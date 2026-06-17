@@ -1,19 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Bell,
-  BellOff,
-  Printer,
-  Trash2,
-  Plus,
-  ChevronRight,
-  Circle,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useState, useMemo, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Bell, BellOff, Printer, Trash2, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency, formatRelativeTime } from "@/lib/format";
+import { getRecentOrders } from "@/lib/actions/dashboard";
 import {
   Dialog,
   DialogContent,
@@ -21,506 +15,67 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { formatCurrency } from '@/lib/format';
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
-type OrderStatus = 'pending' | 'preparing' | 'ready' | 'served';
+type OrderStatus = "PENDING" | "PREPARING" | "READY" | "SERVED";
 
-interface OrderItem {
-  id: string;
-  name: string;
-  quantity: number;
-  price: number;
-}
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  tableNumber: number;
-  status: OrderStatus;
-  items: OrderItem[];
-  createdAt: Date;
-  totalAmount: number;
-  waiter: string;
-  specialNotes: string;
-}
-
-// Mock data
-const mockOrders: Order[] = [
-  {
-    id: '1',
-    orderNumber: 'ORD-1001',
-    tableNumber: 5,
-    status: 'pending',
-    items: [
-      { id: '1a', name: 'Momo (Steamed)', quantity: 2, price: 300 },
-      { id: '1b', name: 'Thakali Set', quantity: 1, price: 450 },
-    ],
-    createdAt: new Date(Date.now() - 14 * 60000),
-    totalAmount: 1050,
-    waiter: 'Rajesh',
-    specialNotes: 'Extra spicy',
-  },
-  {
-    id: '2',
-    orderNumber: 'ORD-1002',
-    tableNumber: 3,
-    status: 'pending',
-    items: [
-      { id: '2a', name: 'Masala Tea', quantity: 3, price: 80 },
-      { id: '2b', name: 'Samosa', quantity: 4, price: 50 },
-    ],
-    createdAt: new Date(Date.now() - 10 * 60000),
-    totalAmount: 440,
-    waiter: 'Priya',
-    specialNotes: '',
-  },
-  {
-    id: '3',
-    orderNumber: 'ORD-1003',
-    tableNumber: 8,
-    status: 'pending',
-    items: [
-      { id: '3a', name: 'Chow Mein', quantity: 1, price: 350 },
-      { id: '3b', name: 'Spring Rolls', quantity: 2, price: 120 },
-    ],
-    createdAt: new Date(Date.now() - 8 * 60000),
-    totalAmount: 590,
-    waiter: 'Amit',
-    specialNotes: 'No onion',
-  },
-  {
-    id: '4',
-    orderNumber: 'ORD-1004',
-    tableNumber: 2,
-    status: 'preparing',
-    items: [
-      { id: '4a', name: 'Dal Bhat', quantity: 2, price: 280 },
-      { id: '4b', name: 'Achar Pickle', quantity: 1, price: 100 },
-    ],
-    createdAt: new Date(Date.now() - 22 * 60000),
-    totalAmount: 660,
-    waiter: 'Sumit',
-    specialNotes: '',
-  },
-  {
-    id: '5',
-    orderNumber: 'ORD-1005',
-    tableNumber: 7,
-    status: 'preparing',
-    items: [
-      { id: '5a', name: 'Biryani', quantity: 1, price: 500 },
-      { id: '5b', name: 'Raita', quantity: 1, price: 100 },
-      { id: '5c', name: 'Pappad', quantity: 2, price: 60 },
-    ],
-    createdAt: new Date(Date.now() - 18 * 60000),
-    totalAmount: 720,
-    waiter: 'Vikram',
-    specialNotes: 'Less salt',
-  },
-  {
-    id: '6',
-    orderNumber: 'ORD-1006',
-    tableNumber: 1,
-    status: 'preparing',
-    items: [
-      { id: '6a', name: 'Momos (Fried)', quantity: 1, price: 320 },
-      { id: '6b', name: 'Chiura', quantity: 1, price: 150 },
-    ],
-    createdAt: new Date(Date.now() - 15 * 60000),
-    totalAmount: 470,
-    waiter: 'Neha',
-    specialNotes: '',
-  },
-  {
-    id: '7',
-    orderNumber: 'ORD-1007',
-    tableNumber: 6,
-    status: 'preparing',
-    items: [
-      { id: '7a', name: 'Tandoori Chicken', quantity: 1, price: 450 },
-      { id: '7b', name: 'Naan', quantity: 2, price: 80 },
-    ],
-    createdAt: new Date(Date.now() - 12 * 60000),
-    totalAmount: 610,
-    waiter: 'Ravi',
-    specialNotes: 'Mild spice',
-  },
-  {
-    id: '8',
-    orderNumber: 'ORD-1008',
-    tableNumber: 4,
-    status: 'ready',
-    items: [
-      { id: '8a', name: 'Vegetable Fried Rice', quantity: 1, price: 280 },
-      { id: '8b', name: 'Egg Roll', quantity: 2, price: 100 },
-    ],
-    createdAt: new Date(Date.now() - 28 * 60000),
-    totalAmount: 480,
-    waiter: 'Deepa',
-    specialNotes: '',
-  },
-  {
-    id: '9',
-    orderNumber: 'ORD-1009',
-    tableNumber: 9,
-    status: 'ready',
-    items: [
-      { id: '9a', name: 'Butter Chicken', quantity: 1, price: 520 },
-      { id: '9b', name: 'Rice', quantity: 1, price: 120 },
-    ],
-    createdAt: new Date(Date.now() - 25 * 60000),
-    totalAmount: 640,
-    waiter: 'Sanjay',
-    specialNotes: 'Extra gravy',
-  },
-  {
-    id: '10',
-    orderNumber: 'ORD-1010',
-    tableNumber: 11,
-    status: 'ready',
-    items: [
-      { id: '10a', name: 'Paneer Tikka', quantity: 1, price: 380 },
-      { id: '10b', name: 'Salad', quantity: 1, price: 150 },
-    ],
-    createdAt: new Date(Date.now() - 20 * 60000),
-    totalAmount: 530,
-    waiter: 'Anita',
-    specialNotes: '',
-  },
-  {
-    id: '11',
-    orderNumber: 'ORD-1011',
-    tableNumber: 10,
-    status: 'served',
-    items: [
-      { id: '11a', name: 'Gulab Jamun', quantity: 4, price: 60 },
-    ],
-    createdAt: new Date(Date.now() - 35 * 60000),
-    totalAmount: 240,
-    waiter: 'Harish',
-    specialNotes: '',
-  },
-  {
-    id: '12',
-    orderNumber: 'ORD-1012',
-    tableNumber: 12,
-    status: 'served',
-    items: [
-      { id: '12a', name: 'Ice Cream', quantity: 3, price: 150 },
-      { id: '12b', name: 'Coffee', quantity: 3, price: 100 },
-    ],
-    createdAt: new Date(Date.now() - 40 * 60000),
-    totalAmount: 750,
-    waiter: 'Maya',
-    specialNotes: 'Vanilla flavor',
-  },
-];
-
-const statusConfig = {
-  pending: { label: 'Pending', bgColor: 'bg-accent', nextStatus: 'preparing' as OrderStatus },
-  preparing: { label: 'Preparing', bgColor: 'bg-info', nextStatus: 'ready' as OrderStatus },
-  ready: { label: 'Ready', bgColor: 'bg-success', nextStatus: 'served' as OrderStatus },
-  served: { label: 'Served', bgColor: 'bg-muted0', nextStatus: null },
+const statusConfig: Record<OrderStatus, { label: string; bgColor: string; nextStatus: OrderStatus | null }> = {
+  PENDING: { label: "Pending", bgColor: "bg-accent", nextStatus: "PREPARING" },
+  PREPARING: { label: "Preparing", bgColor: "bg-info", nextStatus: "READY" },
+  READY: { label: "Ready", bgColor: "bg-success", nextStatus: "SERVED" },
+  SERVED: { label: "Served", bgColor: "bg-muted", nextStatus: null },
 };
 
-const staffNames = ['Rajesh', 'Priya', 'Amit', 'Sumit', 'Vikram', 'Neha', 'Ravi', 'Deepa', 'Sanjay', 'Anita'];
-
-function getTimerMinutes(createdAt: Date): number {
-  return Math.floor((Date.now() - createdAt.getTime()) / 60000);
-}
-
-function OrderCard({
-  order,
-  onSelect,
-}: {
-  order: Order;
-  onSelect: (order: Order) => void;
-}) {
-  const minutes = getTimerMinutes(order.createdAt);
-  const isOvertime = minutes > 20;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
-      onClick={() => onSelect(order)}
-      className="cursor-pointer"
-    >
-      <Card className="hover:shadow-lg transition-shadow">
-        <CardContent className="p-4 space-y-3">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-semibold text-sm">{order.orderNumber}</h3>
-              <p className="text-xs text-muted-foreground">Table {order.tableNumber}</p>
-            </div>
-            <Badge variant="outline" className={isOvertime ? 'bg-red-100 text-destructive' : ''}>
-              <span className={isOvertime ? 'text-destructive font-bold' : 'text-accent'}>
-                {minutes}m
-              </span>
-            </Badge>
-          </div>
-
-          <div className="space-y-1">
-            {order.items.map((item) => (
-              <p key={item.id} className="text-xs text-foreground">
-                {item.quantity}x {item.name}
-              </p>
-            ))}
-          </div>
-
-          <Separator className="my-2" />
-
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-muted-foreground">{order.waiter}</span>
-            <span className="font-semibold">{formatCurrency(order.totalAmount)}</span>
-          </div>
-
-          {statusConfig[order.status].nextStatus && (
-            <Button
-              size="sm"
-              variant="secondary"
-              className="w-full"
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            >
-              Move to {statusConfig[statusConfig[order.status].nextStatus!].label}
-              <ChevronRight className="w-3 h-3 ml-1" />
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-}
-
-function OrderColumn({
-  status,
-  orders,
-  onSelectOrder,
-}: {
-  status: OrderStatus;
-  orders: Order[];
-  onSelectOrder: (order: Order) => void;
-}) {
-  const config = statusConfig[status];
-
-  return (
-    <div className="flex-shrink-0 w-full sm:w-96 bg-muted/30 rounded-lg border">
-      <div className={`${config.bgColor} text-white p-3 rounded-t-lg flex justify-between items-center`}>
-        <h2 className="font-semibold text-sm">{config.label}</h2>
-        <Badge variant="secondary" className="bg-background text-black">
-          {orders.length}
-        </Badge>
-      </div>
-      <ScrollArea className="h-[500px] p-3">
-        <div className="space-y-3">
-          <AnimatePresence>
-            {orders.map((order) => (
-              <OrderCard
-                key={order.id}
-                order={order}
-                onSelect={onSelectOrder}
-              />
-            ))}
-          </AnimatePresence>
-          {orders.length === 0 && (
-            <p className="text-center text-xs text-muted-foreground py-8">
-              No orders
-            </p>
-          )}
-        </div>
-      </ScrollArea>
-    </div>
-  );
-}
-
-function OrderDetailDialog({
-  order,
-  isOpen,
-  onClose,
-}: {
-  order: Order | null;
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  const [assignedStaff, setAssignedStaff] = useState(order?.waiter || '');
-
-  if (!order) return null;
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{order.orderNumber}</DialogTitle>
-          <DialogDescription>
-            Table {order.tableNumber} - {statusConfig[order.status].label}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          {/* Order Items */}
-          <div>
-            <h3 className="font-semibold text-sm mb-3">Order Items</h3>
-            <div className="space-y-2 bg-muted/50 p-3 rounded">
-              {order.items.map((item) => (
-                <div key={item.id} className="flex justify-between items-center text-sm">
-                  <span>
-                    {item.quantity}x {item.name}
-                  </span>
-                  <span className="font-medium">{formatCurrency(item.price * item.quantity)}</span>
-                </div>
-              ))}
-              <Separator className="my-2" />
-              <div className="flex justify-between items-center font-semibold">
-                <span>Total</span>
-                <span className="text-lg">{formatCurrency(order.totalAmount)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Special Notes */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">Special Notes</h3>
-            <div className="bg-info/10 border border-info/20 p-3 rounded text-sm min-h-[80px]">
-              {order.specialNotes ? (
-                <p>{order.specialNotes}</p>
-              ) : (
-                <p className="text-muted-foreground italic">No special notes</p>
-              )}
-            </div>
-          </div>
-
-          {/* Item Status */}
-          <div>
-            <h3 className="font-semibold text-sm mb-3">Item Status</h3>
-            <div className="space-y-2">
-              {order.items.map((item) => (
-                <div key={item.id} className="flex items-center justify-between text-sm p-2 bg-muted/50 rounded">
-                  <span>{item.name}</span>
-                  <Badge variant="outline" className="bg-primary-light text-primary">
-                    Ready
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Assign Staff */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">Assign to Staff</h3>
-            <select
-              value={assignedStaff}
-              onChange={(e) => setAssignedStaff(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
-            >
-              <option value="">Select staff member</option>
-              {staffNames.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Order Timing */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-muted-foreground">Order Time</p>
-              <p className="font-semibold">
-                {new Date(order.createdAt).toLocaleTimeString('en-US', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Duration</p>
-              <p className="font-semibold">{getTimerMinutes(order.createdAt)} minutes</p>
-            </div>
-          </div>
-        </div>
-
-        <DialogFooter className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={onClose}
-          >
-            Close
-          </Button>
-          <Button
-            variant="outline"
-            className="text-info border-info/30"
-          >
-            <Printer className="w-4 h-4 mr-2" />
-            Print KOT
-          </Button>
-          <Button
-            variant="destructive"
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Cancel Order
-          </Button>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Item
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export default function LiveOrdersPage() {
-  const [selectedFilter, setSelectedFilter] = useState<OrderStatus | 'all'>('all');
+  const [orders, setOrders] = useState<any[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<OrderStatus | "all">("all");
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  useEffect(() => {
+    getRecentOrders("demo", 50).then(setOrders).catch(() => setOrders([]));
+    const interval = setInterval(() => {
+      getRecentOrders("demo", 50).then(setOrders).catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const filteredOrders = useMemo(() => {
-    if (selectedFilter === 'all') {
-      return mockOrders;
-    }
-    return mockOrders.filter((order) => order.status === selectedFilter);
-  }, [selectedFilter]);
+    if (selectedFilter === "all") return orders;
+    return orders.filter((o: any) => o.status === selectedFilter);
+  }, [orders, selectedFilter]);
 
-  const ordersByStatus = useMemo(() => {
-    return {
-      pending: filteredOrders.filter((o) => o.status === 'pending'),
-      preparing: filteredOrders.filter((o) => o.status === 'preparing'),
-      ready: filteredOrders.filter((o) => o.status === 'ready'),
-      served: filteredOrders.filter((o) => o.status === 'served'),
-    };
-  }, [filteredOrders]);
+  const ordersByStatus = useMemo(() => ({
+    PENDING: filteredOrders.filter((o: any) => o.status === "PENDING"),
+    PREPARING: filteredOrders.filter((o: any) => o.status === "PREPARING"),
+    READY: filteredOrders.filter((o: any) => o.status === "READY"),
+    SERVED: filteredOrders.filter((o: any) => o.status === "SERVED"),
+  }), [filteredOrders]);
 
-  const handleSelectOrder = (order: Order) => {
-    setSelectedOrder(order);
-    setIsDialogOpen(true);
-  };
+  const tabs: { key: OrderStatus | "all"; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "PENDING", label: "Pending" },
+    { key: "PREPARING", label: "Preparing" },
+    { key: "READY", label: "Ready" },
+    { key: "SERVED", label: "Served" },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="border-b bg-card sticky top-0 z-40">
         <div className="max-w-full px-4 py-4">
           <div className="flex flex-col gap-4">
-            {/* Title and Badge */}
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold">Live Orders</h1>
                 <Badge className="bg-primary text-primary-foreground text-base px-3 py-1">
-                  {mockOrders.length} Active Orders
+                  {orders.length} Active Orders
                 </Badge>
               </div>
-
-              {/* Right Controls */}
               <div className="flex items-center gap-3">
-                {/* Auto-refresh indicator */}
                 <div className="flex items-center gap-2 px-3 py-1 bg-success/10 border border-success/20 rounded-full">
                   <div className="relative w-2 h-2">
                     <div className="absolute inset-0 bg-success rounded-full animate-pulse" />
@@ -528,135 +83,128 @@ export default function LiveOrdersPage() {
                   </div>
                   <span className="text-xs font-semibold text-primary">Live</span>
                 </div>
-
-                {/* Sound Toggle */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSoundEnabled(!soundEnabled)}
-                  className="relative"
-                >
-                  {soundEnabled ? (
-                    <Bell className="w-5 h-5" />
-                  ) : (
-                    <BellOff className="w-5 h-5" />
-                  )}
+                <Button variant="ghost" size="icon" onClick={() => setSoundEnabled(!soundEnabled)}>
+                  {soundEnabled ? <Bell className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
                 </Button>
               </div>
             </div>
-
-            {/* Filter Tabs */}
             <div className="flex gap-2 overflow-x-auto pb-2">
-              <Button
-                variant={selectedFilter === 'all' ? 'default' : 'outline'}
-                onClick={() => setSelectedFilter('all')}
-                className="whitespace-nowrap"
-              >
-                All
-              </Button>
-              <Button
-                variant={selectedFilter === 'pending' ? 'default' : 'outline'}
-                onClick={() => setSelectedFilter('pending')}
-                className={`whitespace-nowrap ${
-                  selectedFilter === 'pending'
-                    ? 'bg-accent hover:bg-accent text-white'
-                    : ''
-                }`}
-              >
-                Pending
-              </Button>
-              <Button
-                variant={selectedFilter === 'preparing' ? 'default' : 'outline'}
-                onClick={() => setSelectedFilter('preparing')}
-                className={`whitespace-nowrap ${
-                  selectedFilter === 'preparing'
-                    ? 'bg-info hover:bg-info text-white'
-                    : ''
-                }`}
-              >
-                Preparing
-              </Button>
-              <Button
-                variant={selectedFilter === 'ready' ? 'default' : 'outline'}
-                onClick={() => setSelectedFilter('ready')}
-                className={`whitespace-nowrap ${
-                  selectedFilter === 'ready'
-                    ? 'bg-success hover:bg-success text-white'
-                    : ''
-                }`}
-              >
-                Ready
-              </Button>
-              <Button
-                variant={selectedFilter === 'served' ? 'default' : 'outline'}
-                onClick={() => setSelectedFilter('served')}
-                className={`whitespace-nowrap ${
-                  selectedFilter === 'served'
-                    ? 'bg-muted0 hover:bg-muted text-white'
-                    : ''
-                }`}
-              >
-                Served
-              </Button>
+              {tabs.map((tab) => (
+                <Button
+                  key={tab.key}
+                  variant={selectedFilter === tab.key ? "default" : "outline"}
+                  onClick={() => setSelectedFilter(tab.key as any)}
+                  className="whitespace-nowrap"
+                >
+                  {tab.label}
+                </Button>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="p-4 overflow-x-auto">
-        {/* Kanban Board - visible on desktop */}
-        <div className="hidden sm:flex gap-4 min-w-max pb-4">
-          <OrderColumn
-            status="pending"
-            orders={ordersByStatus.pending}
-            onSelectOrder={handleSelectOrder}
-          />
-          <OrderColumn
-            status="preparing"
-            orders={ordersByStatus.preparing}
-            onSelectOrder={handleSelectOrder}
-          />
-          <OrderColumn
-            status="ready"
-            orders={ordersByStatus.ready}
-            onSelectOrder={handleSelectOrder}
-          />
-          <OrderColumn
-            status="served"
-            orders={ordersByStatus.served}
-            onSelectOrder={handleSelectOrder}
-          />
-        </div>
-
-        {/* List View - visible on mobile */}
-        <div className="sm:hidden space-y-3">
-          <AnimatePresence>
-            {filteredOrders.map((order) => (
-              <OrderCard
-                key={order.id}
-                order={order}
-                onSelect={handleSelectOrder}
-              />
-            ))}
-          </AnimatePresence>
-          {filteredOrders.length === 0 && (
-            <p className="text-center text-muted-foreground py-8">
-              No orders found
-            </p>
-          )}
+        <div className="flex gap-4 min-w-max pb-4">
+          {(Object.entries(ordersByStatus) as [OrderStatus, any[]][]).map(([status, statusOrders]) => (
+            <div key={status} className="flex-shrink-0 w-96 bg-muted/30 rounded-lg border">
+              <div className={`${statusConfig[status].bgColor} text-white p-3 rounded-t-lg flex justify-between items-center`}>
+                <h2 className="font-semibold text-sm">{statusConfig[status].label}</h2>
+                <Badge variant="secondary" className="bg-background text-black">{statusOrders.length}</Badge>
+              </div>
+              <ScrollArea className="h-[500px] p-3">
+                <div className="space-y-3">
+                  <AnimatePresence>
+                    {statusOrders.map((order: any) => (
+                      <motion.div
+                        key={order.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        onClick={() => { setSelectedOrder(order); setIsDialogOpen(true); }}
+                        className="cursor-pointer"
+                      >
+                        <Card className="hover:shadow-lg transition-shadow">
+                          <CardContent className="p-4 space-y-3">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h3 className="font-semibold text-sm">{order.orderId}</h3>
+                                <p className="text-xs text-muted-foreground">
+                                  {order.table ? `Table ${order.table.tableNumber}` : "Takeaway"}
+                                </p>
+                              </div>
+                              <Badge variant={order.status === "PENDING" ? "default" : "outline"}>
+                                {Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000)}m
+                              </Badge>
+                            </div>
+                            <div className="space-y-1">
+                              {order.items?.slice(0, 3).map((item: any) => (
+                                <p key={item.id} className="text-xs text-foreground">
+                                  {item.quantity}x {item.menuItemName}
+                                </p>
+                              ))}
+                              {order.items?.length > 3 && (
+                                <p className="text-xs text-muted-foreground">+{order.items.length - 3} more</p>
+                              )}
+                            </div>
+                            <Separator className="my-2" />
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="font-semibold">{formatCurrency(order.totalAmount)}</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                  {statusOrders.length === 0 && (
+                    <p className="text-center text-xs text-muted-foreground py-8">No orders</p>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Order Detail Dialog */}
-      <OrderDetailDialog
-        order={selectedOrder}
-        isOpen={isDialogOpen}
-        onClose={() => {
-          setIsDialogOpen(false);
-          setSelectedOrder(null);
-        }}
-      />
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedOrder?.orderId || "Order Details"}</DialogTitle>
+            <DialogDescription>
+              {selectedOrder?.table ? `Table ${selectedOrder.table.tableNumber}` : "Takeaway"} - {statusConfig[selectedOrder?.status as OrderStatus]?.label || "Unknown"}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-semibold text-sm mb-3">Order Items</h3>
+                <div className="space-y-2 bg-muted/50 p-3 rounded">
+                  {selectedOrder.items?.map((item: any) => (
+                    <div key={item.id} className="flex justify-between items-center text-sm">
+                      <span>{item.quantity}x {item.menuItemName}</span>
+                      <span className="font-medium">{formatCurrency(item.pricePerUnit * item.quantity)}</span>
+                    </div>
+                  ))}
+                  <Separator className="my-2" />
+                  <div className="flex justify-between items-center font-semibold">
+                    <span>Total</span>
+                    <span className="text-lg">{formatCurrency(selectedOrder.totalAmount)}</span>
+                  </div>
+                </div>
+              </div>
+              {selectedOrder.specialRequests && (
+                <div>
+                  <h3 className="font-semibold text-sm mb-2">Special Requests</h3>
+                  <p className="text-sm bg-muted p-3 rounded">{selectedOrder.specialRequests}</p>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

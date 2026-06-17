@@ -48,12 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [commandOpen, setCommandOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [notifications] = useState([
-    { id: 1, text: 'Himalayan Kitchen payment failed', type: 'error' as const, time: '2m ago' },
-    { id: 2, text: 'New signup: Sagarmatha Palace (Pro)', type: 'success' as const, time: '15m ago' },
-    { id: 3, text: 'Pokhara Grill upgraded to Enterprise', type: 'info' as const, time: '1h ago' },
-    { id: 4, text: 'Server load at 78%', type: 'warning' as const, time: '2h ago' },
-  ]);
+  const [notifications] = useState<{ id: number; text: string; type: 'error' | 'success' | 'info' | 'warning'; time: string }[]>([]);
 
   useEffect(() => {
     document.body.classList.add('admin-layout');
