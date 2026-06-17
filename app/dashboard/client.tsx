@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuthStore } from "@/store/auth-store";
-import { supabase } from "@/lib/supabase";
 import { formatCurrency, formatRelativeTime } from "@/lib/format";
 import { getGreeting } from "@/lib/helpers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,75 +22,21 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
-export default function DashboardClient() {
+type DashboardData = {
+  stats: Awaited<ReturnType<typeof import("@/lib/actions/dashboard").getDashboardStats>> | null;
+  orders: Awaited<ReturnType<typeof import("@/lib/actions/dashboard").getRecentOrders>>;
+  chartData: Awaited<ReturnType<typeof import("@/lib/actions/dashboard").getRevenueChartData>>;
+  topItems: Awaited<ReturnType<typeof import("@/lib/actions/dashboard").getTopSellingItems>>;
+  activities: Awaited<ReturnType<typeof import("@/lib/actions/dashboard").getRecentActivity>>;
+};
+
+export default function DashboardClient({ stats, orders, chartData, topItems, activities }: DashboardData) {
   const { user } = useAuthStore();
   const [period, setPeriod] = useState<"week" | "month">("week");
-  const [stats, setStats] = useState<{ todayRevenue: number; totalOrders: number; todayOrders: number; occupiedTables: number; totalTables: number; pendingOrders: number } | null>(null);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [chartData, setChartData] = useState<{ date: string; revenue: number }[]>([]);
-  const [topItems, setTopItems] = useState<any[]>([]);
-  const [activities, setActivities] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (!supabase) return;
-    const restaurantId = "demo";
-    const today = new Date().toISOString().split("T")[0];
-
-    supabase.from("orders").select("*").eq("restaurantId", restaurantId).then(({ data: ordersData }) => {
-      if (!ordersData) return;
-      setStats({
-        totalOrders: ordersData.length,
-        todayOrders: ordersData.filter((o: any) => o.createdAt?.startsWith(today)).length,
-        todayRevenue: ordersData
-          .filter((o: any) => o.createdAt?.startsWith(today) && o.status !== "CANCELLED")
-          .reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0),
-        occupiedTables: 0,
-        totalTables: 0,
-        pendingOrders: ordersData.filter((o: any) => ["PENDING", "PREPARING"].includes(o.status)).length,
-      });
-      setOrders(ordersData.slice(0, 5));
-
-      const revenueMap: Record<string, number> = {};
-      ordersData
-        .filter((o: any) => o.status !== "CANCELLED")
-        .forEach((o: any) => {
-          const day = o.createdAt?.split("T")[0];
-          if (day) revenueMap[day] = (revenueMap[day] || 0) + (o.totalAmount || 0);
-        });
-      setChartData(Object.entries(revenueMap).map(([date, revenue]) => ({ date, revenue })).slice(-7));
-
-      const itemMap: Record<string, { orders: number; revenue: number }> = {};
-      ordersData.forEach((o: any) => {
-        (o.items || []).forEach((item: any) => {
-          if (!itemMap[item.menuItemName]) itemMap[item.menuItemName] = { orders: 0, revenue: 0 };
-          itemMap[item.menuItemName].orders += item.quantity || 0;
-          itemMap[item.menuItemName].revenue += (item.quantity || 0) * (item.pricePerUnit || 0);
-        });
-      });
-      setTopItems(
-        Object.entries(itemMap)
-          .map(([name, data]) => ({ name, ...data, isVeg: true, percentage: 100 }))
-          .slice(0, 5)
-      );
-    });
-
-    supabase.from("restaurant_tables").select("*").eq("restaurantId", restaurantId).then(({ data: tablesData }) => {
-      if (tablesData) {
-        setStats((prev) => ({
-          ...prev!,
-          totalTables: tablesData.length,
-          occupiedTables: tablesData.filter((t: any) => t.status !== "AVAILABLE").length,
-        }));
-      }
-    });
-  }, []);
-
-  const kpiData = [
-    { icon: TrendingUp, title: "Today's Revenue", value: formatCurrency(stats?.todayRevenue || 0), change: stats?.todayOrders ? `${stats.todayOrders} orders today` : "No orders yet", color: "text-success" },
-    { icon: ShoppingBag, title: "Total Orders", value: stats?.totalOrders || 0, change: stats?.todayOrders ? `${stats.todayOrders} today` : "No orders yet", color: "text-primary" },
-    { icon: LayoutGrid, title: "Active Tables", value: stats ? `${stats.occupiedTables}/${stats.totalTables}` : "0/0", change: stats ? `${stats.occupiedTables} occupied` : "No tables yet", color: "text-accent" },
-    { icon: Clock, title: "Pending Orders", value: stats?.pendingOrders || 0, change: "In kitchen", color: "text-destructive", pulse: true },
-  ];
+  const statusColors: Record<string, string> = {
+    PENDING: "bg-accent", PREPARING: "bg-info", READY: "bg-success", SERVED: "bg-muted", CANCELLED: "bg-destructive",
+  };
 
   return (
     <div className="space-y-6 pb-8">
@@ -111,7 +56,12 @@ export default function DashboardClient() {
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {kpiData.map((kpi, i) => (
+        {[
+          { icon: TrendingUp, title: "Today's Revenue", value: formatCurrency(stats?.todayRevenue || 0), change: stats?.todayOrders ? `${stats.todayOrders} orders today` : "No orders yet", color: "text-success" },
+          { icon: ShoppingBag, title: "Total Orders", value: stats?.totalOrders || 0, change: stats?.todayOrders ? `${stats.todayOrders} today` : "No orders yet", color: "text-primary" },
+          { icon: LayoutGrid, title: "Active Tables", value: stats ? `${stats.occupiedTables}/${stats.totalTables}` : "0/0", change: stats ? `${stats.occupiedTables} occupied` : "No tables", color: "text-accent" },
+          { icon: Clock, title: "Pending Orders", value: stats?.pendingOrders || 0, change: "In kitchen", color: "text-destructive", pulse: true },
+        ].map((kpi, i) => (
           <motion.div key={i} variants={itemVariants}>
             <Card><CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
@@ -134,13 +84,11 @@ export default function DashboardClient() {
           <motion.div variants={itemVariants}>
             <Card><CardHeader>
               <div className="flex items-center justify-between mb-4">
-                <CardTitle>Revenue {period === "week" ? "This Week" : "This Month"}</CardTitle>
+                <CardTitle>Revenue</CardTitle>
                 <div className="flex gap-2">
                   {(["week", "month"] as const).map((p) => (
                     <button key={p} onClick={() => setPeriod(p)}
-                      className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${period === p ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                      {p === "week" ? "This Week" : "This Month"}
-                    </button>
+                      className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${period === p ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{p === "week" ? "This Week" : "This Month"}</button>
                   ))}
                 </div>
               </div>
@@ -149,16 +97,11 @@ export default function DashboardClient() {
                 <ResponsiveContainer width="100%" height={300}>
                   <AreaChart data={chartData}>
                     <defs><linearGradient id="cr" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#0E7A52" stopOpacity={0.3} /><stop offset="95%" stopColor="#0E7A52" stopOpacity={0} /></linearGradient></defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="date" stroke="#9ca3af" style={{ fontSize: "12px" }} />
-                    <YAxis stroke="#9ca3af" style={{ fontSize: "12px" }} />
-                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                    <Area type="monotone" dataKey="revenue" stroke="#0E7A52" strokeWidth={2} fillOpacity={1} fill="url(#cr)" />
+                    <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="date" stroke="#9ca3af" fontSize={12} /><YAxis stroke="#9ca3af" fontSize={12} />
+                    <Tooltip formatter={(v: number) => formatCurrency(v)} /><Area type="monotone" dataKey="revenue" stroke="#0E7A52" strokeWidth={2} fill="url(#cr)" />
                   </AreaChart>
                 </ResponsiveContainer>
-              ) : (
-                <div className="h-[300px] flex items-center justify-center text-muted-foreground">No revenue data yet</div>
-              )}
+              ) : <div className="h-[300px] flex items-center justify-center text-muted-foreground">No revenue data yet</div>}
             </CardContent></Card>
           </motion.div>
 
@@ -176,7 +119,7 @@ export default function DashboardClient() {
                         </div>
                         <span className="text-sm font-semibold ml-2">{formatCurrency(item.revenue)}</span>
                       </div>
-                      <Progress value={item.percentage || 0} className="h-2" />
+                      <Progress value={item.percentage} className="h-2" />
                     </div>
                   ))}
                 </div>
@@ -202,10 +145,10 @@ export default function DashboardClient() {
                   </div>
                   <div className="flex justify-between text-xs text-muted-foreground border-t pt-4">
                     <span className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 rounded-sm" /> {stats.occupiedTables} Occupied</span>
-                    <span className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500 rounded-sm" /> {stats.totalTables - stats.occupiedTables} Available</span>
+                    <span className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500 rounded-sm" /> {stats.availableTables} Available</span>
                   </div>
                 </>
-              ) : <p className="text-muted-foreground text-sm py-8 text-center">No tables configured yet</p>}
+              ) : <p className="text-muted-foreground text-sm py-8 text-center">No tables configured</p>}
             </CardContent></Card>
           </motion.div>
         </div>
@@ -221,15 +164,15 @@ export default function DashboardClient() {
           </CardHeader><CardContent>
             {orders.length > 0 ? (
               <div className="space-y-3">
-                {orders.map((order: any) => (
+                {orders.slice(0, 5).map((order: any) => (
                   <div key={order.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate">{order.orderId} {order.tableId && `• Table ${order.tableId}`}</p>
+                      <p className="text-sm font-semibold truncate">{order.orderId} {order.table && `• Table ${order.table.tableNumber}`}</p>
                       <p className="text-xs text-muted-foreground">{formatRelativeTime(order.createdAt)}</p>
                     </div>
                     <div className="flex items-center gap-2 ml-2">
                       <span className="text-sm font-semibold">{formatCurrency(order.totalAmount)}</span>
-                      <Badge variant="outline">{order.status?.charAt(0) + order.status?.slice(1).toLowerCase()}</Badge>
+                      <Badge variant="outline" className={statusColors[order.status]}>{order.status?.charAt(0) + order.status?.slice(1).toLowerCase()}</Badge>
                     </div>
                   </div>
                 ))}
@@ -242,10 +185,10 @@ export default function DashboardClient() {
           <Card><CardHeader><CardTitle>Recent Activity</CardTitle></CardHeader><CardContent>
             {activities.length > 0 ? (
               <div className="space-y-4">
-                {activities.map((a: any) => (
+                {activities.map((a) => (
                   <div key={a.id} className="flex gap-4 items-start">
                     <div className={`w-3 h-3 rounded-full flex-shrink-0 mt-1.5 ${
-                      a.type === "order" ? "bg-green-500" : a.type === "payment" ? "bg-blue-500" : a.type === "cancelled" ? "bg-red-500" : "bg-yellow-500"
+                      a.type === "order" ? "bg-green-500" : a.type === "payment" ? "bg-blue-500" : "bg-red-500"
                     }`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm">{a.title}</p>

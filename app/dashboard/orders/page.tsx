@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatRelativeTime } from "@/lib/format";
-import { supabase } from "@/lib/supabase";
+import { getRecentOrders } from "@/lib/actions/dashboard";
 import {
   Dialog,
   DialogContent,
@@ -36,14 +36,9 @@ export default function LiveOrdersPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (!supabase) return;
-    supabase.from("orders").select("*").order("createdAt", { ascending: false }).limit(50).then(({ data }) => {
-      if (data) setOrders(data);
-    });
+    getRecentOrders("demo", 50).then(setOrders).catch(() => setOrders([]));
     const interval = setInterval(() => {
-      if (supabase) supabase.from("orders").select("*").order("createdAt", { ascending: false }).limit(50).then(({ data }) => {
-        if (data) setOrders(data);
-      });
+      getRecentOrders("demo", 50).then(setOrders).catch(() => {});
     }, 30000);
     return () => clearInterval(interval);
   }, []);

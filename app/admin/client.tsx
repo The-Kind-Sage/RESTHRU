@@ -1,43 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { Building2, TrendingUp, UserPlus, ShoppingCart, Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatRelativeTime } from "@/lib/format";
 
-export default function AdminClient() {
-  const [stats, setStats] = useState<{ totalRestaurants: number; activeToday: number; newSignups: number; totalOrders: number; todayGMV: number } | null>(null);
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (!supabase) return;
-
-    Promise.all([
-      supabase.from("restaurants").select("*", { count: "exact", head: true }),
-      supabase.from("orders").select("totalAmount,createdAt,orderId,status").order("createdAt", { ascending: false }).limit(10),
-    ]).then(([restResult, ordersResult]) => {
-      if (restResult.count !== null) {
-        setStats({
-          totalRestaurants: restResult.count,
-          activeToday: 0,
-          newSignups: 0,
-          totalOrders: 0,
-          todayGMV: 0,
-        });
-      }
-      if (ordersResult.data) {
-        setRecentOrders(ordersResult.data);
-        setStats((prev) => prev ? {
-          ...prev,
-          totalOrders: ordersResult.data.length,
-          todayGMV: ordersResult.data.reduce((s, o: any) => s + (o.totalAmount || 0), 0),
-        } : null);
-      }
-    });
-  }, []);
-
+export default function AdminClient({
+  stats,
+  recentOrders,
+}: {
+  stats: { totalRestaurants: number; activeToday: number; newSignups: number; totalOrders: number; todayGMV: number } | null;
+  recentOrders: any[];
+}) {
   const kpiCards = [
     { title: "Total Restaurants", value: stats?.totalRestaurants || 0, icon: Building2, subtitle: "Active on platform" },
     { title: "Active Today", value: stats?.activeToday || 0, icon: Activity, subtitle: "Today" },
@@ -72,6 +46,16 @@ export default function AdminClient() {
         ))}
       </div>
 
+      {stats && (
+        <Card>
+          <CardHeader><CardTitle className="text-sm font-medium">Today's Revenue</CardTitle></CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-primary">{formatCurrency(stats.todayGMV)}</div>
+            <p className="text-xs text-muted-foreground mt-1">Gross Merchandise Value</p>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader><CardTitle className="text-sm">Recent Orders</CardTitle></CardHeader>
         <CardContent>
@@ -81,9 +65,12 @@ export default function AdminClient() {
                 <div key={order.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                   <div>
                     <p className="text-sm font-medium">{order.orderId || order.id}</p>
+                    <p className="text-xs text-muted-foreground">{order.restaurant?.name}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold">{formatCurrency(order.totalAmount || 0)}</p>
                     <p className="text-xs text-muted-foreground">{formatRelativeTime(order.createdAt)}</p>
                   </div>
-                  <p className="text-sm font-semibold">{formatCurrency(order.totalAmount || 0)}</p>
                 </div>
               ))}
             </div>
