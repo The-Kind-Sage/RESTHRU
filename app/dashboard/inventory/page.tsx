@@ -1,0 +1,811 @@
+'use client';
+
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import {
+  AlertTriangle,
+  X,
+  Plus,
+  Edit2,
+  Clock,
+  Search,
+  TrendingUp,
+  TrendingDown,
+  AlertCircle,
+} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { formatRelativeTime } from '@/lib/format';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+
+// Mock data
+const mockInventoryItems = [
+  {
+    id: 1,
+    name: 'Chicken',
+    category: 'Meat',
+    currentStock: 25,
+    unit: 'kg',
+    minThreshold: 10,
+    lastUpdated: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+    status: 'Healthy',
+  },
+  {
+    id: 2,
+    name: 'Rice',
+    category: 'Grains',
+    currentStock: 50,
+    unit: 'kg',
+    minThreshold: 20,
+    lastUpdated: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
+    status: 'Healthy',
+  },
+  {
+    id: 3,
+    name: 'Vegetables Mix',
+    category: 'Produce',
+    currentStock: 5,
+    unit: 'kg',
+    minThreshold: 15,
+    lastUpdated: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
+    status: 'Low',
+  },
+  {
+    id: 4,
+    name: 'Cooking Oil',
+    category: 'Oils',
+    currentStock: 0,
+    unit: 'liters',
+    minThreshold: 5,
+    lastUpdated: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
+    status: 'Out of Stock',
+  },
+  {
+    id: 5,
+    name: 'Flour',
+    category: 'Grains',
+    currentStock: 30,
+    unit: 'kg',
+    minThreshold: 15,
+    lastUpdated: new Date(Date.now() - 48 * 60 * 60 * 1000), // 2 days ago
+    status: 'Healthy',
+  },
+  {
+    id: 6,
+    name: 'Spices (Mixed)',
+    category: 'Spices',
+    currentStock: 3,
+    unit: 'kg',
+    minThreshold: 5,
+    lastUpdated: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
+    status: 'Low',
+  },
+  {
+    id: 7,
+    name: 'Lentils',
+    category: 'Grains',
+    currentStock: 40,
+    unit: 'kg',
+    minThreshold: 20,
+    lastUpdated: new Date(Date.now() - 72 * 60 * 60 * 1000), // 3 days ago
+    status: 'Healthy',
+  },
+  {
+    id: 8,
+    name: 'Potatoes',
+    category: 'Produce',
+    currentStock: 60,
+    unit: 'kg',
+    minThreshold: 25,
+    lastUpdated: new Date(Date.now() - 120 * 60 * 1000), // 2 hours ago
+    status: 'Healthy',
+  },
+  {
+    id: 9,
+    name: 'Tomatoes',
+    category: 'Produce',
+    currentStock: 8,
+    unit: 'kg',
+    minThreshold: 10,
+    lastUpdated: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+    status: 'Low',
+  },
+  {
+    id: 10,
+    name: 'Onions',
+    category: 'Produce',
+    currentStock: 45,
+    unit: 'kg',
+    minThreshold: 20,
+    lastUpdated: new Date(Date.now() - 90 * 60 * 1000), // 1.5 hours ago
+    status: 'Healthy',
+  },
+];
+
+const stockHistoryData = [
+  { day: 'Mon', stock: 15 },
+  { day: 'Tue', stock: 18 },
+  { day: 'Wed', stock: 12 },
+  { day: 'Thu', stock: 20 },
+  { day: 'Fri', stock: 16 },
+  { day: 'Sat', stock: 22 },
+  { day: 'Sun', stock: 25 },
+];
+
+const statusColors: { [key: string]: string } = {
+  Healthy: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
+  Low: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+  'Out of Stock':
+    'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200',
+};
+
+interface InventoryItem {
+  id: number;
+  name: string;
+  category: string;
+  currentStock: number;
+  unit: string;
+  minThreshold: number;
+  lastUpdated: Date;
+  status: string;
+}
+
+function StockHistoryDialog({ item }: { item: InventoryItem }) {
+  const [showAddStock, setShowAddStock] = useState(false);
+  const [showRecordUsage, setShowRecordUsage] = useState(false);
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Clock className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Stock History - {item.name}</DialogTitle>
+          <DialogDescription>
+            View stock movements and trends over the last 7 days
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700"
+              onClick={() => setShowAddStock(!showAddStock)}
+            >
+              <TrendingUp className="h-4 w-4 mr-2" />
+              Add Stock
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowRecordUsage(!showRecordUsage)}
+            >
+              <TrendingDown className="h-4 w-4 mr-2" />
+              Record Usage
+            </Button>
+          </div>
+
+          {showAddStock && (
+            <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Quantity to Add ({item.unit})
+                </label>
+                <Input type="number" placeholder="0" min="0" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Notes
+                </label>
+                <Input placeholder="Add notes..." />
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" className="bg-emerald-600">
+                  Add Stock
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowAddStock(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {showRecordUsage && (
+            <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Quantity Used ({item.unit})
+                </label>
+                <Input type="number" placeholder="0" min="0" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Notes
+                </label>
+                <Input placeholder="Add notes..." />
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" className="bg-amber-600 hover:bg-amber-700">
+                  Record Usage
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowRecordUsage(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <p className="font-medium text-sm">Recent Movements</p>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              <div className="flex items-center justify-between text-sm p-3 border rounded-lg">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-emerald-500" />
+                  <div>
+                    <p className="font-medium">Added 5 kg</p>
+                    <p className="text-xs text-muted-foreground">2 hours ago</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-sm p-3 border rounded-lg">
+                <div className="flex items-center gap-2">
+                  <TrendingDown className="h-4 w-4 text-rose-500" />
+                  <div>
+                    <p className="font-medium">Used 2 kg</p>
+                    <p className="text-xs text-muted-foreground">5 hours ago</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-sm p-3 border rounded-lg">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-emerald-500" />
+                  <div>
+                    <p className="font-medium">Added 10 kg</p>
+                    <p className="text-xs text-muted-foreground">Yesterday</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <p className="font-medium text-sm">Stock Level Trend</p>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={stockHistoryData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="day" />
+                <YAxis />
+                <Tooltip />
+                <Line
+                  type="monotone"
+                  dataKey="stock"
+                  stroke="#3b82f6"
+                  dot={{ fill: '#3b82f6' }}
+                  strokeWidth={2}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AddInventoryDialog() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    itemName: '',
+    category: '',
+    currentStock: '',
+    unit: 'kg',
+    minThreshold: '',
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsOpen(false);
+    setFormData({
+      itemName: '',
+      category: '',
+      currentStock: '',
+      unit: 'kg',
+      minThreshold: '',
+    });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button className="bg-indigo-600 hover:bg-indigo-700">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Item
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add Inventory Item</DialogTitle>
+          <DialogDescription>
+            Add a new item to your restaurant inventory.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Item Name *
+            </label>
+            <Input
+              placeholder="e.g., Chicken"
+              value={formData.itemName}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  itemName: e.target.value,
+                })
+              }
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Category *
+            </label>
+            <Input
+              placeholder="e.g., Meat"
+              value={formData.category}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  category: e.target.value,
+                })
+              }
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Current Stock *
+              </label>
+              <Input
+                type="number"
+                placeholder="0"
+                min="0"
+                value={formData.currentStock}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    currentStock: e.target.value,
+                  })
+                }
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Unit *
+              </label>
+              <Select
+                value={formData.unit}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, unit: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="kg">kg</SelectItem>
+                  <SelectItem value="pcs">pcs</SelectItem>
+                  <SelectItem value="liters">liters</SelectItem>
+                  <SelectItem value="grams">grams</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Minimum Threshold *
+            </label>
+            <Input
+              type="number"
+              placeholder="0"
+              min="0"
+              value={formData.minThreshold}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  minThreshold: e.target.value,
+                })
+              }
+              required
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" className="bg-indigo-600">
+              Add Item
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditableStockCell({
+  value,
+  unit,
+}: {
+  value: number;
+  unit: string;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value.toString());
+
+  const handleSave = () => {
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <div className="flex items-center gap-2">
+        <Input
+          type="number"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          className="w-20"
+          min="0"
+          autoFocus
+        />
+        <span className="text-sm">{unit}</span>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-6 w-6"
+          onClick={handleSave}
+        >
+          ✓
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="cursor-pointer hover:bg-muted/50 px-2 py-1 rounded transition"
+      onClick={() => setIsEditing(true)}
+    >
+      {value} {unit}
+    </div>
+  );
+}
+
+export default function InventoryPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [alertDismissed, setAlertDismissed] = useState(false);
+
+  const totalItems = mockInventoryItems.length;
+  const lowStockItems = mockInventoryItems.filter(
+    (item) => item.status === 'Low'
+  ).length;
+  const outOfStockItems = mockInventoryItems.filter(
+    (item) => item.status === 'Out of Stock'
+  ).length;
+  const healthyItems = mockInventoryItems.filter(
+    (item) => item.status === 'Healthy'
+  ).length;
+
+  const filteredItems = mockInventoryItems.filter((item) =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3 },
+    },
+  };
+
+  return (
+    <div className="space-y-6 p-6">
+      {!alertDismissed && (lowStockItems > 0 || outOfStockItems > 0) && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          className="flex items-center justify-between gap-4 p-4 rounded-lg bg-amber-50 border border-amber-200 dark:bg-amber-950 dark:border-amber-800"
+        >
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <div>
+              <p className="font-medium text-amber-900 dark:text-amber-100">
+                {lowStockItems + outOfStockItems} item
+                {lowStockItems + outOfStockItems !== 1 ? 's are' : ' is'} running low on stock
+              </p>
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                Please reorder soon to avoid stockouts
+              </p>
+            </div>
+          </div>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => setAlertDismissed(true)}
+            className="text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </motion.div>
+      )}
+
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Inventory Management</h1>
+            <p className="text-muted-foreground mt-1">
+              Track and manage your restaurant inventory
+            </p>
+          </div>
+          <AddInventoryDialog />
+        </div>
+      </motion.div>
+
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid gap-4 md:grid-cols-4"
+      >
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Items
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalItems}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Items in inventory
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <Card className="border-l-4 border-l-amber-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Low Stock
+              </CardTitle>
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-amber-600">
+                {lowStockItems}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Below minimum threshold
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <Card className="border-l-4 border-l-rose-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Out of Stock
+              </CardTitle>
+              <AlertCircle className="h-4 w-4 text-rose-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-rose-600">
+                {outOfStockItems}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Items not available
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <Card className="border-l-4 border-l-emerald-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Healthy Stock
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-emerald-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-emerald-600">
+                {healthyItems}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Above minimum threshold
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>Inventory Items</CardTitle>
+            <CardDescription>
+              Manage all inventory items and stock levels
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4 mb-6">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search items or categories..."
+                  className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Item Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Current Stock</TableHead>
+                    <TableHead>Unit</TableHead>
+                    <TableHead>Min Threshold</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Last Updated</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredItems.length > 0 ? (
+                    filteredItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-bold">
+                          {item.name}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {item.category}
+                        </TableCell>
+                        <TableCell>
+                          <EditableStockCell
+                            value={item.currentStock}
+                            unit={item.unit}
+                          />
+                        </TableCell>
+                        <TableCell className="text-sm">{item.unit}</TableCell>
+                        <TableCell className="text-sm">
+                          {item.minThreshold} {item.unit}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={statusColors[item.status]}>
+                            {item.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {formatRelativeTime(item.lastUpdated)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <StockHistoryDialog item={item} />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-6">
+                        <p className="text-muted-foreground">
+                          No inventory items found
+                        </p>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </div>
+  );
+}
