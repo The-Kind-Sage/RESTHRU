@@ -365,7 +365,7 @@ export default function CustomerMenuPage() {
         <div className="p-4 flex items-center justify-between gap-2">
           <div className="flex-1 min-w-0">
             <h1 className="font-bold text-lg truncate">Himalayan Kitchen</h1>
-            <Badge variant="default" className="mt-1 bg-indigo-600 w-fit">
+            <Badge variant="default" className="mt-1 bg-primary w-fit">
               Table {tableId}
             </Badge>
           </div>
@@ -393,7 +393,7 @@ export default function CustomerMenuPage() {
       </header>
 
       {/* RESTAURANT HERO */}
-      <div className="relative h-[200px] bg-gradient-to-br from-orange-200 to-amber-100 overflow-hidden">
+      <div className="relative h-[200px] bg-gradient-to-br from-accent-light to-accent-light overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
           <h2 className="text-xl font-bold">Himalayan Kitchen</h2>
@@ -413,7 +413,7 @@ export default function CustomerMenuPage() {
               onClick={() => setSelectedCategory(cat.key)}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
                 selectedCategory === cat.key
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-primary text-white'
                   : 'bg-muted text-muted-foreground hover:bg-muted/80'
               }`}
             >
@@ -447,7 +447,7 @@ export default function CustomerMenuPage() {
                         <p className="text-xs text-muted-foreground line-clamp-2">
                           {item.description}
                         </p>
-                        <p className="font-bold text-indigo-600 mt-1 text-sm">
+                        <p className="font-bold text-primary mt-1 text-sm">
                           {formatCurrency(item.price)}
                         </p>
 
@@ -460,7 +460,7 @@ export default function CustomerMenuPage() {
                           {item.id === '13' && (
                             <Badge
                               variant="secondary"
-                              className="text-xs bg-amber-100 text-amber-900"
+                              className="text-xs bg-accent-light text-warning"
                             >
                               Popular
                             </Badge>
@@ -468,7 +468,7 @@ export default function CustomerMenuPage() {
                           {item.id === '14' && (
                             <Badge
                               variant="secondary"
-                              className="text-xs bg-emerald-100 text-emerald-900"
+                              className="text-xs bg-primary-light text-primary"
                             >
                               New
                             </Badge>
@@ -478,7 +478,7 @@ export default function CustomerMenuPage() {
 
                       {/* RIGHT SIDE */}
                       <div className="flex-shrink-0">
-                        <div className="relative w-[100px] h-[100px] rounded-lg bg-gradient-to-br from-orange-300 to-orange-200 flex items-center justify-center text-3xl overflow-hidden">
+                        <div className="relative w-[100px] h-[100px] rounded-lg bg-gradient-to-br from-accent to-accent-light flex items-center justify-center text-3xl overflow-hidden">
                           {emojis[Math.floor(Math.random() * emojis.length)]}
 
                           {!item.isAvailable && (
@@ -492,26 +492,26 @@ export default function CustomerMenuPage() {
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => handleAddToCart(item)}
-                              className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center"
+                              className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center"
                             >
                               <Plus className="w-4 h-4" />
                             </motion.button>
                           )}
 
                           {quantity > 0 && (
-                            <div className="absolute bottom-1 right-1 flex items-center gap-1 bg-white rounded-full px-1">
+                            <div className="absolute bottom-1 right-1 flex items-center gap-1 bg-background rounded-full px-1">
                               <button
                                 onClick={() => updateQuantity(item.id, quantity - 1)}
-                                className="p-0.5 hover:bg-gray-100 rounded"
+                                className="p-0.5 hover:bg-muted rounded"
                               >
-                                <Minus className="w-3 h-3 text-indigo-600" />
+                                <Minus className="w-3 h-3 text-primary" />
                               </button>
                               <span className="text-xs font-bold w-4 text-center">{quantity}</span>
                               <button
                                 onClick={() => updateQuantity(item.id, quantity + 1)}
-                                className="p-0.5 hover:bg-gray-100 rounded"
+                                className="p-0.5 hover:bg-muted rounded"
                               >
-                                <Plus className="w-3 h-3 text-indigo-600" />
+                                <Plus className="w-3 h-3 text-primary" />
                               </button>
                             </div>
                           )}
@@ -538,12 +538,12 @@ export default function CustomerMenuPage() {
           >
             <button
               onClick={() => setOrderSheetOpen(true)}
-              className="w-full h-[60px] bg-indigo-600 text-white rounded-t-xl shadow-lg flex items-center justify-between px-4 font-semibold active:opacity-90"
+              className="w-full h-[60px] bg-primary text-white rounded-t-xl shadow-lg flex items-center justify-between px-4 font-semibold active:opacity-90"
             >
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <ShoppingCart className="w-5 h-5" />
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                  <span className="absolute -top-2 -right-2 bg-destructive text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
                     {itemCount}
                   </span>
                 </div>
@@ -576,14 +576,14 @@ export default function CustomerMenuPage() {
                 <motion.div
                   animate={{ scale: [1, 1.1, 1] }}
                   transition={{ duration: 0.6 }}
-                  className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center"
+                  className="w-16 h-16 bg-primary-light rounded-full flex items-center justify-center"
                 >
-                  <Check className="w-8 h-8 text-green-600" />
+                  <Check className="w-8 h-8 text-success" />
                 </motion.div>
                 <p className="text-lg font-bold text-center">
                   Your order is on its way to the kitchen!
                 </p>
-                <Badge className="bg-blue-100 text-blue-900">Order #ORD-2024-00523</Badge>
+                <Badge className="bg-info/10 text-info">Order #ORD-2024-00523</Badge>
 
                 {/* Order Status Tracker */}
                 <div className="w-full px-4 mt-6 space-y-3">
@@ -597,8 +597,8 @@ export default function CustomerMenuPage() {
                       <div
                         className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
                           step.done
-                            ? 'bg-green-600 text-white'
-                            : 'bg-gray-200 text-gray-600'
+                            ? 'bg-success text-white'
+                            : 'bg-muted text-muted-foreground'
                         }`}
                       >
                         {step.done ? <Check className="w-4 h-4" /> : i + 1}
@@ -617,15 +617,15 @@ export default function CustomerMenuPage() {
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
                           <p className="font-semibold text-sm">{cartItem.menuItemName}</p>
-                          <p className="text-xs text-indigo-600 font-bold">
+                          <p className="text-xs text-primary font-bold">
                             {formatCurrency(cartItem.subtotal)}
                           </p>
                         </div>
                         <button
                           onClick={() => removeItem(cartItem.menuItemId)}
-                          className="p-1 hover:bg-red-50 rounded"
+                          className="p-1 hover:bg-destructive/10 rounded"
                         >
-                          <X className="w-4 h-4 text-red-600" />
+                          <X className="w-4 h-4 text-destructive" />
                         </button>
                       </div>
 
@@ -634,7 +634,7 @@ export default function CustomerMenuPage() {
                           onClick={() =>
                             updateQuantity(cartItem.menuItemId, cartItem.quantity - 1)
                           }
-                          className="p-1 border border-indigo-600 text-indigo-600 rounded h-6 w-6 flex items-center justify-center"
+                          className="p-1 border border-primary text-primary rounded h-6 w-6 flex items-center justify-center"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
@@ -645,7 +645,7 @@ export default function CustomerMenuPage() {
                           onClick={() =>
                             updateQuantity(cartItem.menuItemId, cartItem.quantity + 1)
                           }
-                          className="p-1 border border-indigo-600 text-indigo-600 rounded h-6 w-6 flex items-center justify-center"
+                          className="p-1 border border-primary text-primary rounded h-6 w-6 flex items-center justify-center"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -672,7 +672,7 @@ export default function CustomerMenuPage() {
                     </div>
                     <div className="border-t pt-2 flex justify-between font-bold">
                       <span>Total</span>
-                      <span className="text-base text-indigo-600">
+                      <span className="text-base text-primary">
                         {formatCurrency(total)}
                       </span>
                     </div>
@@ -693,7 +693,7 @@ export default function CustomerMenuPage() {
                 <div className="border-t p-4 space-y-3">
                   <Button
                     onClick={handlePlaceOrder}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 h-11 font-bold"
+                    className="w-full bg-primary hover:bg-primary-hover h-11 font-bold"
                   >
                     Place Order
                   </Button>
@@ -768,9 +768,9 @@ export default function CustomerMenuPage() {
             </div>
 
             {paymentMethod !== 'CASH' && (
-              <div className="bg-gray-100 p-4 rounded-lg flex items-center justify-center h-32">
+              <div className="bg-muted p-4 rounded-lg flex items-center justify-center h-32">
                 <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg mx-auto mb-2 flex items-center justify-center text-2xl">
+                  <div className="w-20 h-20 bg-gradient-to-br from-muted to-muted rounded-lg mx-auto mb-2 flex items-center justify-center text-2xl">
                     📱
                   </div>
                   <p className="text-xs text-muted-foreground">QR Code for {paymentMethod}</p>
@@ -778,7 +778,7 @@ export default function CustomerMenuPage() {
               </div>
             )}
 
-            <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+            <Button className="w-full bg-primary hover:bg-primary-hover">
               Confirm Payment
             </Button>
           </div>

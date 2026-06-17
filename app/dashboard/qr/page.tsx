@@ -17,10 +17,10 @@ const FLOOR_NAMES = ['Ground Floor', 'First Floor', 'Second Floor'];
 const TABLES_PER_FLOOR = Math.ceil(20 / FLOOR_NAMES.length);
 
 const QR_CODE_COLORS = [
-  { label: 'White', value: 'bg-white', border: 'border-gray-300' },
-  { label: 'Indigo Light', value: 'bg-indigo-50', border: 'border-indigo-200' },
-  { label: 'Emerald Light', value: 'bg-emerald-50', border: 'border-emerald-200' },
-  { label: 'Amber Light', value: 'bg-amber-50', border: 'border-amber-200' },
+  { label: 'White', value: 'bg-background', border: 'border-border' },
+  { label: 'Indigo Light', value: 'bg-primary-light', border: 'border-primary/20' },
+  { label: 'Emerald Light', value: 'bg-primary-light', border: 'border-primary/20' },
+  { label: 'Amber Light', value: 'bg-accent-light', border: 'border-accent/20' },
 ];
 
 interface TableQRData {
@@ -62,8 +62,8 @@ export default function QRCodeCenterPage() {
   };
 
   const QRPlaceholder = () => (
-    <div className="w-[120px] h-[120px] bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center text-center">
-      <svg className="w-20 h-20 text-gray-400" viewBox="0 0 100 100" fill="none">
+    <div className="w-[120px] h-[120px] bg-gradient-to-br from-muted to-muted rounded-lg flex items-center justify-center text-center">
+      <svg className="w-20 h-20 text-muted-foreground" viewBox="0 0 100 100" fill="none">
         <rect x="10" y="10" width="25" height="25" fill="currentColor" opacity="0.8" />
         <rect x="40" y="10" width="8" height="8" fill="currentColor" opacity="0.6" />
         <rect x="55" y="10" width="8" height="8" fill="currentColor" opacity="0.6" />
@@ -101,21 +101,21 @@ export default function QRCodeCenterPage() {
 
       {/* Explanation Banner */}
       {!dismissBanner && (
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-info/20 bg-info/10">
           <CardContent className="pt-6">
             <div className="flex gap-4">
               <div className="flex-shrink-0">
-                <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+                <Info className="w-5 h-5 text-info mt-0.5" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-blue-900">
+                <p className="text-sm text-info">
                   Place these QR codes on your tables. Customers scan to view menu and
                   order. Staff scan to quickly identify tables.
                 </p>
               </div>
               <button
                 onClick={() => setDismissBanner(true)}
-                className="flex-shrink-0 text-blue-600 hover:text-blue-800"
+                className="flex-shrink-0 text-info hover:text-info"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -191,8 +191,8 @@ export default function QRCodeCenterPage() {
                       onClick={() => setBgColor(color)}
                       className={`w-12 h-12 rounded-lg border-2 transition-all ${color.value} ${
                         bgColor.value === color.value
-                          ? `border-indigo-600 ring-2 ring-indigo-200`
-                          : `border-gray-300 hover:border-gray-400`
+                          ? `border-primary ring-2 ring-primary/20`
+                          : `border-border hover:border-border`
                       }`}
                       title={color.label}
                     />
@@ -216,7 +216,7 @@ export default function QRCodeCenterPage() {
                 </p>
               </div>
 
-              <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+              <Button className="w-full bg-primary hover:bg-primary-hover">
                 Apply to All Tables
               </Button>
             </div>
@@ -227,8 +227,8 @@ export default function QRCodeCenterPage() {
               <div className={`${bgColor.value} border-2 ${bgColor.border} rounded-lg p-6 flex flex-col items-center gap-4 min-h-96`}>
                 {/* Resthru Header */}
                 <div className="flex items-center gap-2 mb-2">
-                  <UtensilsCrossed className="w-5 h-5 text-indigo-600" />
-                  <span className="font-bold text-indigo-600">Resthru</span>
+                  <UtensilsCrossed className="w-5 h-5 text-primary" />
+                  <span className="font-bold text-primary">Resthru</span>
                 </div>
 
                 {/* QR Code */}
@@ -240,7 +240,7 @@ export default function QRCodeCenterPage() {
                 <p className="text-center font-bold text-base">Himalayan Kitchen</p>
 
                 {/* Table Number */}
-                <p className="text-2xl font-bold text-indigo-600">Table 5</p>
+                <p className="text-2xl font-bold text-primary">Table 5</p>
 
                 {/* Custom Message */}
                 <p className="text-sm text-muted-foreground">{customMessage}</p>
@@ -262,11 +262,11 @@ export default function QRCodeCenterPage() {
             </DialogHeader>
 
             {/* Printable Card Design */}
-            <div className={`${bgColor.value} border-4 border-gray-300 rounded-lg p-8 flex flex-col items-center gap-6 min-h-96 bg-white`}>
+            <div className={`${bgColor.value} border-4 border-border rounded-lg p-8 flex flex-col items-center gap-6 min-h-96 bg-background`}>
               {/* Resthru Header */}
               <div className="flex items-center gap-2">
-                <UtensilsCrossed className="w-6 h-6 text-indigo-600" />
-                <span className="font-bold text-lg text-indigo-600">Resthru</span>
+                <UtensilsCrossed className="w-6 h-6 text-primary" />
+                <span className="font-bold text-lg text-primary">Resthru</span>
               </div>
 
               {/* QR Code */}
@@ -278,7 +278,7 @@ export default function QRCodeCenterPage() {
               <p className="text-center font-bold text-lg">Himalayan Kitchen</p>
 
               {/* Table Number */}
-              <p className="text-3xl font-bold text-indigo-600">Table {selectedQRPreview.tableNumber}</p>
+              <p className="text-3xl font-bold text-primary">Table {selectedQRPreview.tableNumber}</p>
 
               {/* Message */}
               <p className="text-base text-muted-foreground">{customMessage}</p>
@@ -296,7 +296,7 @@ export default function QRCodeCenterPage() {
                   handlePrintQR(selectedQRPreview.tableNumber);
                   setSelectedQRPreview(null);
                 }}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                className="flex-1 bg-primary hover:bg-primary-hover"
               >
                 <Printer className="w-4 h-4 mr-2" />
                 Print Card

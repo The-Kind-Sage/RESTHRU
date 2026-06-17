@@ -12,11 +12,11 @@ const restaurants = [
 
 export function SocialProofBar() {
   return (
-    <section className="border-y border-slate-200 bg-white py-8 sm:py-12">
+    <section className="border-y border-border bg-background py-8 sm:py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Main trust statement */}
         <div className="text-center mb-8">
-          <p className="text-lg sm:text-xl font-semibold text-slate-900">
+          <p className="text-lg sm:text-xl font-semibold text-foreground">
             Trusted by 500+ restaurants across Nepal
           </p>
         </div>
@@ -24,7 +24,7 @@ export function SocialProofBar() {
         {/* Restaurant names */}
         <div className="flex flex-wrap justify-center items-center gap-6 sm:gap-8 mb-8">
           {restaurants.map((restaurant, index) => (
-            <div key={index} className="text-sm sm:text-base text-slate-600">
+            <div key={index} className="text-sm sm:text-base text-muted-foreground">
               {restaurant}
             </div>
           ))}
@@ -36,12 +36,12 @@ export function SocialProofBar() {
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className="w-5 h-5 fill-amber-400 text-amber-400"
+                className="w-5 h-5 fill-accent text-accent"
               />
             ))}
           </div>
-          <p className="text-sm sm:text-base text-slate-600 font-medium">
-            <span className="text-slate-900 font-semibold">4.9/5</span> from 200+ reviews
+          <p className="text-sm sm:text-base text-muted-foreground font-medium">
+            <span className="text-foreground font-semibold">4.9/5</span> from 200+ reviews
           </p>
         </div>
       </div>

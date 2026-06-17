@@ -318,7 +318,7 @@ export default function ReportsPage() {
         <TabsContent value="sales" className="space-y-6">
           {/* KPI Summary */}
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100">
+            <Card className="bg-gradient-to-br from-primary-light to-primary-light">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Total Revenue
@@ -332,7 +332,7 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100">
+            <Card className="bg-gradient-to-br from-primary-light to-emerald-100">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Total Orders
@@ -346,7 +346,7 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-amber-50 to-amber-100">
+            <Card className="bg-gradient-to-br from-accent-light to-accent-light">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Avg Order Value
@@ -360,7 +360,7 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-rose-50 to-rose-100">
+            <Card className="bg-gradient-to-br from-destructive/10 to-destructive/10">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Top Payment
@@ -558,9 +558,9 @@ export default function ReportsPage() {
                         </td>
                         <td className="py-3 px-4 text-center">
                           {item.trend === 'up' ? (
-                            <TrendingUp className="h-4 w-4 inline text-emerald-500" />
+                            <TrendingUp className="h-4 w-4 inline text-success" />
                           ) : (
-                            <TrendingDown className="h-4 w-4 inline text-red-500" />
+                            <TrendingDown className="h-4 w-4 inline text-destructive" />
                           )}
                         </td>
                       </tr>
@@ -572,10 +572,10 @@ export default function ReportsPage() {
           </Card>
 
           {/* Least Selling Items */}
-          <Card className="border-amber-200 bg-amber-50">
+          <Card className="border-accent/20 bg-accent-light">
             <CardHeader>
               <div className="flex items-start gap-3">
-                <div className="mt-1 h-5 w-5 rounded-full bg-amber-500 flex-shrink-0" />
+                <div className="mt-1 h-5 w-5 rounded-full bg-accent flex-shrink-0" />
                 <div>
                   <CardTitle className="text-base">
                     Consider removing or promoting these items
@@ -681,7 +681,7 @@ export default function ReportsPage() {
                         </td>
                         <td className="py-3 px-4 text-center flex items-center justify-center gap-1">
                           <span className="font-medium">{staff.rating}</span>
-                          <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                          <Star className="h-4 w-4 fill-accent text-accent" />
                         </td>
                       </tr>
                     ))}
@@ -708,7 +708,7 @@ export default function ReportsPage() {
                 </div>
                 <div className="rounded-lg border p-4">
                   <p className="text-sm text-muted-foreground">VAT Collected (13%)</p>
-                  <p className="mt-2 text-2xl font-bold text-emerald-600">NPR 55,681</p>
+                  <p className="mt-2 text-2xl font-bold text-primary">NPR 55,681</p>
                 </div>
                 <div className="rounded-lg border p-4">
                   <p className="text-sm text-muted-foreground">Net Revenue</p>

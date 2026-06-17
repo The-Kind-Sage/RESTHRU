@@ -19,17 +19,17 @@ interface PricingCardProps {
 }
 
 const accentColorMap = {
-  indigo: 'border-indigo-500 bg-indigo-50',
-  emerald: 'border-emerald-500 bg-emerald-50',
-  amber: 'border-amber-500 bg-amber-50',
-  gray: 'border-gray-300 bg-gray-50',
+  indigo: 'border-primary bg-primary-light',
+  emerald: 'border-primary bg-primary-light',
+  amber: 'border-accent bg-accent-light',
+  gray: 'border-border bg-muted',
 };
 
 const accentBgMap = {
-  indigo: 'bg-indigo-500',
-  emerald: 'bg-emerald-500',
-  amber: 'bg-amber-500',
-  gray: 'bg-gray-400',
+  indigo: 'bg-primary',
+  emerald: 'bg-primary',
+  amber: 'bg-accent',
+  gray: 'bg-muted-foreground',
 };
 
 const buttonVariantMap = {
@@ -63,7 +63,7 @@ export function PricingCard({
     <div className={cn('relative h-full', isPopular && 'md:scale-105')}>
       {isPopular && (
         <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2">
-          <Badge variant="default" className="bg-indigo-600">
+          <Badge variant="default" className="bg-primary">
             Most Popular
           </Badge>
         </div>
@@ -72,7 +72,7 @@ export function PricingCard({
         className={cn(
           'relative flex h-full flex-col border-t-4 transition-all duration-300',
           accentColorMap[accentColor],
-          isPopular && 'shadow-lg ring-2 ring-indigo-500/20'
+          isPopular && 'shadow-lg ring-2 ring-primary/20'
         )}
       >
         <div className={cn('h-1 w-full', accentBgMap[accentColor])} />
@@ -93,9 +93,9 @@ export function PricingCard({
               return (
                 <div key={idx} className="flex items-start gap-3">
                   {isExcluded ? (
-                    <X className="h-5 w-5 shrink-0 text-red-500 mt-0.5" />
+                    <X className="h-5 w-5 shrink-0 text-destructive mt-0.5" />
                   ) : (
-                    <Check className="h-5 w-5 shrink-0 text-emerald-500 mt-0.5" />
+                    <Check className="h-5 w-5 shrink-0 text-success mt-0.5" />
                   )}
                   <span className={cn('text-sm', isExcluded && 'text-muted-foreground')}>
                     {displayFeature}

@@ -220,10 +220,10 @@ const mockOrders: Order[] = [
 ];
 
 const statusConfig = {
-  pending: { label: 'Pending', bgColor: 'bg-amber-500', nextStatus: 'preparing' as OrderStatus },
-  preparing: { label: 'Preparing', bgColor: 'bg-blue-500', nextStatus: 'ready' as OrderStatus },
-  ready: { label: 'Ready', bgColor: 'bg-green-500', nextStatus: 'served' as OrderStatus },
-  served: { label: 'Served', bgColor: 'bg-gray-500', nextStatus: null },
+  pending: { label: 'Pending', bgColor: 'bg-accent', nextStatus: 'preparing' as OrderStatus },
+  preparing: { label: 'Preparing', bgColor: 'bg-info', nextStatus: 'ready' as OrderStatus },
+  ready: { label: 'Ready', bgColor: 'bg-success', nextStatus: 'served' as OrderStatus },
+  served: { label: 'Served', bgColor: 'bg-muted0', nextStatus: null },
 };
 
 const staffNames = ['Rajesh', 'Priya', 'Amit', 'Sumit', 'Vikram', 'Neha', 'Ravi', 'Deepa', 'Sanjay', 'Anita'];
@@ -258,8 +258,8 @@ function OrderCard({
               <h3 className="font-semibold text-sm">{order.orderNumber}</h3>
               <p className="text-xs text-muted-foreground">Table {order.tableNumber}</p>
             </div>
-            <Badge variant="outline" className={isOvertime ? 'bg-red-100 text-red-800' : ''}>
-              <span className={isOvertime ? 'text-red-600 font-bold' : 'text-amber-600'}>
+            <Badge variant="outline" className={isOvertime ? 'bg-red-100 text-destructive' : ''}>
+              <span className={isOvertime ? 'text-destructive font-bold' : 'text-accent'}>
                 {minutes}m
               </span>
             </Badge>
@@ -314,7 +314,7 @@ function OrderColumn({
     <div className="flex-shrink-0 w-full sm:w-96 bg-muted/30 rounded-lg border">
       <div className={`${config.bgColor} text-white p-3 rounded-t-lg flex justify-between items-center`}>
         <h2 className="font-semibold text-sm">{config.label}</h2>
-        <Badge variant="secondary" className="bg-white text-black">
+        <Badge variant="secondary" className="bg-background text-black">
           {orders.length}
         </Badge>
       </div>
@@ -387,7 +387,7 @@ function OrderDetailDialog({
           {/* Special Notes */}
           <div>
             <h3 className="font-semibold text-sm mb-2">Special Notes</h3>
-            <div className="bg-blue-50 border border-blue-200 p-3 rounded text-sm min-h-[80px]">
+            <div className="bg-info/10 border border-info/20 p-3 rounded text-sm min-h-[80px]">
               {order.specialNotes ? (
                 <p>{order.specialNotes}</p>
               ) : (
@@ -403,7 +403,7 @@ function OrderDetailDialog({
               {order.items.map((item) => (
                 <div key={item.id} className="flex items-center justify-between text-sm p-2 bg-muted/50 rounded">
                   <span>{item.name}</span>
-                  <Badge variant="outline" className="bg-green-100 text-green-800">
+                  <Badge variant="outline" className="bg-primary-light text-primary">
                     Ready
                   </Badge>
                 </div>
@@ -455,7 +455,7 @@ function OrderDetailDialog({
           </Button>
           <Button
             variant="outline"
-            className="text-blue-600 border-blue-300"
+            className="text-info border-info/30"
           >
             <Printer className="w-4 h-4 mr-2" />
             Print KOT
@@ -521,12 +521,12 @@ export default function LiveOrdersPage() {
               {/* Right Controls */}
               <div className="flex items-center gap-3">
                 {/* Auto-refresh indicator */}
-                <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-full">
+                <div className="flex items-center gap-2 px-3 py-1 bg-success/10 border border-success/20 rounded-full">
                   <div className="relative w-2 h-2">
-                    <div className="absolute inset-0 bg-green-500 rounded-full animate-pulse" />
-                    <div className="absolute inset-0 bg-green-500 rounded-full" />
+                    <div className="absolute inset-0 bg-success rounded-full animate-pulse" />
+                    <div className="absolute inset-0 bg-success rounded-full" />
                   </div>
-                  <span className="text-xs font-semibold text-green-700">Live</span>
+                  <span className="text-xs font-semibold text-primary">Live</span>
                 </div>
 
                 {/* Sound Toggle */}
@@ -559,7 +559,7 @@ export default function LiveOrdersPage() {
                 onClick={() => setSelectedFilter('pending')}
                 className={`whitespace-nowrap ${
                   selectedFilter === 'pending'
-                    ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                    ? 'bg-accent hover:bg-accent text-white'
                     : ''
                 }`}
               >
@@ -570,7 +570,7 @@ export default function LiveOrdersPage() {
                 onClick={() => setSelectedFilter('preparing')}
                 className={`whitespace-nowrap ${
                   selectedFilter === 'preparing'
-                    ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                    ? 'bg-info hover:bg-info text-white'
                     : ''
                 }`}
               >
@@ -581,7 +581,7 @@ export default function LiveOrdersPage() {
                 onClick={() => setSelectedFilter('ready')}
                 className={`whitespace-nowrap ${
                   selectedFilter === 'ready'
-                    ? 'bg-green-500 hover:bg-green-600 text-white'
+                    ? 'bg-success hover:bg-success text-white'
                     : ''
                 }`}
               >
@@ -592,7 +592,7 @@ export default function LiveOrdersPage() {
                 onClick={() => setSelectedFilter('served')}
                 className={`whitespace-nowrap ${
                   selectedFilter === 'served'
-                    ? 'bg-gray-500 hover:bg-gray-600 text-white'
+                    ? 'bg-muted0 hover:bg-muted text-white'
                     : ''
                 }`}
               >

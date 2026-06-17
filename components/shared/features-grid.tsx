@@ -27,8 +27,8 @@ const features: Feature[] = [
     title: 'Smart QR Ordering',
     description:
       'Customers scan, browse, and order directly from their phone. No app download needed.',
-    colorClass: 'text-indigo-600',
-    bgColorClass: 'bg-indigo-100',
+    colorClass: 'text-primary',
+    bgColorClass: 'bg-primary-light',
   },
   {
     id: '2',
@@ -36,8 +36,8 @@ const features: Feature[] = [
     title: 'Works Without Internet',
     description:
       'Never stop serving. Resthru keeps working even when your internet goes down.',
-    colorClass: 'text-emerald-600',
-    bgColorClass: 'bg-emerald-100',
+    colorClass: 'text-primary',
+    bgColorClass: 'bg-primary-light',
   },
   {
     id: '3',
@@ -45,8 +45,8 @@ const features: Feature[] = [
     title: 'Live Kitchen Display',
     description:
       'Orders fly from table to kitchen instantly. No more shouting across the restaurant.',
-    colorClass: 'text-amber-600',
-    bgColorClass: 'bg-amber-100',
+    colorClass: 'text-accent',
+    bgColorClass: 'bg-accent-light',
   },
   {
     id: '4',
@@ -54,8 +54,8 @@ const features: Feature[] = [
     title: 'One-tap Billing',
     description:
       'Generate IRD-compliant bills, split payments, and print receipts in seconds.',
-    colorClass: 'text-indigo-600',
-    bgColorClass: 'bg-indigo-100',
+    colorClass: 'text-primary',
+    bgColorClass: 'bg-primary-light',
   },
   {
     id: '5',
@@ -63,8 +63,8 @@ const features: Feature[] = [
     title: 'Inventory Alerts',
     description:
       'Never run out of stock. Get alerts when ingredients are running low.',
-    colorClass: 'text-emerald-600',
-    bgColorClass: 'bg-emerald-100',
+    colorClass: 'text-primary',
+    bgColorClass: 'bg-primary-light',
   },
   {
     id: '6',
@@ -72,8 +72,8 @@ const features: Feature[] = [
     title: 'Live Reports',
     description:
       'See your best dishes, peak hours, and daily revenue at a glance.',
-    colorClass: 'text-amber-600',
-    bgColorClass: 'bg-amber-100',
+    colorClass: 'text-accent',
+    bgColorClass: 'bg-accent-light',
   },
 ];
 
@@ -99,7 +99,7 @@ const itemVariants = {
 
 export function FeaturesGrid() {
   return (
-    <section className="py-16 sm:py-20 lg:py-24 bg-white">
+    <section className="py-16 sm:py-20 lg:py-24 bg-background">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <motion.div
@@ -109,10 +109,10 @@ export function FeaturesGrid() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
+          <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
             Everything your restaurant needs
           </h2>
-          <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
             One platform. Zero chaos.
           </p>
         </motion.div>
@@ -134,17 +134,17 @@ export function FeaturesGrid() {
                 whileHover={{ y: -8 }}
                 transition={{ duration: 0.3 }}
               >
-                <Card className="h-full hover:shadow-lg transition-shadow duration-300 border-slate-200 bg-white">
+                <Card className="h-full hover:shadow-lg transition-shadow duration-300 border-border bg-background">
                   <CardHeader className="pb-4">
                     <div className={`w-14 h-14 rounded-xl ${feature.bgColorClass} flex items-center justify-center mb-4`}>
                       <Icon className={`w-7 h-7 ${feature.colorClass}`} />
                     </div>
-                    <CardTitle className="text-xl text-slate-900">
+                    <CardTitle className="text-xl text-foreground">
                       {feature.title}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+                    <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                       {feature.description}
                     </p>
                   </CardContent>

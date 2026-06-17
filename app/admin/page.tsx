@@ -42,30 +42,30 @@ const kpiCards = [
     title: 'Total Restaurants',
     value: '547',
     icon: Building2,
-    accentColor: 'from-purple-600 to-purple-400',
-    textColor: 'text-purple-400',
+    accentColor: 'from-primary to-primary-light',
+    textColor: 'text-primary',
   },
   {
     title: 'Active Today',
     value: '312',
     icon: Building2,
-    accentColor: 'from-emerald-600 to-emerald-400',
-    textColor: 'text-emerald-400',
+    accentColor: 'from-primary to-primary',
+    textColor: 'text-primary',
     hasAnimation: true,
   },
   {
     title: 'Monthly Revenue (Platform)',
     value: 'NPR 12,45,000',
     icon: TrendingUp,
-    accentColor: 'from-amber-600 to-amber-400',
-    textColor: 'text-amber-400',
+    accentColor: 'from-accent to-amber-400',
+    textColor: 'text-accent',
   },
   {
     title: 'New Signups This Month',
     value: '47',
     icon: UserPlus,
-    accentColor: 'from-purple-600 to-purple-400',
-    textColor: 'text-purple-400',
+    accentColor: 'from-primary to-primary-light',
+    textColor: 'text-primary',
   },
 ];
 
@@ -237,26 +237,26 @@ const recentSignups = [
 const getPlanBadgeColor = (plan: string) => {
   switch (plan) {
     case 'Enterprise':
-      return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+      return 'bg-accent/20 text-accent border-accent/30';
     case 'Pro':
-      return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+      return 'bg-primary/20 text-primary border-primary/30';
     case 'Basic':
-      return 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30';
+      return 'bg-primary/20 text-primary border-primary/30';
     default:
-      return 'bg-slate-500/20 text-slate-300 border-slate-500/30';
+      return 'bg-muted0/20 text-muted-foreground border-border/30';
   }
 };
 
 const getStatusBadgeColor = (status: string) => {
   switch (status) {
     case 'Active':
-      return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+      return 'bg-primary/20 text-primary border-primary/30';
     case 'Suspended':
-      return 'bg-red-500/20 text-red-300 border-red-500/30';
+      return 'bg-destructive/20 text-destructive border-destructive/30';
     case 'Trial':
-      return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+      return 'bg-accent/20 text-accent border-accent/30';
     default:
-      return 'bg-slate-500/20 text-slate-300 border-slate-500/30';
+      return 'bg-muted0/20 text-muted-foreground border-border/30';
   }
 };
 
@@ -265,8 +265,8 @@ export default function AdminDashboard() {
     <div className="space-y-8">
       {/* Page Title */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-100">Dashboard</h1>
-        <p className="text-slate-400 mt-1">
+        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-muted-foreground mt-1">
           Welcome back, Super Admin. Here's your platform overview.
         </p>
       </div>
@@ -278,23 +278,23 @@ export default function AdminDashboard() {
           return (
             <Card
               key={card.title}
-              className="bg-slate-900 border-slate-800 overflow-hidden"
+              className="bg-primary border-border overflow-hidden"
             >
               <div className={`h-1 bg-gradient-to-r ${card.accentColor}`} />
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-sm font-medium text-slate-300">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   {card.title}
                 </CardTitle>
                 <Icon className={`h-5 w-5 ${card.textColor}`} />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-100">
+                <div className="text-2xl font-bold text-foreground">
                   {card.value}
                 </div>
                 {card.hasAnimation && (
                   <div className="mt-2 flex items-center gap-1">
-                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <p className="text-xs text-emerald-400">Live</p>
+                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    <p className="text-xs text-primary">Live</p>
                   </div>
                 )}
               </CardContent>
@@ -306,9 +306,9 @@ export default function AdminDashboard() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* MRR Growth Chart */}
-        <Card className="lg:col-span-2 bg-slate-900 border-slate-800">
+        <Card className="lg:col-span-2 bg-primary border-border">
           <CardHeader>
-            <CardTitle className="text-slate-100">MRR Growth</CardTitle>
+            <CardTitle className="text-foreground">MRR Growth</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -344,9 +344,9 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Subscription Distribution */}
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-primary border-border">
           <CardHeader>
-            <CardTitle className="text-slate-100">
+            <CardTitle className="text-foreground">
               Subscription Distribution
             </CardTitle>
           </CardHeader>
@@ -376,7 +376,7 @@ export default function AdminDashboard() {
                 <Legend
                   wrapperStyle={{ paddingTop: '20px' }}
                   formatter={(value, entry: any) => (
-                    <span className="text-xs text-slate-300">
+                    <span className="text-xs text-muted-foreground">
                       {value} ({entry.payload.value})
                     </span>
                   )}
@@ -388,38 +388,38 @@ export default function AdminDashboard() {
       </div>
 
       {/* Restaurants Table */}
-      <Card className="bg-slate-900 border-slate-800">
+      <Card className="bg-primary border-border">
         <CardHeader>
-          <CardTitle className="text-slate-100">All Restaurants</CardTitle>
+          <CardTitle className="text-foreground">All Restaurants</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow className="border-slate-800 hover:bg-transparent">
-                <TableHead className="text-slate-300">Restaurant</TableHead>
-                <TableHead className="text-slate-300">Owner</TableHead>
-                <TableHead className="text-slate-300">Plan</TableHead>
-                <TableHead className="text-slate-300">Status</TableHead>
-                <TableHead className="text-slate-300 text-right">Tables</TableHead>
-                <TableHead className="text-slate-300 text-right">Revenue</TableHead>
-                <TableHead className="text-slate-300">Joined</TableHead>
-                <TableHead className="text-slate-300 text-right">Actions</TableHead>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground">Restaurant</TableHead>
+                <TableHead className="text-muted-foreground">Owner</TableHead>
+                <TableHead className="text-muted-foreground">Plan</TableHead>
+                <TableHead className="text-muted-foreground">Status</TableHead>
+                <TableHead className="text-muted-foreground text-right">Tables</TableHead>
+                <TableHead className="text-muted-foreground text-right">Revenue</TableHead>
+                <TableHead className="text-muted-foreground">Joined</TableHead>
+                <TableHead className="text-muted-foreground text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {restaurantsMockData.map((restaurant) => (
-                <TableRow key={restaurant.id} className="border-slate-800">
+                <TableRow key={restaurant.id} className="border-border">
                   <TableCell>
                     <Link href={`/admin/restaurants/${restaurant.id}`}>
-                      <div className="cursor-pointer hover:text-purple-400 transition">
-                        <p className="font-semibold text-slate-100">
+                      <div className="cursor-pointer hover:text-primary transition">
+                        <p className="font-semibold text-foreground">
                           {restaurant.name}
                         </p>
-                        <p className="text-xs text-slate-400">{restaurant.city}</p>
+                        <p className="text-xs text-muted-foreground">{restaurant.city}</p>
                       </div>
                     </Link>
                   </TableCell>
-                  <TableCell className="text-slate-300">
+                  <TableCell className="text-muted-foreground">
                     {restaurant.owner}
                   </TableCell>
                   <TableCell>
@@ -432,25 +432,25 @@ export default function AdminDashboard() {
                       {restaurant.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right text-slate-300">
+                  <TableCell className="text-right text-muted-foreground">
                     {restaurant.tables}
                   </TableCell>
-                  <TableCell className="text-right text-slate-300">
+                  <TableCell className="text-right text-muted-foreground">
                     {formatCurrency(restaurant.revenue)}
                   </TableCell>
-                  <TableCell className="text-slate-400 text-sm">
+                  <TableCell className="text-muted-foreground text-sm">
                     {formatDate(restaurant.joined)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <Eye className="h-4 w-4 text-slate-400 hover:text-purple-400" />
+                        <Eye className="h-4 w-4 text-muted-foreground hover:text-primary" />
                       </Button>
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <Ban className="h-4 w-4 text-slate-400 hover:text-red-400" />
+                        <Ban className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                       </Button>
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <ArrowUpCircle className="h-4 w-4 text-slate-400 hover:text-amber-400" />
+                        <ArrowUpCircle className="h-4 w-4 text-muted-foreground hover:text-accent" />
                       </Button>
                     </div>
                   </TableCell>
@@ -462,11 +462,11 @@ export default function AdminDashboard() {
       </Card>
 
       {/* Recent Signups */}
-      <Card className="bg-slate-900 border-slate-800">
+      <Card className="bg-primary border-border">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-slate-100">Recent Signups</CardTitle>
+          <CardTitle className="text-foreground">Recent Signups</CardTitle>
           <Link href="/admin/restaurants">
-            <Button variant="link" className="text-purple-400 hover:text-purple-300">
+            <Button variant="link" className="text-primary hover:text-primary">
               View All
             </Button>
           </Link>
@@ -476,17 +476,17 @@ export default function AdminDashboard() {
             {recentSignups.map((signup, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-4 rounded-lg border border-slate-800 bg-slate-800/20"
+                className="flex items-center justify-between p-4 rounded-lg border border-border bg-primary-hover/20"
               >
                 <div className="flex-1">
-                  <p className="font-medium text-slate-100">{signup.name}</p>
-                  <p className="text-sm text-slate-400">{signup.owner}</p>
+                  <p className="font-medium text-foreground">{signup.name}</p>
+                  <p className="text-sm text-muted-foreground">{signup.owner}</p>
                 </div>
                 <div className="flex items-center gap-4">
                   <Badge className={`border ${getPlanBadgeColor(signup.plan)}`}>
                     {signup.plan}
                   </Badge>
-                  <p className="text-sm text-slate-400 w-20 text-right">
+                  <p className="text-sm text-muted-foreground w-20 text-right">
                     {signup.time}
                   </p>
                 </div>

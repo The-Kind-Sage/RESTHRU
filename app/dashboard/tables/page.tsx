@@ -79,38 +79,38 @@ const getStatusColors = (status: string) => {
   switch (status) {
     case 'available':
       return {
-        bg: 'bg-emerald-500/20',
-        border: 'border-emerald-500',
-        text: 'text-emerald-700',
-        badge: 'bg-emerald-500/20 text-emerald-700 border border-emerald-500',
+        bg: 'bg-primary/20',
+        border: 'border-primary',
+        text: 'text-primary',
+        badge: 'bg-primary/20 text-primary border border-primary',
       };
     case 'occupied':
       return {
-        bg: 'bg-rose-500/20',
-        border: 'border-rose-500',
-        text: 'text-rose-700',
-        badge: 'bg-rose-500/20 text-rose-700 border border-rose-500',
+        bg: 'bg-destructive/20',
+        border: 'border-destructive',
+        text: 'text-destructive',
+        badge: 'bg-destructive/20 text-destructive border border-destructive',
       };
     case 'bill_requested':
       return {
-        bg: 'bg-amber-500/20',
-        border: 'border-amber-500',
-        text: 'text-amber-700',
-        badge: 'bg-amber-500/20 text-amber-700 border border-amber-500',
+        bg: 'bg-accent/20',
+        border: 'border-accent',
+        text: 'text-warning',
+        badge: 'bg-accent/20 text-warning border border-accent',
       };
     case 'reserved':
       return {
-        bg: 'bg-slate-500/20',
-        border: 'border-slate-500',
-        text: 'text-slate-700',
-        badge: 'bg-slate-500/20 text-slate-700 border border-slate-500',
+        bg: 'bg-muted0/20',
+        border: 'border-border',
+        text: 'text-foreground',
+        badge: 'bg-muted0/20 text-foreground border border-border',
       };
     default:
       return {
-        bg: 'bg-gray-500/20',
-        border: 'border-gray-500',
-        text: 'text-gray-700',
-        badge: 'bg-gray-500/20 text-gray-700 border border-gray-500',
+        bg: 'bg-muted0/20',
+        border: 'border-border',
+        text: 'text-muted-foreground',
+        badge: 'bg-muted0/20 text-muted-foreground border border-border',
       };
   }
 };
@@ -382,7 +382,7 @@ function AddTableDialog({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={onClose} className="bg-indigo-600 hover:bg-indigo-700">
+          <Button onClick={onClose} className="bg-primary hover:bg-primary-hover">
             Add Table
           </Button>
         </DialogFooter>
@@ -436,7 +436,7 @@ export default function TableMapPage() {
           </Button>
           <Button
             onClick={() => setAddTableOpen(true)}
-            className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+            className="gap-2 bg-primary hover:bg-primary-hover"
           >
             <Plus className="w-4 h-4" />
             Add Table

@@ -58,7 +58,7 @@ const itemVariants = {
 function GreetingBanner() {
   return (
     <motion.div variants={itemVariants}>
-      <Card className="bg-gradient-to-r from-indigo-50 to-indigo-100 border-indigo-200">
+      <Card className="bg-gradient-to-r from-primary-light to-primary-light border-primary/20">
         <CardContent className="p-8 flex items-center justify-between">
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-foreground mb-2">
@@ -70,7 +70,7 @@ function GreetingBanner() {
           </div>
           <div className="text-right">
             <p className="text-sm text-muted-foreground mb-1">Revenue Today</p>
-            <p className="text-3xl font-bold text-indigo-600">
+            <p className="text-3xl font-bold text-primary">
               {formatCurrency(24500)}
             </p>
           </div>
@@ -114,15 +114,15 @@ function KPICard({
             <div
               className={`p-3 rounded-lg ${
                 pulse
-                  ? 'bg-rose-100 animate-pulse'
-                  : 'bg-gray-100'
+                  ? 'bg-destructive/10 animate-pulse'
+                  : 'bg-muted'
               }`}
             >
               <Icon className={`w-6 h-6 ${
-                title.includes('Revenue') ? 'text-green-600' :
-                title.includes('Orders') ? 'text-emerald-600' :
-                title.includes('Tables') ? 'text-amber-600' :
-                'text-rose-600'
+                title.includes('Revenue') ? 'text-success' :
+                title.includes('Orders') ? 'text-primary' :
+                title.includes('Tables') ? 'text-accent' :
+                'text-destructive'
               }`} />
             </div>
           </div>
@@ -153,21 +153,21 @@ function KPISection() {
         title="Today's Revenue"
         value={formatCurrency(24500)}
         change="↑ 12% vs yesterday"
-        changeColor="text-green-600"
+        changeColor="text-success"
       />
       <KPICard
         icon={ShoppingBag}
         title="Total Orders"
         value="47"
         change="8 more than yesterday"
-        changeColor="text-emerald-600"
+        changeColor="text-primary"
       />
       <KPICard
         icon={LayoutGrid}
         title="Active Tables"
         value="8/20"
         change="8 occupied, 12 available"
-        changeColor="text-amber-600"
+        changeColor="text-accent"
         subtext="2 reserved"
       />
       <KPICard
@@ -175,7 +175,7 @@ function KPISection() {
         title="Pending Orders"
         value="5"
         change="In kitchen right now"
-        changeColor="text-rose-600"
+        changeColor="text-destructive"
         pulse={true}
       />
     </motion.div>
@@ -197,15 +197,15 @@ function TableMapPreview() {
   const getTableColor = (status: string) => {
     switch (status) {
       case 'occupied':
-        return 'bg-red-500';
+        return 'bg-destructive';
       case 'available':
-        return 'bg-green-500';
+        return 'bg-success';
       case 'bill':
-        return 'bg-amber-500';
+        return 'bg-accent';
       case 'reserved':
-        return 'bg-gray-400';
+        return 'bg-muted-foreground';
       default:
-        return 'bg-gray-300';
+        return 'bg-muted';
     }
   };
 
@@ -235,15 +235,15 @@ function TableMapPreview() {
           </div>
           <div className="flex justify-between text-xs text-muted-foreground border-t pt-4">
             <span className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 rounded-sm"></div>
+              <div className="w-3 h-3 bg-destructive rounded-sm"></div>
               8 Occupied
             </span>
             <span className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
+              <div className="w-3 h-3 bg-success rounded-sm"></div>
               12 Available
             </span>
             <span className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-amber-500 rounded-sm"></div>
+              <div className="w-3 h-3 bg-accent rounded-sm"></div>
               2 Bill Requested
             </span>
           </div>
@@ -313,15 +313,15 @@ function getOrderStatusColor(
 ): { bg: string; text: string } {
   switch (status) {
     case 'pending':
-      return { bg: 'bg-amber-100', text: 'text-amber-700' };
+      return { bg: 'bg-accent-light', text: 'text-warning' };
     case 'preparing':
-      return { bg: 'bg-blue-100', text: 'text-blue-700' };
+      return { bg: 'bg-info/10', text: 'text-info' };
     case 'ready':
-      return { bg: 'bg-green-100', text: 'text-green-700' };
+      return { bg: 'bg-primary-light', text: 'text-primary' };
     case 'served':
-      return { bg: 'bg-gray-100', text: 'text-gray-700' };
+      return { bg: 'bg-muted', text: 'text-muted-foreground' };
     default:
-      return { bg: 'bg-gray-100', text: 'text-gray-700' };
+      return { bg: 'bg-muted', text: 'text-muted-foreground' };
   }
 }
 
@@ -347,7 +347,7 @@ function LiveOrdersFeed() {
             return (
               <div
                 key={order.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+                className="flex items-center justify-between p-3 bg-muted rounded-lg border border-border hover:border-border transition-colors"
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground truncate">
@@ -408,7 +408,7 @@ function RevenueChart() {
                 className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                   period === 'week'
                     ? 'bg-primary text-primary-foreground'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    : 'bg-muted text-muted-foreground hover:bg-muted'
                 }`}
               >
                 This Week
@@ -418,7 +418,7 @@ function RevenueChart() {
                 className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                   period === 'month'
                     ? 'bg-primary text-primary-foreground'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    : 'bg-muted text-muted-foreground hover:bg-muted'
                 }`}
               >
                 This Month
@@ -503,7 +503,7 @@ function TopSellingItems() {
                 <div className="flex items-center gap-2 flex-1">
                   <div
                     className={`w-3 h-3 rounded-full ${
-                      item.isVeg ? 'bg-green-500' : 'bg-red-500'
+                      item.isVeg ? 'bg-success' : 'bg-destructive'
                     }`}
                   />
                   <span className="text-sm font-medium text-foreground flex-1">
@@ -572,17 +572,17 @@ const recentActivities: Activity[] = [
 function getActivityDotColor(type: string): string {
   switch (type) {
     case 'order':
-      return 'bg-green-500';
+      return 'bg-success';
     case 'payment':
-      return 'bg-blue-500';
+      return 'bg-info';
     case 'alert':
-      return 'bg-amber-500';
+      return 'bg-accent';
     case 'cancelled':
-      return 'bg-red-500';
+      return 'bg-destructive';
     case 'staff':
-      return 'bg-green-500';
+      return 'bg-success';
     default:
-      return 'bg-gray-400';
+      return 'bg-muted-foreground';
   }
 }
 

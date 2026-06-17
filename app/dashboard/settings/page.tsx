@@ -280,7 +280,7 @@ export default function SettingsPage() {
                   Save Changes
                 </Button>
                 {saveMessage && (
-                  <p className="text-sm text-emerald-600">{saveMessage}</p>
+                  <p className="text-sm text-primary">{saveMessage}</p>
                 )}
               </CardContent>
             </Card>
@@ -372,7 +372,7 @@ export default function SettingsPage() {
                   Save Changes
                 </Button>
                 {saveMessage && (
-                  <p className="text-sm text-emerald-600">{saveMessage}</p>
+                  <p className="text-sm text-primary">{saveMessage}</p>
                 )}
               </CardContent>
             </Card>
@@ -699,7 +699,7 @@ export default function SettingsPage() {
                   Save Changes
                 </Button>
                 {saveMessage && (
-                  <p className="text-sm text-emerald-600">{saveMessage}</p>
+                  <p className="text-sm text-primary">{saveMessage}</p>
                 )}
               </CardContent>
             </Card>
@@ -708,7 +708,7 @@ export default function SettingsPage() {
           {/* SUBSCRIPTION TAB */}
           <TabsContent value="subscription" className="space-y-6">
             {/* Current Plan */}
-            <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100">
+            <Card className="border-primary/20 bg-gradient-to-br from-primary-light to-emerald-100">
               <CardHeader>
                 <CardTitle className="text-2xl">Pro Plan</CardTitle>
                 <CardDescription>Your current subscription</CardDescription>
@@ -722,23 +722,23 @@ export default function SettingsPage() {
                   <h4 className="font-semibold mb-3">Included Features:</h4>
                   <ul className="space-y-2 text-sm">
                     <li className="flex gap-2">
-                      <span className="text-emerald-600">✓</span>
+                      <span className="text-primary">✓</span>
                       Up to 50 Tables
                     </li>
                     <li className="flex gap-2">
-                      <span className="text-emerald-600">✓</span>
+                      <span className="text-primary">✓</span>
                       Unlimited Staff Accounts
                     </li>
                     <li className="flex gap-2">
-                      <span className="text-emerald-600">✓</span>
+                      <span className="text-primary">✓</span>
                       Advanced Reports & Analytics
                     </li>
                     <li className="flex gap-2">
-                      <span className="text-emerald-600">✓</span>
+                      <span className="text-primary">✓</span>
                       Multiple Payment Methods
                     </li>
                     <li className="flex gap-2">
-                      <span className="text-emerald-600">✓</span>
+                      <span className="text-primary">✓</span>
                       Priority Support
                     </li>
                   </ul>
@@ -773,7 +773,7 @@ export default function SettingsPage() {
                     </span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                    <div className="bg-emerald-600 h-full" style={{ width: '100%' }} />
+                    <div className="bg-primary h-full" style={{ width: '100%' }} />
                   </div>
                 </div>
 
@@ -839,7 +839,7 @@ export default function SettingsPage() {
                           <td className="py-3 px-4 font-medium">{item.amount}</td>
                           <td className="py-3 px-4">{item.plan}</td>
                           <td className="py-3 px-4">
-                            <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                            <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-primary-light text-primary">
                               {item.status}
                             </span>
                           </td>
@@ -866,8 +866,8 @@ export default function SettingsPage() {
             </Card>
 
             {/* Cancel Subscription */}
-            <div className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-4">
-              <h3 className="font-semibold text-red-600">
+            <div className="space-y-3 rounded-lg border border-destructive/20 bg-destructive/10 p-4">
+              <h3 className="font-semibold text-destructive">
                 Danger Zone
               </h3>
               <p className="text-sm text-muted-foreground">
@@ -1044,8 +1044,8 @@ export default function SettingsPage() {
                             <span
                               className={
                                 entry.status === 'Success'
-                                  ? 'inline-block px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800'
-                                  : 'inline-block px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800'
+                                  ? 'inline-block px-2 py-1 rounded-full text-xs font-medium bg-primary-light text-primary'
+                                  : 'inline-block px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-destructive'
                               }
                             >
                               {entry.status}

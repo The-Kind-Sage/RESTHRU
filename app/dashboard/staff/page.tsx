@@ -146,20 +146,20 @@ const mockStaffMembers = [
 ];
 
 const roleColors: { [key: string]: string } = {
-  Waiter: 'bg-indigo-100 text-indigo-800',
+  Waiter: 'bg-primary-light text-primary',
   Kitchen:
-    'bg-amber-100 text-amber-800',
+    'bg-accent-light text-warning',
   Cashier:
-    'bg-emerald-100 text-emerald-800',
+    'bg-primary-light text-primary',
   Manager:
-    'bg-purple-100 text-purple-800',
+    'bg-primary-light text-primary',
 };
 
 const avatarBgColors: { [key: string]: string } = {
-  Waiter: 'bg-indigo-500',
-  Kitchen: 'bg-amber-500',
-  Cashier: 'bg-emerald-500',
-  Manager: 'bg-purple-500',
+  Waiter: 'bg-primary',
+  Kitchen: 'bg-accent',
+  Cashier: 'bg-primary',
+  Manager: 'bg-primary',
 };
 
 interface StaffMember {
@@ -183,7 +183,7 @@ function StaffAvatar({
 }) {
   return (
     <div
-      className={`${avatarBgColors[role] || 'bg-gray-500'} h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold text-sm`}
+      className={`${avatarBgColors[role] || 'bg-muted0'} h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold text-sm`}
     >
       {initials}
     </div>
@@ -210,7 +210,7 @@ function StaffDetailDialog({ staff }: { staff: StaffMember }) {
           <TableCell>
             <div className="flex items-center gap-2">
               <span
-                className={`h-2 w-2 rounded-full ${staff.status === 'On Duty' ? 'bg-emerald-500' : 'bg-gray-400'}`}
+                className={`h-2 w-2 rounded-full ${staff.status === 'On Duty' ? 'bg-primary' : 'bg-muted-foreground'}`}
               />
               {staff.status}
             </div>
@@ -244,7 +244,7 @@ function StaffDetailDialog({ staff }: { staff: StaffMember }) {
         <div className="space-y-4">
           <div className="flex justify-center">
             <div
-              className={`${avatarBgColors[staff.role] || 'bg-gray-500'} h-20 w-20 rounded-full flex items-center justify-center text-white font-bold text-2xl`}
+              className={`${avatarBgColors[staff.role] || 'bg-muted0'} h-20 w-20 rounded-full flex items-center justify-center text-white font-bold text-2xl`}
             >
               {staff.avatar}
             </div>
@@ -364,7 +364,7 @@ function AddStaffDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-indigo-600 hover:bg-indigo-700">
+        <Button className="bg-primary hover:bg-primary-hover">
           <Plus className="h-4 w-4 mr-2" />
           Add Staff
         </Button>
@@ -492,7 +492,7 @@ function AddStaffDialog() {
             >
               Cancel
             </Button>
-            <Button type="submit" className="bg-indigo-600">
+            <Button type="submit" className="bg-primary">
               Add Staff
             </Button>
           </DialogFooter>
@@ -596,10 +596,10 @@ export default function StaffPage() {
               <CardTitle className="text-sm font-medium">
                 On Duty Today
               </CardTitle>
-              <Clock className="h-4 w-4 text-emerald-500" />
+              <Clock className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-emerald-600">
+              <div className="text-2xl font-bold text-primary">
                 {onDutyCount}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -614,10 +614,10 @@ export default function StaffPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Waiters</CardTitle>
-              <div className="h-4 w-4 rounded-full bg-indigo-500" />
+              <div className="h-4 w-4 rounded-full bg-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-indigo-600">
+              <div className="text-2xl font-bold text-primary">
                 {waiterCount}
               </div>
             </CardContent>
@@ -630,10 +630,10 @@ export default function StaffPage() {
               <CardTitle className="text-sm font-medium">
                 Kitchen Staff
               </CardTitle>
-              <div className="h-4 w-4 rounded-full bg-amber-500" />
+              <div className="h-4 w-4 rounded-full bg-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-600">
+              <div className="text-2xl font-bold text-accent">
                 {kitchenCount}
               </div>
             </CardContent>

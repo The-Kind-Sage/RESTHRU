@@ -53,7 +53,7 @@ const Navbar = () => {
       className={cn(
         'sticky top-0 z-50 w-full transition-all duration-300',
         isScrolled
-          ? 'bg-white/80 backdrop-blur-md shadow-lg'
+          ? 'bg-background/80 backdrop-blur-md shadow-lg'
           : 'bg-transparent'
       )}
     >
@@ -62,8 +62,8 @@ const Navbar = () => {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <div className="flex items-center gap-2">
-              <UtensilsCrossed className="h-6 w-6 text-indigo-600" />
-              <span className="text-xl font-bold text-indigo-600">Resthru</span>
+              <UtensilsCrossed className="h-6 w-6 text-primary" />
+              <span className="text-xl font-bold text-primary">Resthru</span>
             </div>
           </Link>
 
@@ -88,7 +88,7 @@ const Navbar = () => {
             </Button>
             <Button
               size="default"
-              className="rounded-full bg-indigo-600 hover:bg-indigo-700"
+              className="rounded-full bg-primary hover:bg-primary-hover"
             >
               Start Free Trial
             </Button>
@@ -132,7 +132,7 @@ const Navbar = () => {
                   <SheetClose asChild>
                     <Button
                       size="default"
-                      className="w-full rounded-full bg-indigo-600 hover:bg-indigo-700"
+                      className="w-full rounded-full bg-primary hover:bg-primary-hover"
                     >
                       Start Free Trial
                     </Button>

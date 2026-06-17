@@ -468,7 +468,7 @@ export default function MenuPage() {
                     transition={{ duration: 0.2 }}
                     className={`group relative px-3 py-2 rounded-lg cursor-pointer transition-all ${
                       selectedCategory === category.id
-                        ? 'border-l-2 border-indigo-500 bg-indigo-500/5'
+                        ? 'border-l-2 border-primary bg-primary/5'
                         : 'hover:bg-accent'
                     }`}
                     onClick={() => setSelectedCategory(category.id)}
@@ -596,7 +596,7 @@ export default function MenuPage() {
                     >
                       <Card className="h-full overflow-hidden group relative">
                         {/* Image Placeholder */}
-                        <div className="relative h-40 bg-gradient-to-br from-orange-100 to-amber-50 flex items-center justify-center">
+                        <div className="relative h-40 bg-gradient-to-br from-accent-light to-accent-light flex items-center justify-center">
                           <span className="text-6xl">{item.emoji}</span>
                           {item.outOfStock && (
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -639,7 +639,7 @@ export default function MenuPage() {
                             <div className="flex items-baseline gap-2">
                               {item.discountPrice ? (
                                 <>
-                                  <span className="text-indigo-600 font-bold">
+                                  <span className="text-primary font-bold">
                                     NPR {item.discountPrice}
                                   </span>
                                   <span className="text-xs text-muted-foreground line-through">
@@ -647,15 +647,15 @@ export default function MenuPage() {
                                   </span>
                                 </>
                               ) : (
-                                <span className="text-indigo-600 font-bold">
+                                <span className="text-primary font-bold">
                                   NPR {item.price}
                                 </span>
                               )}
                             </div>
 
                             <div className="flex items-center gap-2 pt-2">
-                              {item.isPopular && <Badge variant="secondary" className="bg-amber-100 text-amber-900">Popular</Badge>}
-                              {item.isNew && <Badge variant="secondary" className="bg-emerald-100 text-emerald-900">New</Badge>}
+                              {item.isPopular && <Badge variant="secondary" className="bg-accent-light text-warning">Popular</Badge>}
+                              {item.isNew && <Badge variant="secondary" className="bg-primary-light text-primary">New</Badge>}
                             </div>
 
                             <div className="flex items-center justify-between pt-2 border-t">
@@ -710,7 +710,7 @@ export default function MenuPage() {
                         <p className="text-sm text-muted-foreground line-clamp-1">{item.description}</p>
                       </div>
                       <div className="col-span-1">
-                        <p className="font-bold text-indigo-600">NPR {item.price}</p>
+                        <p className="font-bold text-primary">NPR {item.price}</p>
                       </div>
                       <div className="col-span-1">
                         <div
@@ -730,12 +730,12 @@ export default function MenuPage() {
                       </div>
                       <div className="col-span-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         {item.isPopular && (
-                          <Badge variant="secondary" className="bg-amber-100 text-amber-900 text-xs">
+                          <Badge variant="secondary" className="bg-accent-light text-warning text-xs">
                             Popular
                           </Badge>
                         )}
                         {item.isNew && (
-                          <Badge variant="secondary" className="bg-emerald-100 text-emerald-900 text-xs">
+                          <Badge variant="secondary" className="bg-primary-light text-primary text-xs">
                             New
                           </Badge>
                         )}
@@ -877,8 +877,8 @@ export default function MenuPage() {
                       key={type.value}
                       className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
                         formData.foodType === type.value
-                          ? 'border-indigo-500 bg-indigo-50'
-                          : 'border-border hover:border-indigo-300'
+                          ? 'border-primary bg-primary-light'
+                          : 'border-border hover:border-primary'
                       }`}
                       onClick={() => setFormData({ ...formData, foodType: type.value as any })}
                     >

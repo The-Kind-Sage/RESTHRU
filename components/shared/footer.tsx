@@ -61,17 +61,17 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="border-t border-slate-200 bg-slate-900">
+    <footer className="border-t border-border bg-primary">
       {/* Top Section */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-5">
           {/* Logo and Tagline */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <UtensilsCrossed className="h-6 w-6 text-indigo-600" />
+              <UtensilsCrossed className="h-6 w-6 text-primary" />
               <span className="text-xl font-bold text-white">Resthru</span>
             </div>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-muted-foreground">
               Run Smarter. Serve Better.
             </p>
           </div>
@@ -87,7 +87,7 @@ const Footer = () => {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-slate-400 transition-colors hover:text-white"
+                      className="text-sm text-muted-foreground transition-colors hover:text-white"
                     >
                       {link.label}
                     </Link>
@@ -100,13 +100,13 @@ const Footer = () => {
       </div>
 
       {/* Bottom Section */}
-      <div className="border-t border-slate-800 bg-slate-950">
+      <div className="border-t border-border bg-primary-hover">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
             {/* Left: Contact Email */}
             <a
               href="mailto:hello@resthru.com"
-              className="text-sm text-slate-400 transition-colors hover:text-white"
+              className="text-sm text-muted-foreground transition-colors hover:text-white"
             >
               hello@resthru.com
             </a>
@@ -122,7 +122,7 @@ const Footer = () => {
                     aria-label={social.label}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-slate-400 transition-colors hover:text-white"
+                    className="text-muted-foreground transition-colors hover:text-white"
                   >
                     <Icon className="h-5 w-5" />
                   </a>
@@ -131,7 +131,7 @@ const Footer = () => {
             </div>
 
             {/* Right: Copyright and Made With */}
-            <div className="flex flex-col items-end gap-2 text-right text-xs text-slate-400">
+            <div className="flex flex-col items-end gap-2 text-right text-xs text-muted-foreground">
               <p>{currentYear} Resthru. All rights reserved.</p>
               <p>Made with heart in Nepal</p>
             </div>

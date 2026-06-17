@@ -173,10 +173,10 @@ const stockHistoryData = [
 ];
 
 const statusColors: { [key: string]: string } = {
-  Healthy: 'bg-emerald-100 text-emerald-800',
-  Low: 'bg-amber-100 text-amber-800',
+  Healthy: 'bg-primary-light text-primary',
+  Low: 'bg-accent-light text-warning',
   'Out of Stock':
-    'bg-rose-100 text-rose-800',
+    'bg-destructive/10 text-destructive',
 };
 
 interface InventoryItem {
@@ -216,7 +216,7 @@ function StockHistoryDialog({ item }: { item: InventoryItem }) {
           <div className="flex gap-2">
             <Button
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-primary hover:bg-primary-hover"
               onClick={() => setShowAddStock(!showAddStock)}
             >
               <TrendingUp className="h-4 w-4 mr-2" />
@@ -247,7 +247,7 @@ function StockHistoryDialog({ item }: { item: InventoryItem }) {
                 <Input placeholder="Add notes..." />
               </div>
               <div className="flex gap-2">
-                <Button size="sm" className="bg-emerald-600">
+                <Button size="sm" className="bg-primary">
                   Add Stock
                 </Button>
                 <Button
@@ -276,7 +276,7 @@ function StockHistoryDialog({ item }: { item: InventoryItem }) {
                 <Input placeholder="Add notes..." />
               </div>
               <div className="flex gap-2">
-                <Button size="sm" className="bg-amber-600 hover:bg-amber-700">
+                <Button size="sm" className="bg-accent hover:bg-accent">
                   Record Usage
                 </Button>
                 <Button
@@ -295,7 +295,7 @@ function StockHistoryDialog({ item }: { item: InventoryItem }) {
             <div className="space-y-2 max-h-48 overflow-y-auto">
               <div className="flex items-center justify-between text-sm p-3 border rounded-lg">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-emerald-500" />
+                  <TrendingUp className="h-4 w-4 text-success" />
                   <div>
                     <p className="font-medium">Added 5 kg</p>
                     <p className="text-xs text-muted-foreground">2 hours ago</p>
@@ -304,7 +304,7 @@ function StockHistoryDialog({ item }: { item: InventoryItem }) {
               </div>
               <div className="flex items-center justify-between text-sm p-3 border rounded-lg">
                 <div className="flex items-center gap-2">
-                  <TrendingDown className="h-4 w-4 text-rose-500" />
+                  <TrendingDown className="h-4 w-4 text-destructive" />
                   <div>
                     <p className="font-medium">Used 2 kg</p>
                     <p className="text-xs text-muted-foreground">5 hours ago</p>
@@ -313,7 +313,7 @@ function StockHistoryDialog({ item }: { item: InventoryItem }) {
               </div>
               <div className="flex items-center justify-between text-sm p-3 border rounded-lg">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-emerald-500" />
+                  <TrendingUp className="h-4 w-4 text-success" />
                   <div>
                     <p className="font-medium">Added 10 kg</p>
                     <p className="text-xs text-muted-foreground">Yesterday</p>
@@ -372,7 +372,7 @@ function AddInventoryDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-indigo-600 hover:bg-indigo-700">
+        <Button className="bg-primary hover:bg-primary-hover">
           <Plus className="h-4 w-4 mr-2" />
           Add Item
         </Button>
@@ -484,7 +484,7 @@ function AddInventoryDialog() {
             >
               Cancel
             </Button>
-            <Button type="submit" className="bg-indigo-600">
+            <Button type="submit" className="bg-primary">
               Add Item
             </Button>
           </DialogFooter>
@@ -588,16 +588,16 @@ export default function InventoryPage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="flex items-center justify-between gap-4 p-4 rounded-lg bg-amber-50 border border-amber-200"
+          className="flex items-center justify-between gap-4 p-4 rounded-lg bg-accent-light border border-accent/20"
         >
           <div className="flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600" />
+            <AlertTriangle className="h-5 w-5 text-accent" />
             <div>
-              <p className="font-medium text-amber-900">
+              <p className="font-medium text-warning">
                 {lowStockItems + outOfStockItems} item
                 {lowStockItems + outOfStockItems !== 1 ? 's are' : ' is'} running low on stock
               </p>
-              <p className="text-sm text-amber-800">
+              <p className="text-sm text-warning">
                 Please reorder soon to avoid stockouts
               </p>
             </div>
@@ -606,7 +606,7 @@ export default function InventoryPage() {
             size="icon"
             variant="ghost"
             onClick={() => setAlertDismissed(true)}
-            className="text-amber-600 hover:bg-amber-100"
+            className="text-accent hover:bg-accent-light"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -658,10 +658,10 @@ export default function InventoryPage() {
               <CardTitle className="text-sm font-medium">
                 Low Stock
               </CardTitle>
-              <AlertCircle className="h-4 w-4 text-amber-500" />
+              <AlertCircle className="h-4 w-4 text-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-600">
+              <div className="text-2xl font-bold text-accent">
                 {lowStockItems}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -677,10 +677,10 @@ export default function InventoryPage() {
               <CardTitle className="text-sm font-medium">
                 Out of Stock
               </CardTitle>
-              <AlertCircle className="h-4 w-4 text-rose-500" />
+              <AlertCircle className="h-4 w-4 text-destructive" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-rose-600">
+              <div className="text-2xl font-bold text-destructive">
                 {outOfStockItems}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -696,10 +696,10 @@ export default function InventoryPage() {
               <CardTitle className="text-sm font-medium">
                 Healthy Stock
               </CardTitle>
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
+              <TrendingUp className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-emerald-600">
+              <div className="text-2xl font-bold text-primary">
                 {healthyItems}
               </div>
               <p className="text-xs text-muted-foreground mt-1">

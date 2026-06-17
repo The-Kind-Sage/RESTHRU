@@ -262,18 +262,18 @@ export default function RegisterPage() {
                   <div
                     className={`h-1 rounded-full transition-all duration-300 ${
                       idx < currentStep
-                        ? 'bg-indigo-600'
+                        ? 'bg-primary'
                         : idx === currentStep - 1
-                          ? 'bg-indigo-600'
+                          ? 'bg-primary'
                           : 'bg-border'
                     }`}
                   />
                   <p
                     className={`text-xs mt-2 font-medium text-center ${
                       idx < currentStep
-                        ? 'text-indigo-600'
+                        ? 'text-primary'
                         : idx === currentStep - 1
-                          ? 'text-indigo-600'
+                          ? 'text-primary'
                           : 'text-muted-foreground'
                     }`}
                   >
@@ -494,7 +494,7 @@ export default function RegisterPage() {
                           <FormItem>
                             <FormLabel>Restaurant Logo (Optional)</FormLabel>
                             <FormControl>
-                              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-indigo-600 transition-colors">
+                              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors">
                                 <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
                                 <p className="text-sm text-muted-foreground">
                                   Click to upload or drag and drop
@@ -671,13 +671,13 @@ export default function RegisterPage() {
                               <div
                                 className={`relative rounded-lg border-2 p-6 cursor-pointer transition-all ${
                                   field.value === plan.id
-                                    ? 'border-indigo-600 bg-indigo-50'
-                                    : 'border-border hover:border-indigo-300'
+                                    ? 'border-primary bg-primary-light'
+                                    : 'border-border hover:border-primary'
                                 }`}
                                 onClick={() => field.onChange(plan.id)}
                               >
                                 {plan.isPopular && (
-                                  <div className="absolute top-0 left-0 right-0 bg-indigo-600 text-white text-xs font-semibold py-1 px-3 rounded-t-lg">
+                                  <div className="absolute top-0 left-0 right-0 bg-primary text-white text-xs font-semibold py-1 px-3 rounded-t-lg">
                                     Most Popular
                                   </div>
                                 )}
@@ -685,12 +685,12 @@ export default function RegisterPage() {
                                 <div className={plan.isPopular ? 'mt-8' : ''}>
                                   <h3 className="font-bold text-lg mb-2">{plan.name}</h3>
                                   {plan.price !== null ? (
-                                    <p className="text-2xl font-bold text-indigo-600 mb-4">
+                                    <p className="text-2xl font-bold text-primary mb-4">
                                       {plan.price === 0 ? 'Free' : `${plan.price} ${plan.currency}`}
                                       {plan.price !== 0 && <span className="text-sm text-muted-foreground">/mo</span>}
                                     </p>
                                   ) : (
-                                    <p className="text-2xl font-bold text-indigo-600 mb-4">
+                                    <p className="text-2xl font-bold text-primary mb-4">
                                       Custom pricing
                                     </p>
                                   )}
@@ -698,7 +698,7 @@ export default function RegisterPage() {
                                   <ul className="space-y-2">
                                     {plan.features.map((feature, idx) => (
                                       <li key={idx} className="flex items-start gap-2 text-sm">
-                                        <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                                        <Check className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                                         <span>{feature}</span>
                                       </li>
                                     ))}
@@ -714,7 +714,7 @@ export default function RegisterPage() {
                                   />
 
                                   {field.value === plan.id && (
-                                    <div className="absolute top-4 right-4 bg-indigo-600 text-white rounded-full p-1">
+                                    <div className="absolute top-4 right-4 bg-primary text-white rounded-full p-1">
                                       <Check className="w-4 h-4" />
                                     </div>
                                   )}
@@ -739,7 +739,7 @@ export default function RegisterPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50">
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-success/10 to-primary-light">
                 <CardContent className="pt-12 pb-12">
                   <div className="text-center space-y-6">
                     {/* Celebration Animation */}
@@ -752,21 +752,21 @@ export default function RegisterPage() {
                         repeat: 2,
                       }}
                     >
-                      <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto">
+                      <div className="w-16 h-16 bg-success rounded-full flex items-center justify-center mx-auto">
                         <Check className="w-8 h-8 text-white" />
                       </div>
                     </motion.div>
 
                     <div>
-                      <h2 className="text-3xl font-bold text-green-900 mb-2">
+                      <h2 className="text-3xl font-bold text-primary mb-2">
                         Welcome to Resthru, {formData.step2.restaurantName}!
                       </h2>
-                      <p className="text-green-700 text-lg">
+                      <p className="text-primary text-lg">
                         Your account is ready to go
                       </p>
                     </div>
 
-                    <div className="space-y-2 text-sm text-green-700">
+                    <div className="space-y-2 text-sm text-primary">
                       <p>✓ Account created successfully</p>
                       <p>✓ Restaurant profile set up</p>
                       <p>✓ Plan selected</p>
@@ -774,7 +774,7 @@ export default function RegisterPage() {
 
                     <Button
                       onClick={goToDashboard}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold h-12 text-base mt-4"
+                      className="w-full bg-success hover:bg-success text-white font-semibold h-12 text-base mt-4"
                     >
                       Go to Dashboard
                     </Button>
@@ -800,7 +800,7 @@ export default function RegisterPage() {
             <Button
               onClick={handleNextStep}
               disabled={isLoading}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="flex-1 bg-primary hover:bg-primary-hover text-white"
             >
               {currentStep === 4 ? 'Create Account' : 'Next'}
               <ChevronRight className="w-4 h-4 ml-2" />
@@ -813,7 +813,7 @@ export default function RegisterPage() {
           Already have an account?{' '}
           <Link
             href="/login"
-            className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors"
+            className="text-primary hover:text-primary font-semibold transition-colors"
           >
             Sign in
           </Link>

@@ -100,7 +100,7 @@ export default function TopHeader() {
         {/* New Order Button */}
         <Button
           size="sm"
-          className="bg-indigo-600 hover:bg-indigo-700 text-white h-9 px-3"
+          className="bg-primary hover:bg-primary-hover text-white h-9 px-3"
         >
           <span className="hidden sm:inline">+ New Order</span>
           <span className="sm:hidden">+</span>
@@ -115,7 +115,7 @@ export default function TopHeader() {
           >
             <Bell className="h-5 w-5" />
           </Button>
-          <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full"></span>
+          <span className="absolute top-2 right-2 h-2 w-2 bg-destructive rounded-full"></span>
         </div>
 
         {/* User Dropdown Menu */}
@@ -125,8 +125,8 @@ export default function TopHeader() {
               variant="ghost"
               className="h-9 px-2 hover:bg-accent"
             >
-              <Avatar className="h-8 w-8 bg-indigo-500/20">
-                <AvatarFallback className="bg-indigo-500/20 text-indigo-600 text-xs font-semibold">
+              <Avatar className="h-8 w-8 bg-primary/20">
+                <AvatarFallback className="bg-primary/20 text-primary text-xs font-semibold">
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
@@ -153,7 +153,7 @@ export default function TopHeader() {
               <span>Help & Support</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
+            <DropdownMenuItem className="text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Logout</span>
             </DropdownMenuItem>

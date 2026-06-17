@@ -167,12 +167,12 @@ export default function PricingPage() {
             <Switch
               checked={isYearly}
               onCheckedChange={setIsYearly}
-              className="data-[state=checked]:bg-emerald-600"
+              className="data-[state=checked]:bg-primary"
             />
             <div className="flex items-center gap-2">
               <span className={cn('text-sm font-medium', isYearly && 'text-foreground')}>Yearly</span>
               {isYearly && (
-                <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">
+                <Badge variant="secondary" className="bg-primary-light text-primary">
                   Save 20%
                 </Badge>
               )}
@@ -252,9 +252,9 @@ export default function PricingPage() {
                         {PLANS.map((plan) => (
                           <td key={plan.id} className="px-6 py-4 text-center">
                             {planFeatureMap[feature]?.[plan.id] ? (
-                              <Check className="mx-auto h-5 w-5 text-emerald-500" />
+                              <Check className="mx-auto h-5 w-5 text-success" />
                             ) : (
-                              <X className="mx-auto h-5 w-5 text-red-500" />
+                              <X className="mx-auto h-5 w-5 text-destructive" />
                             )}
                           </td>
                         ))}

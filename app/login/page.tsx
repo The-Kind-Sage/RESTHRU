@@ -87,17 +87,17 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left Side - Branding (Hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-3/5 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-900 flex-col items-center justify-between p-8 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-3/5 bg-gradient-to-br from-primary via-primary-hover to-primary-hover flex-col items-center justify-between p-8 relative overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-300 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-20 left-10 w-72 h-72 bg-background rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary-light rounded-full blur-3xl animate-pulse delay-1000"></div>
         </div>
 
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center">
           {/* Logo */}
           <div className="mb-8 flex items-center gap-3">
-            <div className="p-3 bg-white/10 backdrop-blur-sm rounded-lg">
+            <div className="p-3 bg-background/10 backdrop-blur-sm rounded-lg">
               <UtensilsCrossed className="w-10 h-10 text-white" />
             </div>
             <h1 className="text-4xl font-bold text-white">Resthru</h1>
@@ -108,23 +108,23 @@ export default function LoginPage() {
 
           {/* Dashboard Mockup */}
           <div className="w-full max-w-sm mb-12">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20">
+            <div className="bg-background/10 backdrop-blur-sm rounded-lg p-6 border border-white/20">
               <div className="space-y-4">
                 {/* Mock chart bars */}
                 <div className="flex gap-2 items-end h-32">
-                  <div className="flex-1 bg-gradient-to-t from-blue-400 to-blue-300 rounded-t h-3/4"></div>
-                  <div className="flex-1 bg-gradient-to-t from-green-400 to-green-300 rounded-t h-full"></div>
-                  <div className="flex-1 bg-gradient-to-t from-purple-400 to-purple-300 rounded-t h-2/3"></div>
-                  <div className="flex-1 bg-gradient-to-t from-pink-400 to-pink-300 rounded-t h-4/5"></div>
+                  <div className="flex-1 bg-gradient-to-t from-info to-info/80 rounded-t h-3/4"></div>
+                  <div className="flex-1 bg-gradient-to-t from-success to-success/80 rounded-t h-full"></div>
+                  <div className="flex-1 bg-gradient-to-t from-primary to-primary-light rounded-t h-2/3"></div>
+                  <div className="flex-1 bg-gradient-to-t from-accent to-accent/80 rounded-t h-4/5"></div>
                 </div>
 
                 {/* Mock metrics */}
                 <div className="grid grid-cols-2 gap-2 pt-4">
-                  <div className="bg-white/10 rounded p-2">
+                  <div className="bg-background/10 rounded p-2">
                     <div className="text-white/60 text-xs">Orders</div>
                     <div className="text-white font-semibold">1,234</div>
                   </div>
-                  <div className="bg-white/10 rounded p-2">
+                  <div className="bg-background/10 rounded p-2">
                     <div className="text-white/60 text-xs">Revenue</div>
                     <div className="text-white font-semibold">45.2K</div>
                   </div>
@@ -136,19 +136,19 @@ export default function LoginPage() {
           {/* Feature Highlights */}
           <div className="w-full max-w-sm space-y-3">
             <div className="flex items-center gap-3 text-white">
-              <div className="bg-white/20 p-2 rounded-full">
+              <div className="bg-background/20 p-2 rounded-full">
                 <Check className="w-5 h-5" />
               </div>
               <span>Works Offline</span>
             </div>
             <div className="flex items-center gap-3 text-white">
-              <div className="bg-white/20 p-2 rounded-full">
+              <div className="bg-background/20 p-2 rounded-full">
                 <Check className="w-5 h-5" />
               </div>
               <span>IRD Compliant</span>
             </div>
             <div className="flex items-center gap-3 text-white">
-              <div className="bg-white/20 p-2 rounded-full">
+              <div className="bg-background/20 p-2 rounded-full">
                 <Check className="w-5 h-5" />
               </div>
               <span>Built for Nepal</span>
@@ -195,7 +195,7 @@ export default function LoginPage() {
                           />
                         </FormControl>
                         {!form.formState.errors.email && field.value && (
-                          <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />
+                          <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-success" />
                         )}
                       </div>
                       <FormMessage />
@@ -237,7 +237,7 @@ export default function LoginPage() {
                           )}
                         </button>
                         {!form.formState.errors.password && field.value && (
-                          <Check className="absolute right-10 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />
+                          <Check className="absolute right-10 top-1/2 -translate-y-1/2 w-4 h-4 text-success" />
                         )}
                       </div>
                       <FormMessage />
@@ -273,7 +273,7 @@ export default function LoginPage() {
                   </div>
                   <Link
                     href="/forgot-password"
-                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                    className="text-sm text-primary hover:text-primary font-medium transition-colors"
                   >
                     Forgot password?
                   </Link>
@@ -283,7 +283,7 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium h-10 mt-6"
+                  className="w-full bg-primary hover:bg-primary-hover text-white font-medium h-10 mt-6"
                 >
                   {isLoading ? 'Signing in...' : 'Sign In'}
                 </Button>
@@ -319,7 +319,7 @@ export default function LoginPage() {
               Don't have an account?{' '}
               <Link
                 href="/register"
-                className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors"
+                className="text-primary hover:text-primary font-semibold transition-colors"
               >
                 Start free trial
               </Link>

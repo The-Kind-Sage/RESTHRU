@@ -78,7 +78,7 @@ export default function Sidebar() {
           <div className="h-20 px-4 py-4 flex items-center gap-3 justify-between">
             <div className="flex items-center gap-3 flex-1">
               <div className="flex-shrink-0">
-                <UtensilsCrossed className="h-6 w-6 text-indigo-500" />
+                <UtensilsCrossed className="h-6 w-6 text-primary" />
               </div>
               {!sidebarCollapsed && (
                 <span className="font-bold text-lg text-sidebar-foreground whitespace-nowrap">
@@ -94,7 +94,7 @@ export default function Sidebar() {
               <div className="text-sm font-medium text-sidebar-foreground truncate">
                 {restaurant?.name || 'Restaurant'}
               </div>
-              <Badge variant="secondary" className="mt-2 bg-emerald-500/10 text-emerald-600 border-emerald-200">
+              <Badge variant="secondary" className="mt-2 bg-primary/10 text-primary border-primary/20">
                 Pro
               </Badge>
             </div>
@@ -137,7 +137,7 @@ export default function Sidebar() {
                         className={cn(
                           'flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200',
                           active
-                            ? 'border-l-2 border-indigo-500 bg-sidebar-accent/10 text-sidebar-accent'
+                            ? 'border-l-2 border-primary bg-sidebar-accent/10 text-sidebar-accent'
                             : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-muted'
                         )}
                       >
@@ -164,8 +164,8 @@ export default function Sidebar() {
           {/* User Profile */}
           {!sidebarCollapsed && (
             <div className="flex items-center gap-3 px-2 py-2">
-              <Avatar className="h-8 w-8 bg-indigo-500/20">
-                <AvatarFallback className="bg-indigo-500/20 text-indigo-600 text-xs font-semibold">
+              <Avatar className="h-8 w-8 bg-primary/20">
+                <AvatarFallback className="bg-primary/20 text-primary text-xs font-semibold">
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
@@ -205,7 +205,7 @@ export default function Sidebar() {
                   >
                     <Bell className="h-4 w-4" />
                   </Button>
-                  <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+                  <span className="absolute top-1 right-1 h-2 w-2 bg-destructive rounded-full"></span>
                 </div>
               </TooltipTrigger>
               <TooltipContent side="right">Notifications</TooltipContent>

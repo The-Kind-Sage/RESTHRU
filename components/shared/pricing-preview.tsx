@@ -76,7 +76,7 @@ const itemVariants = {
 
 export function PricingPreview() {
   return (
-    <section className="py-16 sm:py-20 lg:py-24 bg-white">
+    <section className="py-16 sm:py-20 lg:py-24 bg-background">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <motion.div
@@ -86,10 +86,10 @@ export function PricingPreview() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
+          <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
             Simple, honest pricing
           </h2>
-          <p className="text-lg text-slate-600">
+          <p className="text-lg text-muted-foreground">
             No hidden fees. Cancel anytime.
           </p>
         </motion.div>
@@ -112,33 +112,33 @@ export function PricingPreview() {
             >
               {/* Glow effect for popular plan */}
               {plan.isPopular && (
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-600 to-emerald-600 rounded-lg blur opacity-20 -z-10" />
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-primary rounded-lg blur opacity-20 -z-10" />
               )}
 
               <Card
                 className={`h-full border-2 transition-all duration-300 ${
                   plan.isPopular
-                    ? 'border-indigo-600 bg-gradient-to-b from-white to-indigo-50'
-                    : 'border-slate-200 bg-white'
+                    ? 'border-primary bg-gradient-to-b from-white to-primary-light'
+                    : 'border-border bg-background'
                 }`}
               >
                 <CardHeader className="pb-6">
                   <div className="flex items-center justify-between mb-4">
-                    <CardTitle className="text-2xl text-slate-900">
+                    <CardTitle className="text-2xl text-foreground">
                       {plan.name}
                     </CardTitle>
                     {plan.isPopular && (
-                      <Badge variant="default" className="bg-indigo-600 hover:bg-indigo-700">
+                      <Badge variant="default" className="bg-primary hover:bg-primary-hover">
                         Most Popular
                       </Badge>
                     )}
                   </div>
                   <div className="space-y-1">
-                    <p className="text-4xl font-bold text-slate-900">
+                    <p className="text-4xl font-bold text-foreground">
                       {plan.price}
                     </p>
                     {plan.id !== 'free' && (
-                      <p className="text-sm text-slate-600">
+                      <p className="text-sm text-muted-foreground">
                         per month, billed annually
                       </p>
                     )}
@@ -150,8 +150,8 @@ export function PricingPreview() {
                   <div className="space-y-3">
                     {plan.features.map((feature, index) => (
                       <div key={index} className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-slate-700">
+                        <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-foreground">
                           {feature}
                         </span>
                       </div>
@@ -161,7 +161,7 @@ export function PricingPreview() {
                   {/* See all plans link */}
                   <Link
                     href="/pricing"
-                    className="block text-center text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors py-2 border-t border-slate-200 pt-4"
+                    className="block text-center text-sm font-semibold text-primary hover:text-primary transition-colors py-2 border-t border-border pt-4"
                   >
                     See all plans
                   </Link>

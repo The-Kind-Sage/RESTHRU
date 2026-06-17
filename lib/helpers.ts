@@ -37,7 +37,7 @@ export function getGreeting(): string {
 /**
  * Gets the Tailwind color class for a given status
  * @param status - The status string (e.g., "pending", "completed", "cancelled")
- * @returns Tailwind color class like "bg-yellow-100" or "text-green-600"
+ * @returns Tailwind color class like "bg-accent-light" or "text-success"
  */
 export function getStatusColor(status: string): string {
   const statusLower = status.toLowerCase();

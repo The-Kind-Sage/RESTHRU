@@ -53,7 +53,7 @@ const itemVariants = {
 
 export function HowItWorks() {
   return (
-    <section className="py-16 sm:py-20 lg:py-24 bg-slate-50">
+    <section className="py-16 sm:py-20 lg:py-24 bg-muted">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <motion.div
@@ -63,7 +63,7 @@ export function HowItWorks() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl sm:text-5xl font-bold text-slate-900">
+          <h2 className="text-4xl sm:text-5xl font-bold text-foreground">
             Up and running in 3 steps
           </h2>
         </motion.div>
@@ -77,7 +77,7 @@ export function HowItWorks() {
           className="flex flex-col md:flex-row items-center justify-between relative"
         >
           {/* Connecting line - hidden on mobile */}
-          <div className="hidden md:block absolute top-12 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-emerald-500 to-amber-500 -z-10" />
+          <div className="hidden md:block absolute top-12 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary to-accent -z-10" />
 
           {/* Steps */}
           <div className="flex flex-col md:flex-row gap-8 md:gap-0 w-full">
@@ -91,28 +91,28 @@ export function HowItWorks() {
                 >
                   {/* Step circle */}
                   <div className="relative z-10 mb-6">
-                    <div className="w-24 h-24 rounded-full bg-white border-4 border-slate-200 flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-100 to-emerald-100 flex items-center justify-center">
-                        <Icon className="w-8 h-8 text-indigo-600" />
+                    <div className="w-24 h-24 rounded-full bg-background border-4 border-border flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-light to-emerald-100 flex items-center justify-center">
+                        <Icon className="w-8 h-8 text-primary" />
                       </div>
                     </div>
                     {/* Step number */}
-                    <div className="absolute -bottom-3 -right-3 w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold flex items-center justify-center">
+                    <div className="absolute -bottom-3 -right-3 w-8 h-8 rounded-full bg-primary text-white text-sm font-bold flex items-center justify-center">
                       {step.id}
                     </div>
                   </div>
 
                   {/* Step content */}
-                  <h3 className="text-lg sm:text-xl font-semibold text-slate-900 mb-2">
+                  <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
                     {step.title}
                   </h3>
-                  <p className="text-sm sm:text-base text-slate-600">
+                  <p className="text-sm sm:text-base text-muted-foreground">
                     {step.time}
                   </p>
 
                   {/* Connector dots - show only on mobile between items */}
                   {index < steps.length - 1 && (
-                    <div className="md:hidden mt-8 w-1 h-8 bg-gradient-to-b from-indigo-500 via-emerald-500 to-amber-500 rounded-full" />
+                    <div className="md:hidden mt-8 w-1 h-8 bg-gradient-to-b from-primary via-primary to-accent rounded-full" />
                   )}
                 </motion.div>
               );
