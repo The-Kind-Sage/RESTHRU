@@ -49,7 +49,7 @@ const NAV_ITEMS: NavItem[] = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
-  const { user, restaurant } = useAuthStore();
+  const { user, restaurant, logout } = useAuthStore();
   const userInitials = useMemo(() => {
     if (user?.firstName && user?.lastName) {
       return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
@@ -187,6 +187,7 @@ export default function Sidebar() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={logout}
                   className="flex-1 h-9 text-sidebar-foreground/70 hover:text-sidebar-foreground"
                 >
                   <LogOut className="h-4 w-4" />

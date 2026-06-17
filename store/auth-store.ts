@@ -40,7 +40,9 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
   logout: async () => {
     set({ isLoading: true });
     try {
-      await supabase.auth.signOut();
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
       set({
         user: null,
         restaurant: null,
@@ -56,6 +58,10 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
   initialize: async () => {
     set({ isLoading: true });
     try {
+      if (!supabase) {
+        set({ isLoading: false });
+        return;
+      }
       const {
         data: { session },
       } = await supabase.auth.getSession();

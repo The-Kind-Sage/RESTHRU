@@ -48,6 +48,10 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
+      if (!supabase) {
+        toast.error('Supabase is not configured. Please set environment variables.');
+        return;
+      }
       const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
@@ -69,6 +73,10 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     try {
+      if (!supabase) {
+        toast.error('Supabase is not configured. Please set environment variables.');
+        return;
+      }
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

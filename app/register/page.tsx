@@ -180,6 +180,10 @@ export default function RegisterPage() {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
+      if (!supabase) {
+        toast.error('Supabase is not configured. Please set environment variables.');
+        return;
+      }
       // Sign up user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.step1.email!,

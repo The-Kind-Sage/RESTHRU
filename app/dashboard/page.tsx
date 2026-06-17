@@ -30,6 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { formatCurrency, formatNumber, formatRelativeTime } from '@/lib/format';
 import { getGreeting } from '@/lib/helpers';
+import { useAuthStore } from '@/store/auth-store';
 
 // Animation variants for section entrance
 const containerVariants = {
@@ -56,13 +57,14 @@ const itemVariants = {
 // 1. GREETING BANNER
 // ============================================================================
 function GreetingBanner() {
+  const { user } = useAuthStore();
   return (
     <motion.div variants={itemVariants}>
       <Card className="bg-gradient-to-r from-primary-light to-primary-light border-primary/20">
         <CardContent className="p-8 flex items-center justify-between">
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              {getGreeting()}, Ramesh! ☀️
+              {getGreeting()}, {user?.firstName || 'Ramesh'}! ☀️
             </h1>
             <p className="text-muted-foreground text-lg">
               Your restaurant has served 47 customers today.
