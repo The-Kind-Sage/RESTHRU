@@ -123,17 +123,17 @@ const mrrData = [
 ];
 
 const COLORS = {
-  primary: '#12B877',
-  primaryDim: 'rgba(18,184,119,0.15)',
-  accent: '#F4B740',
-  destructive: '#DB3A3A',
-  info: '#3B82F6',
-  muted: '#768B80',
-  surface: '#0D1711',
-  border: '#25332B',
+  primary: 'hsl(var(--primary))',
+  primaryDim: 'hsla(var(--primary) / 0.15)',
+  accent: 'hsl(var(--accent))',
+  destructive: 'hsl(var(--destructive))',
+  info: 'hsl(var(--info))',
+  muted: 'hsl(var(--muted-foreground))',
+  surface: 'hsl(var(--card))',
+  border: 'hsl(var(--border))',
 };
 
-const PieColors = ['#12B877', '#3B82F6', '#F4B740', '#DB3A3A', '#768B80'];
+const PieColors = ['hsl(var(--primary))', 'hsl(var(--info))', 'hsl(var(--accent))', 'hsl(var(--destructive))', 'hsl(var(--muted-foreground))'];
 
 // ─── Subscription Distribution ───
 const subscriptionData = [
@@ -215,12 +215,12 @@ const signupTrendData = [
 
 // ─── Activity icon + color map ───
 const activityConfig: Record<string, { icon: React.ElementType; color: string }> = {
-  signup: { icon: UserPlus, color: 'text-[#12B877]' },
-  upgrade: { icon: ArrowUpRight, color: 'text-[#3B82F6]' },
-  payment: { icon: Wallet, color: 'text-[#F4B740]' },
-  offline: { icon: Activity, color: 'text-[#DB3A3A]' },
-  support: { icon: Headphones, color: 'text-[#F4B740]' },
-  alert: { icon: AlertTriangle, color: 'text-[#DB3A3A]' },
+  signup: { icon: UserPlus, color: 'text-primary' },
+  upgrade: { icon: ArrowUpRight, color: 'text-info' },
+  payment: { icon: Wallet, color: 'text-accent' },
+  offline: { icon: Activity, color: 'text-destructive' },
+  support: { icon: Headphones, color: 'text-accent' },
+  alert: { icon: AlertTriangle, color: 'text-destructive' },
 };
 
 import { Headphones } from 'lucide-react';
@@ -228,26 +228,26 @@ import { Headphones } from 'lucide-react';
 function KpiCard({ card }: { card: typeof kpiCards[0] }) {
   const Icon = card.icon;
   return (
-    <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card hover:shadow-admin-card-hover transition-all duration-300 group">
+    <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all duration-300 group">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xs font-medium text-[#768B80] uppercase tracking-wider">
+        <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           {card.title}
         </CardTitle>
-        <Icon className="h-4.5 w-4.5 text-[#12B877]/60 group-hover:text-[#12B877] transition-colors" strokeWidth={1.5} />
+        <Icon className="h-4.5 w-4.5 text-primary/60 group-hover:text-primary transition-colors" strokeWidth={1.5} />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-white tracking-tight">{card.value}</div>
+        <div className="text-2xl font-bold text-foreground tracking-tight">{card.value}</div>
         {card.subtitle && (
-          <p className="text-[11px] text-[#768B80] mt-0.5">{card.subtitle}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{card.subtitle}</p>
         )}
         {card.trend && (
           <div className="flex items-center gap-1 mt-2">
             {card.trendUp ? (
-              <ArrowUpRight className="h-3 w-3 text-[#12B877]" />
+              <ArrowUpRight className="h-3 w-3 text-primary" />
             ) : (
-              <ArrowDownRight className="h-3 w-3 text-[#DB3A3A]" />
+              <ArrowDownRight className="h-3 w-3 text-destructive" />
             )}
-            <span className={`text-xs ${card.trendUp ? 'text-[#12B877]' : 'text-[#DB3A3A]'}`}>
+            <span className={`text-xs ${card.trendUp ? 'text-primary' : 'text-destructive'}`}>
               {card.trend}
             </span>
           </div>
@@ -265,17 +265,17 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Dashboard</h1>
-          <p className="text-sm text-[#768B80] mt-1">
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Real-time platform overview · Last updated: {new Date().toLocaleTimeString()}
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge variant="outline" className="border-[#12B877]/30 text-[#12B877] bg-[#12B877]/5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#12B877] mr-1.5 animate-pulse" />
+          <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
             Live
           </Badge>
-          <Button variant="outline" size="sm" className="border-[#25332B] text-[#768B80] hover:text-white hover:border-[#12B877]/30">
+          <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground hover:border-primary/30">
             Export
           </Button>
         </div>
@@ -291,60 +291,60 @@ export default function AdminDashboard() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* MRR + Forecast Chart */}
-        <Card className="lg:col-span-2 bg-[#0D1711] border-[#25332B] shadow-admin-card">
+        <Card className="lg:col-span-2 bg-card border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-sm font-medium text-white">MRR Growth & Forecast</CardTitle>
-              <p className="text-xs text-[#768B80] mt-0.5">Actual + AI-predicted revenue</p>
+              <CardTitle className="text-sm font-medium text-foreground">MRR Growth & Forecast</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">Actual + AI-predicted revenue</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-[#12B877]" />
-                <span className="text-[10px] text-[#768B80]">Actual</span>
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                <span className="text-[10px] text-muted-foreground">Actual</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-[#F4B740]" />
-                <span className="text-[10px] text-[#768B80]">Forecast</span>
+                <span className="h-2 w-2 rounded-full bg-accent" />
+                <span className="text-[10px] text-muted-foreground">Forecast</span>
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-4 mb-4">
               <div>
-                <p className="text-xs text-[#768B80]">Current MRR</p>
-                <p className="text-2xl font-bold text-white">NPR 12,45,000</p>
+                <p className="text-xs text-muted-foreground">Current MRR</p>
+                <p className="text-2xl font-bold text-foreground">NPR 12,45,000</p>
               </div>
               <div>
-                <p className="text-xs text-[#768B80]">Next Month</p>
-                <p className="text-lg font-semibold text-[#F4B740]">{forecastData.nextMonth}</p>
+                <p className="text-xs text-muted-foreground">Next Month</p>
+                <p className="text-lg font-semibold text-accent">{forecastData.nextMonth}</p>
               </div>
               <div>
-                <p className="text-xs text-[#768B80]">Next Quarter</p>
-                <p className="text-lg font-semibold text-[#F4B740]">{forecastData.nextQuarter}</p>
+                <p className="text-xs text-muted-foreground">Next Quarter</p>
+                <p className="text-lg font-semibold text-accent">{forecastData.nextQuarter}</p>
               </div>
             </div>
             <ResponsiveContainer width="100%" height={280}>
               <AreaChart data={mrrData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="mrrGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#12B877" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#12B877" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="forecastGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#F4B740" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#F4B740" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#25332B" />
-                <XAxis dataKey="month" stroke="#768B80" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis stroke="#768B80" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 100000).toFixed(1)}L`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 100000).toFixed(1)}L`} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#0D1711', border: '1px solid #25332B', borderRadius: '8px' }}
-                  labelStyle={{ color: '#EDEDED' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
                   formatter={(value: number) => formatCurrency(value)}
                 />
-                <Area type="monotone" dataKey="revenue" stroke="#12B877" fill="url(#mrrGrad)" strokeWidth={2} connectNulls={false} />
-                <Area type="monotone" dataKey="forecast" stroke="#F4B740" fill="url(#forecastGrad)" strokeWidth={2} strokeDasharray="6 3" connectNulls={false} />
+                <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="url(#mrrGrad)" strokeWidth={2} connectNulls={false} />
+                <Area type="monotone" dataKey="forecast" stroke="hsl(var(--accent))" fill="url(#forecastGrad)" strokeWidth={2} strokeDasharray="6 3" connectNulls={false} />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -353,9 +353,9 @@ export default function AdminDashboard() {
         {/* Right Column: Subscriptions + Signups */}
         <div className="space-y-6">
           {/* Subscription Distribution */}
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardHeader>
-              <CardTitle className="text-sm font-medium text-white">Plan Distribution</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">Plan Distribution</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={180}>
@@ -366,7 +366,7 @@ export default function AdminDashboard() {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#0D1711', border: '1px solid #25332B', borderRadius: '8px' }}
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                     formatter={(value: number, name: string) => [`${value} restaurants`, name]}
                   />
                 </PieChart>
@@ -375,8 +375,8 @@ export default function AdminDashboard() {
                 {subscriptionData.map((item, i) => (
                   <div key={item.name} className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PieColors[i] }} />
-                    <span className="text-xs text-[#768B80]">{item.name}</span>
-                    <span className="text-xs text-white/60 ml-auto">{item.percentage}%</span>
+                    <span className="text-xs text-muted-foreground">{item.name}</span>
+                    <span className="text-xs text-foreground/60 ml-auto">{item.percentage}%</span>
                   </div>
                 ))}
               </div>
@@ -384,20 +384,20 @@ export default function AdminDashboard() {
           </Card>
 
           {/* Signup Trend */}
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardHeader>
-              <CardTitle className="text-sm font-medium text-white">New Signups (MTD)</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">New Signups (MTD)</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={120}>
                 <BarChart data={signupTrendData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#25332B" vertical={false} />
-                  <XAxis dataKey="month" stroke="#768B80" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#0D1711', border: '1px solid #25332B', borderRadius: '8px' }}
-                    labelStyle={{ color: '#EDEDED' }}
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
                   />
-                  <Bar dataKey="signups" fill="#12B877" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="signups" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -408,42 +408,42 @@ export default function AdminDashboard() {
       {/* Bottom Grid: Activity + Top Restaurants + At-Risk */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Live Activity Feed */}
-        <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div>
-              <CardTitle className="text-sm font-medium text-white">Live Activity</CardTitle>
-              <p className="text-xs text-[#768B80] mt-0.5">Real-time platform events</p>
+              <CardTitle className="text-sm font-medium text-foreground">Live Activity</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">Real-time platform events</p>
             </div>
-            <Badge variant="outline" className="border-[#12B877]/30 text-[#12B877] bg-[#12B877]/5 text-[10px]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#12B877] mr-1.5 animate-pulse" />
+            <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5 text-[10px]">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
               Streaming
             </Badge>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="divide-y divide-[#25332B]">
+            <div className="divide-y divide-border">
               {activities.map((activity) => {
                 const config = activityConfig[activity.type] || activityConfig.alert;
                 const ActIcon = config.icon;
-                const dotColor = activity.severity === 'error' ? '#DB3A3A'
-                  : activity.severity === 'warning' ? '#F4B740'
-                  : activity.severity === 'success' ? '#12B877'
-                  : '#3B82F6';
+                const dotColor = activity.severity === 'error' ? 'hsl(var(--destructive))'
+                  : activity.severity === 'warning' ? 'hsl(var(--accent))'
+                  : activity.severity === 'success' ? 'hsl(var(--primary))'
+                  : 'hsl(var(--info))';
                 return (
-                  <div key={activity.id} className="flex items-start gap-3 px-4 py-3 hover:bg-[#1A231E]/50 transition-colors">
-                    <div className="h-6 w-6 rounded-full bg-[#1A231E] flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <ActIcon className="h-3 w-3 text-[#768B80]" />
+                  <div key={activity.id} className="flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
+                    <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <ActIcon className="h-3 w-3 text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-white/70 truncate">{activity.text}</p>
-                      <p className="text-[10px] text-[#768B80] mt-0.5">{activity.time}</p>
+                      <p className="text-xs text-foreground/70 truncate">{activity.text}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{activity.time}</p>
                     </div>
                     <span className="h-2 w-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: dotColor }} />
                   </div>
                 );
               })}
             </div>
-            <div className="p-3 border-t border-[#25332B]">
-              <Button variant="ghost" size="sm" className="w-full text-xs text-[#12B877] hover:text-white">
+            <div className="p-3 border-t border-border">
+              <Button variant="ghost" size="sm" className="w-full text-xs text-primary hover:text-foreground">
                 View Full Activity Log
               </Button>
             </div>
@@ -451,29 +451,29 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Top Performing Restaurants */}
-        <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-white">Top Performers</CardTitle>
-            <p className="text-xs text-[#768B80] mt-0.5">Ranked by revenue, orders & satisfaction</p>
+            <CardTitle className="text-sm font-medium text-foreground">Top Performers</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Ranked by revenue, orders & satisfaction</p>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="divide-y divide-[#25332B]">
+            <div className="divide-y divide-border">
               {topRestaurants.map((r) => (
-                <div key={r.rank} className="flex items-center gap-3 px-4 py-3 hover:bg-[#1A231E]/50 transition-colors">
-                  <div className="flex items-center justify-center h-7 w-7 rounded-full bg-[#1A231E] text-xs font-bold text-[#768B80]">
+                <div key={r.rank} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center justify-center h-7 w-7 rounded-full bg-muted text-xs font-bold text-muted-foreground">
                     {r.rank === 1 ? (
-                      <Star className="h-3.5 w-3.5 text-[#F4B740] fill-[#F4B740]" />
+                      <Star className="h-3.5 w-3.5 text-accent fill-accent" />
                     ) : (
                       `#${r.rank}`
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{r.name}</p>
-                    <p className="text-xs text-[#768B80]">{r.city} · {r.plan}</p>
+                    <p className="text-sm font-medium text-foreground truncate">{r.name}</p>
+                    <p className="text-xs text-muted-foreground">{r.city} · {r.plan}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-white">{formatCurrency(r.revenue)}</p>
-                    <p className="text-xs text-[#768B80]">{formatNumber(r.orders)} orders</p>
+                    <p className="text-sm font-medium text-foreground">{formatCurrency(r.revenue)}</p>
+                    <p className="text-xs text-muted-foreground">{formatNumber(r.orders)} orders</p>
                   </div>
                 </div>
               ))}
@@ -482,33 +482,33 @@ export default function AdminDashboard() {
         </Card>
 
         {/* At-Risk Restaurants */}
-        <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-medium text-white">At-Risk Restaurants</CardTitle>
-                <p className="text-xs text-[#768B80] mt-0.5">AI-predicted churn risk</p>
+                <CardTitle className="text-sm font-medium text-foreground">At-Risk Restaurants</CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">AI-predicted churn risk</p>
               </div>
-              <AlertTriangle className="h-4 w-4 text-[#F4B740]" />
+              <AlertTriangle className="h-4 w-4 text-accent" />
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="divide-y divide-[#25332B]">
+            <div className="divide-y divide-border">
               {atRiskRestaurants.map((r) => (
-                <div key={r.name} className="px-4 py-3 hover:bg-[#1A231E]/50 transition-colors">
+                <div key={r.name} className="px-4 py-3 hover:bg-muted/50 transition-colors">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{r.name}</p>
-                      <p className="text-xs text-[#768B80]">{r.city}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{r.name}</p>
+                      <p className="text-xs text-muted-foreground">{r.city}</p>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className="h-6 w-6 rounded-full bg-[#DB3A3A]/10 flex items-center justify-center">
-                        <span className="text-[10px] font-bold text-[#DB3A3A]">{r.risk}%</span>
+                      <div className="h-6 w-6 rounded-full bg-destructive/10 flex items-center justify-center">
+                        <span className="text-[10px] font-bold text-destructive">{r.risk}%</span>
                       </div>
                     </div>
                   </div>
-                  <p className="text-xs text-[#768B80] mb-2">{r.reason}</p>
-                  <Button variant="outline" size="sm" className="h-7 text-[10px] border-[#25332B] text-[#12B877] hover:bg-[#12B877]/10 w-full">
+                  <p className="text-xs text-muted-foreground mb-2">{r.reason}</p>
+                  <Button variant="outline" size="sm" className="h-7 text-[10px] border-border text-primary hover:bg-primary/10 w-full">
                     <Zap className="h-3 w-3 mr-1" />
                     {r.action}
                   </Button>
@@ -520,18 +520,18 @@ export default function AdminDashboard() {
       </div>
 
       {/* Geographic Distribution */}
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-sm font-medium text-white">Geographic Distribution</CardTitle>
-              <p className="text-xs text-[#768B80] mt-0.5">Restaurant concentration across Nepal</p>
+              <CardTitle className="text-sm font-medium text-foreground">Geographic Distribution</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">Restaurant concentration across Nepal</p>
             </div>
             <Tabs defaultValue="city" className="w-auto">
-              <TabsList className="bg-[#1A231E] border border-[#25332B] h-8">
-                <TabsTrigger value="city" className="text-[10px] px-3 py-1 data-[state=active]:bg-[#12B877]/20 data-[state=active]:text-[#12B877]">City</TabsTrigger>
-                <TabsTrigger value="district" className="text-[10px] px-3 py-1 data-[state=active]:bg-[#12B877]/20 data-[state=active]:text-[#12B877]">District</TabsTrigger>
-                <TabsTrigger value="province" className="text-[10px] px-3 py-1 data-[state=active]:bg-[#12B877]/20 data-[state=active]:text-[#12B877]">Province</TabsTrigger>
+              <TabsList className="bg-muted border border-border h-8">
+                <TabsTrigger value="city" className="text-[10px] px-3 py-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">City</TabsTrigger>
+                <TabsTrigger value="district" className="text-[10px] px-3 py-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">District</TabsTrigger>
+                <TabsTrigger value="province" className="text-[10px] px-3 py-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Province</TabsTrigger>
               </TabsList>
               <TabsContent value="city" />
               <TabsContent value="district" />
@@ -545,15 +545,15 @@ export default function AdminDashboard() {
               const maxCount = Math.max(...cityData.map((c) => c.count));
               const barWidth = (city.count / maxCount) * 100;
               return (
-                <div key={city.city} className="p-3 rounded-lg bg-[#1A231E]/50 border border-[#25332B]">
+                <div key={city.city} className="p-3 rounded-lg bg-muted/50 border border-border">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-white">{city.city}</span>
-                    <span className="text-xs text-[#12B877]">{city.growth}</span>
+                    <span className="text-sm font-medium text-foreground">{city.city}</span>
+                    <span className="text-xs text-primary">{city.growth}</span>
                   </div>
-                  <div className="text-2xl font-bold text-white mb-2">{city.count}</div>
-                  <div className="h-1.5 rounded-full bg-[#1A231E] overflow-hidden">
+                  <div className="text-2xl font-bold text-foreground mb-2">{city.count}</div>
+                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#12B877] to-[#0E945E] transition-all duration-500"
+                      className="h-full rounded-full bg-gradient-to-r from-primary to-primary-hover transition-all duration-500"
                       style={{ width: `${barWidth}%` }}
                     />
                   </div>
@@ -565,39 +565,39 @@ export default function AdminDashboard() {
       </Card>
 
       {/* AI Revenue Forecast */}
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card border-l-2 border-l-[#12B877]">
+      <Card className="bg-card border-border shadow-sm border-l-2 border-l-primary">
         <CardContent className="p-6">
           <div className="flex items-start gap-4">
-            <div className="h-10 w-10 rounded-lg bg-[#12B877]/10 flex items-center justify-center flex-shrink-0">
-              <Zap className="h-5 w-5 text-[#12B877]" />
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Zap className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-sm font-medium text-white">AI-Powered Revenue Forecast</h3>
-                <Badge className="bg-[#12B877]/10 text-[#12B877] border border-[#12B877]/30 text-[10px]">87% confidence</Badge>
+                <h3 className="text-sm font-medium text-foreground">AI-Powered Revenue Forecast</h3>
+                <Badge className="bg-primary/10 text-primary border border-primary/30 text-[10px]">87% confidence</Badge>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3">
                 <div>
-                  <p className="text-xs text-[#768B80]">Next Month Forecast</p>
-                  <p className="text-lg font-bold text-white">{forecastData.nextMonth}</p>
+                  <p className="text-xs text-muted-foreground">Next Month Forecast</p>
+                  <p className="text-lg font-bold text-foreground">{forecastData.nextMonth}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#768B80]">Next Quarter Forecast</p>
-                  <p className="text-lg font-bold text-white">{forecastData.nextQuarter}</p>
+                  <p className="text-xs text-muted-foreground">Next Quarter Forecast</p>
+                  <p className="text-lg font-bold text-foreground">{forecastData.nextQuarter}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#768B80]">AI Confidence Score</p>
+                  <p className="text-xs text-muted-foreground">AI Confidence Score</p>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 rounded-full bg-[#1A231E] overflow-hidden">
-                      <div className="h-full rounded-full bg-gradient-to-r from-[#F4B740] to-[#12B877]" style={{ width: `${forecastData.confidence}%` }} />
+                    <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full rounded-full bg-gradient-to-r from-accent to-primary" style={{ width: `${forecastData.confidence}%` }} />
                     </div>
-                    <span className="text-sm font-medium text-white">{forecastData.confidence}%</span>
+                    <span className="text-sm font-medium text-foreground">{forecastData.confidence}%</span>
                   </div>
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {forecastData.drivers.map((d, i) => (
-                  <Badge key={i} variant="outline" className="border-[#25332B] text-[#768B80] text-[10px]">
+                  <Badge key={i} variant="outline" className="border-border text-muted-foreground text-[10px]">
                     {d}
                   </Badge>
                 ))}

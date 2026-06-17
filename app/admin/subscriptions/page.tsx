@@ -162,26 +162,26 @@ const promoCodes: PromoCode[] = [
 function KpiCard({ card }: { card: typeof kpiCards[0] }) {
   const Icon = card.icon;
   return (
-    <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card hover:shadow-admin-card-hover transition-all duration-300 group">
+    <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all duration-300 group">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xs font-medium text-[#768B80] uppercase tracking-wider">
+        <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           {card.title}
         </CardTitle>
-        <Icon className="h-4.5 w-4.5 text-[#12B877]/60 group-hover:text-[#12B877] transition-colors" strokeWidth={1.5} />
+        <Icon className="h-4.5 w-4.5 text-primary/60 group-hover:text-primary transition-colors" strokeWidth={1.5} />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-white tracking-tight">{card.value}</div>
+        <div className="text-2xl font-bold text-foreground tracking-tight">{card.value}</div>
         {card.subtitle && (
-          <p className="text-[11px] text-[#768B80] mt-0.5">{card.subtitle}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{card.subtitle}</p>
         )}
         {card.trend && (
           <div className="flex items-center gap-1 mt-2">
             {card.trendUp ? (
-              <ArrowUpRight className="h-3 w-3 text-[#12B877]" />
+              <ArrowUpRight className="h-3 w-3 text-primary" />
             ) : (
-              <ArrowDownRight className="h-3 w-3 text-[#DB3A3A]" />
+              <ArrowDownRight className="h-3 w-3 text-destructive" />
             )}
-            <span className={`text-xs ${card.trendUp ? 'text-[#12B877]' : 'text-[#DB3A3A]'}`}>
+            <span className={`text-xs ${card.trendUp ? 'text-primary' : 'text-destructive'}`}>
               {card.trend}
             </span>
           </div>
@@ -193,22 +193,22 @@ function KpiCard({ card }: { card: typeof kpiCards[0] }) {
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    paid: 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
-    pending: 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30',
-    failed: 'bg-[#DB3A3A]/10 text-[#DB3A3A] border-[#DB3A3A]/30',
-    overdue: 'bg-[#DB3A3A]/10 text-[#DB3A3A] border-[#DB3A3A]/30',
-    active: 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
-    inactive: 'bg-[#768B80]/10 text-[#768B80] border-[#768B80]/30',
+    paid: 'bg-primary/10 text-primary border-primary/30',
+    pending: 'bg-accent/10 text-accent border-accent/30',
+    failed: 'bg-destructive/10 text-destructive border-destructive/30',
+    overdue: 'bg-destructive/10 text-destructive border-destructive/30',
+    active: 'bg-primary/10 text-primary border-primary/30',
+    inactive: 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30',
   };
   return <Badge className={`border capitalize ${colors[status] || colors.pending}`}>{status}</Badge>;
 }
 
 function PlanBadge({ plan }: { plan: string }) {
   const colors: Record<string, string> = {
-    Enterprise: 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30',
-    Pro: 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
-    Basic: 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/30',
-    Free: 'bg-[#768B80]/10 text-[#768B80] border-[#768B80]/30',
+    Enterprise: 'bg-accent/10 text-accent border-accent/30',
+    Pro: 'bg-primary/10 text-primary border-primary/30',
+    Basic: 'bg-info/10 text-info border-info/30',
+    Free: 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30',
   };
   return <Badge className={`border ${colors[plan] || colors.Free}`}>{plan}</Badge>;
 }
@@ -224,12 +224,12 @@ export default function AdminSubscriptions() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Subscription & Billing</h1>
-          <p className="text-sm text-[#768B80] mt-1">Manage subscriptions, invoices, and promotional codes</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Subscription & Billing</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage subscriptions, invoices, and promotional codes</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="border-[#12B877]/30 text-[#12B877] bg-[#12B877]/5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#12B877] mr-1.5 animate-pulse" />
+          <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
             Auto-billing active
           </Badge>
         </div>
@@ -243,15 +243,15 @@ export default function AdminSubscriptions() {
       </div>
 
       {/* MRR Trend Chart */}
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-sm font-medium text-white">MRR Trend</CardTitle>
-            <p className="text-xs text-[#768B80] mt-0.5">Monthly recurring revenue over the last 12 months</p>
+            <CardTitle className="text-sm font-medium text-foreground">MRR Trend</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Monthly recurring revenue over the last 12 months</p>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-[#12B877]" />
-            <span className="text-[10px] text-[#768B80]">Revenue</span>
+            <span className="h-2 w-2 rounded-full bg-primary" />
+            <span className="text-[10px] text-muted-foreground">Revenue</span>
           </div>
         </CardHeader>
         <CardContent>
@@ -259,59 +259,59 @@ export default function AdminSubscriptions() {
             <AreaChart data={mrrTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="mrrGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#12B877" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#12B877" stopOpacity={0} />
+                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#25332B" />
-              <XAxis dataKey="month" stroke="#768B80" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis stroke="#768B80" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 100000).toFixed(1)}L`} />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 100000).toFixed(1)}L`} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#0D1711', border: '1px solid #25332B', borderRadius: '8px' }}
-                labelStyle={{ color: '#EDEDED' }}
+                contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                labelStyle={{ color: 'hsl(var(--foreground))' }}
                 formatter={(value: number) => formatCurrency(value)}
               />
-              <Area type="monotone" dataKey="revenue" stroke="#12B877" fill="url(#mrrGrad)" strokeWidth={2} />
+              <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="url(#mrrGrad)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
 
       {/* Upcoming Renewals */}
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-sm font-medium text-white">Upcoming Renewals</CardTitle>
-            <p className="text-xs text-[#768B80] mt-0.5">Restaurants with renewals due in the next 30 days</p>
+            <CardTitle className="text-sm font-medium text-foreground">Upcoming Renewals</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Restaurants with renewals due in the next 30 days</p>
           </div>
-          <Button variant="outline" size="sm" className="border-[#25332B] text-[#12B877] hover:text-white">
+          <Button variant="outline" size="sm" className="border-border text-primary hover:text-foreground">
             <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Process All
           </Button>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="border-[#25332B] hover:bg-transparent">
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Plan</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Amount</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Renewal Date</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-center">Days Left</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Actions</TableHead>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Plan</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Amount</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Renewal Date</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-center">Days Left</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {upcomingRenewals.map((r) => (
-                <TableRow key={r.id} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
+                <TableRow key={r.id} className="border-border hover:bg-muted/50 transition-colors">
                   <TableCell>
-                    <p className="text-sm font-medium text-white">{r.restaurant}</p>
+                    <p className="text-sm font-medium text-foreground">{r.restaurant}</p>
                   </TableCell>
                   <TableCell><PlanBadge plan={r.plan} /></TableCell>
-                  <TableCell className="text-right text-white/70 text-sm">{formatCurrency(r.amount)}</TableCell>
-                  <TableCell className="text-xs text-[#768B80]">{formatDate(r.renewalDate)}</TableCell>
+                  <TableCell className="text-right text-foreground/70 text-sm">{formatCurrency(r.amount)}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{formatDate(r.renewalDate)}</TableCell>
                   <TableCell className="text-center">
                     <span className={`text-sm font-medium ${
-                      r.daysLeft <= 0 ? 'text-[#DB3A3A]' : r.daysLeft <= 5 ? 'text-[#F4B740]' : 'text-[#12B877]'
+                      r.daysLeft <= 0 ? 'text-destructive' : r.daysLeft <= 5 ? 'text-accent' : 'text-primary'
                     }`}>
                       {r.daysLeft <= 0 ? 'Overdue' : `${r.daysLeft}d`}
                     </span>
@@ -319,11 +319,11 @@ export default function AdminSubscriptions() {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       {r.status === 'failed' && (
-                        <Button variant="ghost" size="sm" className="h-8 text-xs text-[#DB3A3A] hover:text-white hover:bg-[#DB3A3A]/10">
+                        <Button variant="ghost" size="sm" className="h-8 text-xs text-destructive hover:text-foreground hover:bg-destructive/10">
                           <RefreshCw className="h-3 w-3 mr-1" /> Retry
                         </Button>
                       )}
-                      <Button variant="ghost" size="sm" className="h-8 text-xs text-[#12B877] hover:text-white">
+                      <Button variant="ghost" size="sm" className="h-8 text-xs text-primary hover:text-foreground">
                         <Mail className="h-3 w-3 mr-1" /> Remind
                       </Button>
                     </div>
@@ -336,46 +336,46 @@ export default function AdminSubscriptions() {
       </Card>
 
       {/* Failed Payments */}
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card border-l-2 border-l-[#DB3A3A]">
+      <Card className="bg-card border-border shadow-sm border-l-2 border-l-[#DB3A3A]">
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-[#DB3A3A]" />
+            <AlertTriangle className="h-4 w-4 text-destructive" />
             <div>
-              <CardTitle className="text-sm font-medium text-white">Failed Payments</CardTitle>
-              <p className="text-xs text-[#768B80] mt-0.5">{failedPayments.length} payments require attention</p>
+              <CardTitle className="text-sm font-medium text-foreground">Failed Payments</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">{failedPayments.length} payments require attention</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="border-[#25332B] text-[#DB3A3A] hover:text-white">
+          <Button variant="outline" size="sm" className="border-border text-destructive hover:text-foreground">
             <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry All
           </Button>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="border-[#25332B] hover:bg-transparent">
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Amount</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Date</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-center">Days Overdue</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Action</TableHead>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Amount</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Date</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-center">Days Overdue</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {failedPayments.map((p) => (
-                <TableRow key={p.id} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
+                <TableRow key={p.id} className="border-border hover:bg-muted/50 transition-colors">
                   <TableCell>
                     <div>
-                      <p className="text-sm font-medium text-white">{p.restaurant}</p>
-                      <p className="text-xs text-[#768B80]">{p.method}</p>
+                      <p className="text-sm font-medium text-foreground">{p.restaurant}</p>
+                      <p className="text-xs text-muted-foreground">{p.method}</p>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right text-white/70 text-sm">{p.amount > 0 ? formatCurrency(p.amount) : 'Free trial'}</TableCell>
-                  <TableCell className="text-xs text-[#768B80]">{formatDate(p.date)}</TableCell>
+                  <TableCell className="text-right text-foreground/70 text-sm">{p.amount > 0 ? formatCurrency(p.amount) : 'Free trial'}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{formatDate(p.date)}</TableCell>
                   <TableCell className="text-center">
-                    <span className="text-sm font-medium text-[#DB3A3A]">{p.daysOverdue}d</span>
+                    <span className="text-sm font-medium text-destructive">{p.daysOverdue}d</span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" className="h-8 text-xs border-[#25332B] text-[#12B877] hover:bg-[#12B877]/10">
+                    <Button variant="outline" size="sm" className="h-8 text-xs border-border text-primary hover:bg-primary/10">
                       <RefreshCw className="h-3 w-3 mr-1" /> Retry Payment
                     </Button>
                   </TableCell>
@@ -387,48 +387,48 @@ export default function AdminSubscriptions() {
       </Card>
 
       {/* Invoice Management */}
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-sm font-medium text-white">Invoice Management</CardTitle>
-            <p className="text-xs text-[#768B80] mt-0.5">View and manage all platform invoices</p>
+            <CardTitle className="text-sm font-medium text-foreground">Invoice Management</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">View and manage all platform invoices</p>
           </div>
-          <Button size="sm" className="bg-[#12B877] hover:bg-[#0E945E] text-white text-xs">
+          <Button size="sm" className="bg-primary hover:bg-[hsl(var(--primary-hover))] text-white text-xs">
             <Plus className="h-3.5 w-3.5 mr-1.5" /> Create Invoice
           </Button>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all" className="w-full">
-            <TabsList className="bg-[#1A231E] border border-[#25332B] h-8 mb-4">
-              <TabsTrigger value="all" className="text-[10px] px-3 py-1 data-[state=active]:bg-[#12B877]/20 data-[state=active]:text-[#12B877]">All</TabsTrigger>
-              <TabsTrigger value="paid" className="text-[10px] px-3 py-1 data-[state=active]:bg-[#12B877]/20 data-[state=active]:text-[#12B877]">Paid</TabsTrigger>
-              <TabsTrigger value="pending" className="text-[10px] px-3 py-1 data-[state=active]:bg-[#12B877]/20 data-[state=active]:text-[#12B877]">Pending</TabsTrigger>
-              <TabsTrigger value="overdue" className="text-[10px] px-3 py-1 data-[state=active]:bg-[#12B877]/20 data-[state=active]:text-[#12B877]">Overdue</TabsTrigger>
+            <TabsList className="bg-muted border border-border h-8 mb-4">
+              <TabsTrigger value="all" className="text-[10px] px-3 py-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">All</TabsTrigger>
+              <TabsTrigger value="paid" className="text-[10px] px-3 py-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Paid</TabsTrigger>
+              <TabsTrigger value="pending" className="text-[10px] px-3 py-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Pending</TabsTrigger>
+              <TabsTrigger value="overdue" className="text-[10px] px-3 py-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Overdue</TabsTrigger>
             </TabsList>
             {['all', 'paid', 'pending', 'overdue'].map((tab) => (
               <TabsContent key={tab} value={tab} className="mt-0">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-[#25332B] hover:bg-transparent">
-                      <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Invoice#</TableHead>
-                      <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
-                      <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Amount</TableHead>
-                      <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Method</TableHead>
-                      <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Status</TableHead>
-                      <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Date</TableHead>
+                    <TableRow className="border-border hover:bg-transparent">
+                      <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Invoice#</TableHead>
+                      <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
+                      <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Amount</TableHead>
+                      <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Method</TableHead>
+                      <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Status</TableHead>
+                      <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Date</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {invoices
                       .filter((inv) => tab === 'all' || inv.status === tab)
                       .map((inv) => (
-                        <TableRow key={inv.id} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
-                          <TableCell className="text-sm text-white/70 font-mono">{inv.id}</TableCell>
-                          <TableCell className="text-sm font-medium text-white">{inv.restaurant}</TableCell>
-                          <TableCell className="text-right text-white/70 text-sm">{formatCurrency(inv.amount)}</TableCell>
-                          <TableCell className="text-xs text-[#768B80]">{inv.method}</TableCell>
+                        <TableRow key={inv.id} className="border-border hover:bg-muted/50 transition-colors">
+                          <TableCell className="text-sm text-foreground/70 font-mono">{inv.id}</TableCell>
+                          <TableCell className="text-sm font-medium text-foreground">{inv.restaurant}</TableCell>
+                          <TableCell className="text-right text-foreground/70 text-sm">{formatCurrency(inv.amount)}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{inv.method}</TableCell>
                           <TableCell><StatusBadge status={inv.status} /></TableCell>
-                          <TableCell className="text-xs text-[#768B80]">{formatDate(inv.date)}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{formatDate(inv.date)}</TableCell>
                         </TableRow>
                       ))}
                   </TableBody>
@@ -440,23 +440,23 @@ export default function AdminSubscriptions() {
       </Card>
 
       {/* Promo Code Management */}
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-sm font-medium text-white">Promo Code Management</CardTitle>
-            <p className="text-xs text-[#768B80] mt-0.5">Create and manage discount codes</p>
+            <CardTitle className="text-sm font-medium text-foreground">Promo Code Management</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Create and manage discount codes</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#768B80]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search codes..."
                 value={promoSearch}
                 onChange={(e) => setPromoSearch(e.target.value)}
-                className="pl-9 bg-[#1A231E] border-[#25332B] text-white placeholder:text-[#768B80] text-xs h-9 w-48"
+                className="pl-9 bg-muted border-border text-foreground placeholder:text-muted-foreground text-xs h-9 w-48"
               />
             </div>
-            <Button size="sm" className="bg-[#12B877] hover:bg-[#0E945E] text-white text-xs">
+            <Button size="sm" className="bg-primary hover:bg-[hsl(var(--primary-hover))] text-white text-xs">
               <Plus className="h-3.5 w-3.5 mr-1.5" /> New Code
             </Button>
           </div>
@@ -464,29 +464,29 @@ export default function AdminSubscriptions() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="border-[#25332B] hover:bg-transparent">
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Code</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Discount</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Type</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-center">Usage</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Expiry</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Status</TableHead>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Code</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Discount</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Type</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-center">Usage</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Expiry</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredPromos.map((p) => (
-                <TableRow key={p.id} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
+                <TableRow key={p.id} className="border-border hover:bg-muted/50 transition-colors">
                   <TableCell>
-                    <span className="text-sm font-mono font-medium text-[#12B877]">{p.code}</span>
+                    <span className="text-sm font-mono font-medium text-primary">{p.code}</span>
                   </TableCell>
-                  <TableCell className="text-right text-white/70 text-sm">
+                  <TableCell className="text-right text-foreground/70 text-sm">
                     {p.type === 'percentage' ? `${p.discount}%` : formatCurrency(p.discount)}
                   </TableCell>
                   <TableCell>
                     <Badge className={`border text-[10px] ${
                       p.type === 'percentage'
-                        ? 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/30'
-                        : 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30'
+                        ? 'bg-info/10 text-info border-info/30'
+                        : 'bg-accent/10 text-accent border-accent/30'
                     }`}>
                       {p.type === 'percentage' ? (
                         <Percent className="h-2.5 w-2.5 mr-1" />
@@ -498,16 +498,16 @@ export default function AdminSubscriptions() {
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <div className="w-20 h-1.5 rounded-full bg-[#1A231E] overflow-hidden">
+                      <div className="w-20 h-1.5 rounded-full bg-muted overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-[#12B877]"
+                          className="h-full rounded-full bg-primary"
                           style={{ width: `${(p.usage / p.usageLimit) * 100}%` }}
                         />
                       </div>
-                      <span className="text-xs text-[#768B80]">{p.usage}/{p.usageLimit}</span>
+                      <span className="text-xs text-muted-foreground">{p.usage}/{p.usageLimit}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-xs text-[#768B80]">{formatDate(p.expiry)}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{formatDate(p.expiry)}</TableCell>
                   <TableCell>
                     <StatusBadge status={p.active ? 'active' : 'inactive'} />
                   </TableCell>

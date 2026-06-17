@@ -36,7 +36,7 @@ interface PipelineStage {
 
 const pipelineStages: PipelineStage[] = [
   {
-    name: 'Lead', count: 5, color: '#768B80',
+    name: 'Lead', count: 5, color: 'hsl(var(--muted-foreground))',
     companies: [
       { id: 1, name: 'Momo House', city: 'Kathmandu', owner: 'Rabi Shrestha', planInterest: 'Basic', daysInStage: 3, value: 15000 },
       { id: 2, name: 'Everest View Cafe', city: 'Pokhara', owner: 'Nima Sherpa', planInterest: 'Pro', daysInStage: 7, value: 45000 },
@@ -46,7 +46,7 @@ const pipelineStages: PipelineStage[] = [
     ],
   },
   {
-    name: 'Contacted', count: 12, color: '#3B82F6',
+    name: 'Contacted', count: 12, color: 'hsl(var(--info))',
     companies: [
       { id: 6, name: 'Mandala Kitchen', city: 'Bhaktapur', owner: 'Rajesh Maharjan', planInterest: 'Pro', daysInStage: 4, value: 55000 },
       { id: 7, name: 'Green Bowl', city: 'Pokhara', owner: 'Anupa Rai', planInterest: 'Basic', daysInStage: 6, value: 18000 },
@@ -56,7 +56,7 @@ const pipelineStages: PipelineStage[] = [
     ],
   },
   {
-    name: 'Demo Scheduled', count: 8, color: '#F4B740',
+    name: 'Demo Scheduled', count: 8, color: 'hsl(var(--accent))',
     companies: [
       { id: 11, name: 'Mountain Delights', city: 'Pokhara', owner: 'Dawa Tamang', planInterest: 'Pro', daysInStage: 2, value: 65000 },
       { id: 12, name: 'Garden Kitchen', city: 'Chitwan', owner: 'Sita Poudel', planInterest: 'Enterprise', daysInStage: 1, value: 110000 },
@@ -66,7 +66,7 @@ const pipelineStages: PipelineStage[] = [
     ],
   },
   {
-    name: 'Trial Active', count: 15, color: '#12B877',
+    name: 'Trial Active', count: 15, color: 'hsl(var(--primary))',
     companies: [
       { id: 16, name: 'Thamel Terrace', city: 'Kathmandu', owner: 'Rajan Karki', planInterest: 'Pro', daysInStage: 12, value: 58000 },
       { id: 17, name: 'Boudha Bowl', city: 'Kathmandu', owner: 'Jigme Bhote', planInterest: 'Enterprise', daysInStage: 8, value: 125000 },
@@ -76,7 +76,7 @@ const pipelineStages: PipelineStage[] = [
     ],
   },
   {
-    name: 'Negotiation', count: 4, color: '#DB3A3A',
+    name: 'Negotiation', count: 4, color: 'hsl(var(--destructive))',
     companies: [
       { id: 21, name: 'Langtang Kitchen', city: 'Kathmandu', owner: 'Pasang Sherpa', planInterest: 'Enterprise', daysInStage: 6, value: 150000 },
       { id: 22, name: 'Annapurna Dining', city: 'Pokhara', owner: 'Bimala Rana', planInterest: 'Pro', daysInStage: 4, value: 74000 },
@@ -85,7 +85,7 @@ const pipelineStages: PipelineStage[] = [
     ],
   },
   {
-    name: 'Closed-Won', count: 28, color: '#12B877',
+    name: 'Closed-Won', count: 28, color: 'hsl(var(--primary))',
     companies: [
       { id: 25, name: 'Sagarmatha Palace', city: 'Pokhara', owner: 'Sonam Sherpa', planInterest: 'Enterprise', daysInStage: 0, value: 220000 },
       { id: 26, name: 'Himalayan Kitchen', city: 'Kathmandu', owner: 'Ramesh Poudel', planInterest: 'Pro', daysInStage: 0, value: 125000 },
@@ -95,7 +95,7 @@ const pipelineStages: PipelineStage[] = [
     ],
   },
   {
-    name: 'Closed-Lost', count: 6, color: '#6B7280',
+    name: 'Closed-Lost', count: 6, color: 'hsl(var(--muted-foreground))',
     companies: [
       { id: 30, name: 'Mountain Cafe', city: 'Kathmandu', owner: 'Ramesh Ghimire', planInterest: 'Basic', daysInStage: 0, value: 0 },
       { id: 31, name: 'Sunrise Diner', city: 'Pokhara', owner: 'Krishna Rai', planInterest: 'Free', daysInStage: 0, value: 0 },
@@ -174,21 +174,21 @@ const activityIcons: Record<string, React.ElementType> = {
 
 const stageBadgeColor = (status: string) => {
   const colors: Record<string, string> = {
-    'At Risk': 'bg-[#DB3A3A]/10 text-[#DB3A3A] border-[#DB3A3A]/30',
-    'Engaged': 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/30',
-    'Expiring': 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30',
-    'Onboarded': 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
+    'At Risk': 'bg-destructive/10 text-destructive border-destructive/30',
+    'Engaged': 'bg-info/10 text-info border-info/30',
+    'Expiring': 'bg-accent/10 text-accent border-accent/30',
+    'Onboarded': 'bg-primary/10 text-primary border-primary/30',
   };
-  return colors[status] || 'bg-[#768B80]/10 text-[#768B80] border-[#768B80]/30';
+  return colors[status] || 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30';
 };
 
 const activationBadgeColor = (status: string) => {
   const colors: Record<string, string> = {
-    'Activated': 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
-    'In Progress': 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30',
-    'Pending': 'bg-[#768B80]/10 text-[#768B80] border-[#768B80]/30',
+    'Activated': 'bg-primary/10 text-primary border-primary/30',
+    'In Progress': 'bg-accent/10 text-accent border-accent/30',
+    'Pending': 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30',
   };
-  return colors[status] || 'bg-[#768B80]/10 text-[#768B80] border-[#768B80]/30';
+  return colors[status] || 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30';
 };
 
 export default function AdminPipeline() {
@@ -216,15 +216,15 @@ export default function AdminPipeline() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Sales Pipeline</h1>
-          <p className="text-sm text-[#768B80] mt-1">Track leads, trials, and conversions across the funnel</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Sales Pipeline</h1>
+          <p className="text-sm text-muted-foreground mt-1">Track leads, trials, and conversions across the funnel</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-3 text-xs text-[#768B80] mr-3">
-            <span>Pipeline Value: <span className="text-white font-medium">{formatCurrency(totalValue)}</span></span>
-            <span>Closed: <span className="text-[#12B877] font-medium">{formatCurrency(wonValue)}</span></span>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground mr-3">
+            <span>Pipeline Value: <span className="text-foreground font-medium">{formatCurrency(totalValue)}</span></span>
+            <span>Closed: <span className="text-primary font-medium">{formatCurrency(wonValue)}</span></span>
           </div>
-          <Button variant="outline" size="sm" className="border-[#25332B] text-[#768B80] hover:text-white">
+          <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground">
             <Download className="h-4 w-4 mr-1.5" /> Export
           </Button>
         </div>
@@ -238,7 +238,7 @@ export default function AdminPipeline() {
             variant="ghost"
             size="icon"
             onClick={scrollLeft}
-            className="absolute left-1 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-[#0D1711] border border-[#25332B] text-[#768B80] hover:text-white"
+            className="absolute left-1 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-card border border-border text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -247,7 +247,7 @@ export default function AdminPipeline() {
           variant="ghost"
           size="icon"
           onClick={scrollRight}
-          className="absolute right-1 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-[#0D1711] border border-[#25332B] text-[#768B80] hover:text-white"
+          className="absolute right-1 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-card border border-border text-muted-foreground hover:text-foreground"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -258,33 +258,33 @@ export default function AdminPipeline() {
         >
           {pipelineStages.map((stage) => (
             <div key={stage.name} className="flex-shrink-0 w-72">
-              <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
-                <CardHeader className="px-4 py-3 border-b border-[#25332B]">
+              <Card className="bg-card border-border shadow-sm">
+                <CardHeader className="px-4 py-3 border-b border-border">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: stage.color }} />
-                      <CardTitle className="text-sm font-medium text-white">{stage.name}</CardTitle>
+                      <CardTitle className="text-sm font-medium text-foreground">{stage.name}</CardTitle>
                     </div>
-                    <Badge variant="outline" className="border-[#25332B] text-[#768B80] text-[10px]">{stage.count}</Badge>
+                    <Badge variant="outline" className="border-border text-muted-foreground text-[10px]">{stage.count}</Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="p-3 space-y-2 max-h-[480px] overflow-y-auto">
                   {stage.companies.map((company) => (
                     <div
                       key={company.id}
-                      className="p-3 rounded-lg bg-[#1A231E]/50 border border-[#25332B] hover:border-[#12B877]/30 transition-all cursor-pointer group"
+                      className="p-3 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-all cursor-pointer group"
                     >
                       <div className="flex items-center justify-between mb-1.5">
-                        <p className="text-xs font-medium text-white group-hover:text-[#12B877] transition-colors">{company.name}</p>
+                        <p className="text-xs font-medium text-white group-hover:text-primary transition-colors">{company.name}</p>
                         {company.value > 0 && (
-                          <span className="text-[10px] font-medium text-[#12B877]">{formatCurrency(company.value)}</span>
+                          <span className="text-[10px] font-medium text-primary">{formatCurrency(company.value)}</span>
                         )}
                       </div>
-                      <p className="text-[10px] text-[#768B80] mb-1.5">{company.city} · {company.owner}</p>
+                      <p className="text-[10px] text-muted-foreground mb-1.5">{company.city} · {company.owner}</p>
                       <div className="flex items-center justify-between">
-                        <Badge variant="outline" className="border-[#25332B] text-[#768B80] text-[9px] h-5">{company.planInterest}</Badge>
+                        <Badge variant="outline" className="border-border text-muted-foreground text-[9px] h-5">{company.planInterest}</Badge>
                         {company.daysInStage > 0 && (
-                          <span className="text-[10px] text-[#768B80] flex items-center gap-1">
+                          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {company.daysInStage}d
                           </span>
@@ -300,59 +300,59 @@ export default function AdminPipeline() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1 bg-[#0D1711] border-[#25332B] shadow-admin-card">
+        <Card className="lg:col-span-1 bg-card border-border shadow-sm">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-[#12B877]" />
-              <CardTitle className="text-sm font-medium text-white">Recent Activity</CardTitle>
+              <Activity className="h-4 w-4 text-primary" />
+              <CardTitle className="text-sm font-medium text-foreground">Recent Activity</CardTitle>
             </div>
-            <p className="text-xs text-[#768B80] mt-0.5">Latest prospect interactions</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Latest prospect interactions</p>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="divide-y divide-[#25332B]">
+            <div className="divide-y divide-border">
               {recentActivities.map((act) => {
                 const ActIcon = activityIcons[act.type] || Activity;
                 return (
-                  <div key={act.id} className="flex items-start gap-3 px-4 py-3 hover:bg-[#1A231E]/50 transition-colors">
-                    <div className="h-7 w-7 rounded-full bg-[#1A231E] flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <ActIcon className="h-3.5 w-3.5 text-[#12B877]/70" />
+                  <div key={act.id} className="flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
+                    <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <ActIcon className="h-3.5 w-3.5 text-primary/70" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-white/80 font-medium">{act.company}</p>
-                      <p className="text-[10px] text-[#768B80]">{act.action} · {act.user}</p>
-                      <p className="text-[10px] text-[#4A5B52]">{act.time}</p>
+                      <p className="text-xs text-foreground/80 font-medium">{act.company}</p>
+                      <p className="text-[10px] text-muted-foreground">{act.action} · {act.user}</p>
+                      <p className="text-[10px] text-muted-foreground">{act.time}</p>
                     </div>
                   </div>
                 );
               })}
             </div>
-            <div className="p-3 border-t border-[#25332B]">
-              <Button variant="ghost" size="sm" className="w-full text-xs text-[#12B877] hover:text-white">
+            <div className="p-3 border-t border-border">
+              <Button variant="ghost" size="sm" className="w-full text-xs text-primary hover:text-foreground">
                 View Full Timeline
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 bg-[#0D1711] border-[#25332B] shadow-admin-card">
+        <Card className="lg:col-span-2 bg-card border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <Timer className="h-4 w-4 text-[#F4B740]" />
-                <CardTitle className="text-sm font-medium text-white">Trial Management</CardTitle>
+                <Timer className="h-4 w-4 text-accent" />
+                <CardTitle className="text-sm font-medium text-foreground">Trial Management</CardTitle>
               </div>
-              <p className="text-xs text-[#768B80] mt-0.5">Active trials requiring attention</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Active trials requiring attention</p>
             </div>
             <div className="flex items-center gap-2">
               <Select defaultValue="all">
-                <SelectTrigger className="w-[120px] bg-[#1A231E] border-[#25332B] text-white h-8 text-xs">
+                <SelectTrigger className="w-[120px] bg-muted border-border text-foreground h-8 text-xs">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0D1711] border-[#25332B]">
-                  <SelectItem value="all" className="text-white text-xs">All Trials</SelectItem>
-                  <SelectItem value="at-risk" className="text-white text-xs">At Risk</SelectItem>
-                  <SelectItem value="expiring" className="text-white text-xs">Expiring</SelectItem>
-                  <SelectItem value="engaged" className="text-white text-xs">Engaged</SelectItem>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="all" className="text-foreground text-xs">All Trials</SelectItem>
+                  <SelectItem value="at-risk" className="text-foreground text-xs">At Risk</SelectItem>
+                  <SelectItem value="expiring" className="text-foreground text-xs">Expiring</SelectItem>
+                  <SelectItem value="engaged" className="text-foreground text-xs">Engaged</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -360,38 +360,38 @@ export default function AdminPipeline() {
           <CardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow className="border-[#25332B] hover:bg-transparent">
-                  <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
-                  <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Plan</TableHead>
-                  <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Days Left</TableHead>
-                  <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-center">Usage</TableHead>
-                  <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Status</TableHead>
-                  <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Actions</TableHead>
+                <TableRow className="border-border hover:bg-transparent">
+                  <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
+                  <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Plan</TableHead>
+                  <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Days Left</TableHead>
+                  <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-center">Usage</TableHead>
+                  <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Status</TableHead>
+                  <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {trialData.map((t) => (
-                  <TableRow key={t.id} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
+                  <TableRow key={t.id} className="border-border hover:bg-muted/50 transition-colors">
                     <TableCell>
-                      <p className="text-sm font-medium text-white">{t.restaurant}</p>
+                      <p className="text-sm font-medium text-foreground">{t.restaurant}</p>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="border-[#25332B] text-[#768B80] text-[10px]">{t.plan}</Badge>
+                      <Badge variant="outline" className="border-border text-muted-foreground text-[10px]">{t.plan}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <span className={`text-sm font-medium ${t.daysRemaining <= 3 ? 'text-[#DB3A3A]' : t.daysRemaining <= 7 ? 'text-[#F4B740]' : 'text-white/70'}`}>
+                      <span className={`text-sm font-medium ${t.daysRemaining <= 3 ? 'text-destructive' : t.daysRemaining <= 7 ? 'text-accent' : 'text-foreground/70'}`}>
                         {t.daysRemaining === 0 ? 'Today' : `${t.daysRemaining}d`}
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <div className="w-16 h-1.5 rounded-full bg-[#1A231E] overflow-hidden">
+                        <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
                           <div
-                            className={`h-full rounded-full ${t.usage >= 70 ? 'bg-[#12B877]' : t.usage >= 40 ? 'bg-[#F4B740]' : 'bg-[#3B82F6]'}`}
+                            className={`h-full rounded-full ${t.usage >= 70 ? 'bg-primary' : t.usage >= 40 ? 'bg-accent' : 'bg-info'}`}
                             style={{ width: `${t.usage}%` }}
                           />
                         </div>
-                        <span className={`text-[10px] font-medium ${t.usage >= 70 ? 'text-[#12B877]' : t.usage >= 40 ? 'text-[#F4B740]' : 'text-[#3B82F6]'}`}>{t.usage}%</span>
+                        <span className={`text-[10px] font-medium ${t.usage >= 70 ? 'text-primary' : t.usage >= 40 ? 'text-accent' : 'text-info'}`}>{t.usage}%</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -399,9 +399,9 @@ export default function AdminPipeline() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="sm" className="h-7 text-[10px] text-[#12B877] hover:bg-[#12B877]/10">Convert</Button>
-                        <Button variant="ghost" size="sm" className="h-7 text-[10px] text-[#F4B740] hover:bg-[#F4B740]/10">Extend</Button>
-                        <Button variant="ghost" size="sm" className="h-7 text-[10px] text-[#768B80] hover:text-white">Follow-up</Button>
+                        <Button variant="ghost" size="sm" className="h-7 text-[10px] text-primary hover:bg-primary/10">Convert</Button>
+                        <Button variant="ghost" size="sm" className="h-7 text-[10px] text-accent hover:bg-accent/10">Extend</Button>
+                        <Button variant="ghost" size="sm" className="h-7 text-[10px] text-muted-foreground hover:text-foreground">Follow-up</Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -412,63 +412,63 @@ export default function AdminPipeline() {
         </Card>
       </div>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-[#12B877]" />
-              <CardTitle className="text-sm font-medium text-white">Onboarding Checklist</CardTitle>
+              <CheckCircle className="h-4 w-4 text-primary" />
+              <CardTitle className="text-sm font-medium text-foreground">Onboarding Checklist</CardTitle>
             </div>
-            <p className="text-xs text-[#768B80] mt-0.5">Track restaurant activation progress</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Track restaurant activation progress</p>
           </div>
-          <Badge variant="outline" className="border-[#12B877]/30 text-[#12B877] bg-[#12B877]/5 text-[10px]">
+          <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5 text-[10px]">
             3 / 7 Activated
           </Badge>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="border-[#25332B] hover:bg-transparent">
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-center">Menu Setup</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-center">Staff Added</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-center">QR Generated</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-center">First Order</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Activation Status</TableHead>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-center">Menu Setup</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-center">Staff Added</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-center">QR Generated</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-center">First Order</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Activation Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {onboardingData.map((o) => (
-                <TableRow key={o.id} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
+                <TableRow key={o.id} className="border-border hover:bg-muted/50 transition-colors">
                   <TableCell>
-                    <p className="text-sm font-medium text-white">{o.restaurant}</p>
+                    <p className="text-sm font-medium text-foreground">{o.restaurant}</p>
                   </TableCell>
                   <TableCell className="text-center">
                     {o.menuSetup ? (
-                      <CheckCircle className="h-4 w-4 text-[#12B877] mx-auto" />
+                      <CheckCircle className="h-4 w-4 text-primary mx-auto" />
                     ) : (
-                      <div className="h-4 w-4 rounded-full border border-[#25332B] mx-auto" />
+                      <div className="h-4 w-4 rounded-full border border-border mx-auto" />
                     )}
                   </TableCell>
                   <TableCell className="text-center">
                     {o.staffAdded ? (
-                      <CheckCircle className="h-4 w-4 text-[#12B877] mx-auto" />
+                      <CheckCircle className="h-4 w-4 text-primary mx-auto" />
                     ) : (
-                      <div className="h-4 w-4 rounded-full border border-[#25332B] mx-auto" />
+                      <div className="h-4 w-4 rounded-full border border-border mx-auto" />
                     )}
                   </TableCell>
                   <TableCell className="text-center">
                     {o.qrGenerated ? (
-                      <CheckCircle className="h-4 w-4 text-[#12B877] mx-auto" />
+                      <CheckCircle className="h-4 w-4 text-primary mx-auto" />
                     ) : (
-                      <div className="h-4 w-4 rounded-full border border-[#25332B] mx-auto" />
+                      <div className="h-4 w-4 rounded-full border border-border mx-auto" />
                     )}
                   </TableCell>
                   <TableCell className="text-center">
                     {o.firstOrder ? (
-                      <CheckCircle className="h-4 w-4 text-[#12B877] mx-auto" />
+                      <CheckCircle className="h-4 w-4 text-primary mx-auto" />
                     ) : (
-                      <div className="h-4 w-4 rounded-full border border-[#25332B] mx-auto" />
+                      <div className="h-4 w-4 rounded-full border border-border mx-auto" />
                     )}
                   </TableCell>
                   <TableCell>

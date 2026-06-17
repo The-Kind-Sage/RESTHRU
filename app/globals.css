@@ -70,59 +70,6 @@
     --sidebar-muted: 152 20% 35%;
   }
 
-  /* ============================================
-     ADMIN DARK THEME — Emerald Luxe
-     Applied via .admin-dark class on <body>
-     ============================================ */
-  .admin-dark {
-    --background: 162 30% 4%;        /* #060E0A */
-    --foreground: 0 0% 93%;          /* #EDEDED */
-    --card: 162 25% 7%;              /* #0D1711 */
-    --card-foreground: 0 0% 93%;
-    --popover: 162 25% 7%;
-    --popover-foreground: 0 0% 93%;
-
-    --primary: 160 72% 42%;          /* #12B877 */
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 160 65% 35%;    /* #0E945E */
-    --primary-light: 160 40% 14%;    /* #153A2B */
-
-    --secondary: 162 25% 14%;        /* #1B2D23 */
-    --secondary-foreground: 0 0% 93%;
-
-    --accent: 42 96% 56%;            /* #F4B740 */
-    --accent-foreground: 0 0% 8%;
-    --accent-light: 42 40% 14%;
-
-    --destructive: 0 72% 52%;        /* #DB3A3A */
-    --destructive-foreground: 0 0% 100%;
-
-    --muted: 162 18% 12%;            /* #1A231E */
-    --muted-foreground: 162 12% 52%; /* #768B80 */
-
-    --border: 162 18% 18%;           /* #25332B */
-    --input: 162 18% 18%;
-    --ring: 160 72% 42%;
-
-    --radius: 0.75rem;
-
-    --success: 142 72% 49%;
-    --warning: 36 96% 56%;
-    --error: 0 72% 52%;
-    --info: 200 83% 55%;
-
-    --chart-1: 160 72% 42%;          /* emerald-primary */
-    --chart-2: 200 83% 55%;          /* info blue */
-    --chart-3: 42 96% 56%;           /* accent gold */
-    --chart-4: 0 72% 52%;           /* destructive */
-    --chart-5: 162 30% 30%;          /* muted teal */
-
-    --sidebar: 162 28% 5%;           /* #090F0C */
-    --sidebar-foreground: 0 0% 80%;  /* #CCCCCC */
-    --sidebar-accent: 160 72% 42%;   /* #12B877 */
-    --sidebar-muted: 162 18% 15%;    /* #1F2D25 */
-  }
-
 }
 
 @layer base {
@@ -294,34 +241,26 @@
   animation: border-glow 2s ease-in-out infinite;
 }
 
-.admin-dark .recharts-text {
-  fill: hsl(162 12% 52%) !important;
+/* Recharts override for light theme admin */
+.admin-layout .recharts-text {
+  fill: hsl(216 16% 54%) !important;
 }
 
-.admin-dark .recharts-cartesian-grid-horizontal line,
-.admin-dark .recharts-cartesian-grid-vertical line {
-  stroke: hsl(162 18% 18%) !important;
+.admin-layout .recharts-cartesian-grid-horizontal line,
+.admin-layout .recharts-cartesian-grid-vertical line {
+  stroke: hsl(215 16% 90%) !important;
 }
 
-.admin-dark .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background: hsl(162 25% 7%) !important;
-  border: 1px solid hsl(162 18% 18%) !important;
+.admin-layout .recharts-default-tooltip {
+  background: hsl(0 0% 100%) !important;
+  border: 1px solid hsl(215 16% 90%) !important;
   border-radius: 8px !important;
 }
 
-.admin-dark .recharts-default-tooltip .recharts-tooltip-label {
-  color: hsl(0 0% 93%) !important;
+.admin-layout .recharts-default-tooltip .recharts-tooltip-label {
+  color: hsl(0 0% 8%) !important;
 }
 
-.admin-dark .recharts-default-tooltip .recharts-tooltip-item {
-  color: hsl(162 12% 52%) !important;
-}
-
-/* Custom scrollbar for admin */
-.admin-dark ::-webkit-scrollbar-thumb {
-  background: hsl(160 72% 42% / 0.3);
-}
-
-.admin-dark ::-webkit-scrollbar-thumb:hover {
-  background: hsl(160 72% 42% / 0.5);
+.admin-layout .recharts-default-tooltip .recharts-tooltip-item {
+  color: hsl(216 16% 54%) !important;
 }

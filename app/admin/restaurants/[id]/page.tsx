@@ -80,17 +80,17 @@ export default function RestaurantDetail() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/admin/restaurants">
-            <Button variant="ghost" size="icon" className="h-9 w-9 text-[#768B80] hover:text-white hover:bg-[#1A231E]">
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted">
               <ArrowLeft className="h-4.5 w-4.5" />
             </Button>
           </Link>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-white tracking-tight">{restaurant.name}</h1>
-              <Badge className="bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30">{restaurant.plan}</Badge>
-              <Badge className="bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30">{restaurant.status}</Badge>
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">{restaurant.name}</h1>
+              <Badge className="bg-primary/10 text-primary border-primary/30">{restaurant.plan}</Badge>
+              <Badge className="bg-primary/10 text-primary border-primary/30">{restaurant.status}</Badge>
             </div>
-            <p className="text-sm text-[#768B80] mt-1">Restaurant ID: {params.id} · Member since {formatDate(restaurant.joined)}</p>
+            <p className="text-sm text-muted-foreground mt-1">Restaurant ID: {params.id} · Member since {formatDate(restaurant.joined)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -98,98 +98,98 @@ export default function RestaurantDetail() {
             variant={impersonating ? 'default' : 'outline'}
             size="sm"
             className={impersonating
-              ? 'bg-[#F4B740] text-black hover:bg-[#F4B740]/90'
-              : 'border-[#25332B] text-[#768B80] hover:text-white'
+              ? 'bg-accent text-accent-foreground hover:bg-accent/90'
+              : 'border-border text-muted-foreground hover:text-foreground'
             }
             onClick={() => setImpersonating(!impersonating)}
           >
             <Shield className="h-4 w-4 mr-1.5" />
             {impersonating ? 'Stop Impersonating' : 'Impersonate'}
           </Button>
-          <Button variant="outline" size="sm" className="border-[#DB3A3A]/30 text-[#DB3A3A] hover:bg-[#DB3A3A]/10">
+          <Button variant="outline" size="sm" className="border-destructive/30 text-destructive hover:bg-destructive/10">
             <XCircle className="h-4 w-4 mr-1.5" /> Suspend
           </Button>
         </div>
       </div>
 
       {impersonating && (
-        <div className="bg-[#F4B740]/10 border border-[#F4B740]/30 rounded-lg px-4 py-3 flex items-center gap-3">
-          <Shield className="h-5 w-5 text-[#F4B740]" />
-          <p className="text-sm text-[#F4B740]">You are viewing this restaurant as <strong>Ramesh Poudel</strong>. All actions are logged.</p>
+        <div className="bg-accent/10 border border-accent/30 rounded-lg px-4 py-3 flex items-center gap-3">
+          <Shield className="h-5 w-5 text-accent" />
+          <p className="text-sm text-accent">You are viewing this restaurant as <strong>Ramesh Poudel</strong>. All actions are logged.</p>
         </div>
       )}
 
       {/* Owner Info + Health */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <Card className="lg:col-span-3 bg-[#0D1711] border-[#25332B] shadow-admin-card">
+        <Card className="lg:col-span-3 bg-card border-border shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-start gap-6">
-              <Avatar className="h-20 w-20 rounded-xl bg-[#1A231E]">
-                <AvatarFallback className="bg-gradient-to-br from-[#12B877] to-[#0E945E] text-white text-xl font-bold rounded-xl">RP</AvatarFallback>
+              <Avatar className="h-20 w-20 rounded-xl bg-muted">
+                <AvatarFallback className="bg-gradient-to-br from-primary to-primary-hover text-foreground text-xl font-bold rounded-xl">RP</AvatarFallback>
               </Avatar>
               <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
-                  <p className="text-xs text-[#768B80] uppercase tracking-wider mb-1">Owner</p>
-                  <p className="text-sm font-medium text-white">{restaurant.owner}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Owner</p>
+                  <p className="text-sm font-medium text-foreground">{restaurant.owner}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#768B80] uppercase tracking-wider mb-1">Email</p>
-                  <p className="text-sm text-[#768B80]">{restaurant.email}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Email</p>
+                  <p className="text-sm text-muted-foreground">{restaurant.email}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#768B80] uppercase tracking-wider mb-1">Phone</p>
-                  <p className="text-sm text-[#768B80]">{restaurant.phone}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Phone</p>
+                  <p className="text-sm text-muted-foreground">{restaurant.phone}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#768B80] uppercase tracking-wider mb-1">PAN</p>
-                  <p className="text-sm font-mono text-white">{restaurant.pan}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">PAN</p>
+                  <p className="text-sm font-mono text-foreground">{restaurant.pan}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#768B80] uppercase tracking-wider mb-1">VAT</p>
-                  <p className="text-sm font-mono text-white">{restaurant.vat}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">VAT</p>
+                  <p className="text-sm font-mono text-foreground">{restaurant.vat}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#768B80] uppercase tracking-wider mb-1">Address</p>
-                  <p className="text-sm text-[#768B80]">{restaurant.address}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Address</p>
+                  <p className="text-sm text-muted-foreground">{restaurant.address}</p>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+        <Card className="bg-card border-border shadow-sm">
           <CardContent className="p-6">
-            <p className="text-xs text-[#768B80] uppercase tracking-wider mb-3">Health Score</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Health Score</p>
             <div className="flex items-center gap-3 mb-4">
               <div className="relative h-16 w-16">
                 <svg className="h-16 w-16 -rotate-90" viewBox="0 0 36 36">
-                  <circle cx="18" cy="18" r="15.5" fill="none" stroke="#1A231E" strokeWidth="3" />
-                  <circle cx="18" cy="18" r="15.5" fill="none" stroke="#12B877" strokeWidth="3"
+                  <circle cx="18" cy="18" r="15.5" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
+                  <circle cx="18" cy="18" r="15.5" fill="none" stroke="hsl(var(--primary))" strokeWidth="3"
                     strokeDasharray={`${restaurant.health * 0.97} 100`} strokeLinecap="round" />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">{restaurant.health}</span>
+                <span className="absolute inset-0 flex items-center justify-center text-lg font-bold text-foreground">{restaurant.health}</span>
               </div>
               <div>
-                <p className="text-sm font-medium text-white">Excellent</p>
-                <p className="text-xs text-[#768B80]">All systems operational</p>
+                <p className="text-sm font-medium text-foreground">Excellent</p>
+                <p className="text-xs text-muted-foreground">All systems operational</p>
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#768B80]">Staff</span>
-                <span className="text-white">{restaurant.staff}</span>
+                <span className="text-muted-foreground">Staff</span>
+                <span className="text-foreground">{restaurant.staff}</span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#768B80]">Tables</span>
-                <span className="text-white">{restaurant.tables}</span>
+                <span className="text-muted-foreground">Tables</span>
+                <span className="text-foreground">{restaurant.tables}</span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#768B80]">Satisfaction</span>
-                <span className="text-white">{restaurant.satisfaction}/5.0</span>
+                <span className="text-muted-foreground">Satisfaction</span>
+                <span className="text-foreground">{restaurant.satisfaction}/5.0</span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#768B80]">Last Active</span>
-                <span className="text-white">{restaurant.lastActive}</span>
+                <span className="text-muted-foreground">Last Active</span>
+                <span className="text-foreground">{restaurant.lastActive}</span>
               </div>
             </div>
           </CardContent>
@@ -198,10 +198,10 @@ export default function RestaurantDetail() {
 
       {/* Tabs */}
       <Tabs defaultValue="orders" className="w-full">
-        <TabsList className="bg-[#1A231E] border border-[#25332B] w-full justify-start overflow-auto flex-nowrap h-auto p-1 gap-0">
+        <TabsList className="bg-muted border border-border w-full justify-start overflow-auto flex-nowrap h-auto p-1 gap-0">
           {['orders', 'payments', 'staff', 'tables', 'subscription', 'tickets', 'documents', 'audit'].map((tab) => (
             <TabsTrigger key={tab} value={tab}
-              className="text-xs px-4 py-2 text-[#768B80] data-[state=active]:bg-[#12B877]/10 data-[state=active]:text-[#12B877] data-[state=active]:shadow-none rounded-md capitalize whitespace-nowrap"
+              className="text-xs px-4 py-2 text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md capitalize whitespace-nowrap"
             >
               {tab === 'subscription' ? 'Subscription' : tab}
             </TabsTrigger>
@@ -210,15 +210,15 @@ export default function RestaurantDetail() {
 
         {/* Orders Tab */}
         <TabsContent value="orders" className="mt-4">
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium text-white">Order History</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">Order History</CardTitle>
               <div className="flex items-center gap-2">
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#768B80]" />
-                  <Input placeholder="Search orders..." className="pl-8 h-8 w-48 bg-[#1A231E] border-[#25332B] text-white placeholder:text-[#768B80] text-xs" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input placeholder="Search orders..." className="pl-8 h-8 w-48 bg-muted border-border text-foreground placeholder:text-muted-foreground text-xs" />
                 </div>
-                <Button variant="ghost" size="sm" className="h-8 text-xs text-[#768B80]">
+                <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground">
                   <Download className="h-3.5 w-3.5 mr-1" /> Export
                 </Button>
               </div>
@@ -226,30 +226,30 @@ export default function RestaurantDetail() {
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-[#25332B]">
-                    <TableHead className="text-[#768B80] text-xs">Order</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Customer</TableHead>
-                    <TableHead className="text-[#768B80] text-xs text-right">Items</TableHead>
-                    <TableHead className="text-[#768B80] text-xs text-right">Total</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Status</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Time</TableHead>
+                  <TableRow className="border-border">
+                    <TableHead className="text-muted-foreground text-xs">Order</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Customer</TableHead>
+                    <TableHead className="text-muted-foreground text-xs text-right">Items</TableHead>
+                    <TableHead className="text-muted-foreground text-xs text-right">Total</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Status</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Time</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {orderHistory.map((o) => (
-                    <TableRow key={o.id} className="border-[#25332B]">
-                      <TableCell className="text-sm text-white font-medium">{o.id}</TableCell>
-                      <TableCell className="text-sm text-[#768B80]">{o.customer}</TableCell>
-                      <TableCell className="text-sm text-white/70 text-right">{o.items}</TableCell>
-                      <TableCell className="text-sm text-white/70 text-right">{formatCurrency(o.total)}</TableCell>
+                    <TableRow key={o.id} className="border-border">
+                      <TableCell className="text-sm text-foreground font-medium">{o.id}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{o.customer}</TableCell>
+                      <TableCell className="text-sm text-foreground/70 text-right">{o.items}</TableCell>
+                      <TableCell className="text-sm text-foreground/70 text-right">{formatCurrency(o.total)}</TableCell>
                       <TableCell>
                         <Badge className={`border text-[10px] ${
-                          o.status === 'Completed' ? 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30'
-                            : o.status === 'Processing' ? 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/30'
-                            : 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30'
+                          o.status === 'Completed' ? 'bg-primary/10 text-primary border-primary/30'
+                            : o.status === 'Processing' ? 'bg-info/10 text-info border-info/30'
+                            : 'bg-accent/10 text-accent border-accent/30'
                         }`}>{o.status}</Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-[#768B80]">{o.time}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{o.time}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -260,39 +260,39 @@ export default function RestaurantDetail() {
 
         {/* Payments Tab */}
         <TabsContent value="payments" className="mt-4">
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium text-white">Payment History</CardTitle>
-              <Button variant="outline" size="sm" className="h-8 text-xs border-[#25332B] text-[#768B80]">
+              <CardTitle className="text-sm font-medium text-foreground">Payment History</CardTitle>
+              <Button variant="outline" size="sm" className="h-8 text-xs border-border text-muted-foreground">
                 <CreditCard className="h-3.5 w-3.5 mr-1" /> Process Refund
               </Button>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-[#25332B]">
-                    <TableHead className="text-[#768B80] text-xs">Invoice</TableHead>
-                    <TableHead className="text-[#768B80] text-xs text-right">Amount</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Method</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Status</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Date</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Due</TableHead>
+                  <TableRow className="border-border">
+                    <TableHead className="text-muted-foreground text-xs">Invoice</TableHead>
+                    <TableHead className="text-muted-foreground text-xs text-right">Amount</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Method</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Status</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Date</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Due</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {payments.map((p) => (
-                    <TableRow key={p.id} className="border-[#25332B]">
-                      <TableCell className="text-sm text-white font-medium">{p.id}</TableCell>
-                      <TableCell className="text-sm text-white/70 text-right">{formatCurrency(p.amount)}</TableCell>
-                      <TableCell className="text-sm text-[#768B80]">{p.method}</TableCell>
+                    <TableRow key={p.id} className="border-border">
+                      <TableCell className="text-sm text-foreground font-medium">{p.id}</TableCell>
+                      <TableCell className="text-sm text-foreground/70 text-right">{formatCurrency(p.amount)}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{p.method}</TableCell>
                       <TableCell>
                         <Badge className={`border text-[10px] ${
-                          p.status === 'Paid' ? 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30'
-                            : 'bg-[#DB3A3A]/10 text-[#DB3A3A] border-[#DB3A3A]/30'
+                          p.status === 'Paid' ? 'bg-primary/10 text-primary border-primary/30'
+                            : 'bg-destructive/10 text-destructive border-destructive/30'
                         }`}>{p.status}</Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-[#768B80]">{formatDate(p.date)}</TableCell>
-                      <TableCell className="text-xs text-[#768B80]">{formatDate(p.due)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{formatDate(p.date)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{formatDate(p.due)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -303,37 +303,37 @@ export default function RestaurantDetail() {
 
         {/* Staff Tab */}
         <TabsContent value="staff" className="mt-4">
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium text-white">Staff Members</CardTitle>
-              <Badge className="bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30">{restaurant.staff} total</Badge>
+              <CardTitle className="text-sm font-medium text-foreground">Staff Members</CardTitle>
+              <Badge className="bg-primary/10 text-primary border-primary/30">{restaurant.staff} total</Badge>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-[#25332B]">
-                    <TableHead className="text-[#768B80] text-xs">Name</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Role</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Email</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Phone</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Status</TableHead>
+                  <TableRow className="border-border">
+                    <TableHead className="text-muted-foreground text-xs">Name</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Role</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Email</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Phone</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {staffData.map((s) => (
-                    <TableRow key={s.name} className="border-[#25332B]">
-                      <TableCell className="text-sm text-white font-medium">{s.name}</TableCell>
-                      <TableCell className="text-sm text-[#768B80]">{s.role}</TableCell>
-                      <TableCell className="text-sm text-[#768B80]">{s.email}</TableCell>
-                      <TableCell className="text-sm text-[#768B80]">{s.phone}</TableCell>
+                    <TableRow key={s.name} className="border-border">
+                      <TableCell className="text-sm text-foreground font-medium">{s.name}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{s.role}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{s.email}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{s.phone}</TableCell>
                       <TableCell>
                         {s.active ? (
-                          <Badge className="bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30 text-[10px]">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[#12B877] mr-1" /> Active
+                          <Badge className="bg-primary/10 text-primary border-primary/30 text-[10px]">
+                            <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1" /> Active
                           </Badge>
                         ) : (
-                          <Badge className="bg-[#768B80]/10 text-[#768B80] border-[#768B80]/30 text-[10px]">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[#768B80] mr-1" /> Inactive
+                          <Badge className="bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30 text-[10px]">
+                            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground mr-1" /> Inactive
                           </Badge>
                         )}
                       </TableCell>
@@ -347,14 +347,14 @@ export default function RestaurantDetail() {
 
         {/* Tables Tab */}
         <TabsContent value="tables" className="mt-4">
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardContent className="p-6">
               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
                 {Array.from({ length: restaurant.tables }, (_, i) => (
-                  <div key={i} className="p-3 rounded-lg bg-[#1A231E]/50 border border-[#25332B] text-center hover:border-[#12B877]/30 transition-colors cursor-pointer group">
-                    <QrCode className="h-6 w-6 mx-auto mb-1 text-[#768B80] group-hover:text-[#12B877]" />
-                    <p className="text-xs font-medium text-white">Table {i + 1}</p>
-                    <p className="text-[10px] text-[#768B80]">
+                  <div key={i} className="p-3 rounded-lg bg-muted/50 border border-border text-center hover:border-primary/30 transition-colors cursor-pointer group">
+                    <QrCode className="h-6 w-6 mx-auto mb-1 text-muted-foreground group-hover:text-primary" />
+                    <p className="text-xs font-medium text-foreground">Table {i + 1}</p>
+                    <p className="text-[10px] text-muted-foreground">
                       {i < 8 ? '2 seats' : i < 18 ? '4 seats' : '6 seats'}
                     </p>
                   </div>
@@ -366,33 +366,33 @@ export default function RestaurantDetail() {
 
         {/* Subscription Tab */}
         <TabsContent value="subscription" className="mt-4">
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-4 rounded-lg bg-[#1A231E]/50 border border-[#25332B]">
-                  <p className="text-xs text-[#768B80] uppercase mb-1">Current Plan</p>
-                  <p className="text-lg font-bold text-white">{restaurant.plan}</p>
-                  <p className="text-xs text-[#768B80]">NPR 45,000/month</p>
+                <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                  <p className="text-xs text-muted-foreground uppercase mb-1">Current Plan</p>
+                  <p className="text-lg font-bold text-foreground">{restaurant.plan}</p>
+                  <p className="text-xs text-muted-foreground">NPR 45,000/month</p>
                 </div>
-                <div className="p-4 rounded-lg bg-[#1A231E]/50 border border-[#25332B]">
-                  <p className="text-xs text-[#768B80] uppercase mb-1">Billing Cycle</p>
-                  <p className="text-lg font-bold text-white">Monthly</p>
-                  <p className="text-xs text-[#768B80]">Next billing: Aug 5, 2024</p>
+                <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                  <p className="text-xs text-muted-foreground uppercase mb-1">Billing Cycle</p>
+                  <p className="text-lg font-bold text-foreground">Monthly</p>
+                  <p className="text-xs text-muted-foreground">Next billing: Aug 5, 2024</p>
                 </div>
-                <div className="p-4 rounded-lg bg-[#1A231E]/50 border border-[#25332B]">
-                  <p className="text-xs text-[#768B80] uppercase mb-1">Trial</p>
-                  <p className="text-lg font-bold text-white">Expired</p>
-                  <p className="text-xs text-[#768B80]">Ended Mar 15, 2024</p>
+                <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                  <p className="text-xs text-muted-foreground uppercase mb-1">Trial</p>
+                  <p className="text-lg font-bold text-foreground">Expired</p>
+                  <p className="text-xs text-muted-foreground">Ended Mar 15, 2024</p>
                 </div>
               </div>
               <div className="mt-4 flex items-center gap-2">
-                <Button variant="outline" size="sm" className="border-[#25332B] text-[#768B80] text-xs">
+                <Button variant="outline" size="sm" className="border-border text-muted-foreground text-xs">
                   Override Plan
                 </Button>
-                <Button variant="outline" size="sm" className="border-[#25332B] text-[#768B80] text-xs">
+                <Button variant="outline" size="sm" className="border-border text-muted-foreground text-xs">
                   Extend Trial
                 </Button>
-                <Button variant="outline" size="sm" className="border-[#25332B] text-[#768B80] text-xs">
+                <Button variant="outline" size="sm" className="border-border text-muted-foreground text-xs">
                   Apply Credit
                 </Button>
               </div>
@@ -402,40 +402,40 @@ export default function RestaurantDetail() {
 
         {/* Tickets Tab */}
         <TabsContent value="tickets" className="mt-4">
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-[#25332B]">
-                    <TableHead className="text-[#768B80] text-xs">Ticket</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Subject</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Priority</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Status</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Created</TableHead>
-                    <TableHead className="text-[#768B80] text-xs">Assignee</TableHead>
+                  <TableRow className="border-border">
+                    <TableHead className="text-muted-foreground text-xs">Ticket</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Subject</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Priority</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Status</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Created</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Assignee</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {supportTickets.map((t) => (
-                    <TableRow key={t.id} className="border-[#25332B]">
-                      <TableCell className="text-sm text-white font-medium">{t.id}</TableCell>
-                      <TableCell className="text-sm text-[#768B80]">{t.subject}</TableCell>
+                    <TableRow key={t.id} className="border-border">
+                      <TableCell className="text-sm text-foreground font-medium">{t.id}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{t.subject}</TableCell>
                       <TableCell>
                         <Badge className={`border text-[10px] ${
-                          t.priority === 'High' ? 'bg-[#DB3A3A]/10 text-[#DB3A3A] border-[#DB3A3A]/30'
-                            : t.priority === 'Medium' ? 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30'
-                            : 'bg-[#768B80]/10 text-[#768B80] border-[#768B80]/30'
+                          t.priority === 'High' ? 'bg-destructive/10 text-destructive border-destructive/30'
+                            : t.priority === 'Medium' ? 'bg-accent/10 text-accent border-accent/30'
+                            : 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30'
                         }`}>{t.priority}</Badge>
                       </TableCell>
                       <TableCell>
                         <Badge className={`border text-[10px] ${
-                          t.status === 'Open' ? 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/30'
-                            : t.status === 'Resolved' ? 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30'
-                            : 'bg-[#768B80]/10 text-[#768B80] border-[#768B80]/30'
+                          t.status === 'Open' ? 'bg-info/10 text-info border-info/30'
+                            : t.status === 'Resolved' ? 'bg-primary/10 text-primary border-primary/30'
+                            : 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30'
                         }`}>{t.status}</Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-[#768B80]">{formatDate(t.created)}</TableCell>
-                      <TableCell className="text-xs text-[#768B80]">{t.assignee}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{formatDate(t.created)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{t.assignee}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -446,17 +446,17 @@ export default function RestaurantDetail() {
 
         {/* Documents Tab */}
         <TabsContent value="documents" className="mt-4">
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardContent className="p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {restaurant.documents.map((doc) => (
-                  <div key={doc} className="flex items-center gap-3 p-4 rounded-lg bg-[#1A231E]/50 border border-[#25332B] hover:border-[#12B877]/30 transition-colors cursor-pointer group">
-                    <FileText className="h-8 w-8 text-[#768B80] group-hover:text-[#12B877]" />
+                  <div key={doc} className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors cursor-pointer group">
+                    <FileText className="h-8 w-8 text-muted-foreground group-hover:text-primary" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{doc}</p>
-                      <p className="text-xs text-[#768B80]">Uploaded Jan 15, 2024</p>
+                      <p className="text-sm font-medium text-foreground truncate">{doc}</p>
+                      <p className="text-xs text-muted-foreground">Uploaded Jan 15, 2024</p>
                     </div>
-                    <Download className="h-4 w-4 text-[#768B80] group-hover:text-[#12B877]" />
+                    <Download className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
                   </div>
                 ))}
               </div>
@@ -466,12 +466,12 @@ export default function RestaurantDetail() {
 
         {/* Audit Tab */}
         <TabsContent value="audit" className="mt-4">
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardHeader>
-              <CardTitle className="text-sm font-medium text-white">Audit Trail</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">Audit Trail</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y divide-[#25332B]">
+              <div className="divide-y divide-border">
                 {[
                   { action: 'Plan upgraded from Basic to Pro', by: 'Super Admin', time: '2024-06-15 14:30', type: 'change' },
                   { action: 'Payment of NPR 45,000 received', by: 'System', time: '2024-06-01 09:15', type: 'payment' },
@@ -481,11 +481,11 @@ export default function RestaurantDetail() {
                 ].map((log, i) => (
                   <div key={i} className="flex items-start gap-3 px-4 py-3">
                     <div className={`h-2 w-2 rounded-full mt-1.5 flex-shrink-0 ${
-                      log.type === 'payment' ? 'bg-[#12B877]' : log.type === 'alert' ? 'bg-[#DB3A3A]' : 'bg-[#3B82F6]'
+                      log.type === 'payment' ? 'bg-primary' : log.type === 'alert' ? 'bg-destructive' : 'bg-info'
                     }`} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white/70">{log.action}</p>
-                      <p className="text-xs text-[#768B80]">{log.by} · {log.time}</p>
+                      <p className="text-sm text-foreground/70">{log.action}</p>
+                      <p className="text-xs text-muted-foreground">{log.by} · {log.time}</p>
                     </div>
                   </div>
                 ))}

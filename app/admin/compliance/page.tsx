@@ -24,9 +24,9 @@ import {
 import { formatCurrency, formatDate, formatPercentage, formatRelativeTime } from '@/lib/format';
 
 const kpiCards = [
-  { title: 'Valid PAN', value: '510', subtitle: 'out of 547 restaurants', percentage: 93, color: '#12B877' },
-  { title: 'VAT Registered', value: '423', subtitle: 'out of 547 restaurants', percentage: 77, color: '#3B82F6' },
-  { title: 'Tax Filings Current', value: '89%', subtitle: 'Last quarter compliance', percentage: 89, color: '#F4B740' },
+  { title: 'Valid PAN', value: '510', subtitle: 'out of 547 restaurants', percentage: 93, color: 'hsl(var(--primary))' },
+  { title: 'VAT Registered', value: '423', subtitle: 'out of 547 restaurants', percentage: 77, color: 'hsl(var(--info))' },
+  { title: 'Tax Filings Current', value: '89%', subtitle: 'Last quarter compliance', percentage: 89, color: 'hsl(var(--accent))' },
 ];
 
 const panVatData = [
@@ -67,17 +67,17 @@ const exportData = [
 
 const StatusBadge = ({ status }: { status: string }) => {
   const colors: Record<string, string> = {
-    Compliant: 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
-    'Action Required': 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30',
-    'Non-Compliant': 'bg-[#DB3A3A]/10 text-[#DB3A3A] border-[#DB3A3A]/30',
+    Compliant: 'bg-primary/10 text-primary border-primary/30',
+    'Action Required': 'bg-accent/10 text-accent border-accent/30',
+    'Non-Compliant': 'bg-destructive/10 text-destructive border-destructive/30',
   };
   return <Badge className={`border text-[10px] ${colors[status] || ''}`}>{status}</Badge>;
 };
 
 const VerifiedBadge = ({ status }: { status: string }) => {
-  if (status === 'Yes') return <span className="flex items-center gap-1 text-[#12B877] text-xs"><CheckCircle className="h-3 w-3" /> Yes</span>;
-  if (status === 'No') return <span className="flex items-center gap-1 text-[#DB3A3A] text-xs"><XCircle className="h-3 w-3" /> No</span>;
-  return <span className="flex items-center gap-1 text-[#F4B740] text-xs"><Clock className="h-3 w-3" /> Pending</span>;
+  if (status === 'Yes') return <span className="flex items-center gap-1 text-primary text-xs"><CheckCircle className="h-3 w-3" /> Yes</span>;
+  if (status === 'No') return <span className="flex items-center gap-1 text-destructive text-xs"><XCircle className="h-3 w-3" /> No</span>;
+  return <span className="flex items-center gap-1 text-accent text-xs"><Clock className="h-3 w-3" /> Pending</span>;
 };
 
 export default function AdminCompliance() {
@@ -85,25 +85,25 @@ export default function AdminCompliance() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Compliance Dashboard</h1>
-          <p className="text-sm text-[#768B80] mt-1">IRD compliance, document vault, fraud detection & data export</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Compliance Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">IRD compliance, document vault, fraud detection & data export</p>
         </div>
-        <Badge variant="outline" className="border-[#12B877]/30 text-[#12B877] bg-[#12B877]/5">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#12B877] mr-1.5 animate-pulse" />
+        <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
           Auto-Sync Active
         </Badge>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {kpiCards.map((kpi) => (
-          <Card key={kpi.title} className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card key={kpi.title} className="bg-card border-border shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium text-[#768B80] uppercase tracking-wider">{kpi.title}</CardTitle>
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{kpi.title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white tracking-tight">{kpi.value}</div>
-              <p className="text-[11px] text-[#768B80] mt-0.5">{kpi.subtitle}</p>
-              <div className="mt-3 h-1.5 rounded-full bg-[#1A231E] overflow-hidden">
+              <div className="text-2xl font-bold text-foreground tracking-tight">{kpi.value}</div>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{kpi.subtitle}</p>
+              <div className="mt-3 h-1.5 rounded-full bg-muted overflow-hidden">
                 <div className="h-full rounded-full transition-all" style={{ width: `${kpi.percentage}%`, backgroundColor: kpi.color }} />
               </div>
             </CardContent>
@@ -111,32 +111,32 @@ export default function AdminCompliance() {
         ))}
       </div>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-[#12B877]" />
-            <CardTitle className="text-sm font-medium text-white">PAN / VAT Verification</CardTitle>
+            <FileText className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium text-foreground">PAN / VAT Verification</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="border-[#25332B] hover:bg-transparent">
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">PAN</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Verified</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">VAT</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">VAT Verified</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Status</TableHead>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">PAN</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Verified</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">VAT</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">VAT Verified</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {panVatData.map((row) => (
-                <TableRow key={row.restaurant} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
-                  <TableCell><span className="text-sm font-medium text-white">{row.restaurant}</span></TableCell>
-                  <TableCell><span className="text-xs text-[#768B80]">{row.pan}</span></TableCell>
+                <TableRow key={row.restaurant} className="border-border hover:bg-muted/50 transition-colors">
+                  <TableCell><span className="text-sm font-medium text-foreground">{row.restaurant}</span></TableCell>
+                  <TableCell><span className="text-xs text-muted-foreground">{row.pan}</span></TableCell>
                   <TableCell><VerifiedBadge status={row.verified} /></TableCell>
-                  <TableCell><span className="text-xs text-[#768B80]">{row.vat}</span></TableCell>
+                  <TableCell><span className="text-xs text-muted-foreground">{row.vat}</span></TableCell>
                   <TableCell><VerifiedBadge status={row.vatVerified} /></TableCell>
                   <TableCell><StatusBadge status={row.status} /></TableCell>
                 </TableRow>
@@ -146,11 +146,11 @@ export default function AdminCompliance() {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-[#12B877]" />
-            <CardTitle className="text-sm font-medium text-white">Document Vault</CardTitle>
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium text-foreground">Document Vault</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -158,13 +158,13 @@ export default function AdminCompliance() {
             {documentVault.map((doc) => {
               const DocIcon = doc.icon;
               return (
-                <div key={doc.name} className="p-4 rounded-lg bg-[#1A231E]/50 border border-[#25332B] hover:border-[#12B877]/30 transition-colors">
-                  <div className="h-9 w-9 rounded-lg bg-[#12B877]/10 flex items-center justify-center mb-3">
-                    <DocIcon className="h-4.5 w-4.5 text-[#12B877]" />
+                <div key={doc.name} className="p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors">
+                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                    <DocIcon className="h-4.5 w-4.5 text-primary" />
                   </div>
-                  <p className="text-sm font-medium text-white">{doc.name}</p>
-                  <p className="text-2xl font-bold text-white mt-1">{doc.count}</p>
-                  <p className="text-[10px] text-[#768B80] mt-1">Updated {formatRelativeTime(new Date(doc.lastUpdated))}</p>
+                  <p className="text-sm font-medium text-foreground">{doc.name}</p>
+                  <p className="text-2xl font-bold text-foreground mt-1">{doc.count}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Updated {formatRelativeTime(new Date(doc.lastUpdated))}</p>
                 </div>
               );
             })}
@@ -172,45 +172,45 @@ export default function AdminCompliance() {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-[#DB3A3A]" />
-            <CardTitle className="text-sm font-medium text-white">Fraud Detection</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <CardTitle className="text-sm font-medium text-foreground">Fraud Detection</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="border-[#25332B] hover:bg-transparent">
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Type</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Detail</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Risk Score</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Date</TableHead>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Type</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Detail</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Risk Score</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Date</TableHead>
                 <TableHead className="text-right" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {fraudData.map((row, i) => (
-                <TableRow key={i} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
+                <TableRow key={i} className="border-border hover:bg-muted/50 transition-colors">
                   <TableCell>
                     <Badge className={`border text-[10px] ${
-                      row.type === 'Payment' ? 'bg-[#DB3A3A]/10 text-[#DB3A3A] border-[#DB3A3A]/30'
-                        : row.type === 'Failed Login' ? 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30'
-                        : 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/30'
+                      row.type === 'Payment' ? 'bg-destructive/10 text-destructive border-destructive/30'
+                        : row.type === 'Failed Login' ? 'bg-accent/10 text-accent border-accent/30'
+                        : 'bg-info/10 text-info border-info/30'
                     }`}>{row.type}</Badge>
                   </TableCell>
-                  <TableCell><span className="text-sm text-white">{row.restaurant}</span></TableCell>
-                  <TableCell><span className="text-xs text-[#768B80]">{row.detail}</span></TableCell>
+                  <TableCell><span className="text-sm text-foreground">{row.restaurant}</span></TableCell>
+                  <TableCell><span className="text-xs text-muted-foreground">{row.detail}</span></TableCell>
                   <TableCell className="text-right">
                     <span className={`text-sm font-bold ${
-                      row.risk >= 90 ? 'text-[#DB3A3A]' : row.risk >= 75 ? 'text-[#F4B740]' : 'text-[#F4B740]'
+                      row.risk >= 90 ? 'text-destructive' : row.risk >= 75 ? 'text-accent' : 'text-accent'
                     }`}>{row.risk}%</span>
                   </TableCell>
-                  <TableCell><span className="text-xs text-[#768B80]">{formatDate(new Date(row.date))}</span></TableCell>
+                  <TableCell><span className="text-xs text-muted-foreground">{formatDate(new Date(row.date))}</span></TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" className="h-7 text-[10px] border-[#25332B] text-[#12B877] hover:bg-[#12B877]/10">
+                    <Button variant="outline" size="sm" className="h-7 text-[10px] border-border text-primary hover:bg-primary/10">
                       <Eye className="h-3 w-3 mr-1" /> Review
                     </Button>
                   </TableCell>
@@ -221,44 +221,44 @@ export default function AdminCompliance() {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Download className="h-4 w-4 text-[#12B877]" />
-            <CardTitle className="text-sm font-medium text-white">Data Export Requests</CardTitle>
+            <Download className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium text-foreground">Data Export Requests</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="border-[#25332B] hover:bg-transparent">
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Requester</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Data Type</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Status</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Requested Date</TableHead>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Requester</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Data Type</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Status</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Requested Date</TableHead>
                 <TableHead className="text-right" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {exportData.map((row, i) => (
-                <TableRow key={i} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
-                  <TableCell><span className="text-sm font-medium text-white">{row.requester}</span></TableCell>
-                  <TableCell><span className="text-xs text-[#768B80]">{row.dataType}</span></TableCell>
+                <TableRow key={i} className="border-border hover:bg-muted/50 transition-colors">
+                  <TableCell><span className="text-sm font-medium text-foreground">{row.requester}</span></TableCell>
+                  <TableCell><span className="text-xs text-muted-foreground">{row.dataType}</span></TableCell>
                   <TableCell>
                     <Badge className={`border text-[10px] ${
-                      row.status === 'Completed' ? 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30'
-                        : 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30'
+                      row.status === 'Completed' ? 'bg-primary/10 text-primary border-primary/30'
+                        : 'bg-accent/10 text-accent border-accent/30'
                     }`}>{row.status}</Badge>
                   </TableCell>
-                  <TableCell><span className="text-xs text-[#768B80]">{formatDate(new Date(row.requestedDate))}</span></TableCell>
+                  <TableCell><span className="text-xs text-muted-foreground">{formatDate(new Date(row.requestedDate))}</span></TableCell>
                   <TableCell className="text-right">
                     <Button
                       variant="outline"
                       size="sm"
-                      className={`h-7 text-[10px] border-[#25332B] ${
+                      className={`h-7 text-[10px] border-border ${
                         row.status === 'Completed'
-                          ? 'text-[#12B877] hover:bg-[#12B877]/10'
-                          : 'text-[#768B80] opacity-50 cursor-not-allowed'
+                          ? 'text-primary hover:bg-primary/10'
+                          : 'text-muted-foreground opacity-50 cursor-not-allowed'
                       }`}
                       disabled={row.status !== 'Completed'}
                     >

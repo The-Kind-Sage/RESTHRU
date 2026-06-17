@@ -32,23 +32,23 @@ import { formatDate, formatRelativeTime, formatNumber } from '@/lib/format';
 
 const roles = [
   {
-    name: 'Super Admin', memberCount: 2, color: '#12B877',
+    name: 'Super Admin', memberCount: 2, color: 'hsl(var(--primary))',
     permissions: ['Full system access', 'User management', 'Billing & plans', 'Security config', 'All modules'],
   },
   {
-    name: 'Sales Admin', memberCount: 5, color: '#3B82F6',
+    name: 'Sales Admin', memberCount: 5, color: 'hsl(var(--info))',
     permissions: ['Restaurant profiles', 'Pipeline view', 'Lead management', 'Reports'],
   },
   {
-    name: 'Support Admin', memberCount: 8, color: '#F4B740',
+    name: 'Support Admin', memberCount: 8, color: 'hsl(var(--accent))',
     permissions: ['Ticket management', 'Restaurant lookup', 'Announcements', 'FAQ management'],
   },
   {
-    name: 'Finance Admin', memberCount: 3, color: '#DB3A3A',
+    name: 'Finance Admin', memberCount: 3, color: 'hsl(var(--destructive))',
     permissions: ['Transaction logs', 'Invoice access', 'Refund processing', 'P&L reports'],
   },
   {
-    name: 'Read-Only Admin', memberCount: 4, color: '#768B80',
+    name: 'Read-Only Admin', memberCount: 4, color: 'hsl(var(--muted-foreground))',
     permissions: ['Dashboard view only', 'Report access', 'No edit rights', 'Export allowed'],
   },
 ];
@@ -84,19 +84,19 @@ const backup = {
 };
 
 const RoleCard = ({ role }: { role: typeof roles[0] }) => (
-  <div className="p-4 rounded-lg bg-[#1A231E]/50 border border-[#25332B] hover:border-[#12B877]/30 transition-colors">
+  <div className="p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors">
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center gap-2">
         <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: role.color }} />
-        <h3 className="text-sm font-medium text-white">{role.name}</h3>
+        <h3 className="text-sm font-medium text-foreground">{role.name}</h3>
       </div>
-      <Badge className="bg-[#1A231E] text-[#768B80] border border-[#25332B] text-[10px]">{role.memberCount} members</Badge>
+      <Badge className="bg-muted text-muted-foreground border border-border text-[10px]">{role.memberCount} members</Badge>
     </div>
     <ul className="space-y-1">
       {role.permissions.map((perm) => (
         <li key={perm} className="flex items-center gap-1.5">
-          <span className="h-1 w-1 rounded-full bg-[#12B877]" />
-          <span className="text-[11px] text-[#768B80]">{perm}</span>
+          <span className="h-1 w-1 rounded-full bg-primary" />
+          <span className="text-[11px] text-muted-foreground">{perm}</span>
         </li>
       ))}
     </ul>
@@ -105,9 +105,9 @@ const RoleCard = ({ role }: { role: typeof roles[0] }) => (
 
 const StatusBadge = ({ status }: { status: string }) => {
   const colors: Record<string, string> = {
-    Active: 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
-    Invited: 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/30',
-    Suspended: 'bg-[#DB3A3A]/10 text-[#DB3A3A] border-[#DB3A3A]/30',
+    Active: 'bg-primary/10 text-primary border-primary/30',
+    Invited: 'bg-info/10 text-info border-info/30',
+    Suspended: 'bg-destructive/10 text-destructive border-destructive/30',
   };
   return <Badge className={`border text-[10px] ${colors[status] || ''}`}>{status}</Badge>;
 };
@@ -117,19 +117,19 @@ export default function AdminSettings() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Settings</h1>
-          <p className="text-sm text-[#768B80] mt-1">Admin roles, team management, security & platform configuration</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Settings</h1>
+          <p className="text-sm text-muted-foreground mt-1">Admin roles, team management, security & platform configuration</p>
         </div>
-        <Button variant="outline" size="sm" className="border-[#25332B] text-[#12B877] hover:bg-[#12B877]/10">
+        <Button variant="outline" size="sm" className="border-border text-primary hover:bg-primary/10">
           <RefreshCw className="h-4 w-4 mr-1.5" /> Refresh
         </Button>
       </div>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-[#12B877]" />
-            <CardTitle className="text-sm font-medium text-white">Admin Roles</CardTitle>
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium text-foreground">Admin Roles</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -141,14 +141,14 @@ export default function AdminSettings() {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-[#12B877]" />
-              <CardTitle className="text-sm font-medium text-white">Team Management</CardTitle>
+              <Users className="h-4 w-4 text-primary" />
+              <CardTitle className="text-sm font-medium text-foreground">Team Management</CardTitle>
             </div>
-            <Button size="sm" className="bg-[#12B877] hover:bg-[#0E945E] text-white h-8 text-xs">
+            <Button size="sm" className="bg-primary hover:bg-[hsl(var(--primary-hover))] text-white h-8 text-xs">
               <Plus className="h-3.5 w-3.5 mr-1" /> Add Admin
             </Button>
           </div>
@@ -156,36 +156,36 @@ export default function AdminSettings() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="border-[#25332B] hover:bg-transparent">
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Name</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Email</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Role</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Status</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Last Active</TableHead>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Name</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Email</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Role</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Status</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Last Active</TableHead>
                 <TableHead className="text-right" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {teamMembers.map((member) => (
-                <TableRow key={member.email} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
-                  <TableCell><span className="text-sm font-medium text-white">{member.name}</span></TableCell>
-                  <TableCell><span className="text-xs text-[#768B80]">{member.email}</span></TableCell>
-                  <TableCell><span className="text-xs text-white/70">{member.role}</span></TableCell>
+                <TableRow key={member.email} className="border-border hover:bg-muted/50 transition-colors">
+                  <TableCell><span className="text-sm font-medium text-foreground">{member.name}</span></TableCell>
+                  <TableCell><span className="text-xs text-muted-foreground">{member.email}</span></TableCell>
+                  <TableCell><span className="text-xs text-foreground/70">{member.role}</span></TableCell>
                   <TableCell><StatusBadge status={member.status} /></TableCell>
                   <TableCell>
-                    <span className="text-xs text-[#768B80]">
+                    <span className="text-xs text-muted-foreground">
                       {member.lastActive ? formatRelativeTime(new Date(member.lastActive)) : '—'}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-[#768B80] hover:text-[#12B877]">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
                         <Edit3 className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-[#768B80] hover:text-[#F4B740]">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-accent">
                         <UserX className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-[#768B80] hover:text-[#DB3A3A]">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
                         <UserCheck className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -197,55 +197,55 @@ export default function AdminSettings() {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-[#F4B740]" />
-            <CardTitle className="text-sm font-medium text-white">Security</CardTitle>
+            <ShieldCheck className="h-4 w-4 text-accent" />
+            <CardTitle className="text-sm font-medium text-foreground">Security</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white">Two-Factor Authentication</p>
-              <p className="text-xs text-[#768B80] mt-0.5">Additional security layer for admin accounts</p>
+              <p className="text-sm font-medium text-foreground">Two-Factor Authentication</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Additional security layer for admin accounts</p>
             </div>
-            <Badge className="bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30">
+            <Badge className="bg-primary/10 text-primary border-primary/30">
               <ShieldCheck className="h-3 w-3 mr-1" /> Enabled
             </Badge>
           </div>
-          <div className="border-t border-[#25332B] pt-5">
+          <div className="border-t border-border pt-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-white">IP Whitelist</p>
-                <p className="text-xs text-[#768B80] mt-0.5">Restrict admin access to specific IP addresses</p>
+                <p className="text-sm font-medium text-foreground">IP Whitelist</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Restrict admin access to specific IP addresses</p>
               </div>
               <div className="flex items-center gap-2">
                 <Input
                   defaultValue="103.1.85.0/24"
-                  className="w-48 bg-[#1A231E] border-[#25332B] text-white text-sm h-9"
+                  className="w-48 bg-muted border-border text-foreground text-sm h-9"
                 />
-                <Button variant="outline" size="sm" className="border-[#25332B] text-[#12B877] hover:bg-[#12B877]/10 h-9">
+                <Button variant="outline" size="sm" className="border-border text-primary hover:bg-primary/10 h-9">
                   Update
                 </Button>
               </div>
             </div>
           </div>
-          <div className="border-t border-[#25332B] pt-5">
+          <div className="border-t border-border pt-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-white">Session Timeout</p>
-                <p className="text-xs text-[#768B80] mt-0.5">Auto-logout idle admin sessions</p>
+                <p className="text-sm font-medium text-foreground">Session Timeout</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Auto-logout idle admin sessions</p>
               </div>
               <Select defaultValue="1h">
-                <SelectTrigger className="w-[130px] bg-[#1A231E] border-[#25332B] text-white h-9 text-sm">
+                <SelectTrigger className="w-[130px] bg-muted border-border text-foreground h-9 text-sm">
                   <SelectValue placeholder="Timeout" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0D1711] border-[#25332B]">
-                  <SelectItem value="30m" className="text-white">30 minutes</SelectItem>
-                  <SelectItem value="1h" className="text-white">1 hour</SelectItem>
-                  <SelectItem value="2h" className="text-white">2 hours</SelectItem>
-                  <SelectItem value="4h" className="text-white">4 hours</SelectItem>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="30m" className="text-foreground">30 minutes</SelectItem>
+                  <SelectItem value="1h" className="text-foreground">1 hour</SelectItem>
+                  <SelectItem value="2h" className="text-foreground">2 hours</SelectItem>
+                  <SelectItem value="4h" className="text-foreground">4 hours</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -253,77 +253,77 @@ export default function AdminSettings() {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4 text-[#12B877]" />
-            <CardTitle className="text-sm font-medium text-white">Platform Configuration</CardTitle>
+            <Settings className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium text-foreground">Platform Configuration</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {platformConfig.map((item) => (
-              <div key={item.label} className="p-3 rounded-lg bg-[#1A231E]/50 border border-[#25332B]">
-                <p className="text-[10px] text-[#768B80] uppercase tracking-wider font-medium">{item.label}</p>
-                <p className="text-sm font-medium text-white mt-1">{item.value}</p>
+              <div key={item.label} className="p-3 rounded-lg bg-muted/50 border border-border">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{item.label}</p>
+                <p className="text-sm font-medium text-foreground mt-1">{item.value}</p>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Key className="h-4 w-4 text-[#12B877]" />
-            <CardTitle className="text-sm font-medium text-white">API Management</CardTitle>
+            <Key className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium text-foreground">API Management</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-xs text-[#768B80] mb-1">Primary API Key</p>
+              <p className="text-xs text-muted-foreground mb-1">Primary API Key</p>
               <div className="flex items-center gap-2">
-                <code className="bg-[#1A231E] border border-[#25332B] rounded-lg px-3 py-2 text-sm text-[#768B80] font-mono">
+                <code className="bg-muted border border-border rounded-lg px-3 py-2 text-sm text-muted-foreground font-mono">
                   sk_resthru_••••••••••••a3f8
                 </code>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-[#768B80] hover:text-white">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                   <Copy className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-[#768B80] hover:text-white">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                   <EyeOff className="h-4 w-4" />
                 </Button>
               </div>
             </div>
-            <Button variant="outline" size="sm" className="border-[#25332B] text-[#12B877] hover:bg-[#12B877]/10 h-9 ml-4">
+            <Button variant="outline" size="sm" className="border-border text-primary hover:bg-primary/10 h-9 ml-4">
               <Plus className="h-4 w-4 mr-1.5" /> Generate New
             </Button>
           </div>
-          <div className="border-t border-[#25332B] pt-5">
+          <div className="border-t border-border pt-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <div>
-                  <p className="text-xs text-[#768B80]">Rate Limit</p>
+                  <p className="text-xs text-muted-foreground">Rate Limit</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Input
                       defaultValue="100"
-                      className="w-20 bg-[#1A231E] border-[#25332B] text-white text-sm h-9 text-center"
+                      className="w-20 bg-muted border-border text-foreground text-sm h-9 text-center"
                     />
-                    <span className="text-sm text-white/70">requests/min</span>
-                    <Button variant="outline" size="sm" className="border-[#25332B] text-[#12B877] hover:bg-[#12B877]/10 h-9">
+                    <span className="text-sm text-foreground/70">requests/min</span>
+                    <Button variant="outline" size="sm" className="border-border text-primary hover:bg-primary/10 h-9">
                       Save
                     </Button>
                   </div>
                 </div>
-                <div className="h-10 w-px bg-[#25332B]" />
+                <div className="h-10 w-px bg-border" />
                 <div>
-                  <p className="text-xs text-[#768B80]">Requests Today</p>
-                  <p className="text-lg font-bold text-white mt-0.5">{formatNumber(apiUsage.requestsToday)}</p>
+                  <p className="text-xs text-muted-foreground">Requests Today</p>
+                  <p className="text-lg font-bold text-foreground mt-0.5">{formatNumber(apiUsage.requestsToday)}</p>
                 </div>
-                <div className="h-10 w-px bg-[#25332B]" />
+                <div className="h-10 w-px bg-border" />
                 <div>
-                  <p className="text-xs text-[#768B80]">Error Rate</p>
-                  <p className="text-lg font-bold text-[#12B877] mt-0.5">{apiUsage.errorRate}%</p>
+                  <p className="text-xs text-muted-foreground">Error Rate</p>
+                  <p className="text-lg font-bold text-primary mt-0.5">{apiUsage.errorRate}%</p>
                 </div>
               </div>
             </div>
@@ -331,31 +331,31 @@ export default function AdminSettings() {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Database className="h-4 w-4 text-[#12B877]" />
-            <CardTitle className="text-sm font-medium text-white">Backup / Restore</CardTitle>
+            <Database className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium text-foreground">Backup / Restore</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-4 rounded-lg bg-[#1A231E]/50 border border-[#25332B]">
-              <p className="text-[10px] text-[#768B80] uppercase tracking-wider font-medium">Backup Schedule</p>
-              <p className="text-sm font-medium text-white mt-1">{backup.schedule}</p>
+            <div className="p-4 rounded-lg bg-muted/50 border border-border">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Backup Schedule</p>
+              <p className="text-sm font-medium text-foreground mt-1">{backup.schedule}</p>
             </div>
-            <div className="p-4 rounded-lg bg-[#1A231E]/50 border border-[#25332B]">
-              <p className="text-[10px] text-[#768B80] uppercase tracking-wider font-medium">Last Backup</p>
-              <p className="text-sm font-medium text-white mt-1">{formatRelativeTime(new Date(backup.lastBackup))}</p>
-              <p className="text-[10px] text-[#768B80] mt-0.5">{formatDate(new Date(backup.lastBackup))}</p>
+            <div className="p-4 rounded-lg bg-muted/50 border border-border">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Last Backup</p>
+              <p className="text-sm font-medium text-foreground mt-1">{formatRelativeTime(new Date(backup.lastBackup))}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{formatDate(new Date(backup.lastBackup))}</p>
             </div>
-            <div className="p-4 rounded-lg bg-[#1A231E]/50 border border-[#25332B] flex items-end">
-              <Button className="w-full bg-[#12B877] hover:bg-[#0E945E] text-white h-9">
+            <div className="p-4 rounded-lg bg-muted/50 border border-border flex items-end">
+              <Button className="w-full bg-primary hover:bg-[hsl(var(--primary-hover))] text-white h-9">
                 <Download className="h-4 w-4 mr-1.5" /> Manual Backup
               </Button>
             </div>
-            <div className="p-4 rounded-lg bg-[#1A231E]/50 border border-[#25332B] flex items-end">
-              <Button variant="outline" className="w-full border-[#25332B] text-[#F4B740] hover:bg-[#F4B740]/10 h-9">
+            <div className="p-4 rounded-lg bg-muted/50 border border-border flex items-end">
+              <Button variant="outline" className="w-full border-border text-accent hover:bg-accent/10 h-9">
                 <Upload className="h-4 w-4 mr-1.5" /> Restore
               </Button>
             </div>

@@ -107,15 +107,15 @@ const integrationData: IntegrationEntry[] = [
 
 const statusColor = (status: string) => {
   const colors: Record<string, string> = {
-    Published: 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
-    Draft: 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30',
+    Published: 'bg-primary/10 text-primary border-primary/30',
+    Draft: 'bg-accent/10 text-accent border-accent/30',
   };
-  return colors[status] || 'bg-[#768B80]/10 text-[#768B80] border-[#768B80]/30';
+  return colors[status] || 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30';
 };
 
 const integrationStatusColors: Record<string, string> = {
-  Connected: 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
-  'Not Connected': 'bg-[#DB3A3A]/10 text-[#DB3A3A] border-[#DB3A3A]/30',
+  Connected: 'bg-primary/10 text-primary border-primary/30',
+  'Not Connected': 'bg-destructive/10 text-destructive border-destructive/30',
 };
 
 const cmsIcons: Record<string, React.ElementType> = {
@@ -139,29 +139,29 @@ export default function AdminMarketing() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Marketing Tools</h1>
-          <p className="text-sm text-[#768B80] mt-1">Manage CMS, SEO, press kit, and growth experiments</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Marketing Tools</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage CMS, SEO, press kit, and growth experiments</p>
         </div>
-        <Badge variant="outline" className="border-[#12B877]/30 text-[#12B877] bg-[#12B877]/5">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#12B877] mr-1.5 animate-pulse" />
+        <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
           Live Site
         </Badge>
       </div>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-[#12B877]" />
-              <CardTitle className="text-sm font-medium text-white">CMS Overview</CardTitle>
+              <FileText className="h-4 w-4 text-primary" />
+              <CardTitle className="text-sm font-medium text-foreground">CMS Overview</CardTitle>
             </div>
-            <p className="text-xs text-[#768B80] mt-0.5">Manage website content and pages</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Manage website content and pages</p>
           </div>
           <Tabs value={cmsTab} onValueChange={setCmsTab} className="w-auto">
-            <TabsList className="bg-[#1A231E] border border-[#25332B] h-8">
-              <TabsTrigger value="all" className="text-[10px] px-3 py-1 data-[state=active]:bg-[#12B877]/20 data-[state=active]:text-[#12B877]">All</TabsTrigger>
-              <TabsTrigger value="published" className="text-[10px] px-3 py-1 data-[state=active]:bg-[#12B877]/20 data-[state=active]:text-[#12B877]">Published</TabsTrigger>
-              <TabsTrigger value="draft" className="text-[10px] px-3 py-1 data-[state=active]:bg-[#12B877]/20 data-[state=active]:text-[#12B877]">Drafts</TabsTrigger>
+            <TabsList className="bg-muted border border-border h-8">
+              <TabsTrigger value="all" className="text-[10px] px-3 py-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">All</TabsTrigger>
+              <TabsTrigger value="published" className="text-[10px] px-3 py-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Published</TabsTrigger>
+              <TabsTrigger value="draft" className="text-[10px] px-3 py-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Drafts</TabsTrigger>
             </TabsList>
           </Tabs>
         </CardHeader>
@@ -172,24 +172,24 @@ export default function AdminMarketing() {
               const published = items.filter((c) => c.status === 'Published').length;
               const Icon = cmsIcons[type] || FileText;
               return (
-                <div key={type} className="p-4 rounded-lg bg-[#1A231E]/50 border border-[#25332B] hover:border-[#12B877]/20 transition-colors">
+                <div key={type} className="p-4 rounded-lg bg-muted/50 border border-border hover:border-[hsl(var(--primary))]/20 transition-colors">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="h-8 w-8 rounded-lg bg-[#12B877]/10 flex items-center justify-center">
-                      <Icon className="h-4 w-4 text-[#12B877]" />
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Icon className="h-4 w-4 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-white">{type}</p>
-                      <p className="text-[10px] text-[#768B80]">{items.length} entries</p>
+                      <p className="text-sm font-medium text-foreground">{type}</p>
+                      <p className="text-[10px] text-muted-foreground">{items.length} entries</p>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Badge className="border text-[10px] bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30">{published} Published</Badge>
+                      <Badge className="border text-[10px] bg-primary/10 text-primary border-primary/30">{published} Published</Badge>
                       {items.length - published > 0 && (
-                        <Badge className="border text-[10px] bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30">{items.length - published} Draft</Badge>
+                        <Badge className="border text-[10px] bg-accent/10 text-accent border-accent/30">{items.length - published} Draft</Badge>
                       )}
                     </div>
-                    <span className="text-[10px] text-[#768B80]">
+                    <span className="text-[10px] text-muted-foreground">
                       Updated {formatRelativeTime(items.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime())[0]?.lastUpdated || '')}
                     </span>
                   </div>
@@ -200,60 +200,60 @@ export default function AdminMarketing() {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-[#3B82F6]" />
-              <CardTitle className="text-sm font-medium text-white">SEO Tools</CardTitle>
+              <Search className="h-4 w-4 text-info" />
+              <CardTitle className="text-sm font-medium text-foreground">SEO Tools</CardTitle>
             </div>
-            <p className="text-xs text-[#768B80] mt-0.5">Meta tags and search optimization for public pages</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Meta tags and search optimization for public pages</p>
           </div>
-          <Button variant="outline" size="sm" className="border-[#25332B] text-[#768B80] hover:text-white">
+          <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground">
             <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Reindex
           </Button>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="border-[#25332B] hover:bg-transparent">
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Page</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Meta Title</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Meta Description</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-center">OG Image</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Last Edited</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Actions</TableHead>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Page</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Meta Title</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Meta Description</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-center">OG Image</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Last Edited</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {seoData.map((entry) => (
-                <TableRow key={entry.id} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
+                <TableRow key={entry.id} className="border-border hover:bg-muted/50 transition-colors">
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Globe className="h-3.5 w-3.5 text-[#768B80]" />
-                      <span className="text-sm font-medium text-white">{entry.page}</span>
+                      <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground">{entry.page}</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className={`text-xs ${entry.metaTitle ? 'text-white/70' : 'text-[#DB3A3A] italic'}`}>
+                    <span className={`text-xs ${entry.metaTitle ? 'text-foreground/70' : 'text-destructive italic'}`}>
                       {entry.metaTitle || 'Not set'}
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span className={`text-xs ${entry.metaDescription ? 'text-white/70' : 'text-[#DB3A3A] italic'}`}>
+                    <span className={`text-xs ${entry.metaDescription ? 'text-foreground/70' : 'text-destructive italic'}`}>
                       {entry.metaDescription || 'Not set'}
                     </span>
                   </TableCell>
                   <TableCell className="text-center">
                     {entry.ogImage ? (
-                      <CheckCircle className="h-4 w-4 text-[#12B877] mx-auto" />
+                      <CheckCircle className="h-4 w-4 text-primary mx-auto" />
                     ) : (
-                      <XCircle className="h-4 w-4 text-[#DB3A3A] mx-auto" />
+                      <XCircle className="h-4 w-4 text-destructive mx-auto" />
                     )}
                   </TableCell>
-                  <TableCell className="text-xs text-[#768B80]">{formatDate(entry.lastEdited)}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{formatDate(entry.lastEdited)}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" className="h-7 text-[10px] text-[#12B877] hover:bg-[#12B877]/10">
+                    <Button variant="ghost" size="sm" className="h-7 text-[10px] text-primary hover:bg-primary/10">
                       <Edit className="h-3 w-3 mr-1" /> Edit
                     </Button>
                   </TableCell>
@@ -265,28 +265,28 @@ export default function AdminMarketing() {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Image className="h-4 w-4 text-[#F4B740]" />
-              <CardTitle className="text-sm font-medium text-white">Press Kit</CardTitle>
+              <Image className="h-4 w-4 text-accent" />
+              <CardTitle className="text-sm font-medium text-foreground">Press Kit</CardTitle>
             </div>
-            <p className="text-xs text-[#768B80] mt-0.5">Brand assets, logos, and screenshots</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Brand assets, logos, and screenshots</p>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
-                <p className="text-[10px] font-medium text-[#768B80] uppercase tracking-wider mb-2">Logos</p>
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Logos</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {pressKitData.filter((p) => p.type === 'logo').map((item) => (
-                    <div key={item.id} className="p-3 rounded-lg bg-[#1A231E]/50 border border-[#25332B] hover:border-[#12B877]/20 transition-colors">
-                      <div className="h-12 w-full rounded bg-[#0D1711] flex items-center justify-center mb-2 border border-[#25332B]">
-                        <span className="text-lg font-bold text-[#12B877]">R</span>
+                    <div key={item.id} className="p-3 rounded-lg bg-muted/50 border border-border hover:border-[hsl(var(--primary))]/20 transition-colors">
+                      <div className="h-12 w-full rounded bg-card flex items-center justify-center mb-2 border border-border">
+                        <span className="text-lg font-bold text-primary">R</span>
                       </div>
-                      <p className="text-xs font-medium text-white truncate">{item.name}</p>
+                      <p className="text-xs font-medium text-foreground truncate">{item.name}</p>
                       <div className="flex items-center justify-between mt-1.5">
-                        <span className="text-[10px] text-[#768B80]">{item.size} · {item.format}</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-[#12B877] hover:bg-[#12B877]/10">
+                        <span className="text-[10px] text-muted-foreground">{item.size} · {item.format}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10">
                           <Download className="h-3 w-3" />
                         </Button>
                       </div>
@@ -295,17 +295,17 @@ export default function AdminMarketing() {
                 </div>
               </div>
               <div>
-                <p className="text-[10px] font-medium text-[#768B80] uppercase tracking-wider mb-2">Brand Guidelines</p>
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Brand Guidelines</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {pressKitData.filter((p) => p.type === 'guidelines').map((item) => (
-                    <div key={item.id} className="p-3 rounded-lg bg-[#1A231E]/50 border border-[#25332B] hover:border-[#12B877]/20 transition-colors">
-                      <div className="h-12 w-full rounded bg-[#0D1711] flex items-center justify-center mb-2 border border-[#25332B]">
-                        <FileText className="h-5 w-5 text-[#F4B740]" />
+                    <div key={item.id} className="p-3 rounded-lg bg-muted/50 border border-border hover:border-[hsl(var(--primary))]/20 transition-colors">
+                      <div className="h-12 w-full rounded bg-card flex items-center justify-center mb-2 border border-border">
+                        <FileText className="h-5 w-5 text-accent" />
                       </div>
-                      <p className="text-xs font-medium text-white truncate">{item.name}</p>
+                      <p className="text-xs font-medium text-foreground truncate">{item.name}</p>
                       <div className="flex items-center justify-between mt-1.5">
-                        <span className="text-[10px] text-[#768B80]">{item.size} · {item.format}</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-[#12B877] hover:bg-[#12B877]/10">
+                        <span className="text-[10px] text-muted-foreground">{item.size} · {item.format}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10">
                           <Download className="h-3 w-3" />
                         </Button>
                       </div>
@@ -314,17 +314,17 @@ export default function AdminMarketing() {
                 </div>
               </div>
               <div>
-                <p className="text-[10px] font-medium text-[#768B80] uppercase tracking-wider mb-2">Screenshots</p>
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Screenshots</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {pressKitData.filter((p) => p.type === 'screenshot').map((item) => (
-                    <div key={item.id} className="p-3 rounded-lg bg-[#1A231E]/50 border border-[#25332B] hover:border-[#12B877]/20 transition-colors">
-                      <div className="h-12 w-full rounded bg-[#0D1711] flex items-center justify-center mb-2 border border-[#25332B]">
-                        <Image className="h-5 w-5 text-[#3B82F6]" />
+                    <div key={item.id} className="p-3 rounded-lg bg-muted/50 border border-border hover:border-[hsl(var(--primary))]/20 transition-colors">
+                      <div className="h-12 w-full rounded bg-card flex items-center justify-center mb-2 border border-border">
+                        <Image className="h-5 w-5 text-info" />
                       </div>
-                      <p className="text-xs font-medium text-white truncate">{item.name}</p>
+                      <p className="text-xs font-medium text-foreground truncate">{item.name}</p>
                       <div className="flex items-center justify-between mt-1.5">
-                        <span className="text-[10px] text-[#768B80]">{item.size} · {item.format}</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-[#12B877] hover:bg-[#12B877]/10">
+                        <span className="text-[10px] text-muted-foreground">{item.size} · {item.format}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10">
                           <Download className="h-3 w-3" />
                         </Button>
                       </div>
@@ -337,45 +337,45 @@ export default function AdminMarketing() {
         </Card>
 
         <div className="space-y-6">
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-[#3B82F6]" />
-                <CardTitle className="text-sm font-medium text-white">A/B Testing</CardTitle>
+                <BarChart3 className="h-4 w-4 text-info" />
+                <CardTitle className="text-sm font-medium text-foreground">A/B Testing</CardTitle>
               </div>
-              <p className="text-xs text-[#768B80] mt-0.5">Conversion experiments and results</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Conversion experiments and results</p>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-[#25332B] hover:bg-transparent">
-                    <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Test</TableHead>
-                    <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Variant A</TableHead>
-                    <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Variant B</TableHead>
-                    <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Impressions</TableHead>
-                    <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Conv. Rate</TableHead>
-                    <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-center">Winner</TableHead>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Test</TableHead>
+                    <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Variant A</TableHead>
+                    <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Variant B</TableHead>
+                    <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Impressions</TableHead>
+                    <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Conv. Rate</TableHead>
+                    <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-center">Winner</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {abTestData.map((test) => (
-                    <TableRow key={test.id} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
+                    <TableRow key={test.id} className="border-border hover:bg-muted/50 transition-colors">
                       <TableCell>
-                        <p className="text-xs font-medium text-white">{test.name}</p>
+                        <p className="text-xs font-medium text-foreground">{test.name}</p>
                       </TableCell>
                       <TableCell>
-                        <span className="text-[10px] text-white/60 bg-[#1A231E] px-2 py-0.5 rounded border border-[#25332B]">{test.variantA}</span>
+                        <span className="text-[10px] text-foreground/60 bg-muted px-2 py-0.5 rounded border border-border">{test.variantA}</span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-[10px] text-white/60 bg-[#1A231E] px-2 py-0.5 rounded border border-[#25332B]">{test.variantB}</span>
+                        <span className="text-[10px] text-foreground/60 bg-muted px-2 py-0.5 rounded border border-border">{test.variantB}</span>
                       </TableCell>
-                      <TableCell className="text-right text-xs text-white/70">{test.impressions.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-xs text-white/70">{test.conversionRate}%</TableCell>
+                      <TableCell className="text-right text-xs text-foreground/70">{test.impressions.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-xs text-foreground/70">{test.conversionRate}%</TableCell>
                       <TableCell className="text-center">
                         <Badge className={`border text-[10px] ${
-                          test.winner === 'A' ? 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30'
-                            : test.winner === 'B' ? 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/30'
-                            : 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30'
+                          test.winner === 'A' ? 'bg-primary/10 text-primary border-primary/30'
+                            : test.winner === 'B' ? 'bg-info/10 text-info border-info/30'
+                            : 'bg-accent/10 text-accent border-accent/30'
                         }`}>
                           {test.winner === 'Pending' ? 'Pending' : `Variant ${test.winner}`}
                         </Badge>
@@ -387,13 +387,13 @@ export default function AdminMarketing() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-[#12B877]" />
-                <CardTitle className="text-sm font-medium text-white">Integration Status</CardTitle>
+                <Activity className="h-4 w-4 text-primary" />
+                <CardTitle className="text-sm font-medium text-foreground">Integration Status</CardTitle>
               </div>
-              <p className="text-xs text-[#768B80] mt-0.5">Marketing tool connectivity</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Marketing tool connectivity</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -402,18 +402,18 @@ export default function AdminMarketing() {
                   return (
                     <div
                       key={integration.name}
-                      className="flex items-center justify-between p-3 rounded-lg bg-[#1A231E]/50 border border-[#25332B] hover:border-[#12B877]/20 transition-colors"
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border hover:border-[hsl(var(--primary))]/20 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-lg bg-[#0D1711] border border-[#25332B] flex items-center justify-center">
-                          <IntIcon className="h-4 w-4 text-[#768B80]" />
+                        <div className="h-8 w-8 rounded-lg bg-card border border-border flex items-center justify-center">
+                          <IntIcon className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-white">{integration.name}</p>
-                          <p className="text-[10px] text-[#768B80]">Last sync: {integration.lastSync}</p>
+                          <p className="text-sm font-medium text-foreground">{integration.name}</p>
+                          <p className="text-[10px] text-muted-foreground">Last sync: {integration.lastSync}</p>
                         </div>
                       </div>
-                      <Badge className={`border text-[10px] ${integrationStatusColors[integration.status] || 'bg-[#768B80]/10 text-[#768B80] border-[#768B80]/30'}`}>
+                      <Badge className={`border text-[10px] ${integrationStatusColors[integration.status] || 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30'}`}>
                         {integration.status === 'Connected' ? (
                           <CheckCircle className="h-2.5 w-2.5 mr-1" />
                         ) : (

@@ -41,10 +41,10 @@ interface Alert {
 }
 
 const statusCards = [
-  { title: 'Server Status', value: 'Online', icon: Server, color: '#12B877', subtitle: 'All systems operational', pulse: true },
-  { title: 'API Response Time', value: '245ms', icon: Activity, color: '#3B82F6', subtitle: 'Avg over last 5 min', trend: '-12ms', trendUp: true },
-  { title: 'Database', value: '97.2%', icon: Database, color: '#12B877', subtitle: 'Uptime this month', trend: '+0.3%', trendUp: true },
-  { title: 'Error Rate', value: '0.8%', icon: AlertTriangle, color: '#F4B740', subtitle: 'Last 24 hours', trend: '-0.2%', trendUp: true },
+  { title: 'Server Status', value: 'Online', icon: Server, color: 'hsl(var(--primary))', subtitle: 'All systems operational', pulse: true },
+  { title: 'API Response Time', value: '245ms', icon: Activity, color: 'hsl(var(--info))', subtitle: 'Avg over last 5 min', trend: '-12ms', trendUp: true },
+  { title: 'Database', value: '97.2%', icon: Database, color: 'hsl(var(--primary))', subtitle: 'Uptime this month', trend: '+0.3%', trendUp: true },
+  { title: 'Error Rate', value: '0.8%', icon: AlertTriangle, color: 'hsl(var(--accent))', subtitle: 'Last 24 hours', trend: '-0.2%', trendUp: true },
 ];
 
 const services: Service[] = [
@@ -77,20 +77,20 @@ const recentAlerts: Alert[] = [
 ];
 
 const statusColors: Record<string, string> = {
-  Operational: 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
-  Degraded: 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30',
-  Outage: 'bg-[#DB3A3A]/10 text-[#DB3A3A] border-[#DB3A3A]/30',
+  Operational: 'bg-primary/10 text-primary border-primary/30',
+  Degraded: 'bg-accent/10 text-accent border-accent/30',
+  Outage: 'bg-destructive/10 text-destructive border-destructive/30',
 };
 
 const alertTypeColors: Record<string, string> = {
-  warning: 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30',
-  error: 'bg-[#DB3A3A]/10 text-[#DB3A3A] border-[#DB3A3A]/30',
-  info: 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/30',
+  warning: 'bg-accent/10 text-accent border-accent/30',
+  error: 'bg-destructive/10 text-destructive border-destructive/30',
+  info: 'bg-info/10 text-info border-info/30',
 };
 
 const alertStatusColors: Record<string, string> = {
-  Pending: 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30',
-  Acknowledged: 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
+  Pending: 'bg-accent/10 text-accent border-accent/30',
+  Acknowledged: 'bg-primary/10 text-primary border-primary/30',
 };
 
 export default function SystemHealth() {
@@ -108,15 +108,15 @@ export default function SystemHealth() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">System Health</h1>
-          <p className="text-sm text-[#768B80] mt-1">Real-time monitoring and alert management</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">System Health</h1>
+          <p className="text-sm text-muted-foreground mt-1">Real-time monitoring and alert management</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge className="border-[#12B877]/30 text-[#12B877] bg-[#12B877]/5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#12B877] mr-1.5 animate-pulse" />
+          <Badge className="border-primary/30 text-primary bg-primary/5">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
             Live
           </Badge>
-          <Button variant="outline" size="sm" className="border-[#25332B] text-[#768B80] hover:text-white">
+          <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground">
             <RefreshCw className="h-4 w-4 mr-1.5" /> Refresh
           </Button>
         </div>
@@ -127,27 +127,27 @@ export default function SystemHealth() {
           const Icon = card.icon;
           const isOnline = card.value === 'Online';
           return (
-            <Card key={card.title} className="bg-[#0D1711] border-[#25332B] shadow-admin-card hover:shadow-admin-card-hover transition-all duration-300">
+            <Card key={card.title} className="bg-card border-border shadow-sm hover:shadow-md transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium text-[#768B80] uppercase tracking-wider">{card.title}</CardTitle>
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{card.title}</CardTitle>
                 <Icon className="h-4.5 w-4.5" style={{ color: card.color }} strokeWidth={1.5} />
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold text-white tracking-tight" style={{ color: card.color }}>{card.value}</span>
+                  <span className="text-2xl font-bold text-foreground tracking-tight" style={{ color: card.color }}>{card.value}</span>
                   {card.pulse && (
-                    <span className="h-2 w-2 rounded-full bg-[#12B877] animate-pulse" />
+                    <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                   )}
                 </div>
-                <p className="text-[11px] text-[#768B80] mt-0.5">{card.subtitle}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{card.subtitle}</p>
                 {card.trend && (
                   <div className="flex items-center gap-1 mt-2">
                     {card.trendUp ? (
-                      <ArrowUpRight className="h-3 w-3 text-[#12B877]" />
+                      <ArrowUpRight className="h-3 w-3 text-primary" />
                     ) : (
-                      <ArrowDownRight className="h-3 w-3 text-[#DB3A3A]" />
+                      <ArrowDownRight className="h-3 w-3 text-destructive" />
                     )}
-                    <span className={`text-xs ${card.trendUp ? 'text-[#12B877]' : 'text-[#DB3A3A]'}`}>{card.trend}</span>
+                    <span className={`text-xs ${card.trendUp ? 'text-primary' : 'text-destructive'}`}>{card.trend}</span>
                   </div>
                 )}
               </CardContent>
@@ -156,39 +156,39 @@ export default function SystemHealth() {
         })}
       </div>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
-          <CardTitle className="text-sm font-medium text-white">Services Overview</CardTitle>
-          <p className="text-xs text-[#768B80] mt-0.5">Current status of all platform services</p>
+          <CardTitle className="text-sm font-medium text-foreground">Services Overview</CardTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">Current status of all platform services</p>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="border-[#25332B] hover:bg-transparent">
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Service</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Status</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Uptime</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Response Time</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Last Incident</TableHead>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Service</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Status</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Uptime</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Response Time</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Last Incident</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {services.map((s) => (
-                <TableRow key={s.name} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
+                <TableRow key={s.name} className="border-border hover:bg-muted/50 transition-colors">
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div className={`h-2 w-2 rounded-full ${
-                        s.status === 'Operational' ? 'bg-[#12B877]' : s.status === 'Degraded' ? 'bg-[#F4B740]' : 'bg-[#DB3A3A]'
+                        s.status === 'Operational' ? 'bg-primary' : s.status === 'Degraded' ? 'bg-accent' : 'bg-destructive'
                       }`} />
-                      <span className="text-sm font-medium text-white">{s.name}</span>
+                      <span className="text-sm font-medium text-foreground">{s.name}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge className={`border text-[10px] ${statusColors[s.status]}`}>{s.status}</Badge>
                   </TableCell>
-                  <TableCell className="text-right text-white/70 text-sm">{s.uptime}%</TableCell>
-                  <TableCell className="text-right text-white/70 text-sm font-mono">{s.responseTime}</TableCell>
-                  <TableCell className="text-xs text-[#768B80]">{s.lastIncident}</TableCell>
+                  <TableCell className="text-right text-foreground/70 text-sm">{s.uptime}%</TableCell>
+                  <TableCell className="text-right text-foreground/70 text-sm font-mono">{s.responseTime}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{s.lastIncident}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -197,34 +197,34 @@ export default function SystemHealth() {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-white">Error Rates by Restaurant</CardTitle>
-            <p className="text-xs text-[#768B80] mt-0.5">Top 5 error-prone restaurants</p>
+            <CardTitle className="text-sm font-medium text-foreground">Error Rates by Restaurant</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Top 5 error-prone restaurants</p>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow className="border-[#25332B] hover:bg-transparent">
-                  <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
-                  <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Error Count</TableHead>
-                  <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Feature</TableHead>
+                <TableRow className="border-border hover:bg-transparent">
+                  <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
+                  <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Error Count</TableHead>
+                  <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Feature</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {errorRestaurants.map((r) => (
-                  <TableRow key={r.name} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
+                  <TableRow key={r.name} className="border-border hover:bg-muted/50 transition-colors">
                     <TableCell>
-                      <span className="text-sm font-medium text-white">{r.name}</span>
+                      <span className="text-sm font-medium text-foreground">{r.name}</span>
                     </TableCell>
                     <TableCell className="text-right">
                       <Badge className={`border text-[10px] ${
-                        r.errors >= 30 ? 'bg-[#DB3A3A]/10 text-[#DB3A3A] border-[#DB3A3A]/30'
-                          : r.errors >= 20 ? 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30'
-                          : 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/30'
+                        r.errors >= 30 ? 'bg-destructive/10 text-destructive border-destructive/30'
+                          : r.errors >= 20 ? 'bg-accent/10 text-accent border-accent/30'
+                          : 'bg-info/10 text-info border-info/30'
                       }`}>{formatNumber(r.errors)}</Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-[#768B80]">{r.feature}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{r.feature}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -232,30 +232,30 @@ export default function SystemHealth() {
           </CardContent>
         </Card>
 
-        <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-sm font-medium text-white">Alert Configuration</CardTitle>
-              <p className="text-xs text-[#768B80] mt-0.5">Toggle alert notification channels</p>
+              <CardTitle className="text-sm font-medium text-foreground">Alert Configuration</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">Toggle alert notification channels</p>
             </div>
-            <Bell className="h-4 w-4 text-[#768B80]" />
+            <Bell className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-3">
             <div
               onClick={() => toggleChannel('email')}
-              className="flex items-center justify-between p-4 rounded-lg bg-[#1A231E]/50 border border-[#25332B] hover:border-[#12B877]/30 transition-colors cursor-pointer"
+              className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center">
-                  <Mail className="h-4 w-4 text-[#3B82F6]" />
+                <div className="h-9 w-9 rounded-lg bg-info/10 flex items-center justify-center">
+                  <Mail className="h-4 w-4 text-info" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-white">Email Alerts</p>
-                  <p className="text-xs text-[#768B80]">admin@resthru.com</p>
+                  <p className="text-sm font-medium text-foreground">Email Alerts</p>
+                  <p className="text-xs text-muted-foreground">admin@resthru.com</p>
                 </div>
               </div>
               <div className={`h-6 w-11 rounded-full transition-colors ${
-                alertChannels.email ? 'bg-[#12B877]' : 'bg-[#1A231E] border border-[#25332B]'
+                alertChannels.email ? 'bg-primary' : 'bg-muted border border-border'
               }`}>
                 <div className={`h-5 w-5 rounded-full bg-white shadow-sm transform transition-transform mt-0.5 ${
                   alertChannels.email ? 'translate-x-[22px]' : 'translate-x-0.5'
@@ -264,19 +264,19 @@ export default function SystemHealth() {
             </div>
             <div
               onClick={() => toggleChannel('sms')}
-              className="flex items-center justify-between p-4 rounded-lg bg-[#1A231E]/50 border border-[#25332B] hover:border-[#12B877]/30 transition-colors cursor-pointer"
+              className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-[#F4B740]/10 flex items-center justify-center">
-                  <Smartphone className="h-4 w-4 text-[#F4B740]" />
+                <div className="h-9 w-9 rounded-lg bg-accent/10 flex items-center justify-center">
+                  <Smartphone className="h-4 w-4 text-accent" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-white">SMS Alerts</p>
-                  <p className="text-xs text-[#768B80]">+977 9801234567</p>
+                  <p className="text-sm font-medium text-foreground">SMS Alerts</p>
+                  <p className="text-xs text-muted-foreground">+977 9801234567</p>
                 </div>
               </div>
               <div className={`h-6 w-11 rounded-full transition-colors ${
-                alertChannels.sms ? 'bg-[#12B877]' : 'bg-[#1A231E] border border-[#25332B]'
+                alertChannels.sms ? 'bg-primary' : 'bg-muted border border-border'
               }`}>
                 <div className={`h-5 w-5 rounded-full bg-white shadow-sm transform transition-transform mt-0.5 ${
                   alertChannels.sms ? 'translate-x-[22px]' : 'translate-x-0.5'
@@ -285,19 +285,19 @@ export default function SystemHealth() {
             </div>
             <div
               onClick={() => toggleChannel('slack')}
-              className="flex items-center justify-between p-4 rounded-lg bg-[#1A231E]/50 border border-[#25332B] hover:border-[#12B877]/30 transition-colors cursor-pointer"
+              className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-[#12B877]/10 flex items-center justify-center">
-                  <MessageSquare className="h-4 w-4 text-[#12B877]" />
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <MessageSquare className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-white">Slack Alerts</p>
-                  <p className="text-xs text-[#768B80]">#alerts channel</p>
+                  <p className="text-sm font-medium text-foreground">Slack Alerts</p>
+                  <p className="text-xs text-muted-foreground">#alerts channel</p>
                 </div>
               </div>
               <div className={`h-6 w-11 rounded-full transition-colors ${
-                alertChannels.slack ? 'bg-[#12B877]' : 'bg-[#1A231E] border border-[#25332B]'
+                alertChannels.slack ? 'bg-primary' : 'bg-muted border border-border'
               }`}>
                 <div className={`h-5 w-5 rounded-full bg-white shadow-sm transform transition-transform mt-0.5 ${
                   alertChannels.slack ? 'translate-x-[22px]' : 'translate-x-0.5'
@@ -308,37 +308,37 @@ export default function SystemHealth() {
         </Card>
       </div>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-sm font-medium text-white">Recent Alerts</CardTitle>
-            <p className="text-xs text-[#768B80] mt-0.5">System activity and alert feed</p>
+            <CardTitle className="text-sm font-medium text-foreground">Recent Alerts</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">System activity and alert feed</p>
           </div>
-          <Badge variant="outline" className="border-[#12B877]/30 text-[#12B877] bg-[#12B877]/5 text-[10px]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#12B877] mr-1.5 animate-pulse" />
+          <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5 text-[10px]">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
             Streaming
           </Badge>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y divide-[#25332B]">
+          <div className="divide-y divide-border">
             {recentAlerts.map((alert, i) => (
-              <div key={i} className="flex items-start gap-4 px-4 py-3.5 hover:bg-[#1A231E]/50 transition-colors">
+              <div key={i} className="flex items-start gap-4 px-4 py-3.5 hover:bg-muted/50 transition-colors">
                 <div className={`h-2 w-2 rounded-full mt-1.5 flex-shrink-0 ${
-                  alert.type === 'error' ? 'bg-[#DB3A3A]' : alert.type === 'warning' ? 'bg-[#F4B740]' : 'bg-[#3B82F6]'
+                  alert.type === 'error' ? 'bg-destructive' : alert.type === 'warning' ? 'bg-accent' : 'bg-info'
                 }`} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <Badge className={`border text-[9px] ${alertTypeColors[alert.type]}`}>{alert.type}</Badge>
-                    <span className="text-[10px] text-[#768B80]">{alert.time}</span>
+                    <span className="text-[10px] text-muted-foreground">{alert.time}</span>
                   </div>
-                  <p className="text-xs text-white/70">{alert.message}</p>
+                  <p className="text-xs text-foreground/70">{alert.message}</p>
                 </div>
                 <Badge className={`border text-[9px] flex-shrink-0 ${alertStatusColors[alert.status]}`}>{alert.status}</Badge>
               </div>
             ))}
           </div>
-          <div className="p-3 border-t border-[#25332B]">
-            <Button variant="ghost" size="sm" className="w-full text-xs text-[#12B877] hover:text-white">
+          <div className="p-3 border-t border-border">
+            <Button variant="ghost" size="sm" className="w-full text-xs text-primary hover:text-foreground">
               View All Alerts
             </Button>
           </div>

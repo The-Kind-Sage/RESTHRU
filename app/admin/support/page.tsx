@@ -48,23 +48,23 @@ const tickets: Ticket[] = [
 const quickFilters = ['All', 'Open', 'In Progress', 'Resolved', 'Critical'];
 
 const priorityColors: Record<string, string> = {
-  Critical: 'bg-[#DB3A3A]/10 text-[#DB3A3A] border-[#DB3A3A]/30',
-  High: 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30',
-  Medium: 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/30',
-  Low: 'bg-[#768B80]/10 text-[#768B80] border-[#768B80]/30',
+  Critical: 'bg-destructive/10 text-destructive border-destructive/30',
+  High: 'bg-accent/10 text-accent border-accent/30',
+  Medium: 'bg-info/10 text-info border-info/30',
+  Low: 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30',
 };
 
 const statusColors: Record<string, string> = {
-  Open: 'bg-[#DB3A3A]/10 text-[#DB3A3A] border-[#DB3A3A]/30',
-  'In Progress': 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30',
-  Resolved: 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
+  Open: 'bg-destructive/10 text-destructive border-destructive/30',
+  'In Progress': 'bg-accent/10 text-accent border-accent/30',
+  Resolved: 'bg-primary/10 text-primary border-primary/30',
 };
 
 const planColors: Record<string, string> = {
-  Enterprise: 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30',
-  Pro: 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
-  Basic: 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/30',
-  Free: 'bg-[#768B80]/10 text-[#768B80] border-[#768B80]/30',
+  Enterprise: 'bg-accent/10 text-accent border-accent/30',
+  Pro: 'bg-primary/10 text-primary border-primary/30',
+  Basic: 'bg-info/10 text-info border-info/30',
+  Free: 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30',
 };
 
 const articleData = [
@@ -99,12 +99,12 @@ export default function SupportCenter() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Support Center</h1>
-          <p className="text-sm text-[#768B80] mt-1">Manage tickets, knowledge base, and communications</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Support Center</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage tickets, knowledge base, and communications</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge className="border-[#12B877]/30 text-[#12B877] bg-[#12B877]/5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#12B877] mr-1.5 animate-pulse" />
+          <Badge className="border-primary/30 text-primary bg-primary/5">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
             4 online
           </Badge>
         </div>
@@ -112,16 +112,16 @@ export default function SupportCenter() {
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         <div className="xl:col-span-3 space-y-6">
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardContent className="p-4">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative flex-1 min-w-[200px] max-w-sm">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#768B80]" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search tickets by ID, subject, restaurant..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 bg-[#1A231E] border-[#25332B] text-white placeholder:text-[#768B80] text-sm h-9"
+                    className="pl-9 bg-muted border-border text-foreground placeholder:text-muted-foreground text-sm h-9"
                   />
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -131,15 +131,15 @@ export default function SupportCenter() {
                       onClick={() => setActiveTab(f)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                         activeTab === f
-                          ? 'bg-[#12B877]/10 text-[#12B877] border border-[#12B877]/30'
-                          : 'text-[#768B80] hover:text-white hover:bg-[#1A231E] border border-transparent'
+                          ? 'bg-primary/10 text-primary border border-primary/30'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent'
                       }`}
                     >
                       {f}
                     </button>
                   ))}
                 </div>
-                <Filter className="h-4 w-4 text-[#768B80]" />
+                <Filter className="h-4 w-4 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
@@ -148,46 +148,46 @@ export default function SupportCenter() {
             {filteredTickets.map((ticket) => {
               const currentAssignee = ticketAssignees[ticket.id] || ticket.assignee;
               return (
-                <Card key={ticket.id} className="bg-[#0D1711] border-[#25332B] shadow-admin-card hover:border-[#12B877]/30 transition-all duration-200 cursor-pointer group">
+                <Card key={ticket.id} className="bg-card border-border shadow-sm hover:border-primary/30 transition-all duration-200 cursor-pointer group">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1.5">
-                          <span className="text-[10px] font-mono text-[#768B80]">{ticket.id}</span>
+                          <span className="text-[10px] font-mono text-muted-foreground">{ticket.id}</span>
                           <Badge className={`border text-[10px] ${priorityColors[ticket.priority]}`}>{ticket.priority}</Badge>
                           <Badge className={`border text-[10px] ${statusColors[ticket.status]}`}>{ticket.status}</Badge>
-                          <span className="text-[10px] text-[#768B80] ml-auto">{formatRelativeTime(ticket.created)}</span>
+                          <span className="text-[10px] text-muted-foreground ml-auto">{formatRelativeTime(ticket.created)}</span>
                         </div>
-                        <h3 className="text-sm font-medium text-white group-hover:text-[#12B877] transition-colors truncate">
+                        <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
                           {ticket.subject}
                         </h3>
                         <div className="flex items-center gap-3 mt-2">
                           <div className="flex items-center gap-1.5">
-                            <Building2 className="h-3 w-3 text-[#768B80]" />
-                            <span className="text-xs text-[#768B80]">{ticket.restaurant}</span>
+                            <Building2 className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">{ticket.restaurant}</span>
                           </div>
                           <Badge className={`border text-[9px] ${planColors[ticket.plan]}`}>{ticket.plan}</Badge>
                           <div className="flex items-center gap-1">
-                            <span className="text-[10px] text-[#768B80]">Health:</span>
+                            <span className="text-[10px] text-muted-foreground">Health:</span>
                             <span className={`text-[10px] font-medium ${
-                              ticket.healthScore >= 80 ? 'text-[#12B877]' : ticket.healthScore >= 50 ? 'text-[#F4B740]' : 'text-[#DB3A3A]'
+                              ticket.healthScore >= 80 ? 'text-primary' : ticket.healthScore >= 50 ? 'text-accent' : 'text-destructive'
                             }`}>{ticket.healthScore}</span>
                           </div>
-                          <span className="text-[10px] text-[#768B80]">{ticket.pastTickets} past tickets</span>
+                          <span className="text-[10px] text-muted-foreground">{ticket.pastTickets} past tickets</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <Select value={currentAssignee} onValueChange={(v) => setAssignee(ticket.id, v)}>
-                          <SelectTrigger className="w-[120px] h-8 bg-[#1A231E] border-[#25332B] text-white text-xs">
+                          <SelectTrigger className="w-[120px] h-8 bg-muted border-border text-foreground text-xs">
                             <SelectValue placeholder="Assignee" />
                           </SelectTrigger>
-                          <SelectContent className="bg-[#0D1711] border-[#25332B]">
+                          <SelectContent className="bg-card border-border">
                             {assignees.map((a) => (
-                              <SelectItem key={a} value={a} className="text-white text-xs">{a}</SelectItem>
+                              <SelectItem key={a} value={a} className="text-foreground text-xs">{a}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-[#768B80] hover:text-white">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                           <Eye className="h-4 w-4" />
                         </Button>
                       </div>
@@ -197,138 +197,138 @@ export default function SupportCenter() {
               );
             })}
             {filteredTickets.length === 0 && (
-              <div className="text-center py-12 text-[#768B80] text-sm">No tickets found matching your filters</div>
+              <div className="text-center py-12 text-muted-foreground text-sm">No tickets found matching your filters</div>
             )}
           </div>
         </div>
 
         <div className="space-y-6">
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardHeader>
-              <CardTitle className="text-sm font-medium text-white">Quick Stats</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">Quick Stats</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-[#1A231E]/50 border border-[#25332B]">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-[#DB3A3A]/10 flex items-center justify-center">
-                    <AlertTriangle className="h-4 w-4 text-[#DB3A3A]" />
+                  <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
                   </div>
                   <div>
-                    <p className="text-xs text-[#768B80]">Open</p>
-                    <p className="text-lg font-bold text-white">12</p>
+                    <p className="text-xs text-muted-foreground">Open</p>
+                    <p className="text-lg font-bold text-foreground">12</p>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-[#1A231E]/50 border border-[#25332B]">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-[#DB3A3A]/10 flex items-center justify-center">
-                    <Zap className="h-4 w-4 text-[#DB3A3A]" />
+                  <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                    <Zap className="h-4 w-4 text-destructive" />
                   </div>
                   <div>
-                    <p className="text-xs text-[#768B80]">Critical</p>
-                    <p className="text-lg font-bold text-white">3</p>
+                    <p className="text-xs text-muted-foreground">Critical</p>
+                    <p className="text-lg font-bold text-foreground">3</p>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-[#1A231E]/50 border border-[#25332B]">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center">
-                    <Clock className="h-4 w-4 text-[#3B82F6]" />
+                  <div className="h-8 w-8 rounded-lg bg-info/10 flex items-center justify-center">
+                    <Clock className="h-4 w-4 text-info" />
                   </div>
                   <div>
-                    <p className="text-xs text-[#768B80]">Avg Response</p>
-                    <p className="text-lg font-bold text-white">4.2h</p>
+                    <p className="text-xs text-muted-foreground">Avg Response</p>
+                    <p className="text-lg font-bold text-foreground">4.2h</p>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-[#1A231E]/50 border border-[#25332B]">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-[#12B877]/10 flex items-center justify-center">
-                    <CheckCircle className="h-4 w-4 text-[#12B877]" />
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <CheckCircle className="h-4 w-4 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-[#768B80]">SLA Compliance</p>
-                    <p className="text-lg font-bold text-white">94%</p>
+                    <p className="text-xs text-muted-foreground">SLA Compliance</p>
+                    <p className="text-lg font-bold text-foreground">94%</p>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium text-white">Knowledge Base</CardTitle>
-              <BookOpen className="h-4 w-4 text-[#12B877]" />
+              <CardTitle className="text-sm font-medium text-foreground">Knowledge Base</CardTitle>
+              <BookOpen className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent className="space-y-2">
               {articleData.map((article, i) => (
-                <div key={i} className="p-3 rounded-lg bg-[#1A231E]/50 border border-[#25332B] hover:border-[#12B877]/20 transition-colors cursor-pointer">
+                <div key={i} className="p-3 rounded-lg bg-muted/50 border border-border hover:border-[hsl(var(--primary))]/20 transition-colors cursor-pointer">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-medium text-[#F4B740]">{article.lang === 'Nepali' ? 'नेपाली' : 'EN'}</span>
-                    <Badge className="border text-[9px] bg-[#0D1711] text-[#768B80] border-[#25332B]">{article.category}</Badge>
+                    <span className="text-[10px] font-medium text-accent">{article.lang === 'Nepali' ? 'नेपाली' : 'EN'}</span>
+                    <Badge className="border text-[9px] bg-card text-muted-foreground border-border">{article.category}</Badge>
                   </div>
-                  <p className="text-xs text-white font-medium truncate">{article.title}</p>
+                  <p className="text-xs text-foreground font-medium truncate">{article.title}</p>
                   <div className="flex items-center gap-3 mt-1.5">
-                    <span className="text-[10px] text-[#768B80]">{formatNumber(article.views)} views</span>
-                    <span className="text-[10px] text-[#768B80]">Updated {formatRelativeTime(article.updated)}</span>
+                    <span className="text-[10px] text-muted-foreground">{formatNumber(article.views)} views</span>
+                    <span className="text-[10px] text-muted-foreground">Updated {formatRelativeTime(article.updated)}</span>
                   </div>
                 </div>
               ))}
-              <Button variant="ghost" size="sm" className="w-full text-xs text-[#12B877] hover:text-white mt-1">
+              <Button variant="ghost" size="sm" className="w-full text-xs text-primary hover:text-foreground mt-1">
                 <ExternalLink className="h-3 w-3 mr-1" /> View Full KB
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+          <Card className="bg-card border-border shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium text-white">Mass Communication</CardTitle>
-              <Megaphone className="h-4 w-4 text-[#12B877]" />
+              <CardTitle className="text-sm font-medium text-foreground">Mass Communication</CardTitle>
+              <Megaphone className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-xs text-[#768B80]">Audience</label>
+                <label className="text-xs text-muted-foreground">Audience</label>
                 <Select defaultValue="all">
-                  <SelectTrigger className="w-full bg-[#1A231E] border-[#25332B] text-white h-9 text-sm">
+                  <SelectTrigger className="w-full bg-muted border-border text-foreground h-9 text-sm">
                     <SelectValue placeholder="Select audience" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0D1711] border-[#25332B]">
-                    <SelectItem value="all" className="text-white">All Restaurants</SelectItem>
-                    <SelectItem value="plan" className="text-white">By Plan</SelectItem>
-                    <SelectItem value="city" className="text-white">By City</SelectItem>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="all" className="text-foreground">All Restaurants</SelectItem>
+                    <SelectItem value="plan" className="text-foreground">By Plan</SelectItem>
+                    <SelectItem value="city" className="text-foreground">By City</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs text-[#768B80]">Channel</label>
+                <label className="text-xs text-muted-foreground">Channel</label>
                 <Select defaultValue="email">
-                  <SelectTrigger className="w-full bg-[#1A231E] border-[#25332B] text-white h-9 text-sm">
+                  <SelectTrigger className="w-full bg-muted border-border text-foreground h-9 text-sm">
                     <SelectValue placeholder="Select channel" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0D1711] border-[#25332B]">
-                    <SelectItem value="email" className="text-white">Email</SelectItem>
-                    <SelectItem value="sms" className="text-white">SMS</SelectItem>
-                    <SelectItem value="inapp" className="text-white">In-app</SelectItem>
-                    <SelectItem value="push" className="text-white">Push</SelectItem>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="email" className="text-foreground">Email</SelectItem>
+                    <SelectItem value="sms" className="text-foreground">SMS</SelectItem>
+                    <SelectItem value="inapp" className="text-foreground">In-app</SelectItem>
+                    <SelectItem value="push" className="text-foreground">Push</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs text-[#768B80]">Subject</label>
+                <label className="text-xs text-muted-foreground">Subject</label>
                 <Input
                   placeholder="Message subject..."
-                  className="bg-[#1A231E] border-[#25332B] text-white placeholder:text-[#768B80] text-sm h-9"
+                  className="bg-muted border-border text-foreground placeholder:text-muted-foreground text-sm h-9"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs text-[#768B80]">Message</label>
+                <label className="text-xs text-muted-foreground">Message</label>
                 <textarea
                   placeholder="Type your message..."
                   rows={4}
-                  className="w-full rounded-md bg-[#1A231E] border border-[#25332B] text-white placeholder:text-[#768B80] text-sm px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[#12B877]/30"
+                  className="w-full rounded-md bg-muted border border-border text-foreground placeholder:text-muted-foreground text-sm px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
                 />
               </div>
-              <Button className="w-full bg-[#12B877] hover:bg-[#0E945E] text-white text-sm h-9">
+              <Button className="w-full bg-primary hover:bg-[hsl(var(--primary-hover))] text-white text-sm h-9">
                 <Send className="h-4 w-4 mr-1.5" /> Send Message
               </Button>
             </CardContent>

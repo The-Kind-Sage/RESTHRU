@@ -95,28 +95,28 @@ const featureRequests = [
 
 const ImpactBadge = ({ impact }: { impact: string }) => {
   const colors: Record<string, string> = {
-    High: 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
-    Medium: 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30',
-    Low: 'bg-[#768B80]/10 text-[#768B80] border-[#768B80]/30',
+    High: 'bg-primary/10 text-primary border-primary/30',
+    Medium: 'bg-accent/10 text-accent border-accent/30',
+    Low: 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30',
   };
   return <Badge className={`border text-[10px] ${colors[impact] || ''}`}>{impact} Impact</Badge>;
 };
 
 const StatusBadge = ({ status }: { status: string }) => {
   const colors: Record<string, string> = {
-    Running: 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
-    Complete: 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/30',
-    Analyzing: 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30',
+    Running: 'bg-primary/10 text-primary border-primary/30',
+    Complete: 'bg-info/10 text-info border-info/30',
+    Analyzing: 'bg-accent/10 text-accent border-accent/30',
   };
   return <Badge className={`border text-[10px] ${colors[status] || ''}`}>{status}</Badge>;
 };
 
 const FeatureStatusBadge = ({ status }: { status: string }) => {
   const colors: Record<string, string> = {
-    'Under Review': 'bg-[#F4B740]/10 text-[#F4B740] border-[#F4B740]/30',
-    Planned: 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/30',
-    'In Development': 'bg-[#12B877]/10 text-[#12B877] border-[#12B877]/30',
-    Launched: 'bg-[#12B877]/20 text-[#12B877] border-[#12B877]/50',
+    'Under Review': 'bg-accent/10 text-accent border-accent/30',
+    Planned: 'bg-info/10 text-info border-info/30',
+    'In Development': 'bg-primary/10 text-primary border-primary/30',
+    Launched: 'bg-primary/20 text-primary border-[hsl(var(--primary))]/50',
   };
   return <Badge className={`border text-[10px] ${colors[status] || ''}`}>{status}</Badge>;
 };
@@ -126,19 +126,19 @@ export default function AdminInnovation() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Innovation Lab</h1>
-          <p className="text-sm text-[#768B80] mt-1">AI insights, predictive analytics, experiments & roadmap voting</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Innovation Lab</h1>
+          <p className="text-sm text-muted-foreground mt-1">AI insights, predictive analytics, experiments & roadmap voting</p>
         </div>
-        <Badge variant="outline" className="border-[#12B877]/30 text-[#12B877] bg-[#12B877]/5">
+        <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
           <FlaskConical className="h-3.5 w-3.5 mr-1" /> Beta
         </Badge>
       </div>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-[#F4B740]" />
-            <CardTitle className="text-sm font-medium text-white">AI-Powered Insights</CardTitle>
+            <Lightbulb className="h-4 w-4 text-accent" />
+            <CardTitle className="text-sm font-medium text-foreground">AI-Powered Insights</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -146,16 +146,16 @@ export default function AdminInnovation() {
             {insights.map((insight, i) => {
               const Icon = insight.icon;
               return (
-                <div key={i} className="flex gap-3 p-4 rounded-lg bg-[#1A231E]/50 border border-[#25332B] hover:border-[#12B877]/30 transition-colors">
-                  <div className="h-9 w-9 rounded-lg bg-[#12B877]/10 flex items-center justify-center flex-shrink-0">
-                    <Icon className="h-4.5 w-4.5 text-[#12B877]" />
+                <div key={i} className="flex gap-3 p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors">
+                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Icon className="h-4.5 w-4.5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="text-sm font-medium text-white">{insight.headline}</h3>
+                      <h3 className="text-sm font-medium text-foreground">{insight.headline}</h3>
                       <ImpactBadge impact={insight.impact} />
                     </div>
-                    <p className="text-xs text-[#768B80] mt-1">{insight.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{insight.description}</p>
                   </div>
                 </div>
               );
@@ -164,96 +164,96 @@ export default function AdminInnovation() {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Zap className="h-4 w-4 text-[#12B877]" />
-            <CardTitle className="text-sm font-medium text-white">Predictive Analytics</CardTitle>
+            <Zap className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium text-foreground">Predictive Analytics</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-[#768B80] mb-4">Churn risk prediction — restaurants at risk by category</p>
+          <p className="text-xs text-muted-foreground mb-4">Churn risk prediction — restaurants at risk by category</p>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={churnPredictionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#25332B" />
-              <XAxis dataKey="month" stroke="#768B80" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis stroke="#768B80" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#0D1711', border: '1px solid #25332B', borderRadius: '8px' }}
-                labelStyle={{ color: '#EDEDED' }}
+                contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                labelStyle={{ color: 'hsl(var(--foreground))' }}
               />
-              <Line type="monotone" dataKey="low" stroke="#12B877" strokeWidth={2} name="Low Risk" />
-              <Line type="monotone" dataKey="medium" stroke="#F4B740" strokeWidth={2} name="Medium Risk" />
-              <Line type="monotone" dataKey="high" stroke="#DB3A3A" strokeWidth={2} name="High Risk" />
+              <Line type="monotone" dataKey="low" stroke="hsl(var(--primary))" strokeWidth={2} name="Low Risk" />
+              <Line type="monotone" dataKey="medium" stroke="hsl(var(--accent))" strokeWidth={2} name="Medium Risk" />
+              <Line type="monotone" dataKey="high" stroke="hsl(var(--destructive))" strokeWidth={2} name="High Risk" />
             </LineChart>
           </ResponsiveContainer>
           <div className="flex items-center justify-center gap-6 mt-3">
             <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-[#12B877]" />
-              <span className="text-[10px] text-[#768B80]">Low Risk</span>
+              <span className="h-2 w-2 rounded-full bg-primary" />
+              <span className="text-[10px] text-muted-foreground">Low Risk</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-[#F4B740]" />
-              <span className="text-[10px] text-[#768B80]">Medium Risk</span>
+              <span className="h-2 w-2 rounded-full bg-accent" />
+              <span className="text-[10px] text-muted-foreground">Medium Risk</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-[#DB3A3A]" />
-              <span className="text-[10px] text-[#768B80]">High Risk</span>
+              <span className="h-2 w-2 rounded-full bg-destructive" />
+              <span className="text-[10px] text-muted-foreground">High Risk</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-[#12B877]" />
-            <CardTitle className="text-sm font-medium text-white">Benchmark Reports</CardTitle>
+            <FileText className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium text-foreground">Benchmark Reports</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap items-end gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] text-[#768B80] uppercase tracking-wider font-medium">Restaurant Category</label>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Restaurant Category</label>
               <Select>
-                <SelectTrigger className="w-[160px] bg-[#1A231E] border-[#25332B] text-white h-9 text-sm">
+                <SelectTrigger className="w-[160px] bg-muted border-border text-foreground h-9 text-sm">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0D1711] border-[#25332B]">
-                  <SelectItem value="casual" className="text-white">Casual Dining</SelectItem>
-                  <SelectItem value="fine" className="text-white">Fine Dining</SelectItem>
-                  <SelectItem value="quick" className="text-white">Quick Service</SelectItem>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="casual" className="text-foreground">Casual Dining</SelectItem>
+                  <SelectItem value="fine" className="text-foreground">Fine Dining</SelectItem>
+                  <SelectItem value="quick" className="text-foreground">Quick Service</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] text-[#768B80] uppercase tracking-wider font-medium">City</label>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">City</label>
               <Select>
-                <SelectTrigger className="w-[150px] bg-[#1A231E] border-[#25332B] text-white h-9 text-sm">
+                <SelectTrigger className="w-[150px] bg-muted border-border text-foreground h-9 text-sm">
                   <SelectValue placeholder="Select city" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0D1711] border-[#25332B]">
-                  <SelectItem value="kathmandu" className="text-white">Kathmandu</SelectItem>
-                  <SelectItem value="pokhara" className="text-white">Pokhara</SelectItem>
-                  <SelectItem value="chitwan" className="text-white">Chitwan</SelectItem>
-                  <SelectItem value="all" className="text-white">All Cities</SelectItem>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="kathmandu" className="text-foreground">Kathmandu</SelectItem>
+                  <SelectItem value="pokhara" className="text-foreground">Pokhara</SelectItem>
+                  <SelectItem value="chitwan" className="text-foreground">Chitwan</SelectItem>
+                  <SelectItem value="all" className="text-foreground">All Cities</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] text-[#768B80] uppercase tracking-wider font-medium">Metric</label>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Metric</label>
               <Select>
-                <SelectTrigger className="w-[160px] bg-[#1A231E] border-[#25332B] text-white h-9 text-sm">
+                <SelectTrigger className="w-[160px] bg-muted border-border text-foreground h-9 text-sm">
                   <SelectValue placeholder="Select metric" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0D1711] border-[#25332B]">
-                  <SelectItem value="revenue" className="text-white">Revenue</SelectItem>
-                  <SelectItem value="orders" className="text-white">Orders</SelectItem>
-                  <SelectItem value="satisfaction" className="text-white">Satisfaction</SelectItem>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="revenue" className="text-foreground">Revenue</SelectItem>
+                  <SelectItem value="orders" className="text-foreground">Orders</SelectItem>
+                  <SelectItem value="satisfaction" className="text-foreground">Satisfaction</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <Button className="bg-[#12B877] hover:bg-[#0E945E] text-white h-9">
+            <Button className="bg-primary hover:bg-[hsl(var(--primary-hover))] text-white h-9">
               <FileText className="h-4 w-4 mr-1.5" /> Generate PDF
             </Button>
           </div>
@@ -261,113 +261,113 @@ export default function AdminInnovation() {
       </Card>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 rounded-lg bg-[#0D1711] border border-[#25332B] shadow-admin-card">
+        <div className="p-4 rounded-lg bg-card border border-border shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <div className="h-8 w-8 rounded-lg bg-[#12B877]/10 flex items-center justify-center">
-              <Utensils className="h-4 w-4 text-[#12B877]" />
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Utensils className="h-4 w-4 text-primary" />
             </div>
-            <h3 className="text-sm font-medium text-white">Rising Cuisines</h3>
+            <h3 className="text-sm font-medium text-foreground">Rising Cuisines</h3>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#768B80]">Newari</span>
-              <span className="text-xs text-[#12B877]">+42%</span>
+              <span className="text-xs text-muted-foreground">Newari</span>
+              <span className="text-xs text-primary">+42%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#768B80]">Korean</span>
-              <span className="text-xs text-[#12B877]">+38%</span>
+              <span className="text-xs text-muted-foreground">Korean</span>
+              <span className="text-xs text-primary">+38%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#768B80]">Japanese</span>
-              <span className="text-xs text-[#12B877]">+27%</span>
+              <span className="text-xs text-muted-foreground">Japanese</span>
+              <span className="text-xs text-primary">+27%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#768B80]">Fusion</span>
-              <span className="text-xs text-[#12B877]">+21%</span>
+              <span className="text-xs text-muted-foreground">Fusion</span>
+              <span className="text-xs text-primary">+21%</span>
             </div>
           </div>
         </div>
-        <div className="p-4 rounded-lg bg-[#0D1711] border border-[#25332B] shadow-admin-card">
+        <div className="p-4 rounded-lg bg-card border border-border shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <div className="h-8 w-8 rounded-lg bg-[#DB3A3A]/10 flex items-center justify-center">
-              <CreditCard className="h-4 w-4 text-[#DB3A3A]" />
+            <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+              <CreditCard className="h-4 w-4 text-destructive" />
             </div>
-            <h3 className="text-sm font-medium text-white">Declining Payments</h3>
+            <h3 className="text-sm font-medium text-foreground">Declining Payments</h3>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#768B80]">Cash on Delivery</span>
-              <span className="text-xs text-[#DB3A3A]">-18%</span>
+              <span className="text-xs text-muted-foreground">Cash on Delivery</span>
+              <span className="text-xs text-destructive">-18%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#768B80]">Bank Transfer</span>
-              <span className="text-xs text-[#DB3A3A]">-12%</span>
+              <span className="text-xs text-muted-foreground">Bank Transfer</span>
+              <span className="text-xs text-destructive">-12%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#768B80]">Visa/Mastercard</span>
-              <span className="text-xs text-[#F4B740]">-5%</span>
+              <span className="text-xs text-muted-foreground">Visa/Mastercard</span>
+              <span className="text-xs text-accent">-5%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#768B80]">Mobile Banking</span>
-              <span className="text-xs text-[#12B877]">+15%</span>
+              <span className="text-xs text-muted-foreground">Mobile Banking</span>
+              <span className="text-xs text-primary">+15%</span>
             </div>
           </div>
         </div>
-        <div className="p-4 rounded-lg bg-[#0D1711] border border-[#25332B] shadow-admin-card">
+        <div className="p-4 rounded-lg bg-card border border-border shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <div className="h-8 w-8 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center">
-              <MapPin className="h-4 w-4 text-[#3B82F6]" />
+            <div className="h-8 w-8 rounded-lg bg-info/10 flex items-center justify-center">
+              <MapPin className="h-4 w-4 text-info" />
             </div>
-            <h3 className="text-sm font-medium text-white">Demand Shifts</h3>
+            <h3 className="text-sm font-medium text-foreground">Demand Shifts</h3>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#768B80]">Pokhara lakeside</span>
-              <span className="text-xs text-[#12B877]">+35%</span>
+              <span className="text-xs text-muted-foreground">Pokhara lakeside</span>
+              <span className="text-xs text-primary">+35%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#768B80]">Chitwan safari</span>
-              <span className="text-xs text-[#12B877]">+28%</span>
+              <span className="text-xs text-muted-foreground">Chitwan safari</span>
+              <span className="text-xs text-primary">+28%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#768B80]">Kathmandu valley</span>
-              <span className="text-xs text-[#F4B740]">+8%</span>
+              <span className="text-xs text-muted-foreground">Kathmandu valley</span>
+              <span className="text-xs text-accent">+8%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#768B80]">Dhulikhel hills</span>
-              <span className="text-xs text-[#12B877]">+22%</span>
+              <span className="text-xs text-muted-foreground">Dhulikhel hills</span>
+              <span className="text-xs text-primary">+22%</span>
             </div>
           </div>
         </div>
       </div>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-[#12B877]" />
-            <CardTitle className="text-sm font-medium text-white">Experiment Tracking</CardTitle>
+            <BarChart3 className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium text-foreground">Experiment Tracking</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="border-[#25332B] hover:bg-transparent">
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Experiment</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Variants</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Start Date</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Sample Size</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Result</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Status</TableHead>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Experiment</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Variants</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Start Date</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Sample Size</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Result</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {experiments.map((row) => (
-                <TableRow key={row.name} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
-                  <TableCell><span className="text-sm font-medium text-white">{row.name}</span></TableCell>
-                  <TableCell><span className="text-xs text-[#768B80]">{row.variants}</span></TableCell>
-                  <TableCell><span className="text-xs text-[#768B80]">{formatDate(new Date(row.startDate))}</span></TableCell>
-                  <TableCell className="text-right text-white/70 text-sm">{formatNumber(row.sampleSize)}</TableCell>
-                  <TableCell><span className="text-xs text-white/70">{row.result}</span></TableCell>
+                <TableRow key={row.name} className="border-border hover:bg-muted/50 transition-colors">
+                  <TableCell><span className="text-sm font-medium text-foreground">{row.name}</span></TableCell>
+                  <TableCell><span className="text-xs text-muted-foreground">{row.variants}</span></TableCell>
+                  <TableCell><span className="text-xs text-muted-foreground">{formatDate(new Date(row.startDate))}</span></TableCell>
+                  <TableCell className="text-right text-foreground/70 text-sm">{formatNumber(row.sampleSize)}</TableCell>
+                  <TableCell><span className="text-xs text-foreground/70">{row.result}</span></TableCell>
                   <TableCell><StatusBadge status={row.status} /></TableCell>
                 </TableRow>
               ))}
@@ -376,39 +376,39 @@ export default function AdminInnovation() {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#0D1711] border-[#25332B] shadow-admin-card">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <ThumbsUp className="h-4 w-4 text-[#F4B740]" />
-            <CardTitle className="text-sm font-medium text-white">Roadmap Voting</CardTitle>
+            <ThumbsUp className="h-4 w-4 text-accent" />
+            <CardTitle className="text-sm font-medium text-foreground">Roadmap Voting</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="border-[#25332B] hover:bg-transparent">
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Feature Request</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider text-right">Votes</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Status</TableHead>
-                <TableHead className="text-[#768B80] text-xs font-medium uppercase tracking-wider">Admin Response</TableHead>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Feature Request</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Votes</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Status</TableHead>
+                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Admin Response</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {featureRequests.map((row) => (
-                <TableRow key={row.feature} className="border-[#25332B] hover:bg-[#1A231E]/50 transition-colors">
+                <TableRow key={row.feature} className="border-border hover:bg-muted/50 transition-colors">
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-white">{row.feature}</span>
+                      <span className="text-sm font-medium text-foreground">{row.feature}</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <span className="text-sm font-bold text-[#F4B740]">{formatNumber(row.votes)}</span>
+                    <span className="text-sm font-bold text-accent">{formatNumber(row.votes)}</span>
                   </TableCell>
                   <TableCell><FeatureStatusBadge status={row.status} /></TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <MessageCircle className="h-3 w-3 text-[#768B80]" />
-                      <span className="text-xs text-[#768B80]">{row.response}</span>
+                      <MessageCircle className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">{row.response}</span>
                     </div>
                   </TableCell>
                 </TableRow>
