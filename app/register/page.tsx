@@ -206,6 +206,21 @@ export default function RegisterPage() {
         return;
       }
 
+      // Sign in immediately so auth.uid() is available for RLS checks below.
+      // (signUp does not create a session when email confirmation is enabled)
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.step1.email!,
+        password: formData.step1.password!,
+      });
+
+      if (signInError) {
+        toast.error(
+          'Account created but could not sign in automatically. ' +
+          'Please go to the login page and sign in manually to complete setup.'
+        );
+        return;
+      }
+
       // Build a URL-safe slug from the restaurant name
       const slug = (formData.step2.restaurantName ?? '')
         .toLowerCase()
