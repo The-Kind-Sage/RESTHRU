@@ -53,97 +53,20 @@ import {
 } from '@/components/ui/table';
 import { formatDate, formatCurrency } from '@/lib/format';
 
-// Mock data
-const mockStaffMembers = [
-  {
-    id: 1,
-    name: 'Ramesh Sharma',
-    role: 'Waiter',
-    phone: '+977-9841234567',
-    email: 'ramesh@resthru.com',
-    status: 'On Duty',
-    joinedDate: '2024-01-15',
-    salary: 15000,
-    avatar: 'RS',
-  },
-  {
-    id: 2,
-    name: 'Sita Thapa',
-    role: 'Kitchen',
-    phone: '+977-9842345678',
-    email: 'sita@resthru.com',
-    status: 'On Duty',
-    joinedDate: '2024-02-20',
-    salary: 18000,
-    avatar: 'ST',
-  },
-  {
-    id: 3,
-    name: 'Binod Karki',
-    role: 'Manager',
-    phone: '+977-9843456789',
-    email: 'binod@resthru.com',
-    status: 'On Duty',
-    joinedDate: '2023-12-01',
-    salary: 25000,
-    avatar: 'BK',
-  },
-  {
-    id: 4,
-    name: 'Anita Gurung',
-    role: 'Cashier',
-    phone: '+977-9844567890',
-    email: 'anita@resthru.com',
-    status: 'Off Duty',
-    joinedDate: '2024-03-10',
-    salary: 14000,
-    avatar: 'AG',
-  },
-  {
-    id: 5,
-    name: 'Deepak Poudel',
-    role: 'Waiter',
-    phone: '+977-9845678901',
-    email: 'deepak@resthru.com',
-    status: 'On Duty',
-    joinedDate: '2024-01-25',
-    salary: 15000,
-    avatar: 'DP',
-  },
-  {
-    id: 6,
-    name: 'Priya Sharma',
-    role: 'Kitchen',
-    phone: '+977-9846789012',
-    email: 'priya@resthru.com',
-    status: 'On Duty',
-    joinedDate: '2024-02-15',
-    salary: 17000,
-    avatar: 'PS',
-  },
-  {
-    id: 7,
-    name: 'Suresh Yadav',
-    role: 'Waiter',
-    phone: '+977-9847890123',
-    email: 'suresh@resthru.com',
-    status: 'Off Duty',
-    joinedDate: '2024-01-30',
-    salary: 15000,
-    avatar: 'SY',
-  },
-  {
-    id: 8,
-    name: 'Mina Tamang',
-    role: 'Kitchen',
-    phone: '+977-9848901234',
-    email: 'mina@resthru.com',
-    status: 'On Duty',
-    joinedDate: '2024-03-05',
-    salary: 16000,
-    avatar: 'MT',
-  },
-];
+interface StaffMember {
+  id: number;
+  name: string;
+  role: string;
+  phone: string;
+  email: string;
+  status: string;
+  joinedDate: string;
+  salary: number;
+  avatar: string;
+}
+
+// No mock data — staff will be loaded from the database
+const mockStaffMembers: StaffMember[] = [];
 
 const roleColors: { [key: string]: string } = {
   Waiter: 'bg-primary-light text-primary',
@@ -161,18 +84,6 @@ const avatarBgColors: { [key: string]: string } = {
   Cashier: 'bg-primary',
   Manager: 'bg-primary',
 };
-
-interface StaffMember {
-  id: number;
-  name: string;
-  role: string;
-  phone: string;
-  email: string;
-  status: string;
-  joinedDate: string;
-  salary: number;
-  avatar: string;
-}
 
 function StaffAvatar({
   initials,
