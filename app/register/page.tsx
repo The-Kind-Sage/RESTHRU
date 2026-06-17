@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/lib/supabase';
+import { uploadImage } from '@/lib/upload';
 import { NEPAL_CITIES, RESTAURANT_TYPES, PLANS } from '@/lib/constants';
 import Link from 'next/link';
 
@@ -96,6 +97,8 @@ export default function RegisterPage() {
     step4: {},
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   // Step 1 Form
   const step1Form = useForm<Step1Data>({
@@ -221,6 +224,15 @@ export default function RegisterPage() {
         return;
       }
 
+      // Upload logo if one was selected
+      let logo_url: string | null = null;
+      if (logoFile) {
+        logo_url = await uploadImage(logoFile, 'logos');
+        if (!logo_url) {
+          toast.error('Logo upload failed — continuing without logo');
+        }
+      }
+
       // Build a URL-safe slug from the restaurant name
       const slug = (formData.step2.restaurantName ?? '')
         .toLowerCase()
@@ -249,6 +261,7 @@ export default function RegisterPage() {
               open: formData.step3.openTime,
               close: formData.step3.closeTime,
             },
+            ...(logo_url && { logo_url }),
           },
         ])
         .select('id')
@@ -536,23 +549,38 @@ export default function RegisterPage() {
                           <FormItem>
                             <FormLabel>Restaurant Logo (Optional)</FormLabel>
                             <FormControl>
-                              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors">
-                                <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                                <p className="text-sm text-muted-foreground">
-                                  Click to upload or drag and drop
-                                </p>
+                              <label className="block border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors">
+                                {logoPreview ? (
+                                  <div className="flex flex-col items-center gap-2">
+                                    <img
+                                      src={logoPreview}
+                                      alt="Logo preview"
+                                      className="h-24 w-24 rounded-lg object-cover mx-auto"
+                                    />
+                                    <p className="text-xs text-muted-foreground">Click to change</p>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                                    <p className="text-sm text-muted-foreground">
+                                      Click to upload or drag and drop
+                                    </p>
+                                  </>
+                                )}
                                 <input
                                   type="file"
                                   accept="image/*"
                                   className="hidden"
-                                  {...field}
                                   onChange={(e) => {
-                                    if (e.target.files?.[0]) {
-                                      field.onChange(e.target.files[0]);
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      setLogoFile(file);
+                                      setLogoPreview(URL.createObjectURL(file));
+                                      field.onChange(file);
                                     }
                                   }}
                                 />
-                              </div>
+                              </label>
                             </FormControl>
                             <FormMessage />
                           </FormItem>

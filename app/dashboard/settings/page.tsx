@@ -22,10 +22,59 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Upload, Trash2, Plus, Volume2, Bell } from 'lucide-react';
+import { uploadImage } from '@/lib/upload';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
   const [saveMessage, setSaveMessage] = useState('');
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+
+  const handleLogoUpload = async (file: File) => {
+    setIsUploadingLogo(true);
+    const url = await uploadImage(file, 'logos');
+    if (url) {
+      if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          await supabase
+            .from('restaurants')
+            .update({ logo_url: url })
+            .eq('owner_id', session.user.id);
+        }
+      }
+      toast.success('Logo uploaded successfully');
+    } else {
+      toast.error('Logo upload failed');
+    }
+    setIsUploadingLogo(false);
+  };
+
+  const handleCoverUpload = async (file: File) => {
+    setIsUploadingCover(true);
+    const url = await uploadImage(file, 'covers');
+    if (url) {
+      if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          await supabase
+            .from('restaurants')
+            .update({ cover_url: url })
+            .eq('owner_id', session.user.id);
+        }
+      }
+      toast.success('Cover photo uploaded successfully');
+    } else {
+      toast.error('Cover photo upload failed');
+    }
+    setIsUploadingCover(false);
+  };
 
   const handleSave = () => {
     setSaveMessage('Settings saved successfully!');
@@ -114,16 +163,48 @@ export default function SettingsPage() {
                 <div className="space-y-2">
                   <Label>Logo</Label>
                   <div className="flex items-center gap-4">
-                    <div className="h-20 w-20 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center bg-muted/50">
-                      <Upload className="h-6 w-6 text-muted-foreground" />
-                    </div>
+                    <label className="h-20 w-20 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center bg-muted/50 cursor-pointer hover:border-primary transition-colors overflow-hidden">
+                      {logoPreview ? (
+                        <img src={logoPreview} alt="Logo" className="h-full w-full object-cover rounded-lg" />
+                      ) : (
+                        <Upload className="h-6 w-6 text-muted-foreground" />
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setLogoFile(file);
+                            setLogoPreview(URL.createObjectURL(file));
+                            handleLogoUpload(file);
+                          }
+                        }}
+                      />
+                    </label>
                     <div className="space-y-2">
                       <p className="text-sm text-muted-foreground">
-                        Recommended size: 200x200px
+                        {isUploadingLogo ? 'Uploading...' : 'Recommended size: 200x200px'}
                       </p>
-                      <Button variant="outline" size="sm">
-                        Choose File
-                      </Button>
+                      <label className="cursor-pointer">
+                        <Button variant="outline" size="sm" asChild>
+                          <span>{logoPreview ? 'Change Logo' : 'Choose File'}</span>
+                        </Button>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setLogoFile(file);
+                              setLogoPreview(URL.createObjectURL(file));
+                              handleLogoUpload(file);
+                            }
+                          }}
+                        />
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -131,15 +212,39 @@ export default function SettingsPage() {
                 {/* Cover Photo Upload */}
                 <div className="space-y-2">
                   <Label>Cover Photo</Label>
-                  <div className="w-full rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 flex flex-col items-center justify-center gap-3 bg-muted/50">
-                    <Upload className="h-8 w-8 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      Recommended size: 1200x400px
-                    </p>
-                    <Button variant="outline" size="sm">
-                      Choose File
-                    </Button>
-                  </div>
+                  <label className="block w-full rounded-lg border-2 border-dashed border-muted-foreground/25 cursor-pointer hover:border-primary transition-colors overflow-hidden">
+                    {coverPreview ? (
+                      <div className="relative">
+                        <img src={coverPreview} alt="Cover" className="w-full h-40 object-cover" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
+                          <p className="text-white text-sm font-medium">Click to change</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-8 flex flex-col items-center justify-center gap-3 bg-muted/50">
+                        <Upload className="h-8 w-8 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">
+                          {isUploadingCover ? 'Uploading...' : 'Recommended size: 1200x400px'}
+                        </p>
+                        <span className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 h-8 text-sm font-medium hover:bg-accent">
+                          Choose File
+                        </span>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setCoverFile(file);
+                          setCoverPreview(URL.createObjectURL(file));
+                          handleCoverUpload(file);
+                        }
+                      }}
+                    />
+                  </label>
                 </div>
 
                 <Separator />

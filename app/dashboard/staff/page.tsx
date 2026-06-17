@@ -52,6 +52,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatDate, formatCurrency } from '@/lib/format';
+import { uploadImage } from '@/lib/upload';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 interface StaffMember {
   id: number;
@@ -249,6 +252,9 @@ function StaffDetailDialog({ staff }: { staff: StaffMember }) {
 
 function AddStaffDialog() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     fullName: '',
     role: '',
@@ -258,18 +264,60 @@ function AddStaffDialog() {
     confirmPassword: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const resetForm = () => {
+    setFormData({ fullName: '', role: '', phone: '', email: '', password: '', confirmPassword: '' });
+    setAvatarFile(null);
+    setAvatarPreview(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    setIsOpen(false);
-    setFormData({
-      fullName: '',
-      role: '',
-      phone: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    });
+    if (!supabase) { toast.error('Supabase not configured'); return; }
+    if (formData.password && formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Upload avatar if provided
+      let avatar_url: string | null = null;
+      if (avatarFile) {
+        avatar_url = await uploadImage(avatarFile, 'avatars');
+        if (!avatar_url) toast.error('Avatar upload failed — continuing without photo');
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error('Not authenticated'); return; }
+
+      // Get the restaurant id for this owner
+      const { data: restaurant } = await supabase
+        .from('restaurants')
+        .select('id')
+        .eq('owner_id', session.user.id)
+        .single();
+
+      if (!restaurant) { toast.error('Restaurant not found'); return; }
+
+      const { error } = await supabase.from('staff').insert([{
+        restaurant_id: restaurant.id,
+        name: formData.fullName,
+        role: formData.role,
+        phone: formData.phone,
+        email: formData.email || null,
+        ...(avatar_url && { avatar_url }),
+      }]);
+
+      if (error) { toast.error(error.message || 'Failed to add staff'); return; }
+
+      toast.success(`${formData.fullName} added successfully`);
+      setIsOpen(false);
+      resetForm();
+    } catch {
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -384,27 +432,48 @@ function AddStaffDialog() {
             <label className="block text-sm font-medium mb-2">
               Profile Photo (Optional)
             </label>
-            <label className="flex items-center justify-center border-2 border-dashed border-input rounded-lg p-6 cursor-pointer hover:bg-muted/50 transition">
-              <div className="text-center">
-                <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm font-medium">Click to upload</p>
-                <p className="text-xs text-muted-foreground">
-                  PNG, JPG, GIF up to 10MB
-                </p>
-              </div>
-              <input type="file" className="hidden" accept="image/*" />
+            <label className="flex flex-col items-center justify-center border-2 border-dashed border-input rounded-lg p-6 cursor-pointer hover:bg-muted/50 transition">
+              {avatarPreview ? (
+                <img
+                  src={avatarPreview}
+                  alt="Avatar preview"
+                  className="h-20 w-20 rounded-full object-cover mb-2"
+                />
+              ) : (
+                <div className="text-center">
+                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm font-medium">Click to upload</p>
+                  <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
+                </div>
+              )}
+              {avatarPreview && (
+                <p className="text-xs text-muted-foreground">Click to change</p>
+              )}
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setAvatarFile(file);
+                    setAvatarPreview(URL.createObjectURL(file));
+                  }
+                }}
+              />
             </label>
           </div>
           <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsOpen(false)}
+              onClick={() => { setIsOpen(false); resetForm(); }}
+              disabled={isLoading}
             >
               Cancel
             </Button>
-            <Button type="submit" className="bg-primary">
-              Add Staff
+            <Button type="submit" className="bg-primary" disabled={isLoading}>
+              {isLoading ? 'Adding...' : 'Add Staff'}
             </Button>
           </DialogFooter>
         </form>

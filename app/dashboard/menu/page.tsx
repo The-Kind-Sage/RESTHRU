@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { FOOD_TYPES, SPICE_LEVELS, ALLERGENS } from '@/lib/constants';
+import { uploadImage } from '@/lib/upload';
 
 interface MenuItem {
   id: string;
@@ -80,6 +81,9 @@ export default function MenuPage() {
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSavingItem, setIsSavingItem] = useState(false);
 
   const [formData, setFormData] = useState<Partial<MenuItem>>({
     nameEn: '',
@@ -117,6 +121,8 @@ export default function MenuPage() {
 
   const handleAddItem = () => {
     setEditingItem(null);
+    setImageFile(null);
+    setImagePreview(null);
     setFormData({
       nameEn: '',
       nameNp: '',
@@ -140,18 +146,33 @@ export default function MenuPage() {
   const handleEditItem = (item: MenuItem) => {
     setEditingItem(item);
     setFormData(item);
+    setImageFile(null);
+    setImagePreview(item.image || null);
     setIsAddItemOpen(true);
   };
 
-  const handleSaveItem = () => {
+  const handleSaveItem = async () => {
     if (!formData.nameEn) return;
+    setIsSavingItem(true);
+
+    // Upload image if a new file was selected
+    let image = formData.image;
+    if (imageFile) {
+      const uploaded = await uploadImage(imageFile, 'menu-items');
+      if (uploaded) {
+        image = uploaded;
+      }
+    }
 
     if (editingItem) {
-      setItems(items.map((item) => (item.id === editingItem.id ? { ...editingItem, ...formData } : item)));
+      setItems(items.map((item) =>
+        item.id === editingItem.id ? { ...editingItem, ...formData, image } : item
+      ));
     } else {
       const newItem: MenuItem = {
         id: Date.now().toString(),
         ...formData,
+        image,
         category: selectedCategory,
         nameEn: formData.nameEn || '',
         description: formData.description || '',
@@ -173,6 +194,7 @@ export default function MenuPage() {
         )
       );
     }
+    setIsSavingItem(false);
     setIsAddItemOpen(false);
   };
 
@@ -577,10 +599,35 @@ export default function MenuPage() {
               {/* Image Upload */}
               <div>
                 <label className="text-sm font-medium mb-2 block">Food Image</label>
-                <div className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-accent transition-colors">
-                  <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Drop image here or click</p>
-                </div>
+                <label className="block border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:bg-accent transition-colors">
+                  {imagePreview ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <img
+                        src={imagePreview}
+                        alt="Food preview"
+                        className="h-28 w-full object-cover rounded-md"
+                      />
+                      <p className="text-xs text-muted-foreground">Click to change</p>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">Drop image here or click</p>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setImageFile(file);
+                        setImagePreview(URL.createObjectURL(file));
+                      }
+                    }}
+                  />
+                </label>
               </div>
 
               {/* Item Name EN */}
@@ -775,11 +822,11 @@ export default function MenuPage() {
           </div>
 
           <DialogFooter className="pt-4 border-t">
-            <Button variant="outline" onClick={() => setIsAddItemOpen(false)}>
+            <Button variant="outline" onClick={() => setIsAddItemOpen(false)} disabled={isSavingItem}>
               Cancel
             </Button>
-            <Button variant="default" onClick={handleSaveItem}>
-              {editingItem ? 'Update Item' : 'Add Item'}
+            <Button variant="default" onClick={handleSaveItem} disabled={isSavingItem}>
+              {isSavingItem ? 'Saving...' : editingItem ? 'Update Item' : 'Add Item'}
             </Button>
           </DialogFooter>
         </DialogContent>
