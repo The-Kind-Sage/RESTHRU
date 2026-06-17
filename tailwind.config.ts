@@ -80,6 +80,8 @@ const config: Config = {
         'gradient-indigo': 'linear-gradient(135deg, #4F46E5, #6366F1)',
         'gradient-emerald': 'linear-gradient(135deg, #059669, #10B981)',
         'gradient-dark': 'linear-gradient(180deg, #0F172A, #1E293B)',
+
+        'gradient-primary': 'linear-gradient(90deg, #0E7A52, #14A06A)',
       },
       keyframes: {
         'accordion-down': {

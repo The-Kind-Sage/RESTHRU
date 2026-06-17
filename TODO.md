@@ -1,0 +1,4 @@
+- [ ] Update app/globals.css CSS variables in :root and .dark to match provided palette
+- [ ] Update tailwind.config.ts to add backgroundImage.gradient-primary using linear-gradient(from #0E7A52 to #14A06A)
+- [ ] Run lint/build to verify changes
+- [ ] Mark as done

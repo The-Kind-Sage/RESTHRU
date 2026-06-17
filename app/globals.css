@@ -4,65 +4,104 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 215 25% 15%;
-    --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
-    --primary: 243 75% 59%;
+    /* Palette (hex)
+      Background: #FAFAF7
+      Surface/Card/Popover: #FFFFFF
+      Text primary: #141414
+      Text secondary: #6B7280
+      Border: #E5E7EB
+      Primary: #0E7A52
+      Primary hover (handled via components if needed): #0A6543
+      Primary light: #DDF7EC
+      Accent: #F4B740
+      Accent light: #FFF3D6
+      Semantic: success #22C55E, warning #F59E0B, error #EF4444, info #3B82F6
+      Gradient: #0E7A52 -> #14A06A
+    */
+
+    --background: 52 74% 97%;     /* #FAFAF7 */
+    --foreground: 0 0% 8%;        /* #141414 */
+    --card: 0 0% 100%;            /* #FFFFFF */
+    --card-foreground: 0 0% 8%;  /* #141414 */
+    --popover: 0 0% 100%;         /* #FFFFFF */
+    --popover-foreground: 0 0% 8%;/* #141414 */
+
+    --primary: 152 83% 28%;        /* #0E7A52 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 160 84% 39%;
+
+    --secondary: 152 63% 32%;     /* tasteful secondary using brand primary (green) */
     --secondary-foreground: 0 0% 100%;
-    --accent: 38 92% 50%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 350 88% 60%;
+
+    --accent: 45 95% 63%;          /* #F4B740 */
+    --accent-foreground: 0 0% 8%;  /* better contrast vs yellow */
+
+    --destructive: 0 84% 60%;      /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
-    --muted: 215 20% 96%;
-    --muted-foreground: 215 16% 47%;
-    --border: 215 20% 90%;
-    --input: 215 20% 90%;
-    --ring: 243 75% 59%;
+
+    --muted: 45 30% 95%;            /* soft off-white surfaces */
+    --muted-foreground: 216 16% 54%; /* #6B7280-ish */
+
+    --border: 215 16% 90%;          /* #E5E7EB */
+    --input: 215 16% 90%;
+    --ring: 152 83% 28%;            /* tie ring to primary */
+
     --radius: 0.75rem;
-    --chart-1: 243 75% 59%;
-    --chart-2: 160 84% 39%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 350 88% 60%;
-    --chart-5: 215 25% 15%;
-    --sidebar: 215 50% 15%;
+
+    /* charts/extra semantic slots */
+    --chart-1: 142 72% 49%; /* success #22C55E */
+    --chart-2: 200 83% 55%; /* info #3B82F6 */
+    --chart-3: 36 96% 56%;  /* warning #F59E0B */
+    --chart-4: 0 84% 60%;    /* error #EF4444 */
+    --chart-5: 0 0% 8%;      /* text primary */
+
+    /* sidebar */
+    --sidebar: 0 0% 8%;            /* match text primary */
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-accent: 243 75% 59%;
-    --sidebar-muted: 215 30% 25%;
+    --sidebar-accent: 152 83% 28%;  /* primary */
+    --sidebar-muted: 152 10% 92%;
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 13%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 13%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 243 75% 59%;
+    /* Dark mode derived from provided palette (maintain brand hues, increase contrast) */
+    --background: 0 0% 98%; /* will be overridden by NextThemes 'class' toggling; keep close to near-black surfaces */
+    --foreground: 0 0% 98%; /* near-white text */
+
+    /* Surfaces slightly lighter than background for separation */
+    --card: 210 40% 7%;
+    --card-foreground: 0 0% 98%;
+    --popover: 210 40% 7%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Brand */
+    --primary: 152 83% 30%; /* #0E7A52-ish */
     --primary-foreground: 0 0% 100%;
-    --secondary: 160 84% 39%;
+    --secondary: 152 63% 34%;
     --secondary-foreground: 0 0% 100%;
-    --accent: 38 92% 50%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 350 88% 60%;
+
+    --accent: 45 95% 63%; /* #F4B740 */
+    --accent-foreground: 0 0% 8%;
+
+    /* Semantic */
+    --destructive: 0 84% 60%; /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
+
     --muted: 215 30% 18%;
-    --muted-foreground: 215 16% 57%;
+    --muted-foreground: 215 16% 70%;
+
+    /* Borders / input */
     --border: 215 30% 22%;
     --input: 215 30% 22%;
-    --ring: 243 75% 59%;
-    --chart-1: 243 75% 59%;
-    --chart-2: 160 84% 39%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 350 88% 60%;
-    --chart-5: 210 40% 98%;
-    --sidebar: 215 50% 11%;
+    --ring: 152 83% 30%;
+
+    --chart-1: 142 72% 49%; /* success */
+    --chart-2: 200 83% 55%; /* info */
+    --chart-3: 36 96% 56%;  /* warning */
+    --chart-4: 0 84% 60%;    /* error */
+    --chart-5: 0 0% 98%;
+
+    --sidebar: 222 47% 11%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-accent: 243 75% 59%;
+    --sidebar-accent: 152 83% 30%;
     --sidebar-muted: 215 30% 18%;
   }
 }
