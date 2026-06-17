@@ -79,12 +79,18 @@ const config: Config = {
         'soft-lg': '0 4px 16px -4px rgba(0, 0, 0, 0.08), 0 8px 32px -8px rgba(0, 0, 0, 0.04)',
         glow: '0 0 20px rgba(14, 122, 82, 0.15)',
         'glow-emerald': '0 0 20px rgba(20, 160, 106, 0.15)',
+        'admin-card': '0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2)',
+        'admin-card-hover': '0 10px 40px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3)',
+        'admin-glow': '0 0 20px rgba(18, 184, 119, 0.15)',
+        'admin-glow-lg': '0 0 40px rgba(18, 184, 119, 0.1)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
         'gradient-primary': 'linear-gradient(90deg, #0E7A52, #14A06A)',
         'gradient-dark': 'linear-gradient(180deg, #0E7A52, #0A6543)',
+        'gradient-admin': 'linear-gradient(135deg, #12B877, #0E945E)',
+        'gradient-admin-subtle': 'linear-gradient(180deg, transparent, hsl(160 72% 42% / 0.05))',
       },
       keyframes: {
         'accordion-down': {
