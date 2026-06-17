@@ -49,6 +49,7 @@
     "@types/react": "18.2.22",
     "@types/react-dom": "18.2.7",
     "autoprefixer": "10.4.15",
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
@@ -58,6 +59,7 @@
     "eslint-config-next": "13.5.1",
     "framer-motion": "^12.40.0",
     "input-otp": "^1.2.4",
+    "jose": "^6.2.3",
     "lucide-react": "^0.446.0",
     "nepali-date-converter": "^3.4.0",
     "next": "13.5.1",
@@ -79,5 +81,9 @@
     "vaul": "^0.9.9",
     "zod": "^3.23.8",
     "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "tsx": "^4.22.4"
   }
 }

@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { logout, getCurrentUser } from '@/lib/actions/auth';
 
 const adminNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
@@ -49,10 +50,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [commandOpen, setCommandOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [notifications] = useState<{ id: number; text: string; type: 'error' | 'success' | 'info' | 'warning'; time: string }[]>([]);
+  const [currentUser, setCurrentUser] = useState<{ firstName: string; lastName: string; email: string } | null>(null);
 
   useEffect(() => {
     document.body.classList.add('admin-layout');
     return () => document.body.classList.remove('admin-layout');
+  }, []);
+
+  useEffect(() => {
+    getCurrentUser().then((u) => {
+      if (u) setCurrentUser(u);
+    });
   }, []);
 
   useEffect(() => {
@@ -79,6 +87,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const isActive = (href: string) =>
     pathname === href || (href !== '/admin' && pathname.startsWith(href));
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
+
+  const initials = currentUser
+    ? `${currentUser.firstName.charAt(0)}${currentUser.lastName.charAt(0)}`
+    : 'SA';
+
+  const displayName = currentUser
+    ? `${currentUser.firstName} ${currentUser.lastName}`
+    : 'Super Admin';
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -124,13 +145,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="px-3 py-3 border-t border-sidebar-muted/30 flex-shrink-0">
           <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-sidebar-muted/20">
             <div className="h-9 w-9 rounded-full bg-white/20 flex items-center justify-center text-sidebar-foreground font-semibold text-xs">
-              SA
+              {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">Super Admin</p>
-              <p className="text-xs text-sidebar-foreground/60 truncate">root@resthru.com</p>
+              <p className="text-sm font-medium text-sidebar-foreground truncate">{displayName}</p>
+              <p className="text-xs text-sidebar-foreground/60 truncate">{currentUser?.email || 'admin@resthru.com'}</p>
             </div>
-            <LogOut className="h-4 w-4 text-sidebar-foreground/60 hover:text-destructive cursor-pointer transition-colors flex-shrink-0" />
+            <button onClick={handleLogout} className="p-0 bg-transparent border-none cursor-pointer">
+              <LogOut className="h-4 w-4 text-sidebar-foreground/60 hover:text-destructive transition-colors flex-shrink-0" />
+            </button>
           </div>
         </div>
       </aside>
@@ -175,7 +198,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             <div className="flex items-center gap-2 pl-3 border-l border-border">
               <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-xs">
-                SA
+                {initials}
               </div>
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground hidden md:block" />
             </div>
