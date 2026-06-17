@@ -26,6 +26,8 @@ const config: Config = {
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
+          hover: 'hsl(var(--primary-hover))',
+          light: 'hsl(var(--primary-light))',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -34,11 +36,16 @@ const config: Config = {
         accent: {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
+          light: 'hsl(var(--accent-light))',
         },
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
+        success: 'hsl(var(--success))',
+        warning: 'hsl(var(--warning))',
+        error: 'hsl(var(--error))',
+        info: 'hsl(var(--info))',
         muted: {
           DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))',
@@ -71,17 +78,14 @@ const config: Config = {
       boxShadow: {
         soft: '0 2px 8px -2px rgba(0, 0, 0, 0.06), 0 4px 16px -4px rgba(0, 0, 0, 0.04)',
         'soft-lg': '0 4px 16px -4px rgba(0, 0, 0, 0.08), 0 8px 32px -8px rgba(0, 0, 0, 0.04)',
-        glow: '0 0 20px rgba(79, 70, 229, 0.15)',
-        'glow-emerald': '0 0 20px rgba(16, 185, 129, 0.15)',
+        glow: '0 0 20px rgba(14, 122, 82, 0.15)',
+        'glow-emerald': '0 0 20px rgba(20, 160, 106, 0.15)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'gradient-indigo': 'linear-gradient(135deg, #4F46E5, #6366F1)',
-        'gradient-emerald': 'linear-gradient(135deg, #059669, #10B981)',
-        'gradient-dark': 'linear-gradient(180deg, #0F172A, #1E293B)',
-
         'gradient-primary': 'linear-gradient(90deg, #0E7A52, #14A06A)',
+        'gradient-dark': 'linear-gradient(180deg, #0F172A, #1E293B)',
       },
       keyframes: {
         'accordion-down': {
