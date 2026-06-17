@@ -318,7 +318,7 @@ export default function ReportsPage() {
         <TabsContent value="sales" className="space-y-6">
           {/* KPI Summary */}
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-950 dark:to-indigo-900">
+            <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Total Revenue
@@ -332,7 +332,7 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900">
+            <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Total Orders
@@ -346,7 +346,7 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900">
+            <Card className="bg-gradient-to-br from-amber-50 to-amber-100">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Avg Order Value
@@ -360,7 +360,7 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950 dark:to-rose-900">
+            <Card className="bg-gradient-to-br from-rose-50 to-rose-100">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Top Payment
@@ -572,7 +572,7 @@ export default function ReportsPage() {
           </Card>
 
           {/* Least Selling Items */}
-          <Card className="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20">
+          <Card className="border-amber-200 bg-amber-50">
             <CardHeader>
               <div className="flex items-start gap-3">
                 <div className="mt-1 h-5 w-5 rounded-full bg-amber-500 flex-shrink-0" />

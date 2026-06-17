@@ -69,7 +69,7 @@ const itemVariants = {
 
 export function TestimonialsSection() {
   return (
-    <section className="py-16 sm:py-20 lg:py-24 bg-white dark:bg-slate-950">
+    <section className="py-16 sm:py-20 lg:py-24 bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <motion.div
@@ -79,7 +79,7 @@ export function TestimonialsSection() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white">
+          <h2 className="text-4xl sm:text-5xl font-bold text-slate-900">
             Restaurants love Resthru
           </h2>
         </motion.div>
@@ -99,10 +99,10 @@ export function TestimonialsSection() {
               whileHover={{ y: -8 }}
               transition={{ duration: 0.3 }}
             >
-              <Card className="h-full border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg dark:hover:shadow-xl transition-shadow duration-300">
+              <Card className="h-full border-slate-200 bg-white hover:shadow-lg transition-shadow duration-300">
                 <CardHeader className="pb-4">
                   {/* Quote text */}
-                  <blockquote className="text-base sm:text-lg font-medium text-slate-900 dark:text-white italic mb-6">
+                  <blockquote className="text-base sm:text-lg font-medium text-slate-900 italic mb-6">
                     "{testimonial.quote}"
                   </blockquote>
 
@@ -126,13 +126,13 @@ export function TestimonialsSection() {
                       </span>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                      <p className="text-sm font-semibold text-slate-900 truncate">
                         {testimonial.author}
                       </p>
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 truncate">
+                      <p className="text-xs sm:text-sm text-slate-600 truncate">
                         {testimonial.restaurant}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-500 truncate">
+                      <p className="text-xs text-slate-500 truncate">
                         {testimonial.location}
                       </p>
                     </div>

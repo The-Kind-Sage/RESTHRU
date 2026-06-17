@@ -173,10 +173,10 @@ const stockHistoryData = [
 ];
 
 const statusColors: { [key: string]: string } = {
-  Healthy: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
-  Low: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+  Healthy: 'bg-emerald-100 text-emerald-800',
+  Low: 'bg-amber-100 text-amber-800',
   'Out of Stock':
-    'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200',
+    'bg-rose-100 text-rose-800',
 };
 
 interface InventoryItem {
@@ -588,16 +588,16 @@ export default function InventoryPage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="flex items-center justify-between gap-4 p-4 rounded-lg bg-amber-50 border border-amber-200 dark:bg-amber-950 dark:border-amber-800"
+          className="flex items-center justify-between gap-4 p-4 rounded-lg bg-amber-50 border border-amber-200"
         >
           <div className="flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <AlertTriangle className="h-5 w-5 text-amber-600" />
             <div>
-              <p className="font-medium text-amber-900 dark:text-amber-100">
+              <p className="font-medium text-amber-900">
                 {lowStockItems + outOfStockItems} item
                 {lowStockItems + outOfStockItems !== 1 ? 's are' : ' is'} running low on stock
               </p>
-              <p className="text-sm text-amber-800 dark:text-amber-200">
+              <p className="text-sm text-amber-800">
                 Please reorder soon to avoid stockouts
               </p>
             </div>
@@ -606,7 +606,7 @@ export default function InventoryPage() {
             size="icon"
             variant="ghost"
             onClick={() => setAlertDismissed(true)}
-            className="text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900"
+            className="text-amber-600 hover:bg-amber-100"
           >
             <X className="h-4 w-4" />
           </Button>

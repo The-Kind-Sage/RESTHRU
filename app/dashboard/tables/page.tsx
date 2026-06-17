@@ -81,36 +81,36 @@ const getStatusColors = (status: string) => {
       return {
         bg: 'bg-emerald-500/20',
         border: 'border-emerald-500',
-        text: 'text-emerald-700 dark:text-emerald-300',
-        badge: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500',
+        text: 'text-emerald-700',
+        badge: 'bg-emerald-500/20 text-emerald-700 border border-emerald-500',
       };
     case 'occupied':
       return {
         bg: 'bg-rose-500/20',
         border: 'border-rose-500',
-        text: 'text-rose-700 dark:text-rose-300',
-        badge: 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500',
+        text: 'text-rose-700',
+        badge: 'bg-rose-500/20 text-rose-700 border border-rose-500',
       };
     case 'bill_requested':
       return {
         bg: 'bg-amber-500/20',
         border: 'border-amber-500',
-        text: 'text-amber-700 dark:text-amber-300',
-        badge: 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500',
+        text: 'text-amber-700',
+        badge: 'bg-amber-500/20 text-amber-700 border border-amber-500',
       };
     case 'reserved':
       return {
         bg: 'bg-slate-500/20',
         border: 'border-slate-500',
-        text: 'text-slate-700 dark:text-slate-300',
-        badge: 'bg-slate-500/20 text-slate-700 dark:text-slate-300 border border-slate-500',
+        text: 'text-slate-700',
+        badge: 'bg-slate-500/20 text-slate-700 border border-slate-500',
       };
     default:
       return {
         bg: 'bg-gray-500/20',
         border: 'border-gray-500',
-        text: 'text-gray-700 dark:text-gray-300',
-        badge: 'bg-gray-500/20 text-gray-700 dark:text-gray-300 border border-gray-500',
+        text: 'text-gray-700',
+        badge: 'bg-gray-500/20 text-gray-700 border border-gray-500',
       };
   }
 };

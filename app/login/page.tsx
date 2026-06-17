@@ -273,7 +273,7 @@ export default function LoginPage() {
                   </div>
                   <Link
                     href="/forgot-password"
-                    className="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors"
+                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
                   >
                     Forgot password?
                   </Link>
@@ -319,7 +319,7 @@ export default function LoginPage() {
               Don't have an account?{' '}
               <Link
                 href="/register"
-                className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold transition-colors"
+                className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors"
               >
                 Start free trial
               </Link>

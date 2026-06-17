@@ -61,7 +61,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="border-t border-slate-200 bg-slate-900 dark:border-slate-800 dark:bg-slate-950">
+    <footer className="border-t border-slate-200 bg-slate-900">
       {/* Top Section */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-5">
@@ -100,7 +100,7 @@ const Footer = () => {
       </div>
 
       {/* Bottom Section */}
-      <div className="border-t border-slate-800 bg-slate-950 dark:border-slate-900 dark:bg-slate-950">
+      <div className="border-t border-slate-800 bg-slate-950">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
             {/* Left: Contact Email */}

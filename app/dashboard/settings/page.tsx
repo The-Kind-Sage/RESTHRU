@@ -708,7 +708,7 @@ export default function SettingsPage() {
           {/* SUBSCRIPTION TAB */}
           <TabsContent value="subscription" className="space-y-6">
             {/* Current Plan */}
-            <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:border-emerald-900 dark:from-emerald-950 dark:to-emerald-900">
+            <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100">
               <CardHeader>
                 <CardTitle className="text-2xl">Pro Plan</CardTitle>
                 <CardDescription>Your current subscription</CardDescription>
@@ -839,7 +839,7 @@ export default function SettingsPage() {
                           <td className="py-3 px-4 font-medium">{item.amount}</td>
                           <td className="py-3 px-4">{item.plan}</td>
                           <td className="py-3 px-4">
-                            <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100">
+                            <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
                               {item.status}
                             </span>
                           </td>
@@ -866,8 +866,8 @@ export default function SettingsPage() {
             </Card>
 
             {/* Cancel Subscription */}
-            <div className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/20">
-              <h3 className="font-semibold text-red-600 dark:text-red-400">
+            <div className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-4">
+              <h3 className="font-semibold text-red-600">
                 Danger Zone
               </h3>
               <p className="text-sm text-muted-foreground">
@@ -1044,8 +1044,8 @@ export default function SettingsPage() {
                             <span
                               className={
                                 entry.status === 'Success'
-                                  ? 'inline-block px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100'
-                                  : 'inline-block px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'
+                                  ? 'inline-block px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800'
+                                  : 'inline-block px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800'
                               }
                             >
                               {entry.status}

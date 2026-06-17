@@ -146,13 +146,13 @@ const mockStaffMembers = [
 ];
 
 const roleColors: { [key: string]: string } = {
-  Waiter: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
+  Waiter: 'bg-indigo-100 text-indigo-800',
   Kitchen:
-    'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+    'bg-amber-100 text-amber-800',
   Cashier:
-    'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
+    'bg-emerald-100 text-emerald-800',
   Manager:
-    'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    'bg-purple-100 text-purple-800',
 };
 
 const avatarBgColors: { [key: string]: string } = {

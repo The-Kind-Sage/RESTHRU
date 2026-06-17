@@ -53,7 +53,7 @@ const itemVariants = {
 
 export function HowItWorks() {
   return (
-    <section className="py-16 sm:py-20 lg:py-24 bg-slate-50 dark:bg-slate-900/50">
+    <section className="py-16 sm:py-20 lg:py-24 bg-slate-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <motion.div
@@ -63,7 +63,7 @@ export function HowItWorks() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white">
+          <h2 className="text-4xl sm:text-5xl font-bold text-slate-900">
             Up and running in 3 steps
           </h2>
         </motion.div>
@@ -91,9 +91,9 @@ export function HowItWorks() {
                 >
                   {/* Step circle */}
                   <div className="relative z-10 mb-6">
-                    <div className="w-24 h-24 rounded-full bg-white dark:bg-slate-800 border-4 border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-100 to-emerald-100 dark:from-indigo-950 dark:to-emerald-950 flex items-center justify-center">
-                        <Icon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                    <div className="w-24 h-24 rounded-full bg-white border-4 border-slate-200 flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-100 to-emerald-100 flex items-center justify-center">
+                        <Icon className="w-8 h-8 text-indigo-600" />
                       </div>
                     </div>
                     {/* Step number */}
@@ -103,10 +103,10 @@ export function HowItWorks() {
                   </div>
 
                   {/* Step content */}
-                  <h3 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                  <h3 className="text-lg sm:text-xl font-semibold text-slate-900 mb-2">
                     {step.title}
                   </h3>
-                  <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
+                  <p className="text-sm sm:text-base text-slate-600">
                     {step.time}
                   </p>
 

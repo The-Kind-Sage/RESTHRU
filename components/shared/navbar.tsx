@@ -53,7 +53,7 @@ const Navbar = () => {
       className={cn(
         'sticky top-0 z-50 w-full transition-all duration-300',
         isScrolled
-          ? 'bg-white/80 backdrop-blur-md shadow-lg dark:bg-slate-950/80'
+          ? 'bg-white/80 backdrop-blur-md shadow-lg'
           : 'bg-transparent'
       )}
     >

@@ -671,7 +671,7 @@ export default function RegisterPage() {
                               <div
                                 className={`relative rounded-lg border-2 p-6 cursor-pointer transition-all ${
                                   field.value === plan.id
-                                    ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950'
+                                    ? 'border-indigo-600 bg-indigo-50'
                                     : 'border-border hover:border-indigo-300'
                                 }`}
                                 onClick={() => field.onChange(plan.id)}
@@ -739,7 +739,7 @@ export default function RegisterPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950">
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50">
                 <CardContent className="pt-12 pb-12">
                   <div className="text-center space-y-6">
                     {/* Celebration Animation */}
@@ -758,15 +758,15 @@ export default function RegisterPage() {
                     </motion.div>
 
                     <div>
-                      <h2 className="text-3xl font-bold text-green-900 dark:text-green-100 mb-2">
+                      <h2 className="text-3xl font-bold text-green-900 mb-2">
                         Welcome to Resthru, {formData.step2.restaurantName}!
                       </h2>
-                      <p className="text-green-700 dark:text-green-300 text-lg">
+                      <p className="text-green-700 text-lg">
                         Your account is ready to go
                       </p>
                     </div>
 
-                    <div className="space-y-2 text-sm text-green-700 dark:text-green-300">
+                    <div className="space-y-2 text-sm text-green-700">
                       <p>✓ Account created successfully</p>
                       <p>✓ Restaurant profile set up</p>
                       <p>✓ Plan selected</p>
@@ -813,7 +813,7 @@ export default function RegisterPage() {
           Already have an account?{' '}
           <Link
             href="/login"
-            className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold transition-colors"
+            className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors"
           >
             Sign in
           </Link>

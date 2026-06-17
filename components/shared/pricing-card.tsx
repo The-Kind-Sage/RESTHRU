@@ -19,10 +19,10 @@ interface PricingCardProps {
 }
 
 const accentColorMap = {
-  indigo: 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/20',
-  emerald: 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20',
-  amber: 'border-amber-500 bg-amber-50 dark:bg-amber-950/20',
-  gray: 'border-gray-300 bg-gray-50 dark:bg-gray-950/20',
+  indigo: 'border-indigo-500 bg-indigo-50',
+  emerald: 'border-emerald-500 bg-emerald-50',
+  amber: 'border-amber-500 bg-amber-50',
+  gray: 'border-gray-300 bg-gray-50',
 };
 
 const accentBgMap = {

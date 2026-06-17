@@ -3,7 +3,6 @@
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useTheme } from 'next-themes';
 import {
   UtensilsCrossed,
   ChevronLeft,
@@ -17,8 +16,6 @@ import {
   BarChart3,
   Printer,
   Settings,
-  Moon,
-  Sun,
   LogOut,
   Bell,
 } from 'lucide-react';
@@ -53,8 +50,6 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const { user, restaurant } = useAuthStore();
-  const { theme, setTheme } = useTheme();
-
   const userInitials = useMemo(() => {
     if (user?.firstName && user?.lastName) {
       return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
@@ -187,26 +182,6 @@ export default function Sidebar() {
 
           {/* Bottom Actions */}
           <div className="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  className="flex-1 h-9 text-sidebar-foreground/70 hover:text-sidebar-foreground"
-                >
-                  {theme === 'dark' ? (
-                    <Sun className="h-4 w-4" />
-                  ) : (
-                    <Moon className="h-4 w-4" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-              </TooltipContent>
-            </Tooltip>
-
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

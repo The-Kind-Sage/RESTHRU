@@ -76,7 +76,7 @@ const itemVariants = {
 
 export function PricingPreview() {
   return (
-    <section className="py-16 sm:py-20 lg:py-24 bg-white dark:bg-slate-950">
+    <section className="py-16 sm:py-20 lg:py-24 bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <motion.div
@@ -86,10 +86,10 @@ export function PricingPreview() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white mb-4">
+          <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
             Simple, honest pricing
           </h2>
-          <p className="text-lg text-slate-600 dark:text-slate-400">
+          <p className="text-lg text-slate-600">
             No hidden fees. Cancel anytime.
           </p>
         </motion.div>
@@ -118,13 +118,13 @@ export function PricingPreview() {
               <Card
                 className={`h-full border-2 transition-all duration-300 ${
                   plan.isPopular
-                    ? 'border-indigo-600 dark:border-indigo-500 bg-gradient-to-b from-white to-indigo-50 dark:from-slate-900 dark:to-indigo-950/30'
-                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
+                    ? 'border-indigo-600 bg-gradient-to-b from-white to-indigo-50'
+                    : 'border-slate-200 bg-white'
                 }`}
               >
                 <CardHeader className="pb-6">
                   <div className="flex items-center justify-between mb-4">
-                    <CardTitle className="text-2xl text-slate-900 dark:text-white">
+                    <CardTitle className="text-2xl text-slate-900">
                       {plan.name}
                     </CardTitle>
                     {plan.isPopular && (
@@ -134,11 +134,11 @@ export function PricingPreview() {
                     )}
                   </div>
                   <div className="space-y-1">
-                    <p className="text-4xl font-bold text-slate-900 dark:text-white">
+                    <p className="text-4xl font-bold text-slate-900">
                       {plan.price}
                     </p>
                     {plan.id !== 'free' && (
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                      <p className="text-sm text-slate-600">
                         per month, billed annually
                       </p>
                     )}
@@ -150,8 +150,8 @@ export function PricingPreview() {
                   <div className="space-y-3">
                     {plan.features.map((feature, index) => (
                       <div key={index} className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-slate-700 dark:text-slate-300">
+                        <Check className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-slate-700">
                           {feature}
                         </span>
                       </div>
@@ -161,7 +161,7 @@ export function PricingPreview() {
                   {/* See all plans link */}
                   <Link
                     href="/pricing"
-                    className="block text-center text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors py-2 border-t border-slate-200 dark:border-slate-800 pt-4"
+                    className="block text-center text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors py-2 border-t border-slate-200 pt-4"
                   >
                     See all plans
                   </Link>

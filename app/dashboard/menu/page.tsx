@@ -596,7 +596,7 @@ export default function MenuPage() {
                     >
                       <Card className="h-full overflow-hidden group relative">
                         {/* Image Placeholder */}
-                        <div className="relative h-40 bg-gradient-to-br from-orange-100 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 flex items-center justify-center">
+                        <div className="relative h-40 bg-gradient-to-br from-orange-100 to-amber-50 flex items-center justify-center">
                           <span className="text-6xl">{item.emoji}</span>
                           {item.outOfStock && (
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -639,7 +639,7 @@ export default function MenuPage() {
                             <div className="flex items-baseline gap-2">
                               {item.discountPrice ? (
                                 <>
-                                  <span className="text-indigo-600 dark:text-indigo-400 font-bold">
+                                  <span className="text-indigo-600 font-bold">
                                     NPR {item.discountPrice}
                                   </span>
                                   <span className="text-xs text-muted-foreground line-through">
@@ -647,7 +647,7 @@ export default function MenuPage() {
                                   </span>
                                 </>
                               ) : (
-                                <span className="text-indigo-600 dark:text-indigo-400 font-bold">
+                                <span className="text-indigo-600 font-bold">
                                   NPR {item.price}
                                 </span>
                               )}
@@ -710,7 +710,7 @@ export default function MenuPage() {
                         <p className="text-sm text-muted-foreground line-clamp-1">{item.description}</p>
                       </div>
                       <div className="col-span-1">
-                        <p className="font-bold text-indigo-600 dark:text-indigo-400">NPR {item.price}</p>
+                        <p className="font-bold text-indigo-600">NPR {item.price}</p>
                       </div>
                       <div className="col-span-1">
                         <div
@@ -877,7 +877,7 @@ export default function MenuPage() {
                       key={type.value}
                       className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
                         formData.foodType === type.value
-                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950'
+                          ? 'border-indigo-500 bg-indigo-50'
                           : 'border-border hover:border-indigo-300'
                       }`}
                       onClick={() => setFormData({ ...formData, foodType: type.value as any })}

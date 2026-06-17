@@ -172,7 +172,7 @@ export default function PricingPage() {
             <div className="flex items-center gap-2">
               <span className={cn('text-sm font-medium', isYearly && 'text-foreground')}>Yearly</span>
               {isYearly && (
-                <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
+                <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">
                   Save 20%
                 </Badge>
               )}
