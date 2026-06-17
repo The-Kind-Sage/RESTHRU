@@ -84,7 +84,7 @@ const config: Config = {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
         'gradient-primary': 'linear-gradient(90deg, #0E7A52, #14A06A)',
-        'gradient-dark': 'linear-gradient(180deg, #0F172A, #1E293B)',
+        'gradient-dark': 'linear-gradient(180deg, #0E7A52, #0A6543)',
       },
       keyframes: {
         'accordion-down': {

@@ -43,22 +43,22 @@ export function getStatusColor(status: string): string {
   const statusLower = status.toLowerCase();
 
   const statusColorMap: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    processing: 'bg-blue-100 text-blue-800',
-    completed: 'bg-green-100 text-green-800',
-    confirmed: 'bg-green-100 text-green-800',
-    delivered: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800',
-    rejected: 'bg-red-100 text-red-800',
-    failed: 'bg-red-100 text-red-800',
-    available: 'bg-green-100 text-green-800',
-    occupied: 'bg-red-100 text-red-800',
-    reserved: 'bg-orange-100 text-orange-800',
-    active: 'bg-green-100 text-green-800',
-    inactive: 'bg-gray-100 text-gray-800',
+    pending: 'bg-accent-light text-warning',
+    processing: 'bg-info/10 text-info',
+    completed: 'bg-primary-light text-primary',
+    confirmed: 'bg-primary-light text-primary',
+    delivered: 'bg-primary-light text-primary',
+    cancelled: 'bg-destructive/10 text-destructive',
+    rejected: 'bg-destructive/10 text-destructive',
+    failed: 'bg-destructive/10 text-destructive',
+    available: 'bg-primary-light text-primary',
+    occupied: 'bg-destructive/10 text-destructive',
+    reserved: 'bg-accent-light text-accent',
+    active: 'bg-primary-light text-primary',
+    inactive: 'bg-muted text-muted-foreground',
   };
 
-  return statusColorMap[statusLower] || 'bg-gray-100 text-gray-800';
+  return statusColorMap[statusLower] || 'bg-muted text-muted-foreground';
 }
 
 /**
