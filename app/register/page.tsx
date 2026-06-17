@@ -206,13 +206,22 @@ export default function RegisterPage() {
         return;
       }
 
+      // Build a URL-safe slug from the restaurant name
+      const slug = (formData.step2.restaurantName ?? '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        + '-' + Math.random().toString(36).slice(2, 7);
+
       // Insert restaurant data
-      const { error: restaurantError } = await supabase
+      const { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurants')
         .insert([
           {
-            user_id: authData.user.id,
+            owner_id: authData.user.id,
             name: formData.step2.restaurantName,
+            slug,
             type: formData.step2.restaurantType,
             address: formData.step2.address,
             city: formData.step2.city,
@@ -220,16 +229,30 @@ export default function RegisterPage() {
             pan_number: formData.step3.panNumber,
             vat_registered: formData.step3.vatRegistered,
             vat_number: formData.step3.vatNumber,
-            number_of_tables: formData.step3.numberOfTables,
-            opening_time: formData.step3.openTime,
-            closing_time: formData.step3.closeTime,
-            plan_id: formData.step4.selectedPlan,
+            num_tables: formData.step3.numberOfTables,
+            operating_hours: {
+              open: formData.step3.openTime,
+              close: formData.step3.closeTime,
+            },
           },
-        ]);
+        ])
+        .select('id')
+        .single();
 
       if (restaurantError) {
         toast.error(restaurantError.message || 'Failed to create restaurant');
         return;
+      }
+
+      // Link the chosen plan via the subscriptions table
+      if (restaurantData?.id && formData.step4.selectedPlan) {
+        await supabase.from('subscriptions').insert([
+          {
+            restaurant_id: restaurantData.id,
+            plan_id: formData.step4.selectedPlan,
+            status: 'active',
+          },
+        ]);
       }
 
       toast.success('Account created successfully!');

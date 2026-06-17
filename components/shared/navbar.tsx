@@ -13,9 +13,11 @@ import {
   SheetClose,
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { LoginModal } from '@/components/shared/login-modal';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
   const pathname = usePathname();
   const isHomePage = pathname === '/';
 
@@ -83,7 +85,7 @@ const Navbar = () => {
 
           {/* Desktop Buttons */}
           <div className="hidden items-center gap-3 md:flex">
-            <Button variant="ghost" size="default">
+            <Button variant="ghost" size="default" onClick={() => setLoginOpen(true)}>
               Login
             </Button>
             <Button
@@ -125,7 +127,7 @@ const Navbar = () => {
                 {/* Mobile Buttons */}
                 <div className="flex flex-col gap-3 border-t pt-6">
                   <SheetClose asChild>
-                    <Button variant="ghost" size="default" className="w-full">
+                    <Button variant="ghost" size="default" className="w-full" onClick={() => setLoginOpen(true)}>
                       Login
                     </Button>
                   </SheetClose>
@@ -143,6 +145,7 @@ const Navbar = () => {
           </Sheet>
         </div>
       </div>
+      <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
     </motion.nav>
   );
 };
