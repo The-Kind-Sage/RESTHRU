@@ -52,28 +52,7 @@ interface Table {
   totalBill?: number;
 }
 
-const mockTables: Table[] = [
-  { id: 1, number: '1', capacity: 4, shape: 'square', status: 'available', x: 50, y: 100, floor: 'Ground Floor' },
-  { id: 2, number: '2', capacity: 4, shape: 'square', status: 'occupied', x: 150, y: 100, floor: 'Ground Floor', ordersCount: 3, timeSeated: '45 mins', totalBill: 1500 },
-  { id: 3, number: '3', capacity: 2, shape: 'round', status: 'available', x: 250, y: 100, floor: 'Ground Floor' },
-  { id: 4, number: '4', capacity: 2, shape: 'round', status: 'occupied', x: 350, y: 100, floor: 'Ground Floor', ordersCount: 2, timeSeated: '20 mins', totalBill: 900 },
-  { id: 5, number: '5', capacity: 4, shape: 'square', status: 'available', x: 450, y: 100, floor: 'Ground Floor' },
-  { id: 6, number: '6', capacity: 8, shape: 'large', status: 'reserved', x: 550, y: 100, floor: 'Ground Floor' },
-  { id: 7, number: '7', capacity: 4, shape: 'square', status: 'available', x: 50, y: 250, floor: 'Ground Floor' },
-  { id: 8, number: '8', capacity: 2, shape: 'round', status: 'bill_requested', x: 150, y: 250, floor: 'Ground Floor', ordersCount: 4, timeSeated: '90 mins', totalBill: 2200 },
-  { id: 9, number: '9', capacity: 4, shape: 'square', status: 'occupied', x: 250, y: 250, floor: 'Ground Floor', ordersCount: 2, timeSeated: '30 mins', totalBill: 1200 },
-  { id: 10, number: '10', capacity: 4, shape: 'square', status: 'available', x: 350, y: 250, floor: 'Ground Floor' },
-  { id: 11, number: '11', capacity: 2, shape: 'round', status: 'available', x: 450, y: 250, floor: 'Ground Floor' },
-  { id: 12, number: '12', capacity: 8, shape: 'large', status: 'occupied', x: 550, y: 250, floor: 'Ground Floor', ordersCount: 5, timeSeated: '60 mins', totalBill: 3500 },
-  { id: 13, number: '13', capacity: 4, shape: 'square', status: 'available', x: 50, y: 400, floor: 'Ground Floor' },
-  { id: 14, number: '14', capacity: 4, shape: 'square', status: 'reserved', x: 150, y: 400, floor: 'Ground Floor' },
-  { id: 15, number: '15', capacity: 2, shape: 'round', status: 'occupied', x: 250, y: 400, floor: 'Ground Floor', ordersCount: 1, timeSeated: '15 mins', totalBill: 650 },
-  { id: 16, number: '16', capacity: 4, shape: 'square', status: 'available', x: 350, y: 400, floor: 'Ground Floor' },
-  { id: 17, number: '17', capacity: 8, shape: 'large', status: 'available', x: 450, y: 400, floor: 'Ground Floor' },
-  { id: 18, number: '18', capacity: 2, shape: 'round', status: 'bill_requested', x: 550, y: 400, floor: 'Ground Floor', ordersCount: 3, timeSeated: '75 mins', totalBill: 1800 },
-  { id: 19, number: '19', capacity: 4, shape: 'square', status: 'occupied', x: 50, y: 550, floor: 'Ground Floor', ordersCount: 2, timeSeated: '25 mins', totalBill: 1100 },
-  { id: 20, number: '20', capacity: 4, shape: 'square', status: 'available', x: 150, y: 550, floor: 'Ground Floor' },
-];
+const mockTables: Table[] = [];
 
 const getStatusColors = (status: string) => {
   switch (status) {

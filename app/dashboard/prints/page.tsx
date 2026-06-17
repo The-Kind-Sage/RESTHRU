@@ -35,27 +35,9 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
-const PRINTERS = [
-  { id: '1', name: 'Main Kitchen Printer', type: 'Thermal', ip: '192.168.1.100', status: 'online', model: 'Epson TM-T88VII', lastPrint: '2 min ago' },
-  { id: '2', name: 'Bar Printer', type: 'Thermal', ip: '192.168.1.101', status: 'online', model: 'Star TSP143IIU', lastPrint: '15 min ago' },
-  { id: '3', name: 'Cashier Receipt', type: 'Receipt', ip: '192.168.1.102', status: 'offline', model: 'Epson TM-U220', lastPrint: '1 hour ago' },
-  { id: '4', name: 'Takeaway Counter', type: 'Thermal', ip: '192.168.1.103', status: 'online', model: 'Star SP700', lastPrint: '5 min ago' },
-];
-
-const PRINT_QUEUE = [
-  { id: '101', order: '#ORD-1245', type: 'Kitchen Order', items: 4, time: 'Just now', status: 'printing' },
-  { id: '102', order: '#ORD-1244', type: 'Kitchen Order', items: 2, time: '2 min ago', status: 'pending' },
-  { id: '103', order: '#ORD-1243', type: 'Receipt', items: 6, time: '5 min ago', status: 'pending' },
-  { id: '104', order: '#ORD-1242', type: 'Kitchen Order', items: 3, time: '8 min ago', status: 'completed' },
-  { id: '105', order: '#ORD-1241', type: 'Receipt', items: 1, time: '12 min ago', status: 'completed' },
-];
-
-const PRINT_HISTORY = [
-  { id: '1', order: '#ORD-1240', printer: 'Main Kitchen Printer', date: '2024-01-15 14:32', status: 'success' },
-  { id: '2', order: '#ORD-1239', printer: 'Bar Printer', date: '2024-01-15 14:15', status: 'success' },
-  { id: '3', order: '#ORD-1238', printer: 'Main Kitchen Printer', date: '2024-01-15 13:45', status: 'failed' },
-  { id: '4', order: '#ORD-1237', printer: 'Cashier Receipt', date: '2024-01-15 13:30', status: 'success' },
-];
+const PRINTERS: { id: string; name: string; type: string; ip: string; status: string; model: string; lastPrint: string }[] = [];
+const PRINT_QUEUE: { id: string; order: string; type: string; items: number; time: string; status: string }[] = [];
+const PRINT_HISTORY: { id: string; order: string; printer: string; date: string; status: string }[] = [];
 
 export default function PrintsPage() {
   const [activeTab, setActiveTab] = useState('printers');
@@ -88,7 +70,14 @@ export default function PrintsPage() {
 
         <TabsContent value="printers" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {PRINTERS.map((printer) => (
+            {PRINTERS.length === 0 ? (
+              <div className="col-span-2 text-center py-16 text-muted-foreground">
+                <Printer className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p className="font-medium">No printers configured</p>
+                <p className="text-sm mt-1">Click "Add Printer" to set up your first printer.</p>
+              </div>
+            ) : (
+              PRINTERS.map((printer) => (
               <motion.div key={printer.id} variants={itemVariants}>
                 <Card>
                   <CardContent className="p-6">
@@ -140,7 +129,8 @@ export default function PrintsPage() {
                   </CardContent>
                 </Card>
               </motion.div>
-            ))}
+            ))
+            )}
           </div>
         </TabsContent>
 
@@ -151,41 +141,45 @@ export default function PrintsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {PRINT_QUEUE.map((job) => (
-                  <div key={job.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
-                    <div className="flex items-center gap-3">
-                      {job.status === 'printing' ? (
-                        <RefreshCw className="h-5 w-5 text-primary animate-spin" />
-                      ) : job.status === 'pending' ? (
-                        <Clock className="h-5 w-5 text-warning" />
-                      ) : (
-                        <CheckCircle2 className="h-5 w-5 text-success" />
-                      )}
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-foreground">{job.order}</span>
-                          <Badge variant="secondary">{job.type}</Badge>
+                {PRINT_QUEUE.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Clock className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                    <p className="font-medium">Print queue is empty</p>
+                  </div>
+                ) : (
+                  PRINT_QUEUE.map((job) => (
+                    <div key={job.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
+                      <div className="flex items-center gap-3">
+                        {job.status === 'printing' ? (
+                          <RefreshCw className="h-5 w-5 text-primary animate-spin" />
+                        ) : job.status === 'pending' ? (
+                          <Clock className="h-5 w-5 text-warning" />
+                        ) : (
+                          <CheckCircle2 className="h-5 w-5 text-success" />
+                        )}
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-foreground">{job.order}</span>
+                            <Badge variant="secondary">{job.type}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {job.items} items &middot; {job.time}
+                          </p>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {job.items} items &middot; {job.time}
-                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {job.status === 'printing' && (
+                          <Button variant="outline" size="sm">Cancel</Button>
+                        )}
+                        {job.status === 'pending' && (
+                          <Button variant="outline" size="sm">
+                            <RefreshCw className="h-3 w-3 mr-1" />Retry
+                          </Button>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {job.status === 'printing' && (
-                        <Button variant="outline" size="sm">
-                          Cancel
-                        </Button>
-                      )}
-                      {job.status === 'pending' && (
-                        <Button variant="outline" size="sm">
-                          <RefreshCw className="h-3 w-3 mr-1" />
-                          Retry
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -204,27 +198,32 @@ export default function PrintsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {PRINT_HISTORY.map((entry) => (
-                  <div key={entry.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-foreground">{entry.order}</span>
-                          <Badge variant={entry.status === 'success' ? 'secondary' : 'destructive'}>
-                            {entry.status === 'success' ? 'Success' : 'Failed'}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {entry.printer} &middot; {entry.date}
-                        </p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      Reprint
-                    </Button>
+                {PRINT_HISTORY.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <FileText className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                    <p className="font-medium">No print history yet</p>
                   </div>
-                ))}
+                ) : (
+                  PRINT_HISTORY.map((entry) => (
+                    <div key={entry.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-foreground">{entry.order}</span>
+                            <Badge variant={entry.status === 'success' ? 'secondary' : 'destructive'}>
+                              {entry.status === 'success' ? 'Success' : 'Failed'}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {entry.printer} &middot; {entry.date}
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm">Reprint</Button>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

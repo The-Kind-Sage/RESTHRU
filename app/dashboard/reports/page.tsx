@@ -39,203 +39,16 @@ import {
 } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/lib/format';
 
-// Mock data for revenue chart
-const revenueData = [
-  { date: 'Jun 1', revenue: 32000, lastRevenue: 28000 },
-  { date: 'Jun 2', revenue: 38000, lastRevenue: 35000 },
-  { date: 'Jun 3', revenue: 35000, lastRevenue: 32000 },
-  { date: 'Jun 4', revenue: 42000, lastRevenue: 40000 },
-  { date: 'Jun 5', revenue: 45000, lastRevenue: 42000 },
-  { date: 'Jun 6', revenue: 48000, lastRevenue: 45000 },
-  { date: 'Jun 7', revenue: 52000, lastRevenue: 48000 },
-  { date: 'Jun 8', revenue: 38000, lastRevenue: 35000 },
-  { date: 'Jun 9', revenue: 41000, lastRevenue: 38000 },
-  { date: 'Jun 10', revenue: 45000, lastRevenue: 42000 },
-  { date: 'Jun 11', revenue: 48000, lastRevenue: 45000 },
-  { date: 'Jun 12', revenue: 52000, lastRevenue: 48000 },
-  { date: 'Jun 13', revenue: 55000, lastRevenue: 51000 },
-  { date: 'Jun 14', revenue: 58000, lastRevenue: 54000 },
-];
-
-// Mock hourly data
-const hourlyData = [
-  { hour: '6 AM', orders: 12, revenue: 4800 },
-  { hour: '7 AM', orders: 28, revenue: 11200 },
-  { hour: '8 AM', orders: 42, revenue: 16800 },
-  { hour: '9 AM', orders: 38, revenue: 15200 },
-  { hour: '10 AM', orders: 35, revenue: 14000 },
-  { hour: '11 AM', orders: 52, revenue: 20800 },
-  { hour: '12 PM', orders: 68, revenue: 27200 },
-  { hour: '1 PM', orders: 62, revenue: 24800 },
-  { hour: '2 PM', orders: 48, revenue: 19200 },
-  { hour: '3 PM', orders: 35, revenue: 14000 },
-  { hour: '4 PM', orders: 42, revenue: 16800 },
-  { hour: '5 PM', orders: 55, revenue: 22000 },
-  { hour: '6 PM', orders: 75, revenue: 30000 },
-  { hour: '7 PM', orders: 82, revenue: 32800 },
-  { hour: '8 PM', orders: 78, revenue: 31200 },
-  { hour: '9 PM', orders: 65, revenue: 26000 },
-  { hour: '10 PM', orders: 38, revenue: 15200 },
-];
-
-// Payment methods pie data
-const paymentData = [
-  { name: 'Cash', value: 64, color: '#e11d48' },
-  { name: 'eSewa', value: 18, color: '#06b6d4' },
-  { name: 'Khalti', value: 12, color: '#8b5cf6' },
-  { name: 'Fonepay', value: 6, color: '#f59e0b' },
-];
-
-// Top selling items
-const topItems = [
-  {
-    rank: 1,
-    name: 'Chicken Momo',
-    category: 'Starters',
-    orders: 284,
-    revenue: 42600,
-    trend: 'up',
-  },
-  {
-    rank: 2,
-    name: 'Chow Mein',
-    category: 'Main Course',
-    orders: 256,
-    revenue: 38400,
-    trend: 'up',
-  },
-  {
-    rank: 3,
-    name: 'Masala Tea',
-    category: 'Drinks',
-    orders: 198,
-    revenue: 3960,
-    trend: 'up',
-  },
-  {
-    rank: 4,
-    name: 'Butter Chicken',
-    category: 'Main Course',
-    orders: 168,
-    revenue: 33600,
-    trend: 'down',
-  },
-  {
-    rank: 5,
-    name: 'Samosa',
-    category: 'Starters',
-    orders: 145,
-    revenue: 2175,
-    trend: 'up',
-  },
-  {
-    rank: 6,
-    name: 'Fried Rice',
-    category: 'Main Course',
-    orders: 134,
-    revenue: 20100,
-    trend: 'up',
-  },
-  {
-    rank: 7,
-    name: 'Gulab Jamun',
-    category: 'Desserts',
-    orders: 98,
-    revenue: 2450,
-    trend: 'down',
-  },
-  {
-    rank: 8,
-    name: 'Coke',
-    category: 'Drinks',
-    orders: 156,
-    revenue: 3900,
-    trend: 'up',
-  },
-  {
-    rank: 9,
-    name: 'Paneer Tikka',
-    category: 'Starters',
-    orders: 89,
-    revenue: 8900,
-    trend: 'down',
-  },
-  {
-    rank: 10,
-    name: 'Dal Bhat',
-    category: 'Main Course',
-    orders: 76,
-    revenue: 7600,
-    trend: 'up',
-  },
-];
-
-// Least selling items
-const leastItems = [
-  { rank: 1, name: 'Truffle Pasta', category: 'Specials', orders: 8, revenue: 1600 },
-  { rank: 2, name: 'Biryani', category: 'Main Course', orders: 12, revenue: 3600 },
-  { rank: 3, name: 'Kheer', category: 'Desserts', orders: 5, revenue: 500 },
-];
-
-// Category performance
-const categoryData = [
-  { name: 'Main Course', value: 45 },
-  { name: 'Starters', value: 20 },
-  { name: 'Drinks', value: 18 },
-  { name: 'Desserts', value: 12 },
-  { name: 'Specials', value: 5 },
-];
-
-const categoryColors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-
-// Staff performance
-const staffData = [
-  {
-    name: 'Ram Kumar',
-    ordersHandled: 284,
-    revenue: 56800,
-    avgOrderValue: 200,
-    rating: 4.8,
-  },
-  {
-    name: 'Priya Singh',
-    ordersHandled: 256,
-    revenue: 51200,
-    avgOrderValue: 200,
-    rating: 4.6,
-  },
-  {
-    name: 'Arun Pradhan',
-    ordersHandled: 215,
-    revenue: 43000,
-    avgOrderValue: 200,
-    rating: 4.5,
-  },
-  {
-    name: 'Neha Sharma',
-    ordersHandled: 198,
-    revenue: 39600,
-    avgOrderValue: 200,
-    rating: 4.9,
-  },
-  {
-    name: 'Suresh Thapa',
-    ordersHandled: 167,
-    revenue: 33400,
-    avgOrderValue: 200,
-    rating: 4.3,
-  },
-];
-
-// Monthly VAT summary
-const monthlyVATData = [
-  { month: 'Jan', taxable: 385000, vat: 50050 },
-  { month: 'Feb', taxable: 392000, vat: 50960 },
-  { month: 'Mar', taxable: 410000, vat: 53300 },
-  { month: 'Apr', taxable: 418000, vat: 54340 },
-  { month: 'May', taxable: 425000, vat: 55250 },
-  { month: 'Jun', taxable: 428319, vat: 55681 },
-];
+// Chart and table data — will be populated from real DB queries
+const revenueData: { date: string; revenue: number; lastRevenue: number }[] = [];
+const hourlyData: { hour: string; orders: number; revenue: number }[] = [];
+const paymentData: { name: string; value: number; color: string }[] = [];
+const topItems: { rank: number; name: string; category: string; orders: number; revenue: number; trend: string }[] = [];
+const leastItems: { rank: number; name: string; category: string; orders: number; revenue: number }[] = [];
+const categoryData: { name: string; value: number }[] = [];
+const categoryColors: string[] = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const staffData: { name: string; ordersHandled: number; revenue: number; avgOrderValue: number; rating: number }[] = [];
+const monthlyVATData: { month: string; taxable: number; vat: number }[] = [];
 
 export default function ReportsPage() {
   const [dateRange, setDateRange] = useState('month');
@@ -320,57 +133,38 @@ export default function ReportsPage() {
           <div className="grid gap-4 md:grid-cols-4">
             <Card className="bg-gradient-to-br from-primary-light to-primary-light">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Revenue
-                </CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">NPR 4,85,000</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  +12.5% from last month
-                </p>
+                <div className="text-2xl font-bold">NPR 0</div>
+                <p className="text-xs text-muted-foreground mt-1">No data yet</p>
               </CardContent>
             </Card>
-
             <Card className="bg-gradient-to-br from-primary-light to-emerald-100">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Orders
-                </CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Orders</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">1,247</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  +8.3% from last month
-                </p>
+                <div className="text-2xl font-bold">0</div>
+                <p className="text-xs text-muted-foreground mt-1">No data yet</p>
               </CardContent>
             </Card>
-
             <Card className="bg-gradient-to-br from-accent-light to-accent-light">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Avg Order Value
-                </CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Avg Order Value</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">NPR 389</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  +3.8% from last month
-                </p>
+                <div className="text-2xl font-bold">NPR 0</div>
+                <p className="text-xs text-muted-foreground mt-1">No data yet</p>
               </CardContent>
             </Card>
-
             <Card className="bg-gradient-to-br from-destructive/10 to-destructive/10">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Top Payment
-                </CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Top Payment</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">Cash 64%</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Preferred method
-                </p>
+                <div className="text-2xl font-bold">—</div>
+                <p className="text-xs text-muted-foreground mt-1">No data yet</p>
               </CardContent>
             </Card>
           </div>
@@ -704,15 +498,15 @@ export default function ReportsPage() {
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="rounded-lg border p-4">
                   <p className="text-sm text-muted-foreground">Total Taxable Amount</p>
-                  <p className="mt-2 text-2xl font-bold">NPR 4,28,319</p>
+                  <p className="mt-2 text-2xl font-bold">NPR 0</p>
                 </div>
                 <div className="rounded-lg border p-4">
                   <p className="text-sm text-muted-foreground">VAT Collected (13%)</p>
-                  <p className="mt-2 text-2xl font-bold text-primary">NPR 55,681</p>
+                  <p className="mt-2 text-2xl font-bold text-primary">NPR 0</p>
                 </div>
                 <div className="rounded-lg border p-4">
                   <p className="text-sm text-muted-foreground">Net Revenue</p>
-                  <p className="mt-2 text-2xl font-bold">NPR 4,85,000</p>
+                  <p className="mt-2 text-2xl font-bold">NPR 0</p>
                 </div>
               </div>
 

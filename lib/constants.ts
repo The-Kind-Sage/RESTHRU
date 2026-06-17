@@ -43,12 +43,21 @@ export const SPICE_LEVELS = [
   { value: 'extra_hot', label: 'Extra Hot', icon: '🌶️🌶️🌶️🌶️' },
 ];
 
-// Food Types
+// Food Types (broad category)
 export const FOOD_TYPES = [
-  { value: 'veg', label: 'Veg', color: '#22c55e' },
+  { value: 'veg',     label: 'Veg',     color: '#22c55e' },
   { value: 'non_veg', label: 'Non-veg', color: '#ef4444' },
-  { value: 'vegan', label: 'Vegan', color: '#eab308' },
-  { value: 'fish', label: 'Fish', color: '#3b82f6' },
+  { value: 'vegan',   label: 'Vegan',   color: '#eab308' },
+  { value: 'fish',    label: 'Fish',    color: '#3b82f6' },
+];
+
+// Food Sub-types (meat type for non-veg items)
+export const FOOD_SUB_TYPES = [
+  { value: 'veg',     label: 'Veg',     color: '#22c55e', emoji: '🥦' },
+  { value: 'chicken', label: 'Chicken', color: '#f97316', emoji: '🍗' },
+  { value: 'buff',    label: 'Buff',    color: '#dc2626', emoji: '🐃' },
+  { value: 'pork',    label: 'Pork',    color: '#ec4899', emoji: '🐷' },
+  { value: 'mutton',  label: 'Mutton',  color: '#7c3aed', emoji: '🐑' },
 ];
 
 // Allergens

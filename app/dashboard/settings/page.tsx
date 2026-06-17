@@ -94,52 +94,25 @@ export default function SettingsPage() {
       {/* Tabs with vertical layout */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex gap-6 lg:gap-8">
         {/* Vertical Tab List */}
-        <TabsList className="flex flex-col h-auto w-full lg:w-64 bg-transparent p-0 space-y-1">
-          <TabsTrigger
-            value="general"
-            className="justify-start data-[state=active]:bg-primary/10 w-full rounded-md px-4 py-2"
-          >
-            General
-          </TabsTrigger>
-          <TabsTrigger
-            value="billing"
-            className="justify-start data-[state=active]:bg-primary/10 w-full rounded-md px-4 py-2"
-          >
-            Billing & Tax
-          </TabsTrigger>
-          <TabsTrigger
-            value="payments"
-            className="justify-start data-[state=active]:bg-primary/10 w-full rounded-md px-4 py-2"
-          >
-            Payments
-          </TabsTrigger>
-          <TabsTrigger
-            value="printers"
-            className="justify-start data-[state=active]:bg-primary/10 w-full rounded-md px-4 py-2"
-          >
-            Printers
-          </TabsTrigger>
-          <TabsTrigger
-            value="notifications"
-            className="justify-start data-[state=active]:bg-primary/10 w-full rounded-md px-4 py-2"
-          >
-            Notifications
-          </TabsTrigger>
-          <TabsTrigger
-            value="subscription"
-            className="justify-start data-[state=active]:bg-primary/10 w-full rounded-md px-4 py-2"
-          >
-            Subscription
-          </TabsTrigger>
-          <TabsTrigger
-            value="security"
-            className="justify-start data-[state=active]:bg-primary/10 w-full rounded-md px-4 py-2"
-          >
-            Security
-          </TabsTrigger>
+        <TabsList className="flex flex-col h-fit w-full lg:w-56 bg-transparent p-0 space-y-0.5 self-start sticky top-4">
+          {[
+            { value: 'general',       label: 'General' },
+            { value: 'billing',       label: 'Billing & Tax' },
+            { value: 'payments',      label: 'Payments' },
+            { value: 'printers',      label: 'Printers' },
+            { value: 'notifications', label: 'Notifications' },
+            { value: 'subscription',  label: 'Subscription' },
+            { value: 'security',      label: 'Security' },
+          ].map((tab) => (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className="justify-start w-full rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-none hover:bg-muted/60 transition-colors"
+            >
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
-
-        {/* Tab Contents */}
         <div className="flex-1">
           {/* GENERAL TAB */}
           <TabsContent value="general" className="space-y-6">
