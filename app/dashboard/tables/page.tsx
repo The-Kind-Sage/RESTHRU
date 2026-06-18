@@ -130,8 +130,8 @@ function TableGridItem({ table, restaurantId, onClick, isEditMode, onPositionCha
     e.preventDefault();
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
-    const newX = Math.max(0, dragRef.current.origX + dx);
-    const newY = Math.max(0, dragRef.current.origY + dy);
+    const newX = Math.max(0, Math.round(dragRef.current.origX + dx));
+    const newY = Math.max(0, Math.round(dragRef.current.origY + dy));
     if (elRef.current) {
       elRef.current.style.left = `${newX}px`;
       elRef.current.style.top  = `${newY}px`;
@@ -146,8 +146,8 @@ function TableGridItem({ table, restaurantId, onClick, isEditMode, onPositionCha
     const dy = e.clientY - dragRef.current.startY;
     // Only treat as a drag if actually moved more than 4px
     if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
-      const newX = Math.max(0, dragRef.current.origX + dx);
-      const newY = Math.max(0, dragRef.current.origY + dy);
+      const newX = Math.max(0, Math.round(dragRef.current.origX + dx));
+      const newY = Math.max(0, Math.round(dragRef.current.origY + dy));
       onPositionChange(table.id, newX, newY);
     }
   };
@@ -395,9 +395,12 @@ export default function TableMapPage() {
       if (!supabase) return;
       const { error } = await supabase
         .from('tables')
-        .update({ position_x: x, position_y: y })
+        .update({ position_x: Math.round(x), position_y: Math.round(y) })
         .eq('id', id);
-      if (error) toast.error('Failed to save table position');
+      if (error) {
+        console.error('Table position save error:', error);
+        toast.error(`Position save failed: ${error.message}`);
+      }
     }, 600);
   };
 
