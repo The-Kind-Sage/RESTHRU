@@ -358,6 +358,12 @@ export default function CustomerMenuPage() {
 
   const emojis = ['🍜', '🍛', '🥘', '🍲', '🥗', '🍖'];
 
+  // Deterministic emoji per item — avoids server/client hydration mismatch
+  const getItemEmoji = (id: string) => {
+    const hash = id.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+    return emojis[hash % emojis.length];
+  };
+
   return (
     <div className="max-w-[430px] mx-auto min-h-screen bg-background overflow-x-hidden">
       {/* HEADER BAR */}
@@ -479,7 +485,7 @@ export default function CustomerMenuPage() {
                       {/* RIGHT SIDE */}
                       <div className="flex-shrink-0">
                         <div className="relative w-[100px] h-[100px] rounded-lg bg-gradient-to-br from-accent to-accent-light flex items-center justify-center text-3xl overflow-hidden">
-                          {emojis[Math.floor(Math.random() * emojis.length)]}
+                          {getItemEmoji(item.id)}
 
                           {!item.isAvailable && (
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
