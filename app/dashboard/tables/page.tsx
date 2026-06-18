@@ -3,8 +3,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Plus, Users, QrCode, Lock, Unlock, Download,
+  Plus, Users, QrCode, Lock, Unlock, Download, Trash2,
 } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import QRCode from 'react-qr-code';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -93,10 +98,11 @@ function TableQrDialog({ table, restaurantId }: { table: Table; restaurantId: st
   );
 }
 
-function TableGridItem({ table, restaurantId, onClick, isEditMode, onPositionChange }: {
+function TableGridItem({ table, restaurantId, onClick, isEditMode, onPositionChange, onDelete }: {
   table: Table; restaurantId: string;
   onClick: (t: Table) => void; isEditMode: boolean;
   onPositionChange: (id: string, x: number, y: number) => void;
+  onDelete: (table: Table) => void;
 }) {
   const colors = getStatusColors(table.status);
   const sizeClass = table.shape === 'large'
@@ -178,10 +184,22 @@ function TableGridItem({ table, restaurantId, onClick, isEditMode, onPositionCha
           ${table.shape !== 'round' ? 'rounded-lg' : ''}
           ${colors.bg} border-2 ${colors.border}
           flex flex-col items-center justify-center p-2
-          transition-shadow hover:shadow-md
+          transition-shadow hover:shadow-md relative
           ${isEditMode ? 'ring-2 ring-primary/40 ring-offset-1' : ''}
         `}
       >
+        {/* Delete button — only visible in edit mode */}
+        {isEditMode && (
+          <button
+            className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-white flex items-center justify-center shadow hover:bg-red-700 transition-colors z-10"
+            onPointerDown={e => e.stopPropagation()}
+            onClick={e => { e.stopPropagation(); onDelete(table); }}
+            aria-label={`Delete table ${table.number}`}
+          >
+            <Trash2 className="w-2.5 h-2.5" />
+          </button>
+        )}
+
         <div className="text-sm font-bold">T{table.number}</div>
         {table.name && (
           <div className="text-[10px] text-muted-foreground truncate max-w-full px-1">{table.name}</div>
@@ -381,9 +399,22 @@ export default function TableMapPage() {
   const [tableDetailOpen, setTableDetailOpen] = useState(false);
   const [addTableOpen, setAddTableOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Table | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Debounce timer ref — save position to DB 600ms after last drag end
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleDeleteTable = async () => {
+    if (!deleteTarget || !supabase) return;
+    setIsDeleting(true);
+    const { error } = await supabase.from('tables').delete().eq('id', deleteTarget.id);
+    setIsDeleting(false);
+    if (error) { toast.error(error.message); return; }
+    setTables(prev => prev.filter(t => t.id !== deleteTarget.id));
+    toast.success(`Table ${deleteTarget.number} deleted`);
+    setDeleteTarget(null);
+  };
 
   const handlePositionChange = (id: string, x: number, y: number) => {
     // Update local state immediately so the UI feels instant
@@ -489,6 +520,7 @@ export default function TableMapPage() {
                     onClick={t => { setSelectedTable(t); setTableDetailOpen(true); }}
                     isEditMode={isEditMode}
                     onPositionChange={handlePositionChange}
+                    onDelete={t => setDeleteTarget(t)}
                   />
                 ))
               )}
@@ -536,6 +568,30 @@ export default function TableMapPage() {
         existingCount={tables.length}
         onAdded={t => setTables(prev => [...prev, t])}
       />
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={open => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Table {deleteTarget?.number}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget?.name ? `"${deleteTarget.name}" — ` : ''}
+              Capacity {deleteTarget?.capacity} · {deleteTarget?.floor}.
+              This will permanently remove the table and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteTable}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90 text-white"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Table'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
