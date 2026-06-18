@@ -67,14 +67,26 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
       } = await supabase.auth.getSession();
 
       if (session?.user) {
-        // Fetch user profile and restaurant data from your database
-        // This is a placeholder - adjust based on your API structure
+        // Pull the real owner name from the restaurants table
+        const { data: restaurantData } = await supabase
+          .from('restaurants')
+          .select('id, name, owner_id')
+          .eq('owner_id', session.user.id)
+          .single();
+
+        // The user's full name is stored in auth metadata set during signUp
+        const meta = session.user.user_metadata || {};
+        const rawName: string = meta.full_name || session.user.email || '';
+        const parts = rawName.trim().split(' ');
+        const firstName = parts[0] || '';
+        const lastName = parts.slice(1).join(' ') || '';
+
         const user: User = {
           id: session.user.id,
           email: session.user.email || '',
-          firstName: '',
-          lastName: '',
-          phoneNumber: '',
+          firstName,
+          lastName,
+          phoneNumber: meta.phone || '',
           role: 'STAFF',
           isActive: true,
           createdAt: new Date(),
@@ -83,6 +95,9 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
 
         set({
           user,
+          restaurant: restaurantData
+            ? { id: restaurantData.id, name: restaurantData.name } as any
+            : null,
           isAuthenticated: true,
           isLoading: false,
         });

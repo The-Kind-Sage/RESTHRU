@@ -1,76 +1,47 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  AlertTriangle,
-  X,
-  Plus,
-  Edit2,
-  Clock,
-  Search,
-  TrendingUp,
-  TrendingDown,
-  AlertCircle,
+  AlertTriangle, X, Plus, Edit2, Clock, Search,
+  TrendingUp, TrendingDown, AlertCircle,
 } from 'lucide-react';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogDescription,
+  DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead,
+  TableHeader, TableRow,
 } from '@/components/ui/table';
+import { toast } from 'sonner';
 import { formatRelativeTime } from '@/lib/format';
+import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/store/auth-store';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer,
 } from 'recharts';
-
-const mockInventoryItems: any[] = [];
 
 const stockHistoryData: { day: string; stock: number }[] = [];
 
 const statusColors: { [key: string]: string } = {
-  Healthy: 'bg-primary-light text-primary',
-  Low: 'bg-accent-light text-warning',
-  'Out of Stock':
-    'bg-destructive/10 text-destructive',
+  Healthy:        'bg-primary-light text-primary',
+  Low:            'bg-accent-light text-warning',
+  'Out of Stock': 'bg-destructive/10 text-destructive',
 };
 
 interface InventoryItem {
-  id: number;
+  id: string;
   name: string;
   category: string;
   currentStock: number;
@@ -78,6 +49,12 @@ interface InventoryItem {
   minThreshold: number;
   lastUpdated: Date;
   status: string;
+}
+
+function getItemStatus(currentStock: number, minThreshold: number): string {
+  if (currentStock <= 0) return 'Out of Stock';
+  if (currentStock <= minThreshold) return 'Low';
+  return 'Healthy';
 }
 
 function StockHistoryDialog({ item }: { item: InventoryItem }) {
@@ -237,145 +214,108 @@ function StockHistoryDialog({ item }: { item: InventoryItem }) {
   );
 }
 
-function AddInventoryDialog() {
+function AddInventoryDialog({ restaurantId, onAdded }: {
+  restaurantId: string;
+  onAdded: (item: InventoryItem) => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    itemName: '',
-    category: '',
-    currentStock: '',
-    unit: 'kg',
-    minThreshold: '',
+    itemName: '', category: '', currentStock: '', unit: 'kg', minThreshold: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const resetForm = () => setFormData({ itemName: '', category: '', currentStock: '', unit: 'kg', minThreshold: '' });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsOpen(false);
-    setFormData({
-      itemName: '',
-      category: '',
-      currentStock: '',
-      unit: 'kg',
-      minThreshold: '',
+    if (!supabase || !restaurantId) { toast.error('Not authenticated'); return; }
+    if (!formData.itemName || !formData.currentStock || !formData.minThreshold) {
+      toast.error('Please fill all required fields'); return;
+    }
+    setIsSaving(true);
+    const stock   = parseFloat(formData.currentStock);
+    const minThr  = parseFloat(formData.minThreshold);
+    const { data, error } = await supabase.from('inventory_items').insert([{
+      restaurant_id: restaurantId,
+      name:          formData.itemName,
+      category:      formData.category || null,
+      current_stock: stock,
+      unit:          formData.unit,
+      min_threshold: minThr,
+    }]).select('*').single();
+
+    setIsSaving(false);
+    if (error) { toast.error(error.message || 'Failed to add item'); return; }
+
+    onAdded({
+      id:           data.id,
+      name:         data.name,
+      category:     data.category || '',
+      currentStock: data.current_stock,
+      unit:         data.unit,
+      minThreshold: data.min_threshold,
+      lastUpdated:  new Date(data.last_updated || Date.now()),
+      status:       getItemStatus(data.current_stock, data.min_threshold),
     });
+    toast.success(`${data.name} added to inventory`);
+    setIsOpen(false);
+    resetForm();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button className="bg-primary hover:bg-primary-hover">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Item
+          <Plus className="h-4 w-4 mr-2" />Add Item
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Add Inventory Item</DialogTitle>
-          <DialogDescription>
-            Add a new item to your restaurant inventory.
-          </DialogDescription>
+          <DialogDescription>Add a new item to your restaurant inventory.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Item Name *
-            </label>
-            <Input
-              placeholder="e.g., Chicken"
-              value={formData.itemName}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  itemName: e.target.value,
-                })
-              }
-              required
-            />
+            <label className="block text-sm font-medium mb-1">Item Name *</label>
+            <Input placeholder="e.g., Chicken" value={formData.itemName}
+              onChange={e => setFormData({ ...formData, itemName: e.target.value })} required />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Category *
-            </label>
-            <Input
-              placeholder="e.g., Meat"
-              value={formData.category}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  category: e.target.value,
-                })
-              }
-              required
-            />
+            <label className="block text-sm font-medium mb-1">Category</label>
+            <Input placeholder="e.g., Meat" value={formData.category}
+              onChange={e => setFormData({ ...formData, category: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Current Stock *
-              </label>
-              <Input
-                type="number"
-                placeholder="0"
-                min="0"
-                value={formData.currentStock}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    currentStock: e.target.value,
-                  })
-                }
-                required
-              />
+              <label className="block text-sm font-medium mb-1">Current Stock *</label>
+              <Input type="number" placeholder="0" min="0" value={formData.currentStock}
+                onChange={e => setFormData({ ...formData, currentStock: e.target.value })} required />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Unit *
-              </label>
-              <Select
-                value={formData.unit}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, unit: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+              <label className="block text-sm font-medium mb-1">Unit *</label>
+              <Select value={formData.unit} onValueChange={v => setFormData({ ...formData, unit: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="kg">kg</SelectItem>
                   <SelectItem value="pcs">pcs</SelectItem>
                   <SelectItem value="liters">liters</SelectItem>
                   <SelectItem value="grams">grams</SelectItem>
+                  <SelectItem value="dozen">dozen</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Minimum Threshold *
-            </label>
-            <Input
-              type="number"
-              placeholder="0"
-              min="0"
-              value={formData.minThreshold}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  minThreshold: e.target.value,
-                })
-              }
-              required
-            />
+            <label className="block text-sm font-medium mb-1">Minimum Threshold *</label>
+            <Input type="number" placeholder="0" min="0" value={formData.minThreshold}
+              onChange={e => setFormData({ ...formData, minThreshold: e.target.value })} required />
           </div>
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => { setIsOpen(false); resetForm(); }} disabled={isSaving}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-primary">
-              Add Item
+            <Button type="submit" className="bg-primary" disabled={isSaving}>
+              {isSaving ? 'Adding...' : 'Add Item'}
             </Button>
           </DialogFooter>
         </form>
@@ -433,42 +373,59 @@ function EditableStockCell({
 }
 
 export default function InventoryPage() {
+  const { restaurant } = useAuthStore();
+  const restaurantId = restaurant?.id || '';
+
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [alertDismissed, setAlertDismissed] = useState(false);
 
-  const totalItems = mockInventoryItems.length;
-  const lowStockItems = mockInventoryItems.filter(
-    (item) => item.status === 'Low'
-  ).length;
-  const outOfStockItems = mockInventoryItems.filter(
-    (item) => item.status === 'Out of Stock'
-  ).length;
-  const healthyItems = mockInventoryItems.filter(
-    (item) => item.status === 'Healthy'
-  ).length;
+  // Load items from Supabase on mount
+  useEffect(() => {
+    if (!supabase || !restaurantId) return;
+    setIsLoading(true);
+    supabase
+      .from('inventory_items')
+      .select('*')
+      .eq('restaurant_id', restaurantId)
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        setIsLoading(false);
+        if (error) { toast.error('Failed to load inventory'); return; }
+        if (data) {
+          setInventoryItems(data.map((i: any) => ({
+            id:           i.id,
+            name:         i.name,
+            category:     i.category || '',
+            currentStock: i.current_stock,
+            unit:         i.unit,
+            minThreshold: i.min_threshold,
+            lastUpdated:  new Date(i.last_updated || i.created_at),
+            status:       getItemStatus(i.current_stock, i.min_threshold),
+          })));
+        }
+      });
+  }, [restaurantId]);
 
-  const filteredItems = mockInventoryItems.filter((item) =>
+  const totalItems     = inventoryItems.length;
+  const lowStockItems  = inventoryItems.filter(i => i.status === 'Low').length;
+  const outOfStockItems = inventoryItems.filter(i => i.status === 'Out of Stock').length;
+  const healthyItems   = inventoryItems.filter(i => i.status === 'Healthy').length;
+
+  const filteredItems = inventoryItems.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.3 },
-    },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   };
 
   return (
@@ -515,7 +472,10 @@ export default function InventoryPage() {
               Track and manage your restaurant inventory
             </p>
           </div>
-          <AddInventoryDialog />
+          <AddInventoryDialog
+            restaurantId={restaurantId}
+            onAdded={item => setInventoryItems(prev => [item, ...prev])}
+          />
         </div>
       </motion.div>
 

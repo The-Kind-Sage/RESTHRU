@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Plus,
@@ -55,9 +55,10 @@ import { formatDate, formatCurrency } from '@/lib/format';
 import { uploadImage } from '@/lib/upload';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store/auth-store';
 
 interface StaffMember {
-  id: number;
+  id: number | string;
   name: string;
   role: string;
   phone: string;
@@ -66,6 +67,7 @@ interface StaffMember {
   joinedDate: string;
   salary: number;
   avatar: string;
+  avatarUrl?: string | null;
 }
 
 // No mock data — staff will be loaded from the database
@@ -250,7 +252,7 @@ function StaffDetailDialog({ staff }: { staff: StaffMember }) {
   );
 }
 
-function AddStaffDialog() {
+function AddStaffDialog({ onAdded }: { onAdded: (member: StaffMember) => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -309,6 +311,20 @@ function AddStaffDialog() {
       }]);
 
       if (error) { toast.error(error.message || 'Failed to add staff'); return; }
+
+      const initials = formData.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+      onAdded({
+        id: Date.now(),
+        name: formData.fullName,
+        role: formData.role,
+        phone: formData.phone,
+        email: formData.email || '',
+        status: 'Off Duty',
+        joinedDate: new Date().toISOString().split('T')[0],
+        salary: 0,
+        avatar: initials,
+        avatarUrl: avatar_url,
+      });
 
       toast.success(`${formData.fullName} added successfully`);
       setIsOpen(false);
@@ -483,20 +499,48 @@ function AddStaffDialog() {
 }
 
 export default function StaffPage() {
+  const { restaurant } = useAuthStore();
+  const restaurantId = restaurant?.id || '';
+
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
 
-  const onDutyCount = mockStaffMembers.filter(
-    (s) => s.status === 'On Duty'
-  ).length;
-  const waiterCount = mockStaffMembers.filter(
-    (s) => s.role === 'Waiter'
-  ).length;
-  const kitchenCount = mockStaffMembers.filter(
-    (s) => s.role === 'Kitchen'
-  ).length;
+  // Load staff from Supabase on mount
+  useEffect(() => {
+    if (!supabase || !restaurantId) return;
+    setIsLoading(true);
+    supabase
+      .from('staff')
+      .select('*')
+      .eq('restaurant_id', restaurantId)
+      .order('joined_at', { ascending: false })
+      .then(({ data, error }) => {
+        setIsLoading(false);
+        if (error) { toast.error('Failed to load staff: ' + error.message); return; }
+        if (data) {
+          setStaffMembers(data.map((s: any) => ({
+            id:         s.id,
+            name:       s.name,
+            role:       s.role,
+            phone:      s.phone || '',
+            email:      s.email || '',
+            status:     s.status === 'on_duty' ? 'On Duty' : 'Off Duty',
+            joinedDate: s.joined_at ? s.joined_at.split('T')[0] : new Date().toISOString().split('T')[0],
+            salary:     s.salary || 0,
+            avatar:     s.name ? s.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'ST',
+            avatarUrl:  s.avatar_url || null,
+          })));
+        }
+      });
+  }, [restaurantId]);
 
-  const filteredStaff = mockStaffMembers.filter((staff) => {
+  const onDutyCount  = staffMembers.filter(s => s.status === 'On Duty').length;
+  const waiterCount  = staffMembers.filter(s => s.role === 'waiter').length;
+  const kitchenCount = staffMembers.filter(s => s.role === 'kitchen').length;
+
+  const filteredStaff = staffMembers.filter(staff => {
     const matchesSearch =
       staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       staff.phone.includes(searchQuery);
@@ -507,22 +551,12 @@ export default function StaffPage() {
   });
 
   const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
+    hidden:  { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
-
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.3 },
-    },
+    hidden:  { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   };
 
   return (
@@ -541,9 +575,9 @@ export default function StaffPage() {
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-base px-3 py-1">
-              {mockStaffMembers.length} Staff Members
+              {staffMembers.length} Staff Members
             </Badge>
-            <AddStaffDialog />
+            <AddStaffDialog onAdded={member => setStaffMembers(prev => [member, ...prev])} />
           </div>
         </div>
       </motion.div>
