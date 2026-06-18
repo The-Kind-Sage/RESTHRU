@@ -93,29 +93,108 @@ function TableQrDialog({ table, restaurantId }: { table: Table; restaurantId: st
   );
 }
 
-function TableGridItem({ table, restaurantId, onClick, isEditMode }: {
+function TableGridItem({ table, restaurantId, onClick, isEditMode, onPositionChange }: {
   table: Table; restaurantId: string;
   onClick: (t: Table) => void; isEditMode: boolean;
+  onPositionChange: (id: string, x: number, y: number) => void;
 }) {
   const colors = getStatusColors(table.status);
-  const sizeClass = table.shape === 'large' ? 'w-32 h-20' : table.shape === 'round' ? 'w-20 h-20 rounded-full' : 'w-24 h-24';
+  const sizeClass = table.shape === 'large'
+    ? 'w-32 h-20'
+    : table.shape === 'round'
+      ? 'w-20 h-20 rounded-full'
+      : 'w-24 h-24';
+
+  // Drag state — all tracked in a ref so no re-renders during drag
+  const dragRef = useRef<{
+    dragging: boolean;
+    startX: number; startY: number;
+    origX: number;  origY: number;
+  }>({ dragging: false, startX: 0, startY: 0, origX: 0, origY: 0 });
+  const elRef = useRef<HTMLDivElement>(null);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (!isEditMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragRef.current = {
+      dragging: true,
+      startX: e.clientX, startY: e.clientY,
+      origX: table.position_x, origY: table.position_y,
+    };
+    elRef.current?.setPointerCapture(e.pointerId);
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!dragRef.current.dragging || !isEditMode) return;
+    e.preventDefault();
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    const newX = Math.max(0, dragRef.current.origX + dx);
+    const newY = Math.max(0, dragRef.current.origY + dy);
+    if (elRef.current) {
+      elRef.current.style.left = `${newX}px`;
+      elRef.current.style.top  = `${newY}px`;
+    }
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (!dragRef.current.dragging || !isEditMode) return;
+    dragRef.current.dragging = false;
+    elRef.current?.releasePointerCapture(e.pointerId);
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    // Only treat as a drag if actually moved more than 4px
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+      const newX = Math.max(0, dragRef.current.origX + dx);
+      const newY = Math.max(0, dragRef.current.origY + dy);
+      onPositionChange(table.id, newX, newY);
+    }
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (!isEditMode) onClick(table);
+  };
 
   return (
-    <motion.div
-      whileHover={{ scale: isEditMode ? 1 : 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      style={{ position: 'absolute', left: `${table.position_x}px`, top: `${table.position_y}px` }}
-      onClick={() => !isEditMode && onClick(table)}
-      className="cursor-pointer"
+    <div
+      ref={elRef}
+      style={{
+        position: 'absolute',
+        left: `${table.position_x}px`,
+        top:  `${table.position_y}px`,
+        cursor: isEditMode ? 'grab' : 'pointer',
+        userSelect: 'none',
+        touchAction: 'none',
+      }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onClick={handleClick}
     >
-      <div className={`${sizeClass} ${table.shape !== 'round' ? 'rounded-lg' : ''} ${colors.bg} border-2 ${colors.border} flex flex-col items-center justify-center p-2 transition-all hover:shadow-md`}>
+      <div
+        className={`
+          ${sizeClass}
+          ${table.shape !== 'round' ? 'rounded-lg' : ''}
+          ${colors.bg} border-2 ${colors.border}
+          flex flex-col items-center justify-center p-2
+          transition-shadow hover:shadow-md
+          ${isEditMode ? 'ring-2 ring-primary/40 ring-offset-1' : ''}
+        `}
+      >
         <div className="text-sm font-bold">T{table.number}</div>
+        {table.name && (
+          <div className="text-[10px] text-muted-foreground truncate max-w-full px-1">{table.name}</div>
+        )}
         <div className="flex items-center gap-1 mt-1">
           <Users className="w-3 h-3" />
           <span className="text-xs">{table.capacity}</span>
         </div>
+        {isEditMode && (
+          <div className="text-[9px] text-muted-foreground mt-0.5">drag</div>
+        )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -303,6 +382,25 @@ export default function TableMapPage() {
   const [addTableOpen, setAddTableOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
 
+  // Debounce timer ref — save position to DB 600ms after last drag end
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handlePositionChange = (id: string, x: number, y: number) => {
+    // Update local state immediately so the UI feels instant
+    setTables(prev => prev.map(t => t.id === id ? { ...t, position_x: x, position_y: y } : t));
+
+    // Debounce the DB write
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      if (!supabase) return;
+      const { error } = await supabase
+        .from('tables')
+        .update({ position_x: x, position_y: y })
+        .eq('id', id);
+      if (error) toast.error('Failed to save table position');
+    }, 600);
+  };
+
   useEffect(() => {
     if (!supabase || !restaurantId) return;
     setIsLoading(true);
@@ -387,6 +485,7 @@ export default function TableMapPage() {
                     restaurantId={restaurantId}
                     onClick={t => { setSelectedTable(t); setTableDetailOpen(true); }}
                     isEditMode={isEditMode}
+                    onPositionChange={handlePositionChange}
                   />
                 ))
               )}
