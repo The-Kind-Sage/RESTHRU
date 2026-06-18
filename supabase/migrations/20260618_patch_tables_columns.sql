@@ -1,0 +1,8 @@
+-- Patch the live tables table to add columns that were missing
+ALTER TABLE tables ADD COLUMN IF NOT EXISTS name        TEXT;
+ALTER TABLE tables ADD COLUMN IF NOT EXISTS floor       TEXT DEFAULT 'Ground Floor';
+ALTER TABLE tables ADD COLUMN IF NOT EXISTS position_x  NUMERIC DEFAULT 50;
+ALTER TABLE tables ADD COLUMN IF NOT EXISTS position_y  NUMERIC DEFAULT 50;
+ALTER TABLE tables ADD COLUMN IF NOT EXISTS qr_code_url TEXT;
+ALTER TABLE tables ADD COLUMN IF NOT EXISTS occupied_at TIMESTAMPTZ;
+ALTER TABLE tables ADD COLUMN IF NOT EXISTS updated_at  TIMESTAMPTZ DEFAULT now();
