@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Resthru - Run Smarter. Serve Better.",
   description:
     "The smartest way to run your restaurant in Nepal. Manage orders, staff, billing, and inventory all in one place.",
+  icons: { icon: "/icon.svg" },
 };
 
 export default function RootLayout({
