@@ -9,61 +9,9 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Eye,
-  FileSignature,
-  ScrollText,
-  Shield,
-  Database,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
-import { formatCurrency, formatDate, formatPercentage, formatRelativeTime } from '@/lib/format';
-
-const kpiCards = [
-  { title: 'Valid PAN', value: '510', subtitle: 'out of 547 restaurants', percentage: 93, color: 'hsl(var(--primary))' },
-  { title: 'VAT Registered', value: '423', subtitle: 'out of 547 restaurants', percentage: 77, color: 'hsl(var(--info))' },
-  { title: 'Tax Filings Current', value: '89%', subtitle: 'Last quarter compliance', percentage: 89, color: 'hsl(var(--accent))' },
-];
-
-const panVatData = [
-  { restaurant: 'Himalayan Kitchen', pan: 'PAN-123456', verified: 'Yes', vat: 'VAT-789012', vatVerified: 'Yes', status: 'Compliant' },
-  { restaurant: 'Thakali House', pan: 'PAN-234567', verified: 'Yes', vat: 'VAT-890123', vatVerified: 'Yes', status: 'Compliant' },
-  { restaurant: 'Pokhara Grill', pan: 'PAN-345678', verified: 'Pending', vat: 'VAT-901234', vatVerified: 'No', status: 'Action Required' },
-  { restaurant: 'Newari Delights', pan: 'PAN-456789', verified: 'Yes', vat: 'VAT-012345', vatVerified: 'Yes', status: 'Compliant' },
-  { restaurant: 'Langtang Lodge', pan: 'PAN-567890', verified: 'Yes', vat: 'VAT-123456', vatVerified: 'Yes', status: 'Compliant' },
-  { restaurant: 'Kathmandu Cafe', pan: 'PAN-678901', verified: 'No', vat: 'N/A', vatVerified: 'Pending', status: 'Non-Compliant' },
-  { restaurant: 'Dhulikhel Traditional', pan: 'PAN-789012', verified: 'Pending', vat: 'VAT-234567', vatVerified: 'Pending', status: 'Action Required' },
-  { restaurant: 'Ilam Coffee & Kitchen', pan: 'PAN-890123', verified: 'No', vat: 'N/A', vatVerified: 'No', status: 'Non-Compliant' },
-  { restaurant: 'Chitwan Wildlife Cafe', pan: 'PAN-901234', verified: 'Yes', vat: 'VAT-345678', vatVerified: 'Yes', status: 'Compliant' },
-  { restaurant: 'Sagarmatha Palace', pan: 'PAN-012345', verified: 'Pending', vat: 'VAT-456789', vatVerified: 'Pending', status: 'Action Required' },
-];
-
-const documentVault = [
-  { name: 'Legal Agreements', icon: FileSignature, count: 12, lastUpdated: '2026-06-10' },
-  { name: 'ToS Acceptances', icon: ScrollText, count: 547, lastUpdated: '2026-06-15' },
-  { name: 'Privacy Policy', icon: Shield, count: 8, lastUpdated: '2026-06-01' },
-  { name: 'GDPR Records', icon: Database, count: 23, lastUpdated: '2026-06-12' },
-];
-
-const fraudData = [
-  { type: 'Payment', restaurant: 'Nuwakot Dining', detail: 'Multiple failed card attempts from same IP', risk: 92, date: '2026-06-15' },
-  { type: 'Failed Login', restaurant: 'Kathmandu Cafe', detail: '10 failed login attempts in 5 min', risk: 78, date: '2026-06-14' },
-  { type: 'Fake Signup', restaurant: 'Rara Valley Kitchen', detail: 'Suspicious email domain + burner phone', risk: 85, date: '2026-06-13' },
-  { type: 'Payment', restaurant: 'Manang Heritage', detail: 'Chargeback ratio exceeds 1% threshold', risk: 65, date: '2026-06-12' },
-  { type: 'Failed Login', restaurant: 'Mustang Bistro', detail: 'Brute force attack detected', risk: 95, date: '2026-06-11' },
-];
-
-const exportData = [
-  { requester: 'Ramesh Poudel', dataType: 'Transaction Logs', status: 'Completed', requestedDate: '2026-06-10' },
-  { requester: 'Bhim Magar', dataType: 'Restaurant Analytics', status: 'Completed', requestedDate: '2026-06-08' },
-  { requester: 'Priya Shakya', dataType: 'Invoice History', status: 'Pending', requestedDate: '2026-06-14' },
-  { requester: 'Deepak Ale', dataType: 'Customer Data Export', status: 'Pending', requestedDate: '2026-06-15' },
-  { requester: 'Tenzin Sherpa', dataType: 'Tax Documents', status: 'Completed', requestedDate: '2026-06-05' },
-];
 
 const StatusBadge = ({ status }: { status: string }) => {
   const colors: Record<string, string> = {
@@ -95,20 +43,11 @@ export default function AdminCompliance() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {kpiCards.map((kpi) => (
-          <Card key={kpi.title} className="bg-card border-border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{kpi.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground tracking-tight">{kpi.value}</div>
-              <p className="text-[11px] text-muted-foreground mt-0.5">{kpi.subtitle}</p>
-              <div className="mt-3 h-1.5 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full transition-all" style={{ width: `${kpi.percentage}%`, backgroundColor: kpi.color }} />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <Card className="bg-card border-border shadow-sm col-span-full">
+          <CardContent>
+            <div className="text-center py-12 text-muted-foreground text-sm">No compliance data available</div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card className="bg-card border-border shadow-sm">
@@ -118,31 +57,8 @@ export default function AdminCompliance() {
             <CardTitle className="text-sm font-medium text-foreground">PAN / VAT Verification</CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">PAN</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Verified</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">VAT</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">VAT Verified</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {panVatData.map((row) => (
-                <TableRow key={row.restaurant} className="border-border hover:bg-muted/50 transition-colors">
-                  <TableCell><span className="text-sm font-medium text-foreground">{row.restaurant}</span></TableCell>
-                  <TableCell><span className="text-xs text-muted-foreground">{row.pan}</span></TableCell>
-                  <TableCell><VerifiedBadge status={row.verified} /></TableCell>
-                  <TableCell><span className="text-xs text-muted-foreground">{row.vat}</span></TableCell>
-                  <TableCell><VerifiedBadge status={row.vatVerified} /></TableCell>
-                  <TableCell><StatusBadge status={row.status} /></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <CardContent>
+          <div className="text-center py-12 text-muted-foreground text-sm">No PAN/VAT data</div>
         </CardContent>
       </Card>
 
@@ -154,21 +70,7 @@ export default function AdminCompliance() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {documentVault.map((doc) => {
-              const DocIcon = doc.icon;
-              return (
-                <div key={doc.name} className="p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors">
-                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                    <DocIcon className="h-4.5 w-4.5 text-primary" />
-                  </div>
-                  <p className="text-sm font-medium text-foreground">{doc.name}</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">{doc.count}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">Updated {formatRelativeTime(new Date(doc.lastUpdated))}</p>
-                </div>
-              );
-            })}
-          </div>
+          <div className="text-center py-12 text-muted-foreground text-sm">No documents</div>
         </CardContent>
       </Card>
 
@@ -179,45 +81,8 @@ export default function AdminCompliance() {
             <CardTitle className="text-sm font-medium text-foreground">Fraud Detection</CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Type</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Restaurant</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Detail</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Risk Score</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Date</TableHead>
-                <TableHead className="text-right" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {fraudData.map((row, i) => (
-                <TableRow key={i} className="border-border hover:bg-muted/50 transition-colors">
-                  <TableCell>
-                    <Badge className={`border text-[10px] ${
-                      row.type === 'Payment' ? 'bg-destructive/10 text-destructive border-destructive/30'
-                        : row.type === 'Failed Login' ? 'bg-accent/10 text-accent border-accent/30'
-                        : 'bg-info/10 text-info border-info/30'
-                    }`}>{row.type}</Badge>
-                  </TableCell>
-                  <TableCell><span className="text-sm text-foreground">{row.restaurant}</span></TableCell>
-                  <TableCell><span className="text-xs text-muted-foreground">{row.detail}</span></TableCell>
-                  <TableCell className="text-right">
-                    <span className={`text-sm font-bold ${
-                      row.risk >= 90 ? 'text-destructive' : row.risk >= 75 ? 'text-accent' : 'text-accent'
-                    }`}>{row.risk}%</span>
-                  </TableCell>
-                  <TableCell><span className="text-xs text-muted-foreground">{formatDate(new Date(row.date))}</span></TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="outline" size="sm" className="h-7 text-[10px] border-border text-primary hover:bg-primary/10">
-                      <Eye className="h-3 w-3 mr-1" /> Review
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <CardContent>
+          <div className="text-center py-12 text-muted-foreground text-sm">No fraud data</div>
         </CardContent>
       </Card>
 
@@ -228,47 +93,8 @@ export default function AdminCompliance() {
             <CardTitle className="text-sm font-medium text-foreground">Data Export Requests</CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Requester</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Data Type</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Status</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Requested Date</TableHead>
-                <TableHead className="text-right" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {exportData.map((row, i) => (
-                <TableRow key={i} className="border-border hover:bg-muted/50 transition-colors">
-                  <TableCell><span className="text-sm font-medium text-foreground">{row.requester}</span></TableCell>
-                  <TableCell><span className="text-xs text-muted-foreground">{row.dataType}</span></TableCell>
-                  <TableCell>
-                    <Badge className={`border text-[10px] ${
-                      row.status === 'Completed' ? 'bg-primary/10 text-primary border-primary/30'
-                        : 'bg-accent/10 text-accent border-accent/30'
-                    }`}>{row.status}</Badge>
-                  </TableCell>
-                  <TableCell><span className="text-xs text-muted-foreground">{formatDate(new Date(row.requestedDate))}</span></TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={`h-7 text-[10px] border-border ${
-                        row.status === 'Completed'
-                          ? 'text-primary hover:bg-primary/10'
-                          : 'text-muted-foreground opacity-50 cursor-not-allowed'
-                      }`}
-                      disabled={row.status !== 'Completed'}
-                    >
-                      <Download className="h-3 w-3 mr-1" /> Download
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <CardContent>
+          <div className="text-center py-12 text-muted-foreground text-sm">No export requests</div>
         </CardContent>
       </Card>
     </div>

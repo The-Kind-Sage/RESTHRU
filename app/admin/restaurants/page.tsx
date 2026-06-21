@@ -35,21 +35,6 @@ interface Restaurant {
   lastActive: string;
 }
 
-const restaurants: Restaurant[] = [
-  { id: 1, name: 'Himalayan Kitchen', city: 'Kathmandu', owner: 'Ramesh Poudel', plan: 'Pro', status: 'Active', paymentStatus: 'Paid', tables: 24, revenue: 125000, orders: 520, staff: 8, health: 92, joined: '2024-01-15', lastActive: '2024-07-15' },
-  { id: 2, name: 'Thakali House', city: 'Pokhara', owner: 'Bhim Magar', plan: 'Enterprise', status: 'Active', paymentStatus: 'Paid', tables: 42, revenue: 285000, orders: 980, staff: 15, health: 96, joined: '2023-08-20', lastActive: '2024-07-15' },
-  { id: 3, name: 'Newari Delights', city: 'Kathmandu', owner: 'Priya Shakya', plan: 'Basic', status: 'Active', paymentStatus: 'Paid', tables: 12, revenue: 45000, orders: 185, staff: 5, health: 78, joined: '2024-03-10', lastActive: '2024-07-14' },
-  { id: 4, name: 'Kathmandu Cafe', city: 'Kathmandu', owner: 'Anish Sharma', plan: 'Free', status: 'Trial', paymentStatus: 'N/A', tables: 8, revenue: 15000, orders: 62, staff: 3, health: 55, joined: '2024-06-01', lastActive: '2024-07-12' },
-  { id: 5, name: 'Pokhara Grill', city: 'Pokhara', owner: 'Deepak Ale', plan: 'Pro', status: 'Active', paymentStatus: 'Paid', tables: 30, revenue: 185000, orders: 745, staff: 12, health: 88, joined: '2023-11-05', lastActive: '2024-07-15' },
-  { id: 6, name: 'Nuwakot Dining', city: 'Bhaktapur', owner: 'Sunita Tamang', plan: 'Basic', status: 'Suspended', paymentStatus: 'Overdue', tables: 15, revenue: 0, orders: 0, staff: 4, health: 18, joined: '2024-02-14', lastActive: '2024-06-20' },
-  { id: 7, name: 'Langtang Lodge', city: 'Kathmandu', owner: 'Tenzin Sherpa', plan: 'Enterprise', status: 'Active', paymentStatus: 'Paid', tables: 50, revenue: 325000, orders: 1240, staff: 22, health: 98, joined: '2023-05-22', lastActive: '2024-07-15' },
-  { id: 8, name: 'Dhulikhel Traditional', city: 'Dhulikhel', owner: 'Maya Rai', plan: 'Pro', status: 'Active', paymentStatus: 'Pending', tables: 18, revenue: 95000, orders: 380, staff: 7, health: 72, joined: '2024-01-28', lastActive: '2024-07-14' },
-  { id: 9, name: 'Ilam Coffee & Kitchen', city: 'Ilam', owner: 'Harish Limbu', plan: 'Basic', status: 'Active', paymentStatus: 'Paid', tables: 10, revenue: 35000, orders: 140, staff: 4, health: 45, joined: '2024-04-16', lastActive: '2024-07-10' },
-  { id: 10, name: 'Chitwan Wildlife Cafe', city: 'Chitwan', owner: 'Govind Thapa', plan: 'Pro', status: 'Active', paymentStatus: 'Paid', tables: 28, revenue: 165000, orders: 620, staff: 10, health: 85, joined: '2023-10-08', lastActive: '2024-07-15' },
-  { id: 11, name: 'Sagarmatha Palace', city: 'Pokhara', owner: 'Sonam Sherpa', plan: 'Basic', status: 'Active', paymentStatus: 'Paid', tables: 16, revenue: 52000, orders: 210, staff: 6, health: 70, joined: '2024-07-01', lastActive: '2024-07-14' },
-  { id: 12, name: 'Rara Valley Kitchen', city: 'Kathmandu', owner: 'Ujjwal Prasad', plan: 'Free', status: 'Trial', paymentStatus: 'N/A', tables: 6, revenue: 8000, orders: 35, staff: 2, health: 40, joined: '2024-07-05', lastActive: '2024-07-13' },
-];
-
 const PlanBadge = ({ plan }: { plan: string }) => {
   const colors: Record<string, string> = {
     Enterprise: 'bg-accent/10 text-accent border-accent/30',
@@ -75,12 +60,7 @@ export default function AdminRestaurants() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selected, setSelected] = useState<number[]>([]);
 
-  const filtered = restaurants.filter((r) => {
-    const matchSearch = r.name.toLowerCase().includes(search.toLowerCase()) || r.owner.toLowerCase().includes(search.toLowerCase()) || r.city.toLowerCase().includes(search.toLowerCase());
-    const matchPlan = planFilter === 'all' || r.plan === planFilter;
-    const matchStatus = statusFilter === 'all' || r.status === statusFilter;
-    return matchSearch && matchPlan && matchStatus;
-  });
+  const filtered: Restaurant[] = [];
 
   const toggleAll = () => {
     if (selected.length === filtered.length) setSelected([]);
@@ -96,7 +76,7 @@ export default function AdminRestaurants() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Restaurant Management</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage all {restaurants.length} restaurants on the platform</p>
+          <p className="text-sm text-muted-foreground mt-1">Manage all restaurants on the platform</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground">

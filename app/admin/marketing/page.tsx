@@ -2,108 +2,13 @@
 
 import React, { useState } from 'react';
 import {
-  FileText, Image, Download, ExternalLink, BarChart3,
-  Search, Edit, CheckCircle, XCircle, Activity,
-  Globe, Facebook, PieChart, Link, RefreshCw,
+  FileText, Image, BarChart3,
+  Search, Activity, RefreshCw,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { formatDate, formatRelativeTime } from '@/lib/format';
-
-interface CMSEntry {
-  id: number;
-  name: string;
-  type: string;
-  status: string;
-  lastUpdated: string;
-  author: string;
-}
-
-const cmsData: CMSEntry[] = [
-  { id: 1, name: 'Homepage Hero', type: 'Landing Page', status: 'Published', lastUpdated: '2026-06-15', author: 'Marketing Team' },
-  { id: 2, name: 'Pricing & Plans', type: 'Pricing Page', status: 'Published', lastUpdated: '2026-06-10', author: 'Marketing Team' },
-  { id: 3, name: 'How It Works', type: 'Landing Page', status: 'Draft', lastUpdated: '2026-06-16', author: 'Content Team' },
-  { id: 4, name: 'Why Resthru Blog', type: 'Blog Posts', status: 'Published', lastUpdated: '2026-06-12', author: 'Content Team' },
-  { id: 5, name: 'Nepal Restaurant Trends 2026', type: 'Blog Posts', status: 'Draft', lastUpdated: '2026-06-17', author: 'Content Team' },
-  { id: 6, name: 'Pokhara Grill Case Study', type: 'Case Studies', status: 'Published', lastUpdated: '2026-06-08', author: 'Marketing Team' },
-  { id: 7, name: 'Langtang Lodge Success Story', type: 'Case Studies', status: 'Draft', lastUpdated: '2026-06-14', author: 'Marketing Team' },
-  { id: 8, name: 'Restaurant Owner Testimonials', type: 'Testimonials', status: 'Published', lastUpdated: '2026-06-05', author: 'Content Team' },
-];
-
-interface SEOEntry {
-  id: number;
-  page: string;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  ogImage: boolean;
-  lastEdited: string;
-}
-
-const seoData: SEOEntry[] = [
-  { id: 1, page: '/', metaTitle: 'Resthru - Restaurant Management Platform Nepal', metaDescription: 'Digital ordering, POS, and management platform for Nepali restaurants.', ogImage: true, lastEdited: '2026-06-15' },
-  { id: 2, page: '/pricing', metaTitle: 'Pricing - Resthru', metaDescription: 'Affordable plans for restaurants of all sizes in Nepal.', ogImage: true, lastEdited: '2026-06-10' },
-  { id: 3, page: '/features', metaTitle: 'Features - Resthru', metaDescription: 'Explore powerful features for your restaurant.', ogImage: false, lastEdited: '2026-06-12' },
-  { id: 4, page: '/about', metaTitle: 'About Us - Resthru', metaDescription: 'Learn about Resthru and our mission to digitize Nepali restaurants.', ogImage: true, lastEdited: '2026-06-08' },
-  { id: 5, page: '/blog', metaTitle: null, metaDescription: null, ogImage: false, lastEdited: '2026-06-01' },
-  { id: 6, page: '/contact', metaTitle: 'Contact - Resthru', metaDescription: 'Get in touch with our team.', ogImage: false, lastEdited: '2026-05-28' },
-];
-
-interface PressKitItem {
-  id: number;
-  name: string;
-  type: string;
-  size: string;
-  format: string;
-}
-
-const pressKitData: PressKitItem[] = [
-  { id: 1, name: 'Resthru Logo (PNG)', type: 'logo', size: '2.4 MB', format: 'PNG' },
-  { id: 2, name: 'Resthru Logo (SVG)', type: 'logo', size: '124 KB', format: 'SVG' },
-  { id: 3, name: 'Logo with Tagline', type: 'logo', size: '1.8 MB', format: 'PNG' },
-  { id: 4, name: 'Brand Guidelines PDF', type: 'guidelines', size: '8.5 MB', format: 'PDF' },
-  { id: 5, name: 'Color Palette', type: 'guidelines', size: '456 KB', format: 'PDF' },
-  { id: 6, name: 'Typography Guide', type: 'guidelines', size: '320 KB', format: 'PDF' },
-  { id: 7, name: 'Dashboard Screenshot', type: 'screenshot', size: '3.2 MB', format: 'PNG' },
-  { id: 8, name: 'Mobile App Screenshot', type: 'screenshot', size: '2.8 MB', format: 'PNG' },
-  { id: 9, name: 'Feature Mockup Bundle', type: 'screenshot', size: '12.6 MB', format: 'ZIP' },
-];
-
-interface ABTestEntry {
-  id: number;
-  name: string;
-  variantA: string;
-  variantB: string;
-  impressions: number;
-  conversionRate: number;
-  winner: string;
-}
-
-const abTestData: ABTestEntry[] = [
-  { id: 1, name: 'Hero CTA Button', variantA: 'Get Started Free', variantB: 'Start Your Trial', impressions: 12450, conversionRate: 3.2, winner: 'A' },
-  { id: 2, name: 'Pricing Card Layout', variantA: 'Grid with features', variantB: 'Comparison table', impressions: 8700, conversionRate: 4.8, winner: 'B' },
-  { id: 3, name: 'Signup Form Length', variantA: '3 fields', variantB: '6 fields', impressions: 15200, conversionRate: 5.1, winner: 'A' },
-  { id: 4, name: 'Testimonial Placement', variantA: 'Above fold', variantB: 'Below features', impressions: 6300, conversionRate: 2.9, winner: 'Pending' },
-  { id: 5, name: 'Trial Duration Copy', variantA: '14-day free trial', variantB: 'Try free for 2 weeks', impressions: 10100, conversionRate: 3.7, winner: 'Pending' },
-];
-
-interface IntegrationEntry {
-  name: string;
-  icon: React.ElementType;
-  status: string;
-  lastSync: string;
-}
-
-const integrationData: IntegrationEntry[] = [
-  { name: 'Google Analytics', icon: BarChart3, status: 'Connected', lastSync: '2 min ago' },
-  { name: 'Facebook Pixel', icon: Facebook, status: 'Connected', lastSync: '15 min ago' },
-  { name: 'Mixpanel', icon: PieChart, status: 'Not Connected', lastSync: '--' },
-];
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const statusColor = (status: string) => {
   const colors: Record<string, string> = {
@@ -128,12 +33,6 @@ const cmsIcons: Record<string, React.ElementType> = {
 
 export default function AdminMarketing() {
   const [cmsTab, setCmsTab] = useState('all');
-
-  const filteredCMS = cmsTab === 'all' ? cmsData : cmsData.filter((c) => {
-    if (cmsTab === 'published') return c.status === 'Published';
-    if (cmsTab === 'draft') return c.status === 'Draft';
-    return true;
-  });
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -166,37 +65,7 @@ export default function AdminMarketing() {
           </Tabs>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {['Landing Page', 'Pricing Page', 'Blog Posts', 'Case Studies', 'Testimonials'].map((type) => {
-              const items = cmsData.filter((c) => c.type === type);
-              const published = items.filter((c) => c.status === 'Published').length;
-              const Icon = cmsIcons[type] || FileText;
-              return (
-                <div key={type} className="p-4 rounded-lg bg-muted/50 border border-border hover:border-[hsl(var(--primary))]/20 transition-colors">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Icon className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{type}</p>
-                      <p className="text-[10px] text-muted-foreground">{items.length} entries</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge className="border text-[10px] bg-primary/10 text-primary border-primary/30">{published} Published</Badge>
-                      {items.length - published > 0 && (
-                        <Badge className="border text-[10px] bg-accent/10 text-accent border-accent/30">{items.length - published} Draft</Badge>
-                      )}
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">
-                      Updated {formatRelativeTime(items.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime())[0]?.lastUpdated || '')}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <div className="text-center py-12 text-muted-foreground text-sm">No CMS data available</div>
         </CardContent>
       </Card>
 
@@ -213,54 +82,8 @@ export default function AdminMarketing() {
             <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Reindex
           </Button>
         </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Page</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Meta Title</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Meta Description</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-center">OG Image</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Last Edited</TableHead>
-                <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {seoData.map((entry) => (
-                <TableRow key={entry.id} className="border-border hover:bg-muted/50 transition-colors">
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-sm font-medium text-foreground">{entry.page}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`text-xs ${entry.metaTitle ? 'text-foreground/70' : 'text-destructive italic'}`}>
-                      {entry.metaTitle || 'Not set'}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`text-xs ${entry.metaDescription ? 'text-foreground/70' : 'text-destructive italic'}`}>
-                      {entry.metaDescription || 'Not set'}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {entry.ogImage ? (
-                      <CheckCircle className="h-4 w-4 text-primary mx-auto" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-destructive mx-auto" />
-                    )}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{formatDate(entry.lastEdited)}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" className="h-7 text-[10px] text-primary hover:bg-primary/10">
-                      <Edit className="h-3 w-3 mr-1" /> Edit
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <CardContent>
+          <div className="text-center py-12 text-muted-foreground text-sm">No SEO data available</div>
         </CardContent>
       </Card>
 
@@ -274,65 +97,7 @@ export default function AdminMarketing() {
             <p className="text-xs text-muted-foreground mt-0.5">Brand assets, logos, and screenshots</p>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div>
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Logos</p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {pressKitData.filter((p) => p.type === 'logo').map((item) => (
-                    <div key={item.id} className="p-3 rounded-lg bg-muted/50 border border-border hover:border-[hsl(var(--primary))]/20 transition-colors">
-                      <div className="h-12 w-full rounded bg-card flex items-center justify-center mb-2 border border-border">
-                        <span className="text-lg font-bold text-primary">R</span>
-                      </div>
-                      <p className="text-xs font-medium text-foreground truncate">{item.name}</p>
-                      <div className="flex items-center justify-between mt-1.5">
-                        <span className="text-[10px] text-muted-foreground">{item.size} · {item.format}</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10">
-                          <Download className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Brand Guidelines</p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {pressKitData.filter((p) => p.type === 'guidelines').map((item) => (
-                    <div key={item.id} className="p-3 rounded-lg bg-muted/50 border border-border hover:border-[hsl(var(--primary))]/20 transition-colors">
-                      <div className="h-12 w-full rounded bg-card flex items-center justify-center mb-2 border border-border">
-                        <FileText className="h-5 w-5 text-accent" />
-                      </div>
-                      <p className="text-xs font-medium text-foreground truncate">{item.name}</p>
-                      <div className="flex items-center justify-between mt-1.5">
-                        <span className="text-[10px] text-muted-foreground">{item.size} · {item.format}</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10">
-                          <Download className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Screenshots</p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {pressKitData.filter((p) => p.type === 'screenshot').map((item) => (
-                    <div key={item.id} className="p-3 rounded-lg bg-muted/50 border border-border hover:border-[hsl(var(--primary))]/20 transition-colors">
-                      <div className="h-12 w-full rounded bg-card flex items-center justify-center mb-2 border border-border">
-                        <Image className="h-5 w-5 text-info" />
-                      </div>
-                      <p className="text-xs font-medium text-foreground truncate">{item.name}</p>
-                      <div className="flex items-center justify-between mt-1.5">
-                        <span className="text-[10px] text-muted-foreground">{item.size} · {item.format}</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10">
-                          <Download className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <div className="text-center py-12 text-muted-foreground text-sm">No press kit data</div>
           </CardContent>
         </Card>
 
@@ -345,45 +110,8 @@ export default function AdminMarketing() {
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">Conversion experiments and results</p>
             </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border hover:bg-transparent">
-                    <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Test</TableHead>
-                    <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Variant A</TableHead>
-                    <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Variant B</TableHead>
-                    <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Impressions</TableHead>
-                    <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-right">Conv. Rate</TableHead>
-                    <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wider text-center">Winner</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {abTestData.map((test) => (
-                    <TableRow key={test.id} className="border-border hover:bg-muted/50 transition-colors">
-                      <TableCell>
-                        <p className="text-xs font-medium text-foreground">{test.name}</p>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-[10px] text-foreground/60 bg-muted px-2 py-0.5 rounded border border-border">{test.variantA}</span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-[10px] text-foreground/60 bg-muted px-2 py-0.5 rounded border border-border">{test.variantB}</span>
-                      </TableCell>
-                      <TableCell className="text-right text-xs text-foreground/70">{test.impressions.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-xs text-foreground/70">{test.conversionRate}%</TableCell>
-                      <TableCell className="text-center">
-                        <Badge className={`border text-[10px] ${
-                          test.winner === 'A' ? 'bg-primary/10 text-primary border-primary/30'
-                            : test.winner === 'B' ? 'bg-info/10 text-info border-info/30'
-                            : 'bg-accent/10 text-accent border-accent/30'
-                        }`}>
-                          {test.winner === 'Pending' ? 'Pending' : `Variant ${test.winner}`}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <CardContent>
+              <div className="text-center py-12 text-muted-foreground text-sm">No A/B test data</div>
             </CardContent>
           </Card>
 
@@ -396,35 +124,7 @@ export default function AdminMarketing() {
               <p className="text-xs text-muted-foreground mt-0.5">Marketing tool connectivity</p>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {integrationData.map((integration) => {
-                  const IntIcon = integration.icon;
-                  return (
-                    <div
-                      key={integration.name}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border hover:border-[hsl(var(--primary))]/20 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-lg bg-card border border-border flex items-center justify-center">
-                          <IntIcon className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{integration.name}</p>
-                          <p className="text-[10px] text-muted-foreground">Last sync: {integration.lastSync}</p>
-                        </div>
-                      </div>
-                      <Badge className={`border text-[10px] ${integrationStatusColors[integration.status] || 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30'}`}>
-                        {integration.status === 'Connected' ? (
-                          <CheckCircle className="h-2.5 w-2.5 mr-1" />
-                        ) : (
-                          <XCircle className="h-2.5 w-2.5 mr-1" />
-                        )}
-                        {integration.status}
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
+              <div className="text-center py-12 text-muted-foreground text-sm">No integration data</div>
             </CardContent>
           </Card>
         </div>
