@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import { createSession, clearSession, getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
-export async function login(username: string, password: string) {
+export async function login(username: string, password: string, redirectTo?: string) {
   const user = await prisma.user.findFirst({
     where: { username, isActive: true },
   });
@@ -34,7 +34,9 @@ export async function login(username: string, password: string) {
     restaurantId: user.restaurantId,
   });
 
-  if (user.role === "ADMIN") {
+  if (redirectTo) {
+    redirect(redirectTo);
+  } else if (user.role === "ADMIN") {
     redirect("/admin");
   } else {
     redirect("/dashboard");

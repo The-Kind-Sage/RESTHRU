@@ -12,8 +12,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { logout } from '@/lib/actions/auth';
-import { useAuthStore } from '@/store/auth-store';
+import { logout, getCurrentUser } from '@/lib/actions/auth';
 
 // ── Lazy-load the command palette — it's heavy (all 12 nav icon refs +
 //    keyboard handler + overlay) and only needed when Cmd+K is pressed.
@@ -71,12 +70,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router    = useRouter();
   const [sidebarOpen, setSidebarOpen]   = useState(true);
   const [commandOpen, setCommandOpen]   = useState(false);
+  const [adminUser, setAdminUser] = useState<{ firstName: string; lastName: string; email: string } | null>(null);
 
-  // ── Get user from the shared auth store (already populated by
-  //    DashboardShell's initialize() call) — no extra useEffect fetch.
-  const { user } = useAuthStore();
-  const initials    = user ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` : 'SA';
-  const displayName = user ? `${user.firstName} ${user.lastName}` : 'Super Admin';
+  useEffect(() => {
+    getCurrentUser().then((user) => {
+      if (user) setAdminUser(user);
+    });
+  }, []);
+
+  const initials    = adminUser ? `${adminUser.firstName.charAt(0)}${adminUser.lastName.charAt(0)}` : 'SA';
+  const displayName = adminUser ? `${adminUser.firstName} ${adminUser.lastName}` : 'Super Admin';
 
   // Keyboard shortcut for command palette
   useEffect(() => {
@@ -98,7 +101,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = async () => {
     await logout();
-    router.push('/login');
+    router.push('/admin/login');
   };
 
   return (
@@ -140,7 +143,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {displayName}
               </p>
               <p className="text-xs text-sidebar-foreground/60 truncate">
-                {user?.email || 'admin@resthru.com'}
+                {adminUser?.email || 'admin@resthru.com'}
               </p>
             </div>
             <button

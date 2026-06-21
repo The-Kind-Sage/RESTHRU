@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Building2, TrendingUp, UserPlus, ShoppingCart, Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,12 +12,6 @@ export default function AdminClient({
   stats: { totalRestaurants: number; activeToday: number; newSignups: number; totalOrders: number; todayGMV: number } | null;
   recentOrders: any[];
 }) {
-  const [time, setTime] = useState("");
-
-  useEffect(() => {
-    setTime(new Date().toLocaleTimeString());
-  }, []);
-
   const kpiCards = [
     { title: "Total Restaurants", value: stats?.totalRestaurants || 0, icon: Building2, subtitle: "Active on platform" },
     { title: "Active Today", value: stats?.activeToday || 0, icon: Activity, subtitle: "Today" },
@@ -31,7 +24,7 @@ export default function AdminClient({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Platform overview · {time}</p>
+          <p className="text-sm text-muted-foreground mt-1" suppressHydrationWarning>Platform overview · {new Date().toLocaleTimeString()}</p>
         </div>
         <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
           <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />Live
