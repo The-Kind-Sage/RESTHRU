@@ -7,14 +7,12 @@ import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export default function RestaurantDetail() {
   const params = useParams();
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Back + Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/admin/restaurants">
@@ -29,14 +27,12 @@ export default function RestaurantDetail() {
         </div>
       </div>
 
-      {/* Owner Info + Health - Empty State */}
       <Card className="bg-card border-border shadow-sm">
         <CardContent className="p-6">
           <div className="text-center py-12 text-muted-foreground text-sm">No restaurant data available</div>
         </CardContent>
       </Card>
 
-      {/* Tabs */}
       <Tabs defaultValue="orders" className="w-full">
         <TabsList className="bg-muted border border-border w-full justify-start overflow-auto flex-nowrap h-auto p-1 gap-0">
           {['orders', 'payments', 'staff', 'tables', 'subscription', 'tickets', 'documents', 'audit'].map((tab) => (
