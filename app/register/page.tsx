@@ -184,14 +184,16 @@ export default function RegisterPage() {
         return;
       }
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: formData.step1.email!,
-        password: formData.step1.password!,
-      });
+      if (!authData.session) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.step1.email!,
+          password: formData.step1.password!,
+        });
 
-      if (signInError) {
-        toast.error('Account created but could not sign in automatically. Please go to the login page.');
-        return;
+        if (signInError) {
+          toast.error('Account created but could not sign in automatically. Please go to the login page.');
+          return;
+        }
       }
 
       let logo_url: string | null = null;
