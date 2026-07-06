@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Shield, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -65,7 +65,13 @@ function AdminLoginForm() {
 
 export default function AdminLoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+        <Card className="w-full max-w-md border-0 shadow-lg p-6 text-center">
+          <p className="text-muted-foreground text-sm">Loading login...</p>
+        </Card>
+      </div>
+    }>
       <AdminLoginForm />
     </Suspense>
   );

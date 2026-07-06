@@ -542,13 +542,25 @@ export default function SettingsPage() {
             <div className="space-y-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4"><h3 className="font-semibold text-destructive">Danger Zone</h3><p className="text-sm text-muted-foreground">Cancel your subscription. Your data will be retained for 30 days.</p><Button variant="destructive">Cancel Subscription</Button></div>
           </TabsContent>
 
+          {/* ══ SECURITY ═════════════════════════════════════════════════ */}
           <TabsContent value="security" className="space-y-6">
             <Card>
-              <CardHeader><CardTitle>Account Security</CardTitle><CardDescription>Update your password and keep your account secure</CardDescription></CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2"><Label>New Password</Label><Input type="password" value={newPwd} onChange={(event) => setNewPwd(event.target.value)} placeholder="Enter new password" /></div>
-                <div className="space-y-2"><Label>Confirm Password</Label><Input type="password" value={confirmPwd} onChange={(event) => setConfirmPwd(event.target.value)} placeholder="Confirm new password" /></div>
-                <Button onClick={changePassword} disabled={isSavingPwd} className="w-full md:w-auto">{isSavingPwd ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Updating…</> : 'Update Password'}</Button>
+              <CardHeader>
+                <CardTitle>Change Password</CardTitle>
+                <CardDescription>Update your account password</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>New Password</Label>
+                  <Input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)} placeholder="Enter new password" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Confirm New Password</Label>
+                  <Input type="password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} placeholder="Confirm new password" />
+                </div>
+                <Button onClick={changePassword} disabled={isSavingPwd} className="w-full md:w-auto">
+                  {isSavingPwd ? 'Updating…' : 'Change Password'}
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
