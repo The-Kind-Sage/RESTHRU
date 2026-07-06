@@ -37,7 +37,7 @@ async function getRestaurantId(): Promise<string | null> {
     const { data: restaurant } = await supabase
       .from('restaurants')
       .select('id')
-      .eq('owner_id', user.id)
+      .eq('ownerId', user.id)
       .single();
 
     return restaurant?.id ?? null;

@@ -233,7 +233,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
       const { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurants')
         .insert([{
-          owner_id: authData.user.id,
+          ownerId: authData.user.id,
           name: formData.step2.restaurantName,
           slug,
           type: formData.step2.restaurantType,
@@ -257,8 +257,8 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
 
       if (restaurantData?.id && formData.step4.selectedPlan) {
         await supabase.from('subscriptions').insert([{
-          restaurant_id: restaurantData.id,
-          plan_id: formData.step4.selectedPlan,
+          restaurantId: restaurantData.id,
+          planId: formData.step4.selectedPlan,
           status: 'active',
         }]);
       }
