@@ -296,7 +296,7 @@ function AddStaffDialog({ onAdded }: { onAdded: (member: StaffMember) => void })
       const { data: restaurant } = await supabase
         .from('restaurants')
         .select('id')
-        .eq('ownerId', session.user.id)
+        .eq('owner_id', session.user.id)
         .single();
 
       if (!restaurant) { toast.error('Restaurant not found'); return; }

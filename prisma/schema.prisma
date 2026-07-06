@@ -26,6 +26,8 @@ model User {
 
   restaurant    Restaurant?     @relation(fields: [restaurantId], references: [id])
   notifications Notification[]
+
+  @@map("users")
 }
 
 model Restaurant {
@@ -73,6 +75,8 @@ model Restaurant {
   subscriptions Subscription[]
   operatingHours OperatingHours[]
   kpiCards      KpiCard[]
+
+  @@map("restaurants")
 }
 
 model OperatingHours {
@@ -86,6 +90,7 @@ model OperatingHours {
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
 
   @@unique([restaurantId, dayOfWeek])
+  @@map("operating_hours")
 }
 
 model Plan {
@@ -105,6 +110,8 @@ model Plan {
   updatedAt     DateTime @updatedAt
 
   subscriptions Subscription[]
+
+  @@map("plans")
 }
 
 model Subscription {
@@ -124,6 +131,8 @@ model Subscription {
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   plan       Plan       @relation(fields: [planId], references: [id])
+
+  @@map("subscriptions")
 }
 
 model Staff {
@@ -145,6 +154,8 @@ model Staff {
   updatedAt     DateTime @updatedAt
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@map("staff")
 }
 
 model RestaurantTable {
@@ -167,6 +178,7 @@ model RestaurantTable {
   orders     Order[]
 
   @@unique([restaurantId, tableNumber])
+  @@map("tables")
 }
 
 model Category {
@@ -182,6 +194,8 @@ model Category {
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   menuItems MenuItem[]
+
+  @@map("categories")
 }
 
 model MenuItem {
@@ -208,6 +222,8 @@ model MenuItem {
   category    Category   @relation(fields: [categoryId], references: [id])
   addOns      AddOn[]
   orderItems  OrderItem[]
+
+  @@map("menu_items")
 }
 
 model AddOn {
@@ -219,6 +235,8 @@ model AddOn {
   isAvailable Boolean @default(true)
 
   menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@map("add_ons")
 }
 
 model Order {
@@ -246,6 +264,8 @@ model Order {
   table       RestaurantTable? @relation(fields: [tableId], references: [id])
   items       OrderItem[]
   bills       Bill[]
+
+  @@map("orders")
 }
 
 model OrderItem {
@@ -263,6 +283,8 @@ model OrderItem {
 
   order    Order    @relation(fields: [orderId], references: [id])
   menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@map("order_items")
 }
 
 model InventoryItem {
@@ -284,6 +306,8 @@ model InventoryItem {
 
   restaurant     Restaurant          @relation(fields: [restaurantId], references: [id])
   historyEntries InventoryHistory[]
+
+  @@map("inventory_items")
 }
 
 model InventoryHistory {
@@ -296,6 +320,8 @@ model InventoryHistory {
   createdAt       DateTime @default(now())
 
   item InventoryItem @relation(fields: [inventoryItemId], references: [id])
+
+  @@map("inventory_history")
 }
 
 model Bill {
@@ -321,6 +347,8 @@ model Bill {
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   order      Order      @relation(fields: [orderId], references: [id])
+
+  @@map("bills")
 }
 
 model Notification {
@@ -340,6 +368,8 @@ model Notification {
 
   user       User       @relation(fields: [recipientUserId], references: [id])
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@map("notifications")
 }
 
 model ActivityLog {
@@ -357,6 +387,8 @@ model ActivityLog {
   createdAt     DateTime @default(now())
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@map("activity_logs")
 }
 
 model KpiCard {
@@ -372,4 +404,6 @@ model KpiCard {
   lastUpdated DateTime @default(now())
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@map("kpi_cards")
 }

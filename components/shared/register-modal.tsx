@@ -233,7 +233,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
       const { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurants')
         .insert([{
-          ownerId: authData.user.id,
+          owner_id: authData.user.id,
           name: formData.step2.restaurantName,
           slug,
           type: formData.step2.restaurantType,
