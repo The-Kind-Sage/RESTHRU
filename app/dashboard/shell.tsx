@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/dashboard/sidebar';
 import TopHeader from '@/components/dashboard/top-header';
 import { useUIStore } from '@/store/ui-store';
@@ -16,12 +17,18 @@ export default function DashboardShell({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
   const { sidebarCollapsed } = useUIStore();
   const { initialize } = useAuthStore();
 
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  // Render auth pages (login, forgot-password) without the dashboard shell
+  if (pathname === '/dashboard/login' || pathname === '/dashboard/forgot-password' || pathname === '/dashboard/password-reset') {
+    return <>{children}</>;
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
