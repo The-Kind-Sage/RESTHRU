@@ -8,10 +8,9 @@ const Footer = () => {
     product: {
       title: 'Product',
       links: [
-        { label: 'Features', href: '#features' },
-        { label: 'Pricing', href: '#pricing' },
-        { label: 'QR Menu', href: '#qr-menu' },
-        { label: 'Offline Mode', href: '#offline-mode' },
+        { label: 'Features', href: '/#features' },
+        { label: 'Pricing', href: '/#pricing' },
+        { label: 'QR Menu', href: '/#features' },
       ],
     },
     company: {
@@ -43,51 +42,38 @@ const Footer = () => {
   };
 
   const socialLinks = [
-    {
-      icon: Facebook,
-      href: 'https://facebook.com/resthru',
-      label: 'Facebook',
-    },
-    {
-      icon: Instagram,
-      href: 'https://instagram.com/resthru',
-      label: 'Instagram',
-    },
-    {
-      icon: Linkedin,
-      href: 'https://linkedin.com/company/resthru',
-      label: 'LinkedIn',
-    },
+    { icon: Facebook, href: 'https://facebook.com/resthru', label: 'Facebook' },
+    { icon: Instagram, href: 'https://instagram.com/resthru', label: 'Instagram' },
+    { icon: Linkedin, href: 'https://linkedin.com/company/resthru', label: 'LinkedIn' },
   ];
 
   return (
-    <footer className="border-t border-border bg-primary">
-      {/* Top Section */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-5">
-          {/* Logo and Tagline */}
-          <div className="md:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <UtensilsCrossed className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold text-white">Resthru</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Run Smarter. Serve Better.
-            </p>
+    <footer id="contact" className="border-t border-border bg-gradient-to-b from-primary to-primary-hover">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {/* Logo */}
+        <div className="mb-6 sm:mb-8 md:col-span-1">
+          <div className="flex items-center gap-2 mb-3">
+            <UtensilsCrossed className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+            <span className="text-lg sm:text-xl font-bold text-white">Resthru</span>
           </div>
+          <p className="text-xs sm:text-sm text-white/70">
+            Run Smarter. Serve Better.
+          </p>
+        </div>
 
-          {/* Link Columns */}
+        {/* Link columns: 2 cols on mobile, 4 on md */}
+        <div className="grid grid-cols-2 gap-8 sm:gap-10 md:grid-cols-4">
           {Object.values(footerSections).map((section) => (
             <div key={section.title}>
-              <h3 className="mb-4 text-sm font-semibold text-white">
+              <h3 className="mb-3 sm:mb-4 text-xs sm:text-sm font-semibold text-white uppercase tracking-wider">
                 {section.title}
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-2 sm:space-y-3">
                 {section.links.map((link) => (
-                  <li key={link.href}>
+                  <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-muted-foreground transition-colors hover:text-white"
+                      className="text-xs sm:text-sm text-white/60 transition-colors hover:text-white"
                     >
                       {link.label}
                     </Link>
@@ -99,20 +85,18 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Bottom Section */}
-      <div className="border-t border-border bg-primary-hover">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-            {/* Left: Contact Email */}
+      {/* Bottom */}
+      <div className="border-t border-white/10 bg-black/20 backdrop-blur-sm">
+        <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 py-5 sm:py-8">
+          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <a
               href="mailto:hello@resthru.com"
-              className="text-sm text-muted-foreground transition-colors hover:text-white"
+              className="text-xs sm:text-sm text-white/60 transition-colors hover:text-white"
             >
               hello@resthru.com
             </a>
 
-            {/* Center: Social Icons */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               {socialLinks.map((social) => {
                 const Icon = social.icon;
                 return (
@@ -122,16 +106,15 @@ const Footer = () => {
                     aria-label={social.label}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-muted-foreground transition-colors hover:text-white"
+                    className="text-white/60 transition-colors hover:text-white"
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                   </a>
                 );
               })}
             </div>
 
-            {/* Right: Copyright and Made With */}
-            <div className="flex flex-col items-end gap-2 text-right text-xs text-muted-foreground">
+            <div className="flex flex-col items-center sm:items-end gap-1 text-center sm:text-right text-xs sm:text-xs text-white/60">
               <p>{currentYear} Resthru. All rights reserved.</p>
               <p>Made with heart in Nepal</p>
             </div>

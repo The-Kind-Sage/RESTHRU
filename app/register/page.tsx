@@ -6,13 +6,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Check, Upload } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Upload, UtensilsCrossed, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -32,9 +33,7 @@ import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/lib/supabase';
 import { uploadImage } from '@/lib/upload';
 import { NEPAL_CITIES, RESTAURANT_TYPES, PLANS } from '@/lib/constants';
-import Link from 'next/link';
 
-// Validation Schemas for each step
 const step1Schema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
   email: z.string().email('Valid email is required'),
@@ -68,15 +67,10 @@ const step4Schema = z.object({
   selectedPlan: z.string().min(1, 'Please select a plan'),
 });
 
-const step5Schema = z.object({
-  restaurantName: z.string(),
-});
-
 type Step1Data = z.infer<typeof step1Schema>;
 type Step2Data = z.infer<typeof step2Schema>;
 type Step3Data = z.infer<typeof step3Schema>;
 type Step4Data = z.infer<typeof step4Schema>;
-type Step5Data = z.infer<typeof step5Schema>;
 
 interface FormData {
   step1: Partial<Step1Data>;
@@ -85,7 +79,7 @@ interface FormData {
   step4: Partial<Step4Data>;
 }
 
-const steps = ['Account', 'Restaurant', 'Business', 'Plan', 'Success'];
+const steps = ['Account', 'Restaurant', 'Business', 'Plan'];
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -100,32 +94,31 @@ export default function RegisterPage() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
-  // Step 1 Form
   const step1Form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
-    defaultValues: formData.step1,
+    defaultValues: { fullName: '', email: '', phone: '', password: '', confirmPassword: '' },
   });
 
-  // Step 2 Form
   const step2Form = useForm<Step2Data>({
     resolver: zodResolver(step2Schema),
-    defaultValues: formData.step2,
+    defaultValues: { restaurantName: '', restaurantType: '', address: '', city: '', restaurantPhone: '' },
   });
 
-  // Step 3 Form
   const step3Form = useForm<Step3Data>({
     resolver: zodResolver(step3Schema),
     defaultValues: {
-      ...formData.step3,
-      numberOfTables: formData.step3.numberOfTables || 10,
-      vatRegistered: formData.step3.vatRegistered || false,
+      numberOfTables: 10,
+      vatRegistered: false,
+      panNumber: '',
+      vatNumber: '',
+      openTime: '',
+      closeTime: '',
     },
   });
 
-  // Step 4 Form
   const step4Form = useForm<Step4Data>({
     resolver: zodResolver(step4Schema),
-    defaultValues: formData.step4,
+    defaultValues: { selectedPlan: '' },
   });
 
   const handleNextStep = async () => {
@@ -133,36 +126,16 @@ export default function RegisterPage() {
 
     if (currentStep === 1) {
       isValid = await step1Form.trigger();
-      if (isValid) {
-        setFormData((prev) => ({
-          ...prev,
-          step1: step1Form.getValues(),
-        }));
-      }
+      if (isValid) setFormData((prev) => ({ ...prev, step1: step1Form.getValues() }));
     } else if (currentStep === 2) {
       isValid = await step2Form.trigger();
-      if (isValid) {
-        setFormData((prev) => ({
-          ...prev,
-          step2: step2Form.getValues(),
-        }));
-      }
+      if (isValid) setFormData((prev) => ({ ...prev, step2: step2Form.getValues() }));
     } else if (currentStep === 3) {
       isValid = await step3Form.trigger();
-      if (isValid) {
-        setFormData((prev) => ({
-          ...prev,
-          step3: step3Form.getValues(),
-        }));
-      }
+      if (isValid) setFormData((prev) => ({ ...prev, step3: step3Form.getValues() }));
     } else if (currentStep === 4) {
       isValid = await step4Form.trigger();
-      if (isValid) {
-        setFormData((prev) => ({
-          ...prev,
-          step4: step4Form.getValues(),
-        }));
-      }
+      if (isValid) setFormData((prev) => ({ ...prev, step4: step4Form.getValues() }));
     }
 
     if (isValid) {
@@ -177,6 +150,8 @@ export default function RegisterPage() {
   const handlePreviousStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+    } else {
+      router.push('/');
     }
   };
 
@@ -187,16 +162,10 @@ export default function RegisterPage() {
         toast.error('Supabase is not configured. Please set environment variables.');
         return;
       }
-      // Sign up user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.step1.email!,
         password: formData.step1.password!,
-        options: {
-          data: {
-            full_name: formData.step1.fullName,
-            phone: formData.step1.phone,
-          },
-        },
+        options: { data: { full_name: formData.step1.fullName, phone: formData.step1.phone } },
       });
 
       if (authError) {
@@ -209,61 +178,43 @@ export default function RegisterPage() {
         return;
       }
 
-      // Sign in immediately so auth.uid() is available for RLS checks below.
-      // (signUp does not create a session when email confirmation is enabled)
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.step1.email!,
         password: formData.step1.password!,
       });
 
       if (signInError) {
-        toast.error(
-          'Account created but could not sign in automatically. ' +
-          'Please go to the login page and sign in manually to complete setup.'
-        );
+        toast.error('Account created but could not sign in automatically. Please go to the login page.');
         return;
       }
 
-      // Upload logo if one was selected
       let logo_url: string | null = null;
       if (logoFile) {
         logo_url = await uploadImage(logoFile, 'logos');
-        if (!logo_url) {
-          toast.error('Logo upload failed — continuing without logo');
-        }
+        if (!logo_url) toast.error('Logo upload failed — continuing without logo');
       }
 
-      // Build a URL-safe slug from the restaurant name
       const slug = (formData.step2.restaurantName ?? '')
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')
+        .toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
         + '-' + Math.random().toString(36).slice(2, 7);
 
-      // Insert restaurant data
       const { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurants')
-        .insert([
-          {
-            owner_id: authData.user.id,
-            name: formData.step2.restaurantName,
-            slug,
-            type: formData.step2.restaurantType,
-            address: formData.step2.address,
-            city: formData.step2.city,
-            phone: formData.step2.restaurantPhone,
-            pan_number: formData.step3.panNumber,
-            vat_registered: formData.step3.vatRegistered,
-            vat_number: formData.step3.vatNumber,
-            num_tables: formData.step3.numberOfTables,
-            operating_hours: {
-              open: formData.step3.openTime,
-              close: formData.step3.closeTime,
-            },
-            ...(logo_url && { logo_url }),
-          },
-        ])
+        .insert([{
+          owner_id: authData.user.id,
+          name: formData.step2.restaurantName,
+          slug,
+          type: formData.step2.restaurantType,
+          address: formData.step2.address,
+          city: formData.step2.city,
+          phone: formData.step2.restaurantPhone,
+          pan_number: formData.step3.panNumber,
+          vat_registered: formData.step3.vatRegistered,
+          vat_number: formData.step3.vatNumber,
+          num_tables: formData.step3.numberOfTables,
+          operating_hours: { open: formData.step3.openTime, close: formData.step3.closeTime },
+          ...(logo_url && { logo_url }),
+        }])
         .select('id')
         .single();
 
@@ -272,622 +223,437 @@ export default function RegisterPage() {
         return;
       }
 
-      // Link the chosen plan via the subscriptions table
       if (restaurantData?.id && formData.step4.selectedPlan) {
-        await supabase.from('subscriptions').insert([
-          {
-            restaurant_id: restaurantData.id,
-            plan_id: formData.step4.selectedPlan,
-            status: 'active',
-          },
-        ]);
+        await supabase.from('subscriptions').insert([{
+          restaurant_id: restaurantData.id,
+          plan_id: formData.step4.selectedPlan,
+          status: 'active',
+        }]);
       }
 
       toast.success('Account created successfully!');
       setCurrentStep(5);
-    } catch (err) {
+    } catch {
       toast.error('An unexpected error occurred');
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const progressPercentage = (currentStep / steps.length) * 100;
+  const goToDashboard = () => router.push('/dashboard');
 
-  const goToDashboard = () => {
-    router.push('/dashboard');
+  const stepLabels: Record<number, { title: string; subtitle: string }> = {
+    1: { title: 'Create your account', subtitle: 'Enter your details to get started' },
+    2: { title: 'Restaurant details', subtitle: 'Tell us about your restaurant' },
+    3: { title: 'Business info', subtitle: 'Configure tax and operations' },
+    4: { title: 'Choose your plan', subtitle: 'Select the best plan for you' },
   };
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-2">Join Resthru</h1>
-          <p className="text-muted-foreground">Build your restaurant management empire</p>
+    <div className="min-h-screen flex">
+      {/* Left Panel - Stepper */}
+      <div className="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-primary via-primary-hover to-[#064e3b] flex-col justify-between p-12 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+          <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-white/5" />
+          <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-white/5" />
         </div>
 
-        {/* Progress Bar */}
-        {currentStep < 5 && (
-          <div className="mb-8">
-            <div className="flex gap-2 mb-4">
-              {steps.map((step, idx) => (
-                <div key={idx} className="flex-1 relative">
+        <div className="relative z-10">
+          <Link href="/" className="inline-flex items-center gap-3">
+            <div className="p-2.5 bg-white/10 backdrop-blur-sm rounded-xl">
+              <UtensilsCrossed className="w-8 h-8 text-white" />
+            </div>
+            <span className="text-2xl font-bold text-white">Resthru</span>
+          </Link>
+        </div>
+
+        <div className="relative z-10">
+          <h2 className="text-3xl font-bold text-white mb-8">Setup in 4 simple steps</h2>
+          <div className="space-y-2">
+            {steps.map((step, idx) => (
+              <div
+                key={idx}
+                className={`flex items-center gap-4 p-3 rounded-xl transition-all ${
+                  idx + 1 === currentStep
+                    ? 'bg-white/15'
+                    : idx + 1 < currentStep
+                    ? 'bg-white/10'
+                    : ''
+                }`}
+              >
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                    idx + 1 < currentStep
+                      ? 'bg-white text-primary'
+                      : idx + 1 === currentStep
+                      ? 'bg-white/20 text-white'
+                      : 'bg-white/5 text-white/40'
+                  }`}
+                >
+                  {idx + 1 < currentStep ? <Check className="w-4 h-4" /> : idx + 1}
+                </div>
+                <span
+                  className={`text-sm font-medium ${
+                    idx + 1 <= currentStep ? 'text-white' : 'text-white/40'
+                  }`}
+                >
+                  {step}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative z-10">
+          <p className="text-sm text-white/40">Trusted by 500+ restaurants in Nepal</p>
+        </div>
+      </div>
+
+      {/* Right Panel - Form */}
+      <div className="flex flex-1 flex-col px-4 py-8 sm:px-6 lg:px-12 bg-register-gradient">
+        <div className="flex-1 flex flex-col justify-center max-w-xl mx-auto w-full">
+          {/* Mobile Header */}
+          <div className="lg:hidden mb-8 text-center">
+            <Link href="/" className="inline-flex items-center gap-2">
+              <div className="p-2 bg-primary/10 rounded-xl">
+                <UtensilsCrossed className="w-6 h-6 text-primary" />
+              </div>
+              <span className="text-xl font-bold text-primary">Resthru</span>
+            </Link>
+          </div>
+
+          {/* Progress (mobile) */}
+          {currentStep < 5 && (
+            <div className="lg:hidden mb-8">
+              <div className="flex gap-2 mb-3">
+                {steps.map((_, idx) => (
                   <div
-                    className={`h-1 rounded-full transition-all duration-300 ${
-                      idx < currentStep
+                    key={idx}
+                    className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+                      idx + 1 < currentStep
                         ? 'bg-primary'
-                        : idx === currentStep - 1
-                          ? 'bg-primary'
-                          : 'bg-border'
+                        : idx + 1 === currentStep
+                        ? 'bg-primary'
+                        : 'bg-border/50'
                     }`}
                   />
-                  <p
-                    className={`text-xs mt-2 font-medium text-center ${
-                      idx < currentStep
-                        ? 'text-primary'
-                        : idx === currentStep - 1
-                          ? 'text-primary'
-                          : 'text-muted-foreground'
-                    }`}
-                  >
-                    {step}
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                Step {currentStep} of {steps.length}
+              </p>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Form Steps */}
-        <AnimatePresence mode="wait">
-          {currentStep === 1 && (
+          {/* Step Header */}
+          {currentStep < 5 && stepLabels[currentStep] && (
             <motion.div
-              key="step1"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
+              key={`header-${currentStep}`}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8"
             >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Account Details</CardTitle>
-                  <CardDescription>Create your Resthru account</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...step1Form}>
-                    <form className="space-y-4">
-                      <FormField
-                        control={step1Form.control}
-                        name="fullName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="John Doe" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={step1Form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email Address</FormLabel>
-                            <FormControl>
-                              <Input placeholder="you@example.com" type="email" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={step1Form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
-                            <FormControl>
-                              <Input placeholder="98XXXXXXXXX" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={step1Form.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                              <Input placeholder="At least 8 characters" type="password" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={step1Form.control}
-                        name="confirmPassword"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Confirm Password</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Repeat your password" type="password" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
+              <h1 className="text-3xl font-bold">{stepLabels[currentStep].title}</h1>
+              <p className="mt-2 text-muted-foreground">{stepLabels[currentStep].subtitle}</p>
             </motion.div>
           )}
 
-          {currentStep === 2 && (
-            <motion.div
-              key="step2"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Restaurant Details</CardTitle>
-                  <CardDescription>Tell us about your restaurant</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...step2Form}>
-                    <form className="space-y-4">
-                      <FormField
-                        control={step2Form.control}
-                        name="restaurantName"
-                        render={({ field }) => (
+          {/* Form Steps */}
+          <AnimatePresence mode="wait">
+            {currentStep === 1 && (
+              <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                <Card className="border border-border/70 bg-white/90 shadow-lg backdrop-blur">
+                  <CardContent className="p-6 sm:p-8">
+                    <Form {...step1Form}>
+                      <form className="space-y-4">
+                        <FormField control={step1Form.control} name="fullName" render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Restaurant Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Your Restaurant Name" {...field} />
-                            </FormControl>
+                            <FormLabel>Full Name</FormLabel>
+                            <FormControl><Input placeholder="John Doe" className="h-11" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
-                        )}
-                      />
+                        )} />
+                        <FormField control={step1Form.control} name="email" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email Address</FormLabel>
+                            <FormControl><Input placeholder="you@example.com" type="email" className="h-11" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={step1Form.control} name="phone" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone Number</FormLabel>
+                            <FormControl><Input placeholder="98XXXXXXXXX" className="h-11" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <FormField control={step1Form.control} name="password" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Password</FormLabel>
+                              <FormControl><Input placeholder="At least 8 characters" type="password" className="h-11" {...field} /></FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )} />
+                          <FormField control={step1Form.control} name="confirmPassword" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Confirm Password</FormLabel>
+                              <FormControl><Input placeholder="Repeat password" type="password" className="h-11" {...field} /></FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )} />
+                        </div>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
-                      <FormField
-                        control={step2Form.control}
-                        name="restaurantType"
-                        render={({ field }) => (
+            {currentStep === 2 && (
+              <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                <Card className="border border-border/70 bg-white/90 shadow-lg backdrop-blur">
+                  <CardContent className="p-6 sm:p-8">
+                    <Form {...step2Form}>
+                      <form className="space-y-4">
+                        <FormField control={step2Form.control} name="restaurantName" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Restaurant Name</FormLabel>
+                            <FormControl><Input placeholder="Your Restaurant Name" className="h-11" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={step2Form.control} name="restaurantType" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Restaurant Type</FormLabel>
                             <Select value={field.value} onValueChange={field.onChange}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select restaurant type" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {RESTAURANT_TYPES.map((type) => (
-                                  <SelectItem key={type.value} value={type.value}>
-                                    {type.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
+                              <FormControl><SelectTrigger className="h-11"><SelectValue placeholder="Select type" /></SelectTrigger></FormControl>
+                              <SelectContent>{RESTAURANT_TYPES.map((type) => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}</SelectContent>
                             </Select>
                             <FormMessage />
                           </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={step2Form.control}
-                        name="address"
-                        render={({ field }) => (
+                        )} />
+                        <FormField control={step2Form.control} name="address" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Address</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Street address" {...field} />
-                            </FormControl>
+                            <FormControl><Input placeholder="Street address" className="h-11" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={step2Form.control}
-                        name="city"
-                        render={({ field }) => (
+                        )} />
+                        <FormField control={step2Form.control} name="city" render={({ field }) => (
                           <FormItem>
                             <FormLabel>City</FormLabel>
                             <Select value={field.value} onValueChange={field.onChange}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select city" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {NEPAL_CITIES.map((city) => (
-                                  <SelectItem key={city} value={city}>
-                                    {city}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
+                              <FormControl><SelectTrigger className="h-11"><SelectValue placeholder="Select city" /></SelectTrigger></FormControl>
+                              <SelectContent>{NEPAL_CITIES.map((city) => <SelectItem key={city} value={city}>{city}</SelectItem>)}</SelectContent>
                             </Select>
                             <FormMessage />
                           </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={step2Form.control}
-                        name="restaurantPhone"
-                        render={({ field }) => (
+                        )} />
+                        <FormField control={step2Form.control} name="restaurantPhone" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Restaurant Phone</FormLabel>
-                            <FormControl>
-                              <Input placeholder="98XXXXXXXXX" {...field} />
-                            </FormControl>
+                            <FormControl><Input placeholder="98XXXXXXXXX" className="h-11" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={step2Form.control}
-                        name="logo"
-                        render={({ field }) => (
+                        )} />
+                        <FormField control={step2Form.control} name="logo" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Restaurant Logo (Optional)</FormLabel>
                             <FormControl>
-                              <label className="block border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors">
+                              <label className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-xl p-6 cursor-pointer hover:border-primary/50 transition-colors">
                                 {logoPreview ? (
                                   <div className="flex flex-col items-center gap-2">
-                                    <img
-                                      src={logoPreview}
-                                      alt="Logo preview"
-                                      className="h-24 w-24 rounded-lg object-cover mx-auto"
-                                    />
+                                    <img src={logoPreview} alt="Logo preview" className="h-20 w-20 rounded-lg object-cover" />
                                     <p className="text-xs text-muted-foreground">Click to change</p>
                                   </div>
                                 ) : (
-                                  <>
-                                    <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                                    <p className="text-sm text-muted-foreground">
-                                      Click to upload or drag and drop
-                                    </p>
-                                  </>
+                                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                    <Upload className="w-8 h-8" />
+                                    <p className="text-sm">Click to upload or drag and drop</p>
+                                  </div>
                                 )}
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      setLogoFile(file);
-                                      setLogoPreview(URL.createObjectURL(file));
-                                      field.onChange(file);
-                                    }
-                                  }}
-                                />
+                                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) { setLogoFile(file); setLogoPreview(URL.createObjectURL(file)); field.onChange(file); }
+                                }} />
                               </label>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
-                        )}
-                      />
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
+                        )} />
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
-          {currentStep === 3 && (
-            <motion.div
-              key="step3"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Business Details</CardTitle>
-                  <CardDescription>Additional business information</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...step3Form}>
-                    <form className="space-y-4">
-                      <FormField
-                        control={step3Form.control}
-                        name="panNumber"
-                        render={({ field }) => (
+            {currentStep === 3 && (
+              <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                <Card className="border border-border/70 bg-white/90 shadow-lg backdrop-blur">
+                  <CardContent className="p-6 sm:p-8">
+                    <Form {...step3Form}>
+                      <form className="space-y-4">
+                        <FormField control={step3Form.control} name="panNumber" render={({ field }) => (
                           <FormItem>
                             <FormLabel>PAN Number (Optional)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Your PAN number" {...field} />
-                            </FormControl>
+                            <FormControl><Input placeholder="Your PAN number" className="h-11" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={step3Form.control}
-                        name="vatRegistered"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                        )} />
+                        <FormField control={step3Form.control} name="vatRegistered" render={({ field }) => (
+                          <FormItem className="flex items-center justify-between rounded-xl border p-4">
                             <div className="space-y-0.5">
                               <FormLabel className="text-base">VAT Registered</FormLabel>
-                              <p className="text-sm text-muted-foreground">
-                                Is your restaurant VAT registered?
-                              </p>
+                              <p className="text-sm text-muted-foreground">Is your restaurant VAT registered?</p>
                             </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
+                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                           </FormItem>
-                        )}
-                      />
-
-                      {step3Form.watch('vatRegistered') && (
-                        <FormField
-                          control={step3Form.control}
-                          name="vatNumber"
-                          render={({ field }) => (
+                        )} />
+                        {step3Form.watch('vatRegistered') && (
+                          <FormField control={step3Form.control} name="vatNumber" render={({ field }) => (
                             <FormItem>
                               <FormLabel>VAT Number</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Your VAT number" {...field} />
-                              </FormControl>
+                              <FormControl><Input placeholder="Your VAT number" className="h-11" {...field} /></FormControl>
                               <FormMessage />
                             </FormItem>
-                          )}
-                        />
-                      )}
-
-                      <FormField
-                        control={step3Form.control}
-                        name="numberOfTables"
-                        render={({ field }) => (
+                          )} />
+                        )}
+                        <FormField control={step3Form.control} name="numberOfTables" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Number of Tables</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="10"
-                                {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value))}
-                              />
-                            </FormControl>
+                            <FormControl><Input type="number" placeholder="10" className="h-11" {...field} onChange={(e) => field.onChange(parseInt(e.target.value))} /></FormControl>
                             <FormMessage />
                           </FormItem>
-                        )}
-                      />
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={step3Form.control}
-                          name="openTime"
-                          render={({ field }) => (
+                        )} />
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField control={step3Form.control} name="openTime" render={({ field }) => (
                             <FormItem>
                               <FormLabel>Opening Time</FormLabel>
-                              <FormControl>
-                                <Input type="time" {...field} />
-                              </FormControl>
+                              <FormControl><Input type="time" className="h-11" {...field} /></FormControl>
                               <FormMessage />
                             </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={step3Form.control}
-                          name="closeTime"
-                          render={({ field }) => (
+                          )} />
+                          <FormField control={step3Form.control} name="closeTime" render={({ field }) => (
                             <FormItem>
                               <FormLabel>Closing Time</FormLabel>
-                              <FormControl>
-                                <Input type="time" {...field} />
-                              </FormControl>
+                              <FormControl><Input type="time" className="h-11" {...field} /></FormControl>
                               <FormMessage />
                             </FormItem>
-                          )}
-                        />
-                      </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
+                          )} />
+                        </div>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
-          {currentStep === 4 && (
-            <motion.div
-              key="step4"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Choose Your Plan</CardTitle>
-                  <CardDescription>Select the perfect plan for your restaurant</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...step4Form}>
-                    <form className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {PLANS.map((plan) => (
-                          <FormField
-                            key={plan.id}
-                            control={step4Form.control}
-                            name="selectedPlan"
-                            render={({ field }) => (
+            {currentStep === 4 && (
+              <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                <Card className="border border-border/70 bg-white/90 shadow-lg backdrop-blur">
+                  <CardContent className="p-6 sm:p-8">
+                    <Form {...step4Form}>
+                      <form className="space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {PLANS.map((plan) => (
+                            <FormField key={plan.id} control={step4Form.control} name="selectedPlan" render={({ field }) => (
                               <div
-                                className={`relative rounded-lg border-2 p-6 cursor-pointer transition-all ${
+                                className={`relative rounded-xl border-2 p-5 cursor-pointer transition-all ${
                                   field.value === plan.id
-                                    ? 'border-primary bg-primary-light'
-                                    : 'border-border hover:border-primary'
+                                    ? 'border-primary bg-primary-light/50 shadow-md'
+                                    : 'border-border hover:border-primary/50'
                                 }`}
                                 onClick={() => field.onChange(plan.id)}
                               >
                                 {plan.isPopular && (
-                                  <div className="absolute top-0 left-0 right-0 bg-primary text-white text-xs font-semibold py-1 px-3 rounded-t-lg">
-                                    Most Popular
+                                  <div className="absolute -top-2.5 left-4 bg-primary text-white text-xs font-semibold px-3 py-0.5 rounded-full">
+                                    Popular
                                   </div>
                                 )}
-
-                                <div className={plan.isPopular ? 'mt-8' : ''}>
-                                  <h3 className="font-bold text-lg mb-2">{plan.name}</h3>
-                                  {plan.price !== null ? (
-                                    <p className="text-2xl font-bold text-primary mb-4">
-                                      {plan.price === 0 ? 'Free' : `${plan.price} ${plan.currency}`}
-                                      {plan.price !== 0 && <span className="text-sm text-muted-foreground">/mo</span>}
-                                    </p>
-                                  ) : (
-                                    <p className="text-2xl font-bold text-primary mb-4">
-                                      Custom pricing
-                                    </p>
-                                  )}
-
-                                  <ul className="space-y-2">
-                                    {plan.features.map((feature, idx) => (
-                                      <li key={idx} className="flex items-start gap-2 text-sm">
-                                        <Check className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                                        <span>{feature}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-
-                                  <input
-                                    type="radio"
-                                    name="plan"
-                                    value={plan.id}
-                                    checked={field.value === plan.id}
-                                    onChange={() => field.onChange(plan.id)}
-                                    className="hidden"
-                                  />
-
-                                  {field.value === plan.id && (
-                                    <div className="absolute top-4 right-4 bg-primary text-white rounded-full p-1">
-                                      <Check className="w-4 h-4" />
-                                    </div>
-                                  )}
-                                </div>
+                                <h3 className="font-bold text-lg mb-1">{plan.name}</h3>
+                                <p className="text-2xl font-bold text-primary mb-3">
+                                  {plan.price === 0 ? 'Free' : `${plan.price} ${plan.currency}`}
+                                  {plan.price !== 0 && <span className="text-sm text-muted-foreground font-normal">/mo</span>}
+                                </p>
+                                <ul className="space-y-1.5">
+                                  {plan.features.slice(0, 3).map((feature, idx) => (
+                                    <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                                      <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                                      <span>{feature}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                                {field.value === plan.id && (
+                                  <div className="absolute top-4 right-4 bg-primary text-white rounded-full p-1">
+                                    <Check className="w-3 h-3" />
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          />
-                        ))}
-                      </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
+                            )} />
+                          ))}
+                        </div>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
-          {currentStep === 5 && (
-            <motion.div
-              key="step5"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-success/10 to-primary-light">
-                <CardContent className="pt-12 pb-12">
-                  <div className="text-center space-y-6">
-                    {/* Celebration Animation */}
-                    <motion.div
-                      animate={{
-                        scale: [1, 1.2, 1],
-                      }}
-                      transition={{
-                        duration: 0.6,
-                        repeat: 2,
-                      }}
-                    >
-                      <div className="w-16 h-16 bg-success rounded-full flex items-center justify-center mx-auto">
+            {currentStep === 5 && (
+              <motion.div key="step5" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-success/10 to-primary-light">
+                  <CardContent className="p-8 sm:p-12 text-center">
+                    <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 0.6, repeat: 2 }}>
+                      <div className="w-16 h-16 bg-success rounded-full flex items-center justify-center mx-auto mb-6">
                         <Check className="w-8 h-8 text-white" />
                       </div>
                     </motion.div>
-
-                    <div>
-                      <h2 className="text-3xl font-bold text-primary mb-2">
-                        Welcome to Resthru, {formData.step2.restaurantName}!
-                      </h2>
-                      <p className="text-primary text-lg">
-                        Your account is ready to go
-                      </p>
+                    <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+                      Welcome to Resthru!
+                    </h2>
+                    <p className="text-muted-foreground mb-8">
+                      {formData.step2.restaurantName} is all set up and ready to go.
+                    </p>
+                    <div className="space-y-2 text-sm text-muted-foreground mb-8">
+                      <p>Account created successfully</p>
+                      <p>Restaurant profile set up</p>
+                      <p>Plan selected</p>
                     </div>
-
-                    <div className="space-y-2 text-sm text-primary">
-                      <p>✓ Account created successfully</p>
-                      <p>✓ Restaurant profile set up</p>
-                      <p>✓ Plan selected</p>
-                    </div>
-
-                    <Button
-                      onClick={goToDashboard}
-                      className="w-full bg-success hover:bg-success text-white font-semibold h-12 text-base mt-4"
-                    >
+                    <Button onClick={goToDashboard} className="w-full sm:w-auto bg-success hover:bg-success/90 text-white font-medium h-11 px-8">
                       Go to Dashboard
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Navigation Buttons */}
+          {currentStep < 5 && (
+            <div className="flex gap-3 mt-6">
+              <Button variant="outline" onClick={handlePreviousStep} disabled={isLoading} className="flex-1 h-11">
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              <Button onClick={handleNextStep} disabled={isLoading} className="flex-1 h-11 bg-primary hover:bg-primary-hover text-white">
+                {currentStep === 4 ? 'Create Account' : 'Continue'}
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
           )}
-        </AnimatePresence>
 
-        {/* Navigation Buttons */}
-        {currentStep < 5 && (
-          <div className="flex gap-3 mt-8">
-            <Button
-              variant="outline"
-              onClick={handlePreviousStep}
-              disabled={currentStep === 1 || isLoading}
-              className="flex-1"
-            >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <Button
-              onClick={handleNextStep}
-              disabled={isLoading}
-              className="flex-1 bg-primary hover:bg-primary-hover text-white"
-            >
-              {currentStep === 4 ? 'Create Account' : 'Next'}
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-        )}
-
-        {/* Sign In Link */}
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          Already have an account?{' '}
-          <Link
-            href="/login"
-            className="text-primary hover:text-primary font-semibold transition-colors"
-          >
-            Sign in
-          </Link>
-        </p>
+          {currentStep < 5 && (
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              Already have an account?{' '}
+              <Link href="/login" className="text-primary hover:text-primary/80 font-semibold transition-colors">
+                Sign in
+              </Link>
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -184,6 +184,12 @@
     linear-gradient(to bottom, hsl(var(--foreground) / 0.03) 1px, transparent 1px);
 }
 
+.bg-register-gradient {
+  background:
+    radial-gradient(circle at top right, rgba(20, 160, 106, 0.12), transparent 40%),
+    linear-gradient(135deg, #f7fcf9 0%, #f9fbf8 100%);
+}
+
 /* ==============================================
    ADMIN DARK THEME UTILITIES
    ============================================== */

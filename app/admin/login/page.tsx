@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Shield, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { login } from "@/lib/actions/auth";
 
-export default function AdminLoginPage() {
+function AdminLoginForm() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/admin";
   const [username, setUsername] = useState("");
@@ -60,5 +60,13 @@ export default function AdminLoginPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
+      <AdminLoginForm />
+    </Suspense>
   );
 }

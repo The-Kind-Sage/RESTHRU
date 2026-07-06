@@ -18,7 +18,6 @@ const nextConfig = {
     optimizePackageImports: [
       'lucide-react',
       'date-fns',
-      'framer-motion',
       'recharts',
       '@radix-ui/react-dialog',
       '@radix-ui/react-dropdown-menu',
@@ -35,7 +34,13 @@ const nextConfig = {
       {
         source: '/_next/static/:path*',
         headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          {
+            key: 'Cache-Control',
+            value:
+              process.env.NODE_ENV === 'production'
+                ? 'public, max-age=31536000, immutable'
+                : 'no-cache, must-revalidate',
+          },
         ],
       },
       {

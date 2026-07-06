@@ -41,7 +41,7 @@ const comparisonFeatures = [
   },
   {
     category: 'Integrations',
-    items: ['Offline mode', 'Thermal printer support', 'API access'],
+    items: ['Thermal printer support', 'API access'],
   },
 ];
 
@@ -54,9 +54,9 @@ const faqItems = [
   },
   {
     id: '2',
-    question: 'What happens if my internet goes down?',
+    question: 'Do you support thermal printers?',
     answer:
-      'Resthru\'s Basic and Pro plans include offline mode, so your restaurant keeps operating smoothly. Orders sync automatically when your connection returns.',
+      'Yes, we support ESC/POS thermal printers out of the box. Perfect for kitchen receipts and order tickets. Available on Basic and Pro plans.',
   },
   {
     id: '3',
@@ -114,7 +114,6 @@ const planFeatureMap: Record<string, Record<string, boolean>> = {
   'Email support': { free: true, basic: false, pro: false, enterprise: false },
   'Priority email support': { free: false, basic: true, pro: true, enterprise: true },
   'Phone & email support': { free: false, basic: false, pro: true, enterprise: true },
-  'Offline mode': { free: false, basic: true, pro: true, enterprise: true },
   'Thermal printer support': { free: false, basic: true, pro: true, enterprise: true },
   'API access': { free: false, basic: false, pro: true, enterprise: true },
 };
