@@ -70,8 +70,8 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
         // Pull the real owner name from the restaurants table
         const { data: restaurantData } = await supabase
           .from('restaurants')
-          .select('id, name, owner_id')
-          .eq('owner_id', session.user.id)
+          .select('id, name, ownerId')
+          .eq('ownerId', session.user.id)
           .single();
 
         // The user's full name is stored in auth metadata set during signUp
