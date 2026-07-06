@@ -576,3 +576,31 @@ export default function SettingsPage() {
               <Button variant="destructive">Cancel Subscription</Button>
             </div>
           </TabsContent>
+
+          {/* ══ SECURITY ═════════════════════════════════════════════════ */}
+          <TabsContent value="security" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Change Password</CardTitle>
+                <CardDescription>Update your account password</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>New Password</Label>
+                  <Input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)} placeholder="Enter new password" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Confirm New Password</Label>
+                  <Input type="password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} placeholder="Confirm new password" />
+                </div>
+                <Button onClick={changePassword} disabled={isSavingPwd} className="w-full md:w-auto">
+                  {isSavingPwd ? 'Updating…' : 'Change Password'}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </div>
+      </Tabs>
+    </div>
+  );
+}
