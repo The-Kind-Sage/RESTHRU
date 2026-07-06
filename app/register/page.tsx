@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Check, Upload, UtensilsCrossed, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Upload, UtensilsCrossed, ArrowRight, CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
@@ -30,6 +30,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { uploadImage } from '@/lib/upload';
 import { NEPAL_CITIES, RESTAURANT_TYPES, PLANS } from '@/lib/constants';
@@ -93,6 +97,8 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [businessDate, setBusinessDate] = useState<Date | undefined>();
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const step1Form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
@@ -502,6 +508,28 @@ export default function RegisterPage() {
                             <FormMessage />
                           </FormItem>
                         )} />
+                        <FormItem>
+                          <FormLabel>Establishment Date (Optional)</FormLabel>
+                          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" className={cn('w-full justify-start text-left font-normal h-11', !businessDate && 'text-muted-foreground')}>
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {businessDate ? format(businessDate, 'PPP') : <span>Select date</span>}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={businessDate}
+                                onSelect={(date) => {
+                                  setBusinessDate(date);
+                                  setDatePickerOpen(false);
+                                }}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </FormItem>
                         <FormField control={step3Form.control} name="vatRegistered" render={({ field }) => (
                           <FormItem className="flex items-center justify-between rounded-xl border p-4">
                             <div className="space-y-0.5">
