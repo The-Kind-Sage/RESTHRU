@@ -8,6 +8,8 @@ import { TestimonialsSection } from "@/components/shared/testimonials-section";
 import { NepalSection } from "@/components/shared/nepal-section";
 import Footer from "@/components/shared/footer";
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   return (
     <main className="min-h-screen">
