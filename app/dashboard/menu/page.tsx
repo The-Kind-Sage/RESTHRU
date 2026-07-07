@@ -263,7 +263,7 @@ export default function MenuPage() {
   };
 
   const handleSaveCategory = async () => {
-    if (!categoryFormData.name) return;
+    if (!categoryFormData.name || !restaurantId) return;
     setIsSavingCategory(true);
     try {
       if (editingCategory) {
@@ -285,6 +285,7 @@ export default function MenuPage() {
           emoji: categoryFormData.emoji,
           sortOrder: categoryFormData.sortOrder,
           active: categoryFormData.active,
+          restaurantId,
         });
         if (result.error) { toast.error(result.error); return; }
         if (result.data) {
