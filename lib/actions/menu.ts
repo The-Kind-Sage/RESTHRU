@@ -16,8 +16,8 @@ export async function addCategory(data: {
 
   try {
     const result: { id: string }[] = await prisma.$queryRaw`
-      INSERT INTO categories (id, restaurant_id, name, display_order, is_active)
-      VALUES (gen_random_uuid()::text, ${data.restaurantId}, ${data.name}, ${data.sortOrder || 0}, ${data.active ?? true})
+      INSERT INTO categories (id, restaurant_id, name, display_order, is_active, created_at, updated_at)
+      VALUES (gen_random_uuid()::text, ${data.restaurantId}, ${data.name}, ${data.sortOrder || 0}, ${data.active ?? true}, now(), now())
       RETURNING id
     `;
     return { data: { id: result[0].id } };
