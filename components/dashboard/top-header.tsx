@@ -121,7 +121,7 @@ export default function TopHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const { sidebarCollapsed, setMobileMenuOpen } = useUIStore();
-  const { user, restaurant } = useAuthStore();
+  const { user, restaurant, logout } = useAuthStore();
   const { notifications, unreadCount, isLoading, fetch, markRead, markAllRead, dismiss } = useNotificationsStore();
 
   const pageTitle = useMemo(() => PAGE_TITLES[pathname] || 'Dashboard', [pathname]);
@@ -302,7 +302,7 @@ export default function TopHeader() {
               <HelpCircle className="mr-2 h-4 w-4" /> Help & Support
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive focus:text-destructive">
+            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={logout}>
               <LogOut className="mr-2 h-4 w-4" /> Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

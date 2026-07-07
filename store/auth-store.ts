@@ -51,7 +51,7 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
         isAuthenticated: false,
         isLoading: false,
       });
-      window.location.href = '/dashboard/login';
+      window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
       set({ isLoading: false });

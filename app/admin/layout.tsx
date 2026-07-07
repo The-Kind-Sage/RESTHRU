@@ -101,7 +101,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = async () => {
     await logout();
-    router.push('/admin/login');
+    router.push('/');
   };
 
   // Login page renders without the admin shell
