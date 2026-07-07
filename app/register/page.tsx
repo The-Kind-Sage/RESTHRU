@@ -6,13 +6,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Check, Upload, UtensilsCrossed, ArrowRight, CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, UtensilsCrossed, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Form,
@@ -29,11 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { createSessionFromSupabaseLogin } from '@/lib/actions/auth';
 import { NEPAL_CITIES, RESTAURANT_TYPES, PLANS } from '@/lib/constants';
@@ -58,31 +52,20 @@ const step2Schema = z.object({
 });
 
 const step3Schema = z.object({
-  panNumber: z.string().optional(),
-  vatRegistered: z.boolean().default(false),
-  vatNumber: z.string().optional(),
-  numberOfTables: z.number().min(1, 'Number of tables is required'),
-  openTime: z.string().min(1, 'Open time is required'),
-  closeTime: z.string().min(1, 'Close time is required'),
-});
-
-const step4Schema = z.object({
   selectedPlan: z.string().min(1, 'Please select a plan'),
 });
 
 type Step1Data = z.infer<typeof step1Schema>;
 type Step2Data = z.infer<typeof step2Schema>;
 type Step3Data = z.infer<typeof step3Schema>;
-type Step4Data = z.infer<typeof step4Schema>;
 
 interface FormData {
   step1: Partial<Step1Data>;
   step2: Partial<Step2Data>;
   step3: Partial<Step3Data>;
-  step4: Partial<Step4Data>;
 }
 
-const steps = ['Account', 'Restaurant', 'Business', 'Plan'];
+const steps = ['Account', 'Restaurant', 'Plan'];
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -91,11 +74,8 @@ export default function RegisterPage() {
     step1: {},
     step2: {},
     step3: {},
-    step4: {},
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [businessDate, setBusinessDate] = useState<Date | undefined>();
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const step1Form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
@@ -109,18 +89,6 @@ export default function RegisterPage() {
 
   const step3Form = useForm<Step3Data>({
     resolver: zodResolver(step3Schema),
-    defaultValues: {
-      numberOfTables: 10,
-      vatRegistered: false,
-      panNumber: '',
-      vatNumber: '',
-      openTime: '',
-      closeTime: '',
-    },
-  });
-
-  const step4Form = useForm<Step4Data>({
-    resolver: zodResolver(step4Schema),
     defaultValues: { selectedPlan: '' },
   });
 
@@ -136,13 +104,10 @@ export default function RegisterPage() {
     } else if (currentStep === 3) {
       isValid = await step3Form.trigger();
       if (isValid) setFormData((prev) => ({ ...prev, step3: step3Form.getValues() }));
-    } else if (currentStep === 4) {
-      isValid = await step4Form.trigger();
-      if (isValid) setFormData((prev) => ({ ...prev, step4: step4Form.getValues() }));
     }
 
     if (isValid) {
-      if (currentStep === 4) {
+      if (currentStep === 3) {
         await handleSubmit();
       } else {
         setCurrentStep(currentStep + 1);
@@ -199,10 +164,6 @@ export default function RegisterPage() {
         }
       }
 
-      const slug = (formData.step2.restaurantName ?? '')
-        .toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-        + '-' + Math.random().toString(36).slice(2, 7);
-
       // Create restaurant via server action so it's in the Prisma-managed table
       const { createRestaurant } = await import('@/lib/actions/auth');
       const restResult = await createRestaurant({
@@ -212,11 +173,6 @@ export default function RegisterPage() {
         address: formData.step2.address,
         city: formData.step2.city,
         phone: formData.step2.restaurantPhone,
-        panNumber: formData.step3.panNumber,
-        vatRegistered: formData.step3.vatRegistered,
-        vatNumber: formData.step3.vatNumber,
-        numTables: formData.step3.numberOfTables,
-        operatingHours: { open: formData.step3.openTime, close: formData.step3.closeTime },
       });
 
       if (restResult?.error) {
@@ -224,10 +180,10 @@ export default function RegisterPage() {
         return;
       }
 
-      if (restResult?.restaurantId && formData.step4.selectedPlan) {
+      if (restResult?.restaurantId && formData.step3.selectedPlan) {
         await supabase.from('subscriptions').insert([{
           restaurantId: restResult.restaurantId,
-          planId: formData.step4.selectedPlan,
+          planId: formData.step3.selectedPlan,
           status: 'active',
         }]);
       }
@@ -243,7 +199,7 @@ export default function RegisterPage() {
       }
 
       toast.success('Account created successfully!');
-      setCurrentStep(5);
+      setCurrentStep(4);
     } catch {
       toast.error('An unexpected error occurred');
     } finally {
@@ -256,8 +212,7 @@ export default function RegisterPage() {
   const stepLabels: Record<number, { title: string; subtitle: string }> = {
     1: { title: 'Create your account', subtitle: 'Enter your details to get started' },
     2: { title: 'Restaurant details', subtitle: 'Tell us about your restaurant' },
-    3: { title: 'Business info', subtitle: 'Configure tax and operations' },
-    4: { title: 'Choose your plan', subtitle: 'Select the best plan for you' },
+    3: { title: 'Choose your plan', subtitle: 'Select the best plan for you' },
   };
 
   return (
@@ -279,7 +234,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="relative z-10">
-          <h2 className="text-3xl font-bold text-white mb-8">Setup in 4 simple steps</h2>
+          <h2 className="text-3xl font-bold text-white mb-8">Setup in 3 simple steps</h2>
           <div className="space-y-2">
             {steps.map((step, idx) => (
               <div
@@ -334,7 +289,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Progress (mobile) */}
-          {currentStep < 5 && (
+          {currentStep < 4 && (
             <div className="lg:hidden mb-8">
               <div className="flex gap-2 mb-3">
                 {steps.map((_, idx) => (
@@ -357,7 +312,7 @@ export default function RegisterPage() {
           )}
 
           {/* Step Header */}
-          {currentStep < 5 && stepLabels[currentStep] && (
+          {currentStep < 4 && stepLabels[currentStep] && (
             <motion.div
               key={`header-${currentStep}`}
               initial={{ opacity: 0, y: -10 }}
@@ -480,93 +435,10 @@ export default function RegisterPage() {
                 <Card className="border border-border/70 bg-white/90 shadow-lg backdrop-blur">
                   <CardContent className="p-6 sm:p-8">
                     <Form {...step3Form}>
-                      <form className="space-y-4">
-                        <FormField control={step3Form.control} name="panNumber" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>PAN Number (Optional)</FormLabel>
-                            <FormControl><Input placeholder="Your PAN number" className="h-11" {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                        <FormItem>
-                          <FormLabel>Establishment Date (Optional)</FormLabel>
-                          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                            <PopoverTrigger asChild>
-                              <Button variant="outline" className={cn('w-full justify-start text-left font-normal h-11', !businessDate && 'text-muted-foreground')}>
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {businessDate ? format(businessDate, 'PPP') : <span>Select date</span>}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={businessDate}
-                                onSelect={(date) => {
-                                  setBusinessDate(date);
-                                  setDatePickerOpen(false);
-                                }}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </FormItem>
-                        <FormField control={step3Form.control} name="vatRegistered" render={({ field }) => (
-                          <FormItem className="flex items-center justify-between rounded-xl border p-4">
-                            <div className="space-y-0.5">
-                              <FormLabel className="text-base">VAT Registered</FormLabel>
-                              <p className="text-sm text-muted-foreground">Is your restaurant VAT registered?</p>
-                            </div>
-                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                          </FormItem>
-                        )} />
-                        {step3Form.watch('vatRegistered') && (
-                          <FormField control={step3Form.control} name="vatNumber" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>VAT Number</FormLabel>
-                              <FormControl><Input placeholder="Your VAT number" className="h-11" {...field} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )} />
-                        )}
-                        <FormField control={step3Form.control} name="numberOfTables" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Number of Tables</FormLabel>
-                            <FormControl><Input type="number" placeholder="10" className="h-11" {...field} onChange={(e) => field.onChange(parseInt(e.target.value))} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField control={step3Form.control} name="openTime" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Opening Time</FormLabel>
-                              <FormControl><Input type="time" className="h-11" {...field} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )} />
-                          <FormField control={step3Form.control} name="closeTime" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Closing Time</FormLabel>
-                              <FormControl><Input type="time" className="h-11" {...field} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )} />
-                        </div>
-                      </form>
-                    </Form>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-
-            {currentStep === 4 && (
-              <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-                <Card className="border border-border/70 bg-white/90 shadow-lg backdrop-blur">
-                  <CardContent className="p-6 sm:p-8">
-                    <Form {...step4Form}>
                       <form className="space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {PLANS.map((plan) => (
-                            <FormField key={plan.id} control={step4Form.control} name="selectedPlan" render={({ field }) => (
+                            <FormField key={plan.id} control={step3Form.control} name="selectedPlan" render={({ field }) => (
                               <div
                                 className={`relative rounded-xl border-2 p-5 cursor-pointer transition-all ${
                                   field.value === plan.id
@@ -609,8 +481,8 @@ export default function RegisterPage() {
               </motion.div>
             )}
 
-            {currentStep === 5 && (
-              <motion.div key="step5" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
+            {currentStep === 4 && (
+              <motion.div key="step4" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
                 <Card className="border-0 shadow-lg bg-gradient-to-br from-success/10 to-primary-light">
                   <CardContent className="p-8 sm:p-12 text-center">
                     <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 0.6, repeat: 2 }}>
@@ -640,20 +512,20 @@ export default function RegisterPage() {
           </AnimatePresence>
 
           {/* Navigation Buttons */}
-          {currentStep < 5 && (
+          {currentStep < 4 && (
             <div className="flex gap-3 mt-6">
               <Button variant="outline" onClick={handlePreviousStep} disabled={isLoading} className="flex-1 h-11">
                 <ChevronLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
               <Button onClick={handleNextStep} disabled={isLoading} className="flex-1 h-11 bg-primary hover:bg-primary-hover text-white">
-                {currentStep === 4 ? 'Create Account' : 'Continue'}
+                {currentStep === 3 ? 'Create Account' : 'Continue'}
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           )}
 
-          {currentStep < 5 && (
+          {currentStep < 4 && (
             <p className="text-center text-sm text-muted-foreground mt-6">
               Already have an account?{' '}
               <Link href="/login" className="text-primary hover:text-primary/80 font-semibold transition-colors">
