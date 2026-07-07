@@ -12,12 +12,19 @@ async function resolveRestaurantId(session: { id: string; email: string }): Prom
   });
   if (user?.restaurantId) return user.restaurantId;
 
-  // Fallback: find restaurant by email match
-  const restaurant = await prisma.restaurant.findFirst({
-    where: { email: session.email },
-    select: { id: true },
-  });
-  return restaurant?.id ?? null;
+  // Fallback: look up by Supabase auth owner_id using the user's email
+  const supabase = supabaseServer();
+  const { data: authUsers } = await supabase.auth.admin.listUsers();
+  const authUser = authUsers?.users?.find(u => u.email === session.email);
+  if (authUser) {
+    const restaurant = await prisma.restaurant.findFirst({
+      where: { ownerId: authUser.id },
+      select: { id: true },
+    });
+    if (restaurant?.id) return restaurant.id;
+  }
+
+  return null;
 }
 
 export async function addCategory(data: {
