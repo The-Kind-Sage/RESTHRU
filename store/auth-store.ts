@@ -75,7 +75,7 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
           .from('restaurants')
           .select('id, name, owner_id')
           .eq('owner_id', session.user.id)
-          .single();
+          .maybeSingle();
 
         // The user's full name is stored in auth metadata set during signUp
         const meta = session.user.user_metadata || {};
