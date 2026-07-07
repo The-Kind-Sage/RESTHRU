@@ -4,6 +4,14 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { createSession, clearSession, getSession } from "@/lib/auth";
 
+function generateUsername(email: string): string {
+  let base = email.split("@")[0] || "user";
+  // Replace non-alphanumeric chars (except - and _) to keep it safe
+  base = base.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase();
+  // Append short random suffix to avoid unique constraint collisions
+  return `${base}_${Math.random().toString(36).substring(2, 7)}`;
+}
+
 export async function createSessionFromSupabaseLogin(userId: string, email: string, fullName?: string) {
   try {
     const nameParts = (fullName || email || "").trim().split(" ");
@@ -14,7 +22,7 @@ export async function createSessionFromSupabaseLogin(userId: string, email: stri
       prismaUser = await prisma.user.create({
         data: {
           email,
-          username: email.split("@")[0] || "",
+          username: generateUsername(email),
           firstName: nameParts[0] || "",
           lastName: nameParts.slice(1).join(" ") || "",
           role: "STAFF",
@@ -56,36 +64,41 @@ export async function createSessionFromSupabaseLogin(userId: string, email: stri
 }
 
 export async function login(username: string, password: string, redirectTo?: string) {
-  const user = await prisma.user.findFirst({
-    where: { username, isActive: true },
-  });
+  try {
+    const user = await prisma.user.findFirst({
+      where: { username, isActive: true },
+    });
 
-  if (!user || !user.passwordHash) {
-    return { error: "Invalid username or password" };
+    if (!user || !user.passwordHash) {
+      return { error: "Invalid username or password" };
+    }
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
+      return { error: "Invalid username or password" };
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    await createSession({
+      id: user.id,
+      username: user.username || "",
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      restaurantId: user.restaurantId,
+    });
+
+    const destination = redirectTo || (user.role === "ADMIN" ? "/admin" : "/dashboard");
+    return { success: true, redirectTo: destination };
+  } catch (err) {
+    console.error("login error:", err);
+    return { error: "Failed to create session" };
   }
-
-  const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid) {
-    return { error: "Invalid username or password" };
-  }
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { lastLoginAt: new Date() },
-  });
-
-  await createSession({
-    id: user.id,
-    username: user.username || "",
-    role: user.role,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    restaurantId: user.restaurantId,
-  });
-
-  const destination = redirectTo || (user.role === "ADMIN" ? "/admin" : "/dashboard");
-  return { success: true, redirectTo: destination };
 }
 
 export async function createRestaurant(data: {

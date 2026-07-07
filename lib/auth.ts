@@ -30,6 +30,7 @@ export async function createSession(user: SessionUser) {
   });
 }
 
+
 export async function getSession(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
