@@ -14,6 +14,9 @@ function generateUsername(email: string): string {
 
 export async function createSessionFromSupabaseLogin(userId: string, email: string, fullName?: string) {
   try {
+    const dbUrl = process.env.DATABASE_URL || "NOT SET";
+    const portMatch = dbUrl.match(/:(\d+)\//);
+    console.log("[debug] DATABASE_URL port:", portMatch ? portMatch[1] : "unknown", "| has sslmode:", dbUrl.includes("sslmode"), "| has pgbouncer:", dbUrl.includes("pgbouncer"));
     const nameParts = (fullName || email || "").trim().split(" ");
 
     // Find or create a Prisma user
