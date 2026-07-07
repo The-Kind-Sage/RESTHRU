@@ -20,7 +20,6 @@ interface RestaurantData {
   address: string;
   phone: string;
   email: string;
-  logo_url: string;
   cover_url: string;
   pan_number: string;
   vat_registered: boolean;
@@ -82,9 +81,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingPwd, setIsSavingPwd] = useState(false);
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [newPwd, setNewPwd] = useState('');
   const [confirmPwd, setConfirmPwd] = useState('');
@@ -95,7 +92,6 @@ export default function SettingsPage() {
     address: '',
     phone: '',
     email: '',
-    logo_url: '',
     cover_url: '',
     pan_number: '',
     vat_registered: false,
@@ -142,7 +138,6 @@ export default function SettingsPage() {
           address: r.address ?? '',
           phone: r.phone ?? '',
           email: r.email ?? '',
-          logo_url: r.logo_url ?? '',
           cover_url: r.cover_url ?? '',
           pan_number: r.pan_number ?? '',
           vat_registered: r.vat_registered ?? false,
@@ -152,7 +147,6 @@ export default function SettingsPage() {
           currency: r.currency ?? 'NPR',
           timezone: r.timezone ?? 'Asia/Kathmandu',
         });
-        if (r.logo_url) setLogoPreview(r.logo_url);
         if (r.cover_url) setCoverPreview(r.cover_url);
       }
 
@@ -276,19 +270,6 @@ export default function SettingsPage() {
     setConfirmPwd('');
   };
 
-  const handleLogoUpload = async (file: File) => {
-    setIsUploadingLogo(true);
-    const url = await uploadImage(file, 'logos');
-    if (url && supabase) {
-      await supabase.from('restaurants').update({ logo_url: url }).eq('id', restaurantId!);
-      setRestaurant((prev) => ({ ...prev, logo_url: url }));
-      toast.success('Logo uploaded');
-    } else {
-      toast.error('Logo upload failed');
-    }
-    setIsUploadingLogo(false);
-  };
-
   const handleCoverUpload = async (file: File) => {
     setIsUploadingCover(true);
     const url = await uploadImage(file, 'covers');
@@ -370,22 +351,6 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2"><Label>Restaurant Name</Label><Input value={restaurant.name} onChange={(event) => setRestaurant((prev) => ({ ...prev, name: event.target.value }))} placeholder="Enter restaurant name" /></div>
-                <div className="space-y-2">
-                  <Label>Logo</Label>
-                  <div className="flex items-center gap-4">
-                    <label className="flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 transition-colors hover:border-primary">
-                      {logoPreview ? <img src={logoPreview} alt="Logo" className="h-full w-full rounded-lg object-cover" /> : <Upload className="h-6 w-6 text-muted-foreground" />}
-                      <input type="file" accept="image/*" className="hidden" onChange={(event) => {
-                        const file = event.target.files?.[0];
-                        if (file) {
-                          setLogoPreview(URL.createObjectURL(file));
-                          handleLogoUpload(file);
-                        }
-                      }} />
-                    </label>
-                    <p className="text-sm text-muted-foreground">{isUploadingLogo ? 'Uploading…' : 'Recommended: 200×200px'}</p>
-                  </div>
-                </div>
                 <div className="space-y-2">
                   <Label>Cover Photo</Label>
                   <label className="block w-full cursor-pointer overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/25 transition-colors hover:border-primary">

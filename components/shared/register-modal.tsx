@@ -37,7 +37,6 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/lib/supabase';
 import { createSessionFromSupabaseLogin } from '@/lib/actions/auth';
-import { uploadImage } from '@/lib/upload';
 import { NEPAL_CITIES, RESTAURANT_TYPES, PLANS } from '@/lib/constants';
 
 const step1Schema = z.object({
@@ -57,7 +56,6 @@ const step2Schema = z.object({
   address: z.string().min(5, 'Address is required'),
   city: z.string().min(1, 'City is required'),
   restaurantPhone: z.string().min(10, 'Valid phone number is required'),
-  logo: z.any().optional(),
 });
 
 const step3Schema = z.object({
@@ -108,8 +106,6 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
     step4: {},
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   const step1Form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
@@ -147,8 +143,6 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
   const resetAndClose = () => {
     setCurrentStep(1);
     setFormData({ step1: {}, step2: {}, step3: {}, step4: {} });
-    setLogoFile(null);
-    setLogoPreview(null);
     onOpenChange(false);
   };
 
@@ -237,12 +231,6 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
         return;
       }
 
-      let logo_url: string | null = null;
-      if (logoFile) {
-        logo_url = await uploadImage(logoFile, 'logos');
-        if (!logo_url) toast.error('Logo upload failed — continuing without logo');
-      }
-
       const slug = (formData.step2.restaurantName ?? '')
         .toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
         + '-' + Math.random().toString(36).slice(2, 7);
@@ -262,7 +250,6 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
           vat_number: formData.step3.vatNumber,
           num_tables: formData.step3.numberOfTables,
           operating_hours: { open: formData.step3.openTime, close: formData.step3.closeTime },
-          ...(logo_url && { logo_url }),
         }])
         .select('id')
         .single();
@@ -453,36 +440,8 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
                     )} />
                     <FormField control={step2Form.control} name="restaurantPhone" render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Restaurant Phone</FormLabel>
+                        <FormLabel>Restaurant Phone</FormLabel>
                         <FormControl><Input placeholder="98XXXXXXXXX" className="h-11 border-border/70 bg-muted/30 focus:bg-white transition-colors mt-1.5" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={step2Form.control} name="logo" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Restaurant Logo <span className="normal-case tracking-normal font-normal">(Optional)</span></FormLabel>
-                        <FormControl>
-                          <label className="flex flex-col items-center justify-center border-2 border-dashed border-border/70 rounded-xl p-5 cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all mt-1.5">
-                            {logoPreview ? (
-                              <div className="flex flex-col items-center gap-2">
-                                <img src={logoPreview} alt="Logo preview" className="h-16 w-16 rounded-lg object-cover ring-2 ring-primary/10" />
-                                <p className="text-xs text-muted-foreground">Click to change</p>
-                              </div>
-                            ) : (
-                              <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/60">
-                                  <Upload className="w-5 h-5" />
-                                </div>
-                                <p className="text-sm font-medium">Click to upload</p>
-                                <p className="text-xs text-muted-foreground/70">PNG, JPG up to 5MB</p>
-                              </div>
-                            )}
-                            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) { setLogoFile(file); setLogoPreview(URL.createObjectURL(file)); field.onChange(file); }
-                            }} />
-                          </label>
-                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />

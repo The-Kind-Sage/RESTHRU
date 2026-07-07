@@ -36,7 +36,6 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { createSessionFromSupabaseLogin } from '@/lib/actions/auth';
-import { uploadImage } from '@/lib/upload';
 import { NEPAL_CITIES, RESTAURANT_TYPES, PLANS } from '@/lib/constants';
 
 const step1Schema = z.object({
@@ -56,7 +55,6 @@ const step2Schema = z.object({
   address: z.string().min(5, 'Address is required'),
   city: z.string().min(1, 'City is required'),
   restaurantPhone: z.string().min(10, 'Valid phone number is required'),
-  logo: z.any().optional(),
 });
 
 const step3Schema = z.object({
@@ -96,8 +94,6 @@ export default function RegisterPage() {
     step4: {},
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [businessDate, setBusinessDate] = useState<Date | undefined>();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
@@ -213,12 +209,6 @@ export default function RegisterPage() {
         return;
       }
 
-      let logo_url: string | null = null;
-      if (logoFile) {
-        logo_url = await uploadImage(logoFile, 'logos');
-        if (!logo_url) toast.error('Logo upload failed — continuing without logo');
-      }
-
       const slug = (formData.step2.restaurantName ?? '')
         .toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
         + '-' + Math.random().toString(36).slice(2, 7);
@@ -238,7 +228,6 @@ export default function RegisterPage() {
           vat_number: formData.step3.vatNumber,
           num_tables: formData.step3.numberOfTables,
           operating_hours: { open: formData.step3.openTime, close: formData.step3.closeTime },
-          ...(logo_url && { logo_url }),
         }])
         .select('id')
         .single();
@@ -479,31 +468,6 @@ export default function RegisterPage() {
                           <FormItem>
                             <FormLabel>Restaurant Phone</FormLabel>
                             <FormControl><Input placeholder="98XXXXXXXXX" className="h-11" {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                        <FormField control={step2Form.control} name="logo" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Restaurant Logo (Optional)</FormLabel>
-                            <FormControl>
-                              <label className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-xl p-6 cursor-pointer hover:border-primary/50 transition-colors">
-                                {logoPreview ? (
-                                  <div className="flex flex-col items-center gap-2">
-                                    <img src={logoPreview} alt="Logo preview" className="h-20 w-20 rounded-lg object-cover" />
-                                    <p className="text-xs text-muted-foreground">Click to change</p>
-                                  </div>
-                                ) : (
-                                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                    <Upload className="w-8 h-8" />
-                                    <p className="text-sm">Click to upload or drag and drop</p>
-                                  </div>
-                                )}
-                                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) { setLogoFile(file); setLogoPreview(URL.createObjectURL(file)); field.onChange(file); }
-                                }} />
-                              </label>
-                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
