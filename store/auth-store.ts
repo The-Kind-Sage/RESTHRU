@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { User, Restaurant } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { logout as clearServerSession } from '@/lib/actions/auth';
 
 interface AuthStoreState {
   user: User | null;
@@ -43,12 +44,14 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
       if (supabase) {
         await supabase.auth.signOut();
       }
+      await clearServerSession();
       set({
         user: null,
         restaurant: null,
         isAuthenticated: false,
         isLoading: false,
       });
+      window.location.href = '/dashboard/login';
     } catch (error) {
       console.error('Logout error:', error);
       set({ isLoading: false });
