@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { User, Restaurant } from '@/types';
 import { supabase } from '@/lib/supabase';
-import { logout as clearServerSession } from '@/lib/actions/auth';
+import { logout as clearServerSession, getRestaurantFromSession, getUserFromSession } from '@/lib/actions/auth';
 
 interface AuthStoreState {
   user: User | null;
@@ -105,14 +105,39 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
           isLoading: false,
         });
       } else {
-        // No valid session — clear any stale persisted tokens from storage
-        // to prevent "Invalid Refresh Token" console errors from the SDK's refresh timer.
-        await supabase.auth.signOut();
-        set({
-          user: null,
-          isAuthenticated: false,
-          isLoading: false,
-        });
+        // No Supabase session — try custom JWT auth
+        const [restaurantData, userData] = await Promise.all([
+          getRestaurantFromSession(),
+          getUserFromSession(),
+        ]);
+        if (userData) {
+          set({
+            user: {
+              id: userData.id,
+              email: userData.email,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              role: userData.role as User['role'],
+              phoneNumber: '',
+              isActive: true,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+            restaurant: restaurantData
+              ? { id: restaurantData.id, name: restaurantData.name } as any
+              : null,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } else {
+          // Clear any stale Supabase tokens
+          await supabase.auth.signOut();
+          set({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
+        }
       }
     } catch (error) {
       console.error('Auth initialization error:', error);

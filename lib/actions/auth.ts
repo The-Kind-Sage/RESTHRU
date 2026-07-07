@@ -79,6 +79,31 @@ export async function getCurrentUser() {
   return user;
 }
 
+export async function getRestaurantFromSession() {
+  const session = await getSession();
+  if (!session?.restaurantId) return null;
+
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { id: session.restaurantId },
+    select: { id: true, name: true },
+  });
+
+  return restaurant;
+}
+
+export async function getUserFromSession() {
+  const session = await getSession();
+  if (!session) return null;
+
+  return {
+    id: session.id,
+    email: session.email,
+    firstName: session.firstName,
+    lastName: session.lastName,
+    role: session.role,
+  };
+}
+
 export async function changePassword(
   username: string,
   currentPassword: string,
