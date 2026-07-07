@@ -135,13 +135,13 @@ export default function MenuPage() {
 
       if (itemRes.data) {
         const mapped: MenuItem[] = itemRes.data.map((i: any) => ({
-          id: i.id, nameEn: i.name, nameNp: i.name_np,
+          id: i.id, nameEn: i.name, nameNp: undefined,
           category: i.category_id, description: i.description || '',
           price: i.price, discountPrice: i.discount_price,
-          foodType: i.food_type || 'veg', subType: i.sub_type || 'veg',
+          foodType: i.food_type || 'veg', subType: 'veg',
           spiceLevel: i.spice_level || 'none', prepTime: i.prep_time || 15,
-          available: i.is_available, isPopular: i.is_popular,
-          isNew: i.is_new, allergens: i.allergens || [],
+          available: i.is_available, isPopular: false,
+          isNew: false, allergens: i.allergens || [],
           variants: [], emoji: '🍽️', image: i.image_url,
         }));
         setItems(mapped);
@@ -199,17 +199,13 @@ export default function MenuPage() {
         restaurant_id: restaurantId,
         category_id:   formData.category || selectedCategory,
         name:          formData.nameEn,
-        name_np:       formData.nameNp || null,
         description:   formData.description || null,
         price:         formData.price || 0,
         discount_price: formData.discountPrice || null,
         food_type:     formData.foodType || 'veg',
-        sub_type:      formData.subType  || 'veg',
         spice_level:   formData.spiceLevel || 'none',
         prep_time:     formData.prepTime || 15,
         is_available:  formData.available ?? true,
-        is_popular:    formData.isPopular ?? false,
-        is_new:        formData.isNew ?? false,
         allergens:     formData.allergens || [],
         image_url,
       };
