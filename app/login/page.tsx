@@ -21,6 +21,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { supabase } from '@/lib/supabase';
+import { createSessionFromSupabaseLogin } from '@/lib/actions/auth';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -55,7 +56,7 @@ export default function LoginPage() {
         toast.error('Supabase is not configured. Please set environment variables.');
         return;
       }
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
@@ -63,6 +64,19 @@ export default function LoginPage() {
       if (error) {
         toast.error(error.message || 'Failed to sign in');
         return;
+      }
+
+      const user = signInData?.user;
+      if (user) {
+        const result = await createSessionFromSupabaseLogin(
+          user.id,
+          user.email || '',
+          user.user_metadata?.full_name as string | undefined
+        );
+        if (result?.error) {
+          toast.error(result.error);
+          return;
+        }
       }
 
       toast.success('Welcome back to Resthru!');

@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/lib/supabase';
+import { createSessionFromSupabaseLogin } from '@/lib/actions/auth';
 import { uploadImage } from '@/lib/upload';
 import { NEPAL_CITIES, RESTAURANT_TYPES, PLANS } from '@/lib/constants';
 
@@ -208,8 +209,10 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
         return;
       }
 
+      let authUser = authData.user;
+
       if (!authData.session) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email: formData.step1.email!,
           password: formData.step1.password!,
         });
@@ -218,6 +221,20 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
           toast.error('Account created but could not sign in automatically. Please go to the login page.');
           return;
         }
+
+        if (signInData?.user) {
+          authUser = signInData.user;
+        }
+      }
+
+      const sessionResult = await createSessionFromSupabaseLogin(
+        authUser.id,
+        authUser.email || '',
+        formData.step1.fullName
+      );
+      if (sessionResult?.error) {
+        toast.error('Account created but session could not be established.');
+        return;
       }
 
       let logo_url: string | null = null;
