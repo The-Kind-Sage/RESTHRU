@@ -97,6 +97,7 @@ export default function MenuPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSavingItem, setIsSavingItem] = useState(false);
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [menuSettings, setMenuSettings] = useState<MenuSettings>({ bgUrl: null, customMenuUrl: null });
   const [bgFile, setBgFile] = useState<File | null>(null);
@@ -262,33 +263,46 @@ export default function MenuPage() {
 
   const handleSaveCategory = async () => {
     if (!categoryFormData.name || !restaurantId || !supabase) return;
-    const payload = {
-      restaurant_id: restaurantId,
-      name: categoryFormData.name,
-      name_np: categoryFormData.nameNp || null,
-      icon: categoryFormData.emoji || '📂',
-      sort_order: categoryFormData.sortOrder || 0,
-      is_active: categoryFormData.active ?? true,
-    };
-    if (editingCategory) {
-      await supabase.from('categories').update(payload).eq('id', editingCategory.id);
-      setCategories(categories.map(c => c.id === editingCategory.id
-        ? { ...editingCategory, ...categoryFormData } as Category : c));
-    } else {
-      const { data } = await supabase.from('categories').insert([payload]).select('id').single();
-      if (data) {
-        setCategories([...categories, {
-          id: data.id, name: categoryFormData.name!, nameNp: categoryFormData.nameNp,
-          emoji: categoryFormData.emoji || '📂', itemCount: 0,
-          active: categoryFormData.active ?? true, sortOrder: categoryFormData.sortOrder || 0,
-        }]);
+    setIsSavingCategory(true);
+    try {
+      const payload = {
+        restaurant_id: restaurantId,
+        name: categoryFormData.name,
+        name_np: categoryFormData.nameNp || null,
+        icon: categoryFormData.emoji || '📂',
+        sort_order: categoryFormData.sortOrder || 0,
+        is_active: categoryFormData.active ?? true,
+      };
+      if (editingCategory) {
+        const { error } = await supabase.from('categories').update(payload).eq('id', editingCategory.id);
+        if (error) { toast.error(error.message); return; }
+        setCategories(categories.map(c => c.id === editingCategory.id
+          ? { ...editingCategory, ...categoryFormData } as Category : c));
+        toast.success('Category updated');
+      } else {
+        const { data, error } = await supabase.from('categories').insert([payload]).select('id').single();
+        if (error) { toast.error(error.message); return; }
+        if (data) {
+          setCategories([...categories, {
+            id: data.id, name: categoryFormData.name!, nameNp: categoryFormData.nameNp,
+            emoji: categoryFormData.emoji || '📂', itemCount: 0,
+            active: categoryFormData.active ?? true, sortOrder: categoryFormData.sortOrder || 0,
+          }]);
+          toast.success('Category added');
+        }
       }
+      setIsAddCategoryOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save category');
+    } finally {
+      setIsSavingCategory(false);
     }
-    setIsAddCategoryOpen(false);
   };
 
   const handleDeleteCategory = async (id: string) => {
-    if (supabase) await supabase.from('categories').delete().eq('id', id);
+    if (!supabase) return;
+    const { error } = await supabase.from('categories').delete().eq('id', id);
+    if (error) { toast.error(error.message); return; }
     setCategories(categories.filter(c => c.id !== id));
     setItems(items.filter(i => i.category !== id));
     if (selectedCategory === id) setSelectedCategory(categories[0]?.id || '');
@@ -297,7 +311,8 @@ export default function MenuPage() {
   const toggleCategoryActive = async (id: string) => {
     const cat = categories.find(c => c.id === id);
     if (!cat || !supabase) return;
-    await supabase.from('categories').update({ is_active: !cat.active }).eq('id', id);
+    const { error } = await supabase.from('categories').update({ is_active: !cat.active }).eq('id', id);
+    if (error) { toast.error(error.message); return; }
     setCategories(categories.map(c => c.id === id ? { ...c, active: !c.active } : c));
   };
 
@@ -651,8 +666,10 @@ export default function MenuPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddCategoryOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveCategory}>{editingCategory ? 'Update' : 'Add Category'}</Button>
+            <Button variant="outline" onClick={() => setIsAddCategoryOpen(false)} disabled={isSavingCategory}>Cancel</Button>
+            <Button onClick={handleSaveCategory} disabled={isSavingCategory}>
+              {isSavingCategory ? 'Saving...' : editingCategory ? 'Update' : 'Add Category'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
