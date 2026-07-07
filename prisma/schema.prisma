@@ -212,6 +212,7 @@ model MenuItem {
   imageUrl      String?  @map("image_url")
   price         Float
   discountPrice Float?   @map("discount_price")
+  itemType      String   @default("FOOD") @map("item_type")
   foodType      String   @default("VEG") @map("food_type")
   subType       String   @default("VEG") @map("sub_type")
   spiceLevel    String   @default("NONE") @map("spice_level")
@@ -219,6 +220,9 @@ model MenuItem {
   prepTime      Int      @default(15) @map("prep_time")
   calories      Int?
   ingredients   String[] @default([])
+  temperature   String?  @default("COLD")
+  volume        Int?
+  sizeOptions   Json?    @map("size_options")
   isAvailable   Boolean  @default(true) @map("is_available")
   displayOrder  Int      @default(0) @map("display_order")
   createdAt     DateTime @default(now()) @map("created_at")

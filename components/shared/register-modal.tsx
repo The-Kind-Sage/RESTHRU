@@ -6,12 +6,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Check, Upload, ArrowRight, UtensilsCrossed } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, ArrowRight, UtensilsCrossed } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -34,9 +33,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/lib/supabase';
-import { createSessionFromSupabaseLogin } from '@/lib/actions/auth';
+import { createSessionFromSupabaseLogin, createRestaurant } from '@/lib/actions/auth';
 import { NEPAL_CITIES, RESTAURANT_TYPES, PLANS } from '@/lib/constants';
 
 const step1Schema = z.object({
@@ -59,35 +57,23 @@ const step2Schema = z.object({
 });
 
 const step3Schema = z.object({
-  panNumber: z.string().optional(),
-  vatRegistered: z.boolean().default(false),
-  vatNumber: z.string().optional(),
-  numberOfTables: z.number().min(1, 'Number of tables is required'),
-  openTime: z.string().min(1, 'Open time is required'),
-  closeTime: z.string().min(1, 'Close time is required'),
-});
-
-const step4Schema = z.object({
   selectedPlan: z.string().min(1, 'Please select a plan'),
 });
 
 type Step1Data = z.infer<typeof step1Schema>;
 type Step2Data = z.infer<typeof step2Schema>;
 type Step3Data = z.infer<typeof step3Schema>;
-type Step4Data = z.infer<typeof step4Schema>;
 
 interface FormData {
   step1: Partial<Step1Data>;
   step2: Partial<Step2Data>;
   step3: Partial<Step3Data>;
-  step4: Partial<Step4Data>;
 }
 
 const stepMeta: Record<number, { title: string; subtitle: string; icon: string }> = {
   1: { title: 'Your account', subtitle: 'Enter your personal details', icon: '1' },
   2: { title: 'Restaurant details', subtitle: 'Tell us about your place', icon: '2' },
-  3: { title: 'Business info', subtitle: 'Tax & operations setup', icon: '3' },
-  4: { title: 'Choose plan', subtitle: 'Pick the right fit for you', icon: '4' },
+  3: { title: 'Choose plan', subtitle: 'Pick the right fit for you', icon: '3' },
 };
 
 interface RegisterModalProps {
@@ -103,7 +89,6 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
     step1: {},
     step2: {},
     step3: {},
-    step4: {},
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -119,18 +104,6 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
 
   const step3Form = useForm<Step3Data>({
     resolver: zodResolver(step3Schema),
-    defaultValues: {
-      numberOfTables: 10,
-      vatRegistered: false,
-      panNumber: '',
-      vatNumber: '',
-      openTime: '',
-      closeTime: '',
-    },
-  });
-
-  const step4Form = useForm<Step4Data>({
-    resolver: zodResolver(step4Schema),
     defaultValues: { selectedPlan: '' },
   });
 
@@ -142,7 +115,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
 
   const resetAndClose = () => {
     setCurrentStep(1);
-    setFormData({ step1: {}, step2: {}, step3: {}, step4: {} });
+    setFormData({ step1: {}, step2: {}, step3: {} });
     onOpenChange(false);
   };
 
@@ -158,13 +131,10 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
     } else if (currentStep === 3) {
       isValid = await step3Form.trigger();
       if (isValid) setFormData((prev) => ({ ...prev, step3: step3Form.getValues() }));
-    } else if (currentStep === 4) {
-      isValid = await step4Form.trigger();
-      if (isValid) setFormData((prev) => ({ ...prev, step4: step4Form.getValues() }));
     }
 
     if (isValid) {
-      if (currentStep === 4) {
+      if (currentStep === 3) {
         await handleSubmit();
       } else {
         setCurrentStep(currentStep + 1);
@@ -221,6 +191,30 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
         }
       }
 
+      // Create restaurant via Prisma first (so it has the correct ID)
+      const restResult = await createRestaurant({
+        ownerId: authData.user.id,
+        name: formData.step2.restaurantName!,
+        type: formData.step2.restaurantType || 'CASUAL_DINING',
+        address: formData.step2.address,
+        city: formData.step2.city,
+        phone: formData.step2.restaurantPhone,
+      });
+
+      if (restResult?.error) {
+        toast.error(restResult.error);
+        return;
+      }
+
+      if (restResult?.restaurantId && formData.step3.selectedPlan) {
+        await supabase.from('subscriptions').insert([{
+          restaurantId: restResult.restaurantId,
+          planId: formData.step3.selectedPlan,
+          status: 'active',
+        }]);
+      }
+
+      // Create session with correct restaurant ID
       const sessionResult = await createSessionFromSupabaseLogin(
         authUser.id,
         authUser.email || '',
@@ -231,44 +225,8 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
         return;
       }
 
-      const slug = (formData.step2.restaurantName ?? '')
-        .toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-        + '-' + Math.random().toString(36).slice(2, 7);
-
-      const { data: restaurantData, error: restaurantError } = await supabase
-        .from('restaurants')
-        .insert([{
-          owner_id: authData.user.id,
-          name: formData.step2.restaurantName,
-          slug,
-          type: formData.step2.restaurantType,
-          address: formData.step2.address,
-          city: formData.step2.city,
-          phone: formData.step2.restaurantPhone,
-          pan_number: formData.step3.panNumber,
-          vat_registered: formData.step3.vatRegistered,
-          vat_number: formData.step3.vatNumber,
-          num_tables: formData.step3.numberOfTables,
-          operating_hours: { open: formData.step3.openTime, close: formData.step3.closeTime },
-        }])
-        .select('id')
-        .single();
-
-      if (restaurantError) {
-        toast.error(restaurantError.message || 'Failed to create restaurant');
-        return;
-      }
-
-      if (restaurantData?.id && formData.step4.selectedPlan) {
-        await supabase.from('subscriptions').insert([{
-          restaurantId: restaurantData.id,
-          planId: formData.step4.selectedPlan,
-          status: 'active',
-        }]);
-      }
-
       toast.success('Account created successfully!');
-      setCurrentStep(5);
+      setCurrentStep(4);
     } catch {
       toast.error('An unexpected error occurred');
     } finally {
@@ -304,7 +262,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
           </DialogHeader>
 
           {/* Step indicators */}
-          {currentStep < 5 && (
+          {currentStep < 4 && (
             <div className="relative z-10 flex items-center gap-2 mt-2">
               {Object.values(stepMeta).map((step, idx) => {
                 const stepNum = idx + 1;
@@ -326,7 +284,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
                     <span className={`text-xs font-medium hidden sm:block transition-colors ${isCurrent ? 'text-white' : 'text-white/50'}`}>
                       {step.title}
                     </span>
-                    {idx < 3 && (
+                    {idx < 2 && (
                       <div className={`flex-1 h-0.5 rounded-full transition-colors ml-2 ${isCompleted ? 'bg-white/50' : 'bg-white/15'}`} />
                     )}
                   </div>
@@ -337,7 +295,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
         </div>
 
         {/* Step Header */}
-        {currentStep < 5 && stepMeta[currentStep] && (
+        {currentStep < 4 && stepMeta[currentStep] && (
           <div className="px-8 pt-5">
             <motion.div
               key={`header-${currentStep}`}
@@ -453,67 +411,10 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
             {currentStep === 3 && (
               <motion.div key="step3" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.25 }}>
                 <Form {...step3Form}>
-                  <form className="space-y-3.5">
-                    <FormField control={step3Form.control} name="panNumber" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">PAN Number <span className="normal-case tracking-normal font-normal">(Optional)</span></FormLabel>
-                        <FormControl><Input placeholder="Your PAN number" className="h-11 border-border/70 bg-muted/30 focus:bg-white transition-colors mt-1.5" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={step3Form.control} name="vatRegistered" render={({ field }) => (
-                      <FormItem className="flex items-center justify-between rounded-xl border border-border/70 bg-muted/20 p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-sm font-semibold">VAT Registered</FormLabel>
-                          <p className="text-xs text-muted-foreground">Is your restaurant VAT registered?</p>
-                        </div>
-                        <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                      </FormItem>
-                    )} />
-                    {step3Form.watch('vatRegistered') && (
-                      <FormField control={step3Form.control} name="vatNumber" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">VAT Number</FormLabel>
-                          <FormControl><Input placeholder="Your VAT number" className="h-11 border-border/70 bg-muted/30 focus:bg-white transition-colors mt-1.5" {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                    )}
-                    <FormField control={step3Form.control} name="numberOfTables" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Number of Tables</FormLabel>
-                        <FormControl><Input type="number" placeholder="10" className="h-11 border-border/70 bg-muted/30 focus:bg-white transition-colors mt-1.5" {...field} onChange={(e) => field.onChange(parseInt(e.target.value))} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <div className="grid grid-cols-2 gap-3.5">
-                      <FormField control={step3Form.control} name="openTime" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Opening Time</FormLabel>
-                          <FormControl><Input type="time" className="h-11 border-border/70 bg-muted/30 focus:bg-white transition-colors mt-1.5" {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                      <FormField control={step3Form.control} name="closeTime" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Closing Time</FormLabel>
-                          <FormControl><Input type="time" className="h-11 border-border/70 bg-muted/30 focus:bg-white transition-colors mt-1.5" {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                    </div>
-                  </form>
-                </Form>
-              </motion.div>
-            )}
-
-            {currentStep === 4 && (
-              <motion.div key="step4" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.25 }}>
-                <Form {...step4Form}>
                   <form className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {PLANS.map((plan) => (
-                        <FormField key={plan.id} control={step4Form.control} name="selectedPlan" render={({ field }) => (
+                        <FormField key={plan.id} control={step3Form.control} name="selectedPlan" render={({ field }) => (
                           <div
                             className={`relative rounded-xl border-2 p-4 cursor-pointer transition-all ${
                               field.value === plan.id
@@ -558,8 +459,8 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
               </motion.div>
             )}
 
-            {currentStep === 5 && (
-              <motion.div key="step5" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
+            {currentStep === 4 && (
+              <motion.div key="step4" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
                 <div className="bg-gradient-to-br from-success/10 to-primary-light/30 rounded-2xl p-8 text-center">
                   <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.6, repeat: 2 }}>
                     <div className="w-16 h-16 bg-gradient-to-br from-success to-success/80 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg shadow-success/20">
@@ -587,7 +488,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
           </AnimatePresence>
 
           {/* Navigation Buttons */}
-          {currentStep < 5 && (
+          {currentStep < 4 && (
             <div className="flex gap-3 mt-5">
               <motion.div whileTap={{ scale: 0.98 }} className="flex-1">
                 <Button variant="outline" onClick={handlePreviousStep} disabled={isLoading} className="w-full h-11 border-border/70 font-medium">
@@ -604,7 +505,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
                     </span>
                   ) : (
                     <span className="flex items-center gap-1">
-                      {currentStep === 4 ? 'Create Account' : 'Continue'}
+                      {currentStep === 3 ? 'Create Account' : 'Continue'}
                       <ChevronRight className="w-4 h-4" />
                     </span>
                   )}
@@ -613,7 +514,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
             </div>
           )}
 
-          {currentStep < 5 && (
+          {currentStep < 4 && (
             <p className="text-center text-sm text-muted-foreground mt-5">
               Already have an account?{' '}
               <button

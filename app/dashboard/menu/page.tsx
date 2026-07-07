@@ -30,7 +30,30 @@ import { supabase } from '@/lib/supabase';
 import { addCategory, updateCategory, deleteCategory as deleteCategoryAction, toggleCategoryActive as toggleCategoryActiveAction } from '@/lib/actions/menu';
 import { useAuthStore } from '@/store/auth-store';
 
+const ITEM_TYPES = [
+  { value: 'food', label: 'Food', emoji: '🍽️', description: 'Cooked dishes, meals, snacks' },
+  { value: 'item', label: 'Items', emoji: '📦', description: 'General items, merchandise, packaged goods' },
+  { value: 'beverage', label: 'Beverages', emoji: '🥤', description: 'Drinks, juices, tea, coffee' },
+];
+
+const TEMPERATURE_OPTIONS = [
+  { value: 'hot', label: 'Hot', emoji: '☕' },
+  { value: 'cold', label: 'Cold', emoji: '🧊' },
+  { value: 'iced', label: 'Iced', emoji: '❄️' },
+];
+
+const DEFAULT_SIZE_OPTIONS: SizeOption[] = [
+  { name: 'Small', price: 0 },
+  { name: 'Medium', price: 0 },
+  { name: 'Large', price: 0 },
+];
+
 // ── Types ────────────────────────────────────────────────────────────────────
+interface SizeOption {
+  name: string;
+  price: number;
+}
+
 interface MenuItem {
   id: string;
   nameEn: string;
@@ -39,6 +62,7 @@ interface MenuItem {
   description: string;
   price: number;
   discountPrice?: number;
+  itemType: 'food' | 'item' | 'beverage';
   foodType: 'veg' | 'non_veg' | 'vegan' | 'fish';
   subType: 'veg' | 'chicken' | 'buff' | 'pork' | 'mutton';
   spiceLevel: 'none' | 'mild' | 'medium' | 'hot' | 'extra_hot';
@@ -51,6 +75,9 @@ interface MenuItem {
   emoji: string;
   image?: string;
   outOfStock?: boolean;
+  temperature?: 'hot' | 'cold' | 'iced';
+  volume?: number;
+  sizeOptions?: SizeOption[];
 }
 
 interface Category {
@@ -71,10 +98,13 @@ interface MenuSettings {
 const EMPTY_FORM: Partial<MenuItem> = {
   nameEn: '', nameNp: '', description: '',
   price: 0, discountPrice: undefined,
+  itemType: 'food',
   foodType: 'veg', subType: 'veg',
   spiceLevel: 'none', prepTime: 15,
   available: true, isPopular: false, isNew: false,
   allergens: [], variants: [], emoji: '🍽️',
+  temperature: 'cold', volume: undefined,
+  sizeOptions: DEFAULT_SIZE_OPTIONS,
 };
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -138,11 +168,15 @@ export default function MenuPage() {
           id: i.id, nameEn: i.name, nameNp: undefined,
           category: i.category_id, description: i.description || '',
           price: i.price, discountPrice: i.discount_price,
+          itemType: i.item_type || 'food',
           foodType: i.food_type || 'veg', subType: i.sub_type || 'veg',
           spiceLevel: i.spice_level || 'none', prepTime: i.prep_time || 15,
           available: i.is_available, isPopular: false,
           isNew: false, allergens: i.allergens || [],
           variants: [], emoji: '🍽️', image: i.image_url,
+          temperature: i.temperature || 'cold',
+          volume: i.volume || undefined,
+          sizeOptions: i.size_options || DEFAULT_SIZE_OPTIONS,
         }));
         setItems(mapped);
       }
@@ -175,7 +209,7 @@ export default function MenuPage() {
   // ── Item handlers ──────────────────────────────────────────────────────────
   const handleAddItem = () => {
     setEditingItem(null); setImageFile(null); setImagePreview(null);
-    setFormData({ ...EMPTY_FORM, category: selectedCategory });
+    setFormData({ ...EMPTY_FORM, category: selectedCategory, itemType: 'food' });
     setIsAddItemOpen(true);
   };
 
@@ -202,6 +236,7 @@ export default function MenuPage() {
         description:   formData.description || null,
         price:         formData.price || 0,
         discount_price: formData.discountPrice || null,
+        item_type:     formData.itemType || 'food',
         food_type:     formData.foodType || 'veg',
         sub_type:      formData.subType  || 'veg',
         spice_level:   formData.spiceLevel || 'none',
@@ -209,6 +244,9 @@ export default function MenuPage() {
         is_available:  formData.available ?? true,
         allergens:     formData.allergens || [],
         image_url,
+        temperature:   formData.temperature || null,
+        volume:        formData.volume || null,
+        size_options:  formData.sizeOptions ? JSON.parse(JSON.stringify(formData.sizeOptions)) : null,
       };
 
       if (editingItem) {
@@ -224,12 +262,17 @@ export default function MenuPage() {
           id: data.id, nameEn: formData.nameEn!, nameNp: formData.nameNp,
           category: formData.category || selectedCategory,
           description: formData.description || '', price: formData.price || 0,
-          discountPrice: formData.discountPrice, foodType: formData.foodType || 'veg',
+          discountPrice: formData.discountPrice,
+          itemType: formData.itemType || 'food',
+          foodType: formData.foodType || 'veg',
           subType: formData.subType || 'veg', spiceLevel: formData.spiceLevel || 'none',
           prepTime: formData.prepTime || 15, available: formData.available ?? true,
           isPopular: formData.isPopular ?? false, isNew: formData.isNew ?? false,
           allergens: formData.allergens || [], variants: [],
           emoji: '🍽️', image: image_url || undefined,
+          temperature: formData.temperature || undefined,
+          volume: formData.volume || undefined,
+          sizeOptions: formData.sizeOptions || [],
         };
         setItems([...items, newItem]);
         setCategories(categories.map(c =>
@@ -468,11 +511,21 @@ export default function MenuPage() {
                           <div className="relative h-36 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
                             {item.image
                               ? <img src={item.image} alt={item.nameEn} className="w-full h-full object-cover" />
-                              : <span className="text-5xl">🍽️</span>}
-                            <div className="absolute top-2 left-2">
-                              {sub && (
+                              : <span className="text-5xl">{ITEM_TYPES.find(t => t.value === item.itemType)?.emoji || '🍽️'}</span>}
+                            <div className="absolute top-2 left-2 flex gap-1">
+                              {item.itemType === 'beverage' && (
+                                <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white bg-blue-500">
+                                  {TEMPERATURE_OPTIONS.find(t => t.value === item.temperature)?.emoji} {TEMPERATURE_OPTIONS.find(t => t.value === item.temperature)?.label}
+                                </span>
+                              )}
+                              {item.itemType === 'food' && sub && (
                                 <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: sub.color }}>
                                   {sub.emoji} {sub.label}
+                                </span>
+                              )}
+                              {item.itemType === 'item' && (
+                                <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white bg-purple-500">
+                                  📦 Item
                                 </span>
                               )}
                             </div>
@@ -507,13 +560,23 @@ export default function MenuPage() {
                   return (
                     <div key={item.id} className="flex items-center gap-4 p-3 border rounded-lg hover:bg-muted/40 group">
                       <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {item.image ? <img src={item.image} alt={item.nameEn} className="w-full h-full object-cover rounded-lg" /> : <span className="text-2xl">🍽️</span>}
+                        {item.image ? <img src={item.image} alt={item.nameEn} className="w-full h-full object-cover rounded-lg" /> : <span className="text-2xl">{ITEM_TYPES.find(t => t.value === item.itemType)?.emoji || '🍽️'}</span>}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{item.nameEn}</p>
                         <p className="text-xs text-muted-foreground truncate">{item.description}</p>
                       </div>
-                      {sub && <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white flex-shrink-0" style={{ backgroundColor: sub.color }}>{sub.emoji} {sub.label}</span>}
+                      {item.itemType === 'beverage' && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white bg-blue-500 flex-shrink-0">
+                          {TEMPERATURE_OPTIONS.find(t => t.value === item.temperature)?.emoji} {TEMPERATURE_OPTIONS.find(t => t.value === item.temperature)?.label}
+                        </span>
+                      )}
+                      {item.itemType === 'food' && sub && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white flex-shrink-0" style={{ backgroundColor: sub.color }}>{sub.emoji} {sub.label}</span>
+                      )}
+                      {item.itemType === 'item' && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white bg-purple-500 flex-shrink-0">📦 Item</span>
+                      )}
                       <p className="font-bold text-primary text-sm flex-shrink-0">NPR {item.price}</p>
                       <Switch checked={item.available} onCheckedChange={v => handleToggleAvailable(item.id, v)} />
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100">
@@ -539,12 +602,34 @@ export default function MenuPage() {
             <DialogDescription>{editingItem ? 'Update item details' : 'Add a new item to your menu'}</DialogDescription>
           </DialogHeader>
 
+          {/* Item Type Selector */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Item Type *</label>
+            <div className="grid grid-cols-3 gap-2">
+              {ITEM_TYPES.map(type => (
+                <div key={type.value}
+                  className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                    formData.itemType === type.value
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                  onClick={() => setFormData({ ...formData, itemType: type.value as any })}>
+                  <span className="text-2xl">{type.emoji}</span>
+                  <span className="text-sm font-medium">{type.label}</span>
+                  <span className="text-xs text-muted-foreground text-center">{type.description}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-6 py-4">
             {/* Left */}
             <div className="space-y-4">
               {/* Image */}
               <div>
-                <label className="text-sm font-medium mb-2 block">Food Image</label>
+                <label className="text-sm font-medium mb-2 block">
+                  {formData.itemType === 'beverage' ? 'Drink Image' : formData.itemType === 'item' ? 'Item Image' : 'Food Image'}
+                </label>
                 <label className="block border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:bg-muted/40 transition-colors">
                   {imagePreview
                     ? <div className="flex flex-col items-center gap-1"><img src={imagePreview} alt="preview" className="h-28 w-full object-cover rounded-md" /><p className="text-xs text-muted-foreground">Click to change</p></div>
@@ -554,7 +639,7 @@ export default function MenuPage() {
               </div>
 
               <div><label className="text-sm font-medium mb-1.5 block">Item Name (English) *</label>
-                <Input placeholder="e.g., Momo" value={formData.nameEn || ''} onChange={e => setFormData({ ...formData, nameEn: e.target.value })} /></div>
+                <Input placeholder={formData.itemType === 'beverage' ? 'e.g., Masala Tea' : formData.itemType === 'item' ? 'e.g., T-Shirt' : 'e.g., Momo'} value={formData.nameEn || ''} onChange={e => setFormData({ ...formData, nameEn: e.target.value })} /></div>
 
               <div><label className="text-sm font-medium mb-1.5 block">Item Name (Nepali)</label>
                 <Input placeholder="e.g., मोमो" value={formData.nameNp || ''} onChange={e => setFormData({ ...formData, nameNp: e.target.value })} /></div>
@@ -576,63 +661,167 @@ export default function MenuPage() {
               </div>
             </div>
 
-            {/* Right */}
+            {/* Right - Conditional based on item type */}
             <div className="space-y-4">
-              {/* Food Sub-type */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">Food Sub-type</label>
-                <div className="grid grid-cols-1 gap-1.5">
-                  {FOOD_SUB_TYPES.map(st => (
-                    <div key={st.value}
-                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border-2 cursor-pointer transition-all ${formData.subType === st.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
-                      onClick={() => setFormData({ ...formData, subType: st.value as any, foodType: st.value === 'veg' ? 'veg' : 'non_veg' })}>
-                      <span className="text-base">{st.emoji}</span>
-                      <span className="text-sm font-medium flex-1">{st.label}</span>
-                      <div className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: st.color }} />
+              {formData.itemType === 'food' && (
+                <>
+                  {/* Food Sub-type */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Food Sub-type</label>
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {FOOD_SUB_TYPES.map(st => (
+                        <div key={st.value}
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border-2 cursor-pointer transition-all ${formData.subType === st.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
+                          onClick={() => setFormData({ ...formData, subType: st.value as any, foodType: st.value === 'veg' ? 'veg' : 'non_veg' })}>
+                          <span className="text-base">{st.emoji}</span>
+                          <span className="text-sm font-medium flex-1">{st.label}</span>
+                          <div className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: st.color }} />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
 
-              {/* Spice Level */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">Spice Level</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {SPICE_LEVELS.map(lv => (
-                    <Button key={lv.value} variant={formData.spiceLevel === lv.value ? 'default' : 'outline'} size="sm"
-                      onClick={() => setFormData({ ...formData, spiceLevel: lv.value as any })} className="text-xs">
-                      {lv.icon} {lv.label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
+                  {/* Spice Level */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Spice Level</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {SPICE_LEVELS.map(lv => (
+                        <Button key={lv.value} variant={formData.spiceLevel === lv.value ? 'default' : 'outline'} size="sm"
+                          onClick={() => setFormData({ ...formData, spiceLevel: lv.value as any })} className="text-xs">
+                          {lv.icon} {lv.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
 
-              <div><label className="text-sm font-medium mb-1.5 block">Prep Time (min)</label>
-                <Input type="number" value={formData.prepTime || 15} onChange={e => setFormData({ ...formData, prepTime: parseInt(e.target.value) || 15 })} /></div>
+                  <div><label className="text-sm font-medium mb-1.5 block">Prep Time (min)</label>
+                    <Input type="number" value={formData.prepTime || 15} onChange={e => setFormData({ ...formData, prepTime: parseInt(e.target.value) || 15 })} /></div>
 
-              <div className="space-y-2.5">
+                  {/* Allergens */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Allergens</label>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {ALLERGENS.map(a => (
+                        <label key={a} className="flex items-center gap-2 cursor-pointer text-sm">
+                          <input type="checkbox" checked={(formData.allergens || []).includes(a)}
+                            onChange={e => setFormData({ ...formData, allergens: e.target.checked
+                              ? [...(formData.allergens || []), a]
+                              : (formData.allergens || []).filter(x => x !== a) })}
+                            className="rounded" />
+                          {a}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {formData.itemType === 'beverage' && (
+                <>
+                  {/* Temperature */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Temperature</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {TEMPERATURE_OPTIONS.map(temp => (
+                        <div key={temp.value}
+                          className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                            formData.temperature === temp.value
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                          onClick={() => setFormData({ ...formData, temperature: temp.value as any })}>
+                          <span className="text-xl">{temp.emoji}</span>
+                          <span className="text-xs font-medium">{temp.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Volume */}
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">Volume (ml)</label>
+                    <Input type="number" placeholder="e.g., 250" value={formData.volume || ''} onChange={e => setFormData({ ...formData, volume: parseInt(e.target.value) || undefined })} />
+                  </div>
+
+                  {/* Size Options */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Size Options</label>
+                    <p className="text-xs text-muted-foreground mb-2">Set prices for different sizes (leave base price as default)</p>
+                    <div className="space-y-2">
+                      {(formData.sizeOptions || DEFAULT_SIZE_OPTIONS).map((size, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <Input
+                            placeholder="Size name"
+                            value={size.name}
+                            onChange={e => {
+                              const newSizes = [...(formData.sizeOptions || DEFAULT_SIZE_OPTIONS)];
+                              newSizes[idx] = { ...newSizes[idx], name: e.target.value };
+                              setFormData({ ...formData, sizeOptions: newSizes });
+                            }}
+                            className="flex-1"
+                          />
+                          <Input
+                            type="number"
+                            placeholder="Price"
+                            value={size.price || ''}
+                            onChange={e => {
+                              const newSizes = [...(formData.sizeOptions || DEFAULT_SIZE_OPTIONS)];
+                              newSizes[idx] = { ...newSizes[idx], price: parseFloat(e.target.value) || 0 };
+                              setFormData({ ...formData, sizeOptions: newSizes });
+                            }}
+                            className="w-24"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-destructive"
+                            onClick={() => {
+                              const newSizes = (formData.sizeOptions || DEFAULT_SIZE_OPTIONS).filter((_, i) => i !== idx);
+                              setFormData({ ...formData, sizeOptions: newSizes });
+                            }}>
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const newSizes = [...(formData.sizeOptions || DEFAULT_SIZE_OPTIONS), { name: '', price: 0 }];
+                          setFormData({ ...formData, sizeOptions: newSizes });
+                        }}>
+                        <Plus className="w-3 h-3 mr-1" /> Add Size
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {formData.itemType === 'item' && (
+                <>
+                  {/* Generic Item - minimal options */}
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">SKU / Code (optional)</label>
+                    <Input placeholder="e.g., ITEM-001" value={formData.subType || ''} onChange={e => setFormData({ ...formData, subType: e.target.value as any })} />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">Stock Quantity (optional)</label>
+                    <Input type="number" placeholder="0" value={formData.volume || ''} onChange={e => setFormData({ ...formData, volume: parseInt(e.target.value) || undefined })} />
+                  </div>
+                </>
+              )}
+
+              {/* Common toggles for all types */}
+              <div className="space-y-2.5 pt-2 border-t">
                 {[['available','Available'], ['isPopular','Mark as Popular'], ['isNew','Mark as New']].map(([key, label]) => (
                   <div key={key} className="flex items-center justify-between">
                     <label className="text-sm font-medium">{label}</label>
                     <Switch checked={(formData as any)[key] ?? (key === 'available')} onCheckedChange={v => setFormData({ ...formData, [key]: v })} />
                   </div>
                 ))}
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Allergens</label>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {ALLERGENS.map(a => (
-                    <label key={a} className="flex items-center gap-2 cursor-pointer text-sm">
-                      <input type="checkbox" checked={(formData.allergens || []).includes(a)}
-                        onChange={e => setFormData({ ...formData, allergens: e.target.checked
-                          ? [...(formData.allergens || []), a]
-                          : (formData.allergens || []).filter(x => x !== a) })}
-                        className="rounded" />
-                      {a}
-                    </label>
-                  ))}
-                </div>
               </div>
             </div>
           </div>
