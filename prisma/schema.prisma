@@ -162,11 +162,16 @@ model RestaurantTable {
   id              String   @id @default(cuid())
   restaurantId    String   @map("restaurant_id")
   tableNumber     Int      @map("table_number")
+  name            String?
   qrCode          String   @default("") @map("qr_code")
+  qrCodeUrl       String?  @map("qr_code_url")
   capacity        Int      @default(4)
   shape           String   @default("SQUARE")
   location        String?
+  floor           String   @default("Ground Floor")
   status          String   @default("AVAILABLE")
+  positionX       Float    @default(50) @map("position_x")
+  positionY       Float    @default(50) @map("position_y")
   currentOrderId  String?  @map("current_order_id")
   occupiedSince   DateTime? @map("occupied_since")
   assignedWaiterId String? @map("assigned_waiter_id")
