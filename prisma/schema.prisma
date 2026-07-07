@@ -12,17 +12,17 @@ model User {
   id            String   @id @default(cuid())
   email         String   @unique
   username      String?  @unique
-  passwordHash  String?
-  firstName     String   @default("")
-  lastName      String   @default("")
-  phoneNumber   String   @default("")
-  profileImage  String?
+  passwordHash  String?  @map("password_hash")
+  firstName     String   @default("") @map("first_name")
+  lastName      String   @default("") @map("last_name")
+  phoneNumber   String   @default("") @map("phone_number")
+  profileImage  String?  @map("profile_image")
   role          String   @default("STAFF")
-  restaurantId  String?
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  lastLoginAt   DateTime?
+  restaurantId  String?  @map("restaurant_id")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  lastLoginAt   DateTime? @map("last_login_at")
 
   restaurant    Restaurant?     @relation(fields: [restaurantId], references: [id])
   notifications Notification[]
@@ -32,35 +32,35 @@ model User {
 
 model Restaurant {
   id              String   @id @default(cuid())
-  ownerId         String?
+  ownerId         String?  @map("owner_id")
   name            String
   description     String?
   type            String   @default("CASUAL_DINING")
   email           String   @default("")
-  phoneNumber     String   @default("")
-  websiteUrl      String?
-  logoUrl         String?
-  bannerImageUrl  String?
-  street          String   @default("")
+  phoneNumber     String   @default("") @map("phone")
+  websiteUrl      String?  @map("website_url")
+  logoUrl         String?  @map("logo_url")
+  bannerImageUrl  String?  @map("cover_url")
+  street          String   @default("") @map("address")
   city            String   @default("")
   state           String   @default("")
-  postalCode      String   @default("")
+  postalCode      String   @default("") @map("postal_code")
   country         String   @default("Nepal")
   latitude        Float?
   longitude       Float?
   timezone        String   @default("Asia/Kathmandu")
   currency        String   @default("NPR")
   language        String   @default("en")
-  taxPercentage   Float    @default(13)
-  serviceCharge   Float    @default(10)
-  enableGST       Boolean  @default(false)
-  gstNumber       String?
-  enableQRMenu    Boolean  @default(true)
-  totalTables     Int      @default(0)
-  totalStaff      Int      @default(0)
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  taxPercentage   Float    @default(13) @map("tax_percentage")
+  serviceCharge   Float    @default(10) @map("service_charge")
+  enableGST       Boolean  @default(false) @map("enable_gst")
+  gstNumber       String?  @map("gst_number")
+  enableQRMenu    Boolean  @default(true) @map("enable_qr_menu")
+  totalTables     Int      @default(0) @map("num_tables")
+  totalStaff      Int      @default(0) @map("total_staff")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   users         User[]
   staff         Staff[]
@@ -81,11 +81,11 @@ model Restaurant {
 
 model OperatingHours {
   id        String  @id @default(cuid())
-  restaurantId String
-  dayOfWeek Int
-  isOpen    Boolean @default(true)
-  openTime  String  @default("09:00")
-  closeTime String  @default("22:00")
+  restaurantId String @map("restaurant_id")
+  dayOfWeek Int     @map("day_of_week")
+  isOpen    Boolean @default(true) @map("is_open")
+  openTime  String  @default("09:00") @map("open_time")
+  closeTime String  @default("22:00") @map("close_time")
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
 
@@ -98,16 +98,16 @@ model Plan {
   type          String   @unique
   name          String
   description   String   @default("")
-  monthlyPrice  Float    @default(0)
-  annualPrice   Float    @default(0)
-  maxRestaurants Int     @default(1)
-  maxTables     Int      @default(10)
-  maxStaff      Int      @default(5)
-  maxMenuItems  Int      @default(50)
+  monthlyPrice  Float    @default(0) @map("monthly_price")
+  annualPrice   Float    @default(0) @map("annual_price")
+  maxRestaurants Int     @default(1) @map("max_restaurants")
+  maxTables     Int      @default(10) @map("max_tables")
+  maxStaff      Int      @default(5) @map("max_staff")
+  maxMenuItems  Int      @default(50) @map("max_menu_items")
   features      String[] @default([])
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   subscriptions Subscription[]
 
@@ -116,18 +116,18 @@ model Plan {
 
 model Subscription {
   id            String   @id @default(cuid())
-  restaurantId  String
-  planId        String
+  restaurantId  String   @map("restaurant_id")
+  planId        String   @map("plan_id")
   status        String   @default("ACTIVE")
-  startDate     DateTime
-  endDate       DateTime
-  autoRenew     Boolean  @default(true)
-  billingCycle  String   @default("MONTHLY")
-  lastPaymentDate DateTime?
-  nextPaymentDate DateTime?
-  paymentMethod String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  startDate     DateTime @map("start_date")
+  endDate       DateTime @map("end_date")
+  autoRenew     Boolean  @default(true) @map("auto_renew")
+  billingCycle  String   @default("MONTHLY") @map("billing_cycle")
+  lastPaymentDate DateTime? @map("last_payment_date")
+  nextPaymentDate DateTime? @map("next_payment_date")
+  paymentMethod String?  @map("payment_method")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   plan       Plan       @relation(fields: [planId], references: [id])
@@ -137,21 +137,21 @@ model Subscription {
 
 model Staff {
   id            String   @id @default(cuid())
-  restaurantId  String
-  firstName     String
-  lastName      String   @default("")
+  restaurantId  String   @map("restaurant_id")
+  firstName     String   @map("first_name")
+  lastName      String   @default("") @map("last_name")
   email         String   @default("")
-  phoneNumber   String   @default("")
-  profileImage  String?
+  phoneNumber   String   @default("") @map("phone_number")
+  profileImage  String?  @map("profile_image")
   role          String
   status        String   @default("ACTIVE")
   salary        Float    @default(0)
-  joinDate      DateTime @default(now())
-  dateOfBirth   DateTime?
+  joinDate      DateTime @default(now()) @map("join_date")
+  dateOfBirth   DateTime? @map("date_of_birth")
   address       String?
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
 
@@ -160,19 +160,19 @@ model Staff {
 
 model RestaurantTable {
   id              String   @id @default(cuid())
-  restaurantId    String
-  tableNumber     Int
-  qrCode          String   @default("")
+  restaurantId    String   @map("restaurant_id")
+  tableNumber     Int      @map("table_number")
+  qrCode          String   @default("") @map("qr_code")
   capacity        Int      @default(4)
   shape           String   @default("SQUARE")
   location        String?
   status          String   @default("AVAILABLE")
-  currentOrderId  String?
-  occupiedSince   DateTime?
-  assignedWaiterId String?
+  currentOrderId  String?  @map("current_order_id")
+  occupiedSince   DateTime? @map("occupied_since")
+  assignedWaiterId String? @map("assigned_waiter_id")
   notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   orders     Order[]
@@ -183,14 +183,14 @@ model RestaurantTable {
 
 model Category {
   id            String   @id @default(cuid())
-  restaurantId  String
+  restaurantId  String   @map("restaurant_id")
   name          String
   description   String?
-  imageUrl      String?
-  displayOrder  Int      @default(0)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  imageUrl      String?  @map("image_url")
+  displayOrder  Int      @default(0) @map("display_order")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   menuItems MenuItem[]
@@ -200,23 +200,23 @@ model Category {
 
 model MenuItem {
   id            String   @id @default(cuid())
-  restaurantId  String
-  categoryId    String
+  restaurantId  String   @map("restaurant_id")
+  categoryId    String   @map("category_id")
   name          String
   description   String?
-  imageUrl      String?
+  imageUrl      String?  @map("image_url")
   price         Float
-  discountPrice Float?
-  foodType      String   @default("VEG")
-  spiceLevel    String   @default("NONE")
+  discountPrice Float?   @map("discount_price")
+  foodType      String   @default("VEG") @map("food_type")
+  spiceLevel    String   @default("NONE") @map("spice_level")
   allergens     String[] @default([])
-  prepTime      Int      @default(15)
+  prepTime      Int      @default(15) @map("prep_time")
   calories      Int?
   ingredients   String[] @default([])
-  isAvailable   Boolean  @default(true)
-  displayOrder  Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isAvailable   Boolean  @default(true) @map("is_available")
+  displayOrder  Int      @default(0) @map("display_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   restaurant  Restaurant @relation(fields: [restaurantId], references: [id])
   category    Category   @relation(fields: [categoryId], references: [id])
@@ -228,11 +228,11 @@ model MenuItem {
 
 model AddOn {
   id          String  @id @default(cuid())
-  menuItemId  String
+  menuItemId  String  @map("menu_item_id")
   name        String
   description String?
   price       Float   @default(0)
-  isAvailable Boolean @default(true)
+  isAvailable Boolean @default(true) @map("is_available")
 
   menuItem MenuItem @relation(fields: [menuItemId], references: [id])
 
@@ -241,24 +241,24 @@ model AddOn {
 
 model Order {
   id              String   @id @default(cuid())
-  restaurantId    String
-  tableId         String?
-  orderId         String   @unique
-  orderType       String   @default("DINE_IN")
+  restaurantId    String   @map("restaurant_id")
+  tableId         String?  @map("table_id")
+  orderId         String   @unique @map("order_id")
+  orderType       String   @default("DINE_IN") @map("order_type")
   status          String   @default("PENDING")
   subtotal        Float    @default(0)
-  taxAmount       Float    @default(0)
-  serviceCharge   Float    @default(0)
-  discountAmount  Float    @default(0)
-  discountReason  String?
-  totalAmount     Float    @default(0)
-  assignedWaiterId String?
-  customerName    String?
-  customerPhone   String?
-  specialRequests String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  completedAt     DateTime?
+  taxAmount       Float    @default(0) @map("tax_amount")
+  serviceCharge   Float    @default(0) @map("service_charge")
+  discountAmount  Float    @default(0) @map("discount_amount")
+  discountReason  String?  @map("discount_reason")
+  totalAmount     Float    @default(0) @map("total_amount")
+  assignedWaiterId String? @map("assigned_waiter_id")
+  customerName    String?  @map("customer_name")
+  customerPhone   String?  @map("customer_phone")
+  specialRequests String?  @map("special_requests")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  completedAt     DateTime? @map("completed_at")
 
   restaurant  Restaurant  @relation(fields: [restaurantId], references: [id])
   table       RestaurantTable? @relation(fields: [tableId], references: [id])
@@ -270,16 +270,16 @@ model Order {
 
 model OrderItem {
   id                  String   @id @default(cuid())
-  orderId             String
-  menuItemId          String
-  menuItemName        String
+  orderId             String   @map("order_id")
+  menuItemId          String   @map("menu_item_id")
+  menuItemName        String   @map("menu_item_name")
   quantity            Int      @default(1)
-  pricePerUnit        Float    @default(0)
-  specialInstructions String?
-  addOnData           Json     @default("[]")
+  pricePerUnit        Float    @default(0) @map("price_per_unit")
+  specialInstructions String?  @map("special_instructions")
+  addOnData           Json     @default("[]") @map("add_on_data")
   status              String   @default("PENDING")
-  preparedAt          DateTime?
-  servedAt            DateTime?
+  preparedAt          DateTime? @map("prepared_at")
+  servedAt            DateTime? @map("served_at")
 
   order    Order    @relation(fields: [orderId], references: [id])
   menuItem MenuItem @relation(fields: [menuItemId], references: [id])
@@ -289,20 +289,20 @@ model OrderItem {
 
 model InventoryItem {
   id              String   @id @default(cuid())
-  restaurantId    String
+  restaurantId    String   @map("restaurant_id")
   name            String
   description     String?
   unit            String   @default("pieces")
-  currentQuantity Float    @default(0)
-  reorderLevel    Float    @default(10)
-  reorderQuantity Float    @default(20)
-  unitCost        Float    @default(0)
+  currentQuantity Float    @default(0) @map("current_quantity")
+  reorderLevel    Float    @default(10) @map("reorder_level")
+  reorderQuantity Float    @default(20) @map("reorder_quantity")
+  unitCost        Float    @default(0) @map("unit_cost")
   supplier        String?
   status          String   @default("HEALTHY")
-  lastRestockDate DateTime?
-  expiryDate      DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  lastRestockDate DateTime? @map("last_restock_date")
+  expiryDate      DateTime? @map("expiry_date")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   restaurant     Restaurant          @relation(fields: [restaurantId], references: [id])
   historyEntries InventoryHistory[]
@@ -312,12 +312,12 @@ model InventoryItem {
 
 model InventoryHistory {
   id              String   @id @default(cuid())
-  inventoryItemId String
-  movementType    String
+  inventoryItemId String   @map("inventory_item_id")
+  movementType    String   @map("movement_type")
   quantity        Float
   reason          String?
-  recordedBy      String
-  createdAt       DateTime @default(now())
+  recordedBy      String   @map("recorded_by")
+  createdAt       DateTime @default(now()) @map("created_at")
 
   item InventoryItem @relation(fields: [inventoryItemId], references: [id])
 
@@ -326,24 +326,24 @@ model InventoryHistory {
 
 model Bill {
   id              String   @id @default(cuid())
-  restaurantId    String
-  orderId         String
-  billNumber      String   @unique
+  restaurantId    String   @map("restaurant_id")
+  orderId         String   @map("order_id")
+  billNumber      String   @unique @map("bill_number")
   subtotal        Float    @default(0)
-  taxAmount       Float    @default(0)
-  serviceCharge   Float    @default(0)
-  discountAmount  Float    @default(0)
-  totalAmount     Float    @default(0)
-  amountPaid      Float    @default(0)
+  taxAmount       Float    @default(0) @map("tax_amount")
+  serviceCharge   Float    @default(0) @map("service_charge")
+  discountAmount  Float    @default(0) @map("discount_amount")
+  totalAmount     Float    @default(0) @map("total_amount")
+  amountPaid      Float    @default(0) @map("amount_paid")
   change          Float    @default(0)
-  paymentMethod   String   @default("CASH")
-  paymentRef      String?
-  billDate        DateTime @default(now())
-  settledAt       DateTime?
-  createdBy       String
+  paymentMethod   String   @default("CASH") @map("payment_method")
+  paymentRef      String?  @map("payment_ref")
+  billDate        DateTime @default(now()) @map("bill_date")
+  settledAt       DateTime? @map("settled_at")
+  createdBy       String   @map("created_by")
   notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   order      Order      @relation(fields: [orderId], references: [id])
@@ -353,18 +353,18 @@ model Bill {
 
 model Notification {
   id              String   @id @default(cuid())
-  recipientUserId String
-  restaurantId    String
+  recipientUserId String   @map("recipient_user_id")
+  restaurantId    String   @map("restaurant_id")
   type            String
   title           String
   message         String
-  relatedEntityId String?
-  relatedEntityType String?
-  isRead          Boolean  @default(false)
-  readAt          DateTime?
-  actionUrl       String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  relatedEntityId String?  @map("related_entity_id")
+  relatedEntityType String? @map("related_entity_type")
+  isRead          Boolean  @default(false) @map("is_read")
+  readAt          DateTime? @map("read_at")
+  actionUrl       String?  @map("action_url")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   user       User       @relation(fields: [recipientUserId], references: [id])
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
@@ -374,17 +374,17 @@ model Notification {
 
 model ActivityLog {
   id            String   @id @default(cuid())
-  restaurantId  String
-  userId        String
-  actionType    String
-  entityType    String
-  entityId      String
-  changesBefore Json?
-  changesAfter  Json?
+  restaurantId  String   @map("restaurant_id")
+  userId        String   @map("user_id")
+  actionType    String   @map("action_type")
+  entityType    String   @map("entity_type")
+  entityId      String   @map("entity_id")
+  changesBefore Json?    @map("changes_before")
+  changesAfter  Json?    @map("changes_after")
   description   String
-  ipAddress     String?
-  userAgent     String?
-  createdAt     DateTime @default(now())
+  ipAddress     String?  @map("ip_address")
+  userAgent     String?  @map("user_agent")
+  createdAt     DateTime @default(now()) @map("created_at")
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
 
@@ -393,15 +393,15 @@ model ActivityLog {
 
 model KpiCard {
   id          String   @id @default(cuid())
-  restaurantId String
+  restaurantId String   @map("restaurant_id")
   title       String
   value       String
   unit        String?
   trend       String   @default("STABLE")
-  changePct   Float?
+  changePct   Float?   @map("change_pct")
   icon        String?
   color       String?
-  lastUpdated DateTime @default(now())
+  lastUpdated DateTime @default(now()) @map("last_updated")
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
 
