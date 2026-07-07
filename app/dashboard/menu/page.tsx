@@ -138,7 +138,7 @@ export default function MenuPage() {
           id: i.id, nameEn: i.name, nameNp: undefined,
           category: i.category_id, description: i.description || '',
           price: i.price, discountPrice: i.discount_price,
-          foodType: i.food_type || 'veg', subType: 'veg',
+          foodType: i.food_type || 'veg', subType: i.sub_type || 'veg',
           spiceLevel: i.spice_level || 'none', prepTime: i.prep_time || 15,
           available: i.is_available, isPopular: false,
           isNew: false, allergens: i.allergens || [],
@@ -195,7 +195,7 @@ export default function MenuPage() {
         if (url) image_url = url;
       }
 
-      const payload = {
+      const payload: Record<string, any> = {
         restaurant_id: restaurantId,
         category_id:   formData.category || selectedCategory,
         name:          formData.nameEn,
@@ -203,6 +203,7 @@ export default function MenuPage() {
         price:         formData.price || 0,
         discount_price: formData.discountPrice || null,
         food_type:     formData.foodType || 'veg',
+        sub_type:      formData.subType  || 'veg',
         spice_level:   formData.spiceLevel || 'none',
         prep_time:     formData.prepTime || 15,
         is_available:  formData.available ?? true,

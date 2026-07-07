@@ -180,11 +180,6 @@ export default function TopHeader() {
 
       {/* Right: actions */}
       <div className="flex items-center gap-2">
-        {/* New Order */}
-        <Button size="sm" className="bg-primary hover:bg-primary-hover text-white h-9 px-3 hidden sm:flex">
-          + New Order
-        </Button>
-
         {/* ── Notification Bell ── */}
         <Popover>
           <PopoverTrigger asChild>
