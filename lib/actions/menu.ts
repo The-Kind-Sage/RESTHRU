@@ -14,13 +14,16 @@ export async function addCategory(data: {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  const result: { id: string }[] = await prisma.$queryRaw`
-    INSERT INTO categories (restaurant_id, name, name_np, icon, sort_order, is_active)
-    VALUES (${data.restaurantId}::uuid, ${data.name}, ${data.nameNp || null}, ${data.emoji || "📂"}, ${data.sortOrder || 0}, ${data.active ?? true})
-    RETURNING id::text
-  `;
-
-  return { data: { id: result[0].id } };
+  try {
+    const result: { id: string }[] = await prisma.$queryRaw`
+      INSERT INTO categories (restaurant_id, name, name_np, icon, sort_order, is_active)
+      VALUES (${data.restaurantId}::uuid, ${data.name}, ${data.nameNp || null}, ${data.emoji || "📂"}, ${data.sortOrder || 0}, ${data.active ?? true})
+      RETURNING id::text
+    `;
+    return { data: { id: result[0].id } };
+  } catch (err: any) {
+    return { error: err?.message || "Database error" };
+  }
 }
 
 export async function updateCategory(
@@ -36,30 +39,39 @@ export async function updateCategory(
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  await prisma.$executeRaw`
-    UPDATE categories
-    SET name = ${data.name}, name_np = ${data.nameNp || null}, icon = ${data.emoji || "📂"},
-        sort_order = ${data.sortOrder || 0}, is_active = ${data.active ?? true}
-    WHERE id = ${id}::uuid
-  `;
-
-  return { success: true };
+  try {
+    await prisma.$executeRaw`
+      UPDATE categories
+      SET name = ${data.name}, name_np = ${data.nameNp || null}, icon = ${data.emoji || "📂"},
+          sort_order = ${data.sortOrder || 0}, is_active = ${data.active ?? true}
+      WHERE id = ${id}::uuid
+    `;
+    return { success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Database error" };
+  }
 }
 
 export async function deleteCategory(id: string) {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  await prisma.$executeRaw`DELETE FROM categories WHERE id = ${id}::uuid`;
-
-  return { success: true };
+  try {
+    await prisma.$executeRaw`DELETE FROM categories WHERE id = ${id}::uuid`;
+    return { success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Database error" };
+  }
 }
 
 export async function toggleCategoryActive(id: string, active: boolean) {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  await prisma.$executeRaw`UPDATE categories SET is_active = ${active} WHERE id = ${id}::uuid`;
-
-  return { success: true };
+  try {
+    await prisma.$executeRaw`UPDATE categories SET is_active = ${active} WHERE id = ${id}::uuid`;
+    return { success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Database error" };
+  }
 }

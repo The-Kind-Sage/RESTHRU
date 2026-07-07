@@ -655,6 +655,7 @@ export default function MenuPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{editingCategory ? 'Edit Category' : 'Add Category'}</DialogTitle>
+            <DialogDescription>{editingCategory ? 'Update category details' : 'Add a new category to your menu'}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div><label className="text-sm font-medium mb-1.5 block">Category Name *</label>
