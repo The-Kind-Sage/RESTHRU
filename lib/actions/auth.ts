@@ -6,21 +6,46 @@ import { createSession, clearSession, getSession } from "@/lib/auth";
 
 export async function createSessionFromSupabaseLogin(userId: string, email: string, fullName?: string) {
   try {
-    const restaurant = await prisma.restaurant.findFirst({
+    const nameParts = (fullName || email || "").trim().split(" ");
+
+    // Find or create a Prisma user
+    let prismaUser = await prisma.user.findUnique({ where: { email } });
+    if (!prismaUser) {
+      prismaUser = await prisma.user.create({
+        data: {
+          email,
+          username: email.split("@")[0] || "",
+          firstName: nameParts[0] || "",
+          lastName: nameParts.slice(1).join(" ") || "",
+          role: "STAFF",
+          isActive: true,
+        },
+      });
+    }
+
+    // Find restaurant by ownerId (may have been inserted via Supabase already)
+    let restaurant = await prisma.restaurant.findFirst({
       where: { ownerId: userId },
       select: { id: true },
     });
 
-    const nameParts = (fullName || email || "").trim().split(" ");
+    // Link Prisma user to restaurant if not already linked
+    if (restaurant && !prismaUser.restaurantId) {
+      await prisma.user.update({
+        where: { id: prismaUser.id },
+        data: { restaurantId: restaurant.id },
+      });
+      prismaUser.restaurantId = restaurant.id;
+    }
 
     await createSession({
-      id: userId,
-      username: email.split("@")[0] || "",
-      role: "STAFF",
-      firstName: nameParts[0] || "",
-      lastName: nameParts.slice(1).join(" ") || "",
-      email: email || "",
-      restaurantId: restaurant?.id ?? null,
+      id: prismaUser.id,
+      username: prismaUser.username || "",
+      role: prismaUser.role,
+      firstName: prismaUser.firstName,
+      lastName: prismaUser.lastName,
+      email: prismaUser.email,
+      restaurantId: restaurant?.id ?? prismaUser.restaurantId ?? null,
     });
 
     return { success: true, redirectTo: "/dashboard" };
@@ -61,6 +86,57 @@ export async function login(username: string, password: string, redirectTo?: str
 
   const destination = redirectTo || (user.role === "ADMIN" ? "/admin" : "/dashboard");
   return { success: true, redirectTo: destination };
+}
+
+export async function createRestaurant(data: {
+  ownerId: string;
+  name: string;
+  type: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+  panNumber?: string;
+  vatRegistered?: boolean;
+  vatNumber?: string;
+  numTables?: number;
+  operatingHours?: any;
+}) {
+  try {
+    const restaurant = await prisma.restaurant.create({
+      data: {
+        ownerId: data.ownerId,
+        name: data.name,
+        type: data.type.toUpperCase().replace(/\s+/g, '_'),
+        street: data.address || '',
+        city: data.city || '',
+        phoneNumber: data.phone || '',
+        totalTables: data.numTables || 0,
+        isActive: true,
+      },
+    });
+
+    // Also create in Supabase for backwards compatibility
+    const { supabase } = await import('@/lib/supabase');
+    if (supabase) {
+      const slug = data.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+        + '-' + Math.random().toString(36).slice(2, 7);
+      await supabase.from('restaurants').insert([{
+        id: restaurant.id,
+        owner_id: data.ownerId,
+        name: data.name,
+        slug,
+        type: data.type,
+        address: data.address || '',
+        city: data.city || '',
+        phone: data.phone || '',
+        num_tables: data.numTables || 0,
+      }]).select('id').maybeSingle();
+    }
+
+    return { restaurantId: restaurant.id };
+  } catch (err: any) {
+    return { error: err?.message || 'Failed to create restaurant' };
+  }
 }
 
 export async function logout() {

@@ -199,50 +199,47 @@ export default function RegisterPage() {
         }
       }
 
+      const slug = (formData.step2.restaurantName ?? '')
+        .toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+        + '-' + Math.random().toString(36).slice(2, 7);
+
+      // Create restaurant via server action so it's in the Prisma-managed table
+      const { createRestaurant } = await import('@/lib/actions/auth');
+      const restResult = await createRestaurant({
+        ownerId: authData.user.id,
+        name: formData.step2.restaurantName!,
+        type: formData.step2.restaurantType || 'CASUAL_DINING',
+        address: formData.step2.address,
+        city: formData.step2.city,
+        phone: formData.step2.restaurantPhone,
+        panNumber: formData.step3.panNumber,
+        vatRegistered: formData.step3.vatRegistered,
+        vatNumber: formData.step3.vatNumber,
+        numTables: formData.step3.numberOfTables,
+        operatingHours: { open: formData.step3.openTime, close: formData.step3.closeTime },
+      });
+
+      if (restResult?.error) {
+        toast.error(restResult.error);
+        return;
+      }
+
+      if (restResult?.restaurantId && formData.step4.selectedPlan) {
+        await supabase.from('subscriptions').insert([{
+          restaurantId: restResult.restaurantId,
+          planId: formData.step4.selectedPlan,
+          status: 'active',
+        }]);
+      }
+
       const sessionResult = await createSessionFromSupabaseLogin(
-        authUser.id,
+        authData.user.id,
         authUser.email || '',
         formData.step1.fullName
       );
       if (sessionResult?.error) {
         toast.error('Account created but session could not be established.');
         return;
-      }
-
-      const slug = (formData.step2.restaurantName ?? '')
-        .toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-        + '-' + Math.random().toString(36).slice(2, 7);
-
-      const { data: restaurantData, error: restaurantError } = await supabase
-        .from('restaurants')
-        .insert([{
-          owner_id: authData.user.id,
-          name: formData.step2.restaurantName,
-          slug,
-          type: formData.step2.restaurantType,
-          address: formData.step2.address,
-          city: formData.step2.city,
-          phone: formData.step2.restaurantPhone,
-          pan_number: formData.step3.panNumber,
-          vat_registered: formData.step3.vatRegistered,
-          vat_number: formData.step3.vatNumber,
-          num_tables: formData.step3.numberOfTables,
-          operating_hours: { open: formData.step3.openTime, close: formData.step3.closeTime },
-        }])
-        .select('id')
-        .single();
-
-      if (restaurantError) {
-        toast.error(restaurantError.message || 'Failed to create restaurant');
-        return;
-      }
-
-      if (restaurantData?.id && formData.step4.selectedPlan) {
-        await supabase.from('subscriptions').insert([{
-          restaurantId: restaurantData.id,
-          planId: formData.step4.selectedPlan,
-          status: 'active',
-        }]);
       }
 
       toast.success('Account created successfully!');
