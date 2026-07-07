@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -93,5 +93,8 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "tsx": "^4.22.4"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
