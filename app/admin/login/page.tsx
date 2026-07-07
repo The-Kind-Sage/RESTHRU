@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Shield, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { login } from "@/lib/actions/auth";
 
 function AdminLoginForm() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const redirectTo = searchParams.get("redirect") || "/admin";
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -26,6 +27,8 @@ function AdminLoginForm() {
     if (result?.error) {
       setError(result.error);
       setLoading(false);
+    } else if (result?.success) {
+      router.push(result.redirectTo);
     }
   };
 

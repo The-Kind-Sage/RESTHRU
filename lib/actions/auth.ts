@@ -3,7 +3,6 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { createSession, clearSession, getSession } from "@/lib/auth";
-import { redirect } from "next/navigation";
 
 export async function login(username: string, password: string, redirectTo?: string) {
   const user = await prisma.user.findFirst({
@@ -34,13 +33,8 @@ export async function login(username: string, password: string, redirectTo?: str
     restaurantId: user.restaurantId,
   });
 
-  if (redirectTo) {
-    redirect(redirectTo);
-  } else if (user.role === "ADMIN") {
-    redirect("/admin");
-  } else {
-    redirect("/dashboard");
-  }
+  const destination = redirectTo || (user.role === "ADMIN" ? "/admin" : "/dashboard");
+  return { success: true, redirectTo: destination };
 }
 
 export async function logout() {
