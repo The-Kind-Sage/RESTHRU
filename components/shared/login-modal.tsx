@@ -28,6 +28,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { supabase } from '@/lib/supabase';
+import { createSessionFromSupabaseLogin } from '@/lib/actions/auth';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -66,9 +67,24 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
         toast.error(error.message || 'Failed to sign in');
         return;
       }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      const result = session?.user
+        ? await createSessionFromSupabaseLogin(
+            session.user.id,
+            session.user.email || '',
+            session.user.user_metadata?.full_name as string | undefined
+          )
+        : null;
+
+      if (!result?.success) {
+        const errMsg = result?.error || 'Could not set up your session';
+        console.warn('Session setup warning:', errMsg);
+      }
+
       toast.success('Welcome back to Resthru!');
       onOpenChange(false);
-      router.push('/dashboard');
+      router.push(result?.redirectTo || '/dashboard');
     } catch {
       toast.error('An unexpected error occurred');
     } finally {

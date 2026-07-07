@@ -4,6 +4,36 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { createSession, clearSession, getSession } from "@/lib/auth";
 
+export async function createSessionFromSupabaseLogin(userId: string, email: string, fullName?: string) {
+  try {
+    const restaurant = await prisma.restaurant.findFirst({
+      where: { ownerId: userId },
+      select: { id: true },
+    });
+
+    if (!restaurant) {
+      return { error: "No restaurant found for this account" };
+    }
+
+    const nameParts = (fullName || email || "").trim().split(" ");
+
+    await createSession({
+      id: userId,
+      username: email.split("@")[0] || "",
+      role: "STAFF",
+      firstName: nameParts[0] || "",
+      lastName: nameParts.slice(1).join(" ") || "",
+      email: email || "",
+      restaurantId: restaurant.id,
+    });
+
+    return { success: true, redirectTo: "/dashboard" };
+  } catch (err) {
+    console.error("createSessionFromSupabaseLogin error:", err);
+    return { error: "Failed to create session" };
+  }
+}
+
 export async function login(username: string, password: string, redirectTo?: string) {
   const user = await prisma.user.findFirst({
     where: { username, isActive: true },
