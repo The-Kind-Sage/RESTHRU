@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { FOOD_TYPES, FOOD_SUB_TYPES, SPICE_LEVELS, ALLERGENS } from '@/lib/constants';
 import { uploadImage } from '@/lib/upload';
 import { supabase } from '@/lib/supabase';
+import { addCategory, updateCategory, deleteCategory as deleteCategoryAction, toggleCategoryActive as toggleCategoryActiveAction } from '@/lib/actions/menu';
 import { useAuthStore } from '@/store/auth-store';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -262,29 +263,33 @@ export default function MenuPage() {
   };
 
   const handleSaveCategory = async () => {
-    if (!categoryFormData.name || !restaurantId || !supabase) return;
+    if (!categoryFormData.name) return;
     setIsSavingCategory(true);
     try {
-      const payload = {
-        restaurant_id: restaurantId,
-        name: categoryFormData.name,
-        name_np: categoryFormData.nameNp || null,
-        icon: categoryFormData.emoji || '📂',
-        sort_order: categoryFormData.sortOrder || 0,
-        is_active: categoryFormData.active ?? true,
-      };
       if (editingCategory) {
-        const { error } = await supabase.from('categories').update(payload).eq('id', editingCategory.id);
-        if (error) { toast.error(error.message); return; }
+        const result = await updateCategory(editingCategory.id, {
+          name: categoryFormData.name,
+          nameNp: categoryFormData.nameNp,
+          emoji: categoryFormData.emoji,
+          sortOrder: categoryFormData.sortOrder,
+          active: categoryFormData.active,
+        });
+        if (result.error) { toast.error(result.error); return; }
         setCategories(categories.map(c => c.id === editingCategory.id
           ? { ...editingCategory, ...categoryFormData } as Category : c));
         toast.success('Category updated');
       } else {
-        const { data, error } = await supabase.from('categories').insert([payload]).select('id').single();
-        if (error) { toast.error(error.message); return; }
-        if (data) {
+        const result = await addCategory({
+          name: categoryFormData.name,
+          nameNp: categoryFormData.nameNp,
+          emoji: categoryFormData.emoji,
+          sortOrder: categoryFormData.sortOrder,
+          active: categoryFormData.active,
+        });
+        if (result.error) { toast.error(result.error); return; }
+        if (result.data) {
           setCategories([...categories, {
-            id: data.id, name: categoryFormData.name!, nameNp: categoryFormData.nameNp,
+            id: result.data.id, name: categoryFormData.name!, nameNp: categoryFormData.nameNp,
             emoji: categoryFormData.emoji || '📂', itemCount: 0,
             active: categoryFormData.active ?? true, sortOrder: categoryFormData.sortOrder || 0,
           }]);
@@ -300,9 +305,8 @@ export default function MenuPage() {
   };
 
   const handleDeleteCategory = async (id: string) => {
-    if (!supabase) return;
-    const { error } = await supabase.from('categories').delete().eq('id', id);
-    if (error) { toast.error(error.message); return; }
+    const result = await deleteCategoryAction(id);
+    if (result.error) { toast.error(result.error); return; }
     setCategories(categories.filter(c => c.id !== id));
     setItems(items.filter(i => i.category !== id));
     if (selectedCategory === id) setSelectedCategory(categories[0]?.id || '');
@@ -310,9 +314,9 @@ export default function MenuPage() {
 
   const toggleCategoryActive = async (id: string) => {
     const cat = categories.find(c => c.id === id);
-    if (!cat || !supabase) return;
-    const { error } = await supabase.from('categories').update({ is_active: !cat.active }).eq('id', id);
-    if (error) { toast.error(error.message); return; }
+    if (!cat) return;
+    const result = await toggleCategoryActiveAction(id, !cat.active);
+    if (result.error) { toast.error(result.error); return; }
     setCategories(categories.map(c => c.id === id ? { ...c, active: !c.active } : c));
   };
 
