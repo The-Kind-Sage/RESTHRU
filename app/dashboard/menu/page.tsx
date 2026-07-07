@@ -263,7 +263,8 @@ export default function MenuPage() {
   };
 
   const handleSaveCategory = async () => {
-    if (!categoryFormData.name || !restaurantId) return;
+    if (!categoryFormData.name) { toast.error('Category name is required'); return; }
+    if (!restaurantId) { toast.error('Restaurant not loaded — try refreshing'); return; }
     setIsSavingCategory(true);
     try {
       if (editingCategory) {
