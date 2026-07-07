@@ -102,6 +102,9 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
           isLoading: false,
         });
       } else {
+        // No valid session — clear any stale persisted tokens from storage
+        // to prevent "Invalid Refresh Token" console errors from the SDK's refresh timer.
+        await supabase.auth.signOut();
         set({
           user: null,
           isAuthenticated: false,
@@ -110,6 +113,9 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
       }
     } catch (error) {
       console.error('Auth initialization error:', error);
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
       set({
         user: null,
         isAuthenticated: false,
