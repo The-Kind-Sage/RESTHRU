@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -42,6 +43,7 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ open, onOpenChange }: LoginModalProps) {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -85,6 +87,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 
       toast.success('Welcome back to Resthru!');
       onOpenChange(false);
+      router.push('/dashboard');
     } catch {
       toast.error('An unexpected error occurred');
     } finally {

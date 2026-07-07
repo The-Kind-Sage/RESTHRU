@@ -2,7 +2,6 @@
 
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { redirect } from "next/navigation";
 import { createSession, clearSession, getSession } from "@/lib/auth";
 
 export async function createSessionFromSupabaseLogin(userId: string, email: string, fullName?: string) {
@@ -24,9 +23,8 @@ export async function createSessionFromSupabaseLogin(userId: string, email: stri
       restaurantId: restaurant?.id ?? null,
     });
 
-    redirect("/dashboard");
+    return { success: true, redirectTo: "/dashboard" };
   } catch (err) {
-    if ((err as any)?.digest?.startsWith("NEXT_REDIRECT")) throw err;
     console.error("createSessionFromSupabaseLogin error:", err);
     return { error: "Failed to create session" };
   }
