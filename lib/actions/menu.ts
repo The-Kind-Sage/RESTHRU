@@ -1,7 +1,24 @@
 "use server";
 
+import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { supabaseServer } from "@/lib/supabase";
+
+async function resolveRestaurantId(session: { id: string; email: string }): Promise<string | null> {
+  // First try the user's restaurantId
+  const user = await prisma.user.findUnique({
+    where: { id: session.id },
+    select: { restaurantId: true },
+  });
+  if (user?.restaurantId) return user.restaurantId;
+
+  // Fallback: find restaurant by email match
+  const restaurant = await prisma.restaurant.findFirst({
+    where: { email: session.email },
+    select: { id: true },
+  });
+  return restaurant?.id ?? null;
+}
 
 export async function addCategory(data: {
   name: string;
@@ -11,11 +28,14 @@ export async function addCategory(data: {
   active?: boolean;
 }) {
   const session = await getSession();
-  if (!session?.restaurantId) return { error: "Not authenticated" };
+  if (!session) return { error: "Not authenticated" };
+
+  const restaurantId = await resolveRestaurantId(session);
+  if (!restaurantId) return { error: "No restaurant found for your account" };
 
   const supabase = supabaseServer();
   const payload = {
-    restaurant_id: session.restaurantId,
+    restaurant_id: restaurantId,
     name: data.name,
     name_np: data.nameNp || null,
     icon: data.emoji || "📂",
@@ -44,7 +64,10 @@ export async function updateCategory(
   }
 ) {
   const session = await getSession();
-  if (!session?.restaurantId) return { error: "Not authenticated" };
+  if (!session) return { error: "Not authenticated" };
+
+  const restaurantId = await resolveRestaurantId(session);
+  if (!restaurantId) return { error: "No restaurant found for your account" };
 
   const supabase = supabaseServer();
   const payload = {
@@ -63,7 +86,10 @@ export async function updateCategory(
 
 export async function deleteCategory(id: string) {
   const session = await getSession();
-  if (!session?.restaurantId) return { error: "Not authenticated" };
+  if (!session) return { error: "Not authenticated" };
+
+  const restaurantId = await resolveRestaurantId(session);
+  if (!restaurantId) return { error: "No restaurant found for your account" };
 
   const supabase = supabaseServer();
   const { error } = await supabase.from("categories").delete().eq("id", id);
@@ -74,7 +100,10 @@ export async function deleteCategory(id: string) {
 
 export async function toggleCategoryActive(id: string, active: boolean) {
   const session = await getSession();
-  if (!session?.restaurantId) return { error: "Not authenticated" };
+  if (!session) return { error: "Not authenticated" };
+
+  const restaurantId = await resolveRestaurantId(session);
+  if (!restaurantId) return { error: "No restaurant found for your account" };
 
   const supabase = supabaseServer();
   const { error } = await supabase.from("categories").update({ is_active: active }).eq("id", id);
