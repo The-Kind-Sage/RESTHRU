@@ -275,9 +275,9 @@ function TableDetailDialog({ table, restaurantId, isOpen, onClose, onStatusChang
   );
 }
 
-function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, onAdded }: {
+function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultFloor, onAdded }: {
   isOpen: boolean; onClose: () => void;
-  restaurantId: string; existingCount: number;
+  restaurantId: string; existingCount: number; defaultFloor: string;
   onAdded: (table: Table) => void;
 }) {
   const [tableNumber, setTableNumber] = useState('');
@@ -288,8 +288,11 @@ function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, onAdded 
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (isOpen) setTableNumber(String(existingCount + 1));
-  }, [isOpen, existingCount]);
+    if (isOpen) {
+      setTableNumber(String(existingCount + 1));
+      setFloor(defaultFloor);
+    }
+  }, [isOpen, existingCount, defaultFloor]);
 
   const handleAdd = async () => {
     if (!tableNumber || !supabase) return;
@@ -566,6 +569,7 @@ export default function TableMapPage() {
         onClose={() => setAddTableOpen(false)}
         restaurantId={restaurantId}
         existingCount={tables.length}
+        defaultFloor={selectedFloor}
         onAdded={t => setTables(prev => [...prev, t])}
       />
 

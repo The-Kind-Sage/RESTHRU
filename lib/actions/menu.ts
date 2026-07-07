@@ -16,7 +16,7 @@ export async function addCategory(data: {
 
   try {
     const result: { id: string }[] = await prisma.$queryRaw`
-      INSERT INTO categories (restaurant_id, name, sort_order, is_active)
+      INSERT INTO categories (restaurant_id, name, display_order, is_active)
       VALUES (${data.restaurantId}::uuid, ${data.name}, ${data.sortOrder || 0}, ${data.active ?? true})
       RETURNING id::text
     `;
@@ -42,7 +42,7 @@ export async function updateCategory(
   try {
     await prisma.$executeRaw`
       UPDATE categories
-      SET name = ${data.name}, sort_order = ${data.sortOrder || 0}, is_active = ${data.active ?? true}
+      SET name = ${data.name}, display_order = ${data.sortOrder || 0}, is_active = ${data.active ?? true}
       WHERE id = ${id}::uuid
     `;
     return { success: true };

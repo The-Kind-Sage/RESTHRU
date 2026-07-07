@@ -118,7 +118,7 @@ export default function MenuPage() {
     setIsLoadingItems(true);
     try {
       const [catRes, itemRes, restRes] = await Promise.all([
-        supabase.from('categories').select('*').eq('restaurant_id', restaurantId).order('sort_order'),
+          supabase.from('categories').select('*').eq('restaurant_id', restaurantId).order('display_order'),
         supabase.from('menu_items').select('*').eq('restaurant_id', restaurantId).order('created_at'),
         supabase.from('restaurants').select('menu_bg_url,menu_custom_url').eq('id', restaurantId).single(),
       ]);
@@ -127,7 +127,7 @@ export default function MenuPage() {
         const cats: Category[] = catRes.data.map((c: any) => ({
           id: c.id, name: c.name, nameNp: c.name_np,
           emoji: c.icon || '📂', itemCount: 0,
-          active: c.is_active, sortOrder: c.sort_order,
+          active: c.is_active, sortOrder: c.display_order ?? c.sort_order ?? 0,
         }));
         setCategories(cats);
         if (!selectedCategory && cats.length > 0) setSelectedCategory(cats[0].id);
