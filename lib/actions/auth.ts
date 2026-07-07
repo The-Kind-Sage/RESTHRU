@@ -81,10 +81,20 @@ export async function getCurrentUser() {
 
 export async function getRestaurantFromSession() {
   const session = await getSession();
-  if (!session?.restaurantId) return null;
+  if (!session) return null;
 
-  const restaurant = await prisma.restaurant.findUnique({
-    where: { id: session.restaurantId },
+  // Try restaurantId from the JWT first
+  if (session.restaurantId) {
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id: session.restaurantId },
+      select: { id: true, name: true },
+    });
+    if (restaurant) return restaurant;
+  }
+
+  // Fallback: find restaurant where this user is the owner
+  const restaurant = await prisma.restaurant.findFirst({
+    where: { ownerId: session.id },
     select: { id: true, name: true },
   });
 
