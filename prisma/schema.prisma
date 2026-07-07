@@ -213,6 +213,7 @@ model MenuItem {
   price         Float
   discountPrice Float?   @map("discount_price")
   foodType      String   @default("VEG") @map("food_type")
+  subType       String   @default("VEG") @map("sub_type")
   spiceLevel    String   @default("NONE") @map("spice_level")
   allergens     String[] @default([])
   prepTime      Int      @default(15) @map("prep_time")
