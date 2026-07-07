@@ -17,7 +17,7 @@ export async function addCategory(data: {
   try {
     const result: { id: string }[] = await prisma.$queryRaw`
       INSERT INTO categories (restaurant_id, name, display_order, is_active)
-      VALUES (${data.restaurantId}::uuid, ${data.name}, ${data.sortOrder || 0}, ${data.active ?? true})
+      VALUES (${data.restaurantId}, ${data.name}, ${data.sortOrder || 0}, ${data.active ?? true})
       RETURNING id::text
     `;
     return { data: { id: result[0].id } };
@@ -43,7 +43,7 @@ export async function updateCategory(
     await prisma.$executeRaw`
       UPDATE categories
       SET name = ${data.name}, display_order = ${data.sortOrder || 0}, is_active = ${data.active ?? true}
-      WHERE id = ${id}::uuid
+      WHERE id = ${id}
     `;
     return { success: true };
   } catch (err: any) {
@@ -56,7 +56,7 @@ export async function deleteCategory(id: string) {
   if (!session) return { error: "Not authenticated" };
 
   try {
-    await prisma.$executeRaw`DELETE FROM categories WHERE id = ${id}::uuid`;
+    await prisma.$executeRaw`DELETE FROM categories WHERE id = ${id}`;
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Database error" };
@@ -68,7 +68,7 @@ export async function toggleCategoryActive(id: string, active: boolean) {
   if (!session) return { error: "Not authenticated" };
 
   try {
-    await prisma.$executeRaw`UPDATE categories SET is_active = ${active} WHERE id = ${id}::uuid`;
+    await prisma.$executeRaw`UPDATE categories SET is_active = ${active} WHERE id = ${id}`;
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Database error" };
