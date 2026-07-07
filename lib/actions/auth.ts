@@ -58,7 +58,8 @@ export async function createSessionFromSupabaseLogin(userId: string, email: stri
 
     return { success: true, redirectTo: "/dashboard" };
   } catch (err) {
-    console.error("createSessionFromSupabaseLogin error:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("createSessionFromSupabaseLogin error:", message, err instanceof Error ? err.stack : "");
     return { error: "Failed to create session" };
   }
 }
@@ -96,7 +97,8 @@ export async function login(username: string, password: string, redirectTo?: str
     const destination = redirectTo || (user.role === "ADMIN" ? "/admin" : "/dashboard");
     return { success: true, redirectTo: destination };
   } catch (err) {
-    console.error("login error:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("login error:", message, err instanceof Error ? err.stack : "");
     return { error: "Failed to create session" };
   }
 }
