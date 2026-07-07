@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { redirect } from "next/navigation";
 import { createSession, clearSession, getSession } from "@/lib/auth";
 
 export async function createSessionFromSupabaseLogin(userId: string, email: string, fullName?: string) {
@@ -10,10 +11,6 @@ export async function createSessionFromSupabaseLogin(userId: string, email: stri
       where: { ownerId: userId },
       select: { id: true },
     });
-
-    if (!restaurant) {
-      return { error: "No restaurant found for this account" };
-    }
 
     const nameParts = (fullName || email || "").trim().split(" ");
 
@@ -24,11 +21,12 @@ export async function createSessionFromSupabaseLogin(userId: string, email: stri
       firstName: nameParts[0] || "",
       lastName: nameParts.slice(1).join(" ") || "",
       email: email || "",
-      restaurantId: restaurant.id,
+      restaurantId: restaurant?.id ?? null,
     });
 
-    return { success: true, redirectTo: "/dashboard" };
+    redirect("/dashboard");
   } catch (err) {
+    if ((err as any)?.digest?.startsWith("NEXT_REDIRECT")) throw err;
     console.error("createSessionFromSupabaseLogin error:", err);
     return { error: "Failed to create session" };
   }

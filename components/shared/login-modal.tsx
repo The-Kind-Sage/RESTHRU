@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -43,7 +42,6 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ open, onOpenChange }: LoginModalProps) {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -59,7 +57,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
         toast.error('Supabase is not configured. Please set environment variables.');
         return;
       }
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
@@ -68,23 +66,25 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
         return;
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      const result = session?.user
-        ? await createSessionFromSupabaseLogin(
-            session.user.id,
-            session.user.email || '',
-            session.user.user_metadata?.full_name as string | undefined
-          )
-        : null;
+      const user = signInData?.user;
+      if (!user) {
+        toast.error('Could not retrieve user session');
+        return;
+      }
 
-      if (!result?.success) {
-        const errMsg = result?.error || 'Could not set up your session';
-        console.warn('Session setup warning:', errMsg);
+      const result = await createSessionFromSupabaseLogin(
+        user.id,
+        user.email || '',
+        user.user_metadata?.full_name as string | undefined
+      );
+
+      if (result?.error) {
+        toast.error(result.error);
+        return;
       }
 
       toast.success('Welcome back to Resthru!');
       onOpenChange(false);
-      router.push(result?.redirectTo || '/dashboard');
     } catch {
       toast.error('An unexpected error occurred');
     } finally {
