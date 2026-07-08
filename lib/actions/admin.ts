@@ -32,6 +32,20 @@ export async function getRecentOrders(limit = 10) {
   });
 }
 
+export async function getAllRestaurants() {
+  return prisma.restaurant.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      _count: { select: { users: true, tables: true, menuItems: true, orders: true } },
+      subscriptions: {
+        where: { status: "active" },
+        take: 1,
+        include: { plan: { select: { name: true } } },
+      },
+    },
+  });
+}
+
 export async function getSubscriptionDistribution() {
   const plans = await prisma.plan.findMany({
     include: { _count: { select: { subscriptions: true } } },
