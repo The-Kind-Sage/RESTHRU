@@ -85,6 +85,9 @@ function normalizeMenuSection(section?: string | null): string {
   if (["beverage", "beverages", "drink", "drinks", "cocktail", "cocktails", "wine", "wines", "tea", "coffee", "juice"].includes(normalized)) {
     return "Beverages";
   }
+  if (["extra", "extras", "side", "sides", "misc", "other", "others"].includes(normalized)) {
+    return "Extra";
+  }
 
   return raw || "Appetizers";
 }
@@ -184,7 +187,7 @@ export async function getBookMenuData(restaurantId: string) {
       });
     }
 
-    const sectionOrder = ["Appetizers", "Main Courses", "Desserts"];
+    const sectionOrder = ["Appetizers", "Main Courses", "Desserts", "Extra"];
     const orderedSections = sectionOrder
       .map((sectionName) => Array.from(grouped.values()).find((entry) => entry.name === sectionName))
       .filter(Boolean) as Array<{

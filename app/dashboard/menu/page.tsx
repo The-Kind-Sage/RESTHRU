@@ -693,6 +693,7 @@ export default function MenuPage() {
                     <SelectItem value="Main Courses">Main Courses</SelectItem>
                     <SelectItem value="Desserts">Desserts</SelectItem>
                     <SelectItem value="Beverages">Beverages</SelectItem>
+                    <SelectItem value="Extra">Extra</SelectItem>
                   </SelectContent>
                 </Select></div>
 

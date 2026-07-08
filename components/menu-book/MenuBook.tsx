@@ -11,7 +11,7 @@ import { BackCoverPage } from "./BackCoverPage";
 import { PageNav } from "./PageNav";
 import { FilterPanel } from "./FilterPanel";
 
-const TOTAL_PAGES = 6;
+const TOTAL_PAGES = 7;
 
 export function MenuBook({ data }: { data: MenuData }) {
   const [page, setPage] = useState(0);
@@ -56,7 +56,7 @@ export function MenuBook({ data }: { data: MenuData }) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") go(page + 1);
       else if (e.key === "ArrowLeft") go(page - 1);
-      else if (/^[1-6]$/.test(e.key)) go(parseInt(e.key, 10) - 1);
+      else if (/^[1-7]$/.test(e.key)) go(parseInt(e.key, 10) - 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -82,9 +82,17 @@ export function MenuBook({ data }: { data: MenuData }) {
     ["dessert", "sweet", "cake", "pastry", "ice cream", "pudding", "bakery"]
   );
 
+  const extraCategory = findCategory(
+    data.categories.filter(
+      (category) => category.id !== appetizerCategory?.id && category.id !== mainCategory?.id && category.id !== dessertCategory?.id
+    ),
+    ["extra", "extras", "side", "sides", "misc", "other", "others"]
+  );
+
   const appetizerItems = appetizerCategory?.items ?? [];
   const mainItems = mainCategory?.items ?? [];
   const dessertItems = dessertCategory?.items ?? [];
+  const extraItems = extraCategory?.items ?? [];
   const mainSig = mainItems.find((m) => m.tags?.includes("signature"));
 
   const renderPage = (i: number) => {
@@ -126,6 +134,16 @@ export function MenuBook({ data }: { data: MenuData }) {
       case 4:
         return <DrinksPage drinks={data.drinks} />;
       case 5:
+        return (
+          <CategoryPage
+            title="Extra"
+            kicker="Extras"
+            items={extraItems}
+            pageNumber={6}
+            activeFilter={filter}
+          />
+        );
+      case 6:
         return <BackCoverPage restaurant={data.restaurant} />;
       default:
         return null;
