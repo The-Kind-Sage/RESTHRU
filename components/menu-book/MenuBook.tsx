@@ -154,12 +154,12 @@ export function MenuBook({ data }: { data: MenuData }) {
       <PageNav current={page} total={TOTAL_PAGES} onGo={go} />
 
       {/* Book stage */}
-      <div className="flex min-h-screen items-center justify-center px-4 py-20 sm:py-24 lg:px-24">
+      <div className="flex items-center justify-center px-2 py-6 sm:py-10 lg:px-8" style={{ height: "100dvh" }}>
         <div
           className={`book-spine relative w-full ${
             isCover ? "max-w-[640px]" : "max-w-[640px] lg:max-w-[1280px]"
           }`}
-          style={{ height: "min(88vh, 900px)" }}
+          style={{ height: "min(90dvh, 960px)" }}
         >
           <AnimatePresence mode="wait" custom={dir}>
             <motion.div
@@ -171,12 +171,14 @@ export function MenuBook({ data }: { data: MenuData }) {
               transition={{ duration: 0.5, ease: [0.65, 0, 0.35, 1] }}
               drag={isMobile ? "x" : false}
               dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.2}
+              dragElastic={0.1}
               onDragEnd={(_, info) => {
-                if (info.offset.x < -60) go(page + 1);
-                else if (info.offset.x > 60) go(page - 1);
+                const threshold = 40;
+                const velocity = info.velocity.x;
+                if (info.offset.x < -threshold || velocity < -300) go(page + 1);
+                else if (info.offset.x > threshold || velocity > 300) go(page - 1);
               }}
-              className="grid h-full w-full grid-cols-1 gap-0 lg:grid-cols-2"
+              className="grid h-full w-full grid-cols-1 gap-0 lg:grid-cols-2 cursor-grab active:cursor-grabbing"
               style={{ perspective: "1600px" }}
             >
               {isCover ? (
