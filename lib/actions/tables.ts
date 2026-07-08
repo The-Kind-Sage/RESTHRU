@@ -32,12 +32,19 @@ export async function addTable(data: {
   if (!session) return { error: "Not authenticated" };
 
   try {
-    const result: { id: string }[] = await prisma.$queryRaw`
-      INSERT INTO restaurant_tables (id, restaurant_id, table_number, name, capacity, shape, floor, status, position_x, position_y, created_at, updated_at)
-      VALUES (gen_random_uuid()::text, ${data.restaurantId}, ${data.tableNumber}, ${data.name || null}, ${data.capacity}, ${data.shape}, ${data.floor}, 'available', ${data.positionX}, ${data.positionY}, now(), now())
-      RETURNING id
-    `;
-    return { data: { id: result[0].id } };
+    const table = await prisma.restaurantTable.create({
+      data: {
+        restaurantId: data.restaurantId,
+        tableNumber: data.tableNumber,
+        name: data.name || null,
+        capacity: data.capacity,
+        shape: data.shape,
+        floor: data.floor,
+        positionX: data.positionX,
+        positionY: data.positionY,
+      },
+    });
+    return { data: { id: table.id } };
   } catch (err: any) {
     return { error: err?.message || "Failed to add table" };
   }
