@@ -17,6 +17,7 @@ export interface DrinkItemData {
   price: number;
   group: "wine" | "cocktail";
   featured?: boolean;
+  imageUrl?: string | null;
 }
 
 export interface MenuData {

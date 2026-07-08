@@ -2,6 +2,7 @@ import type { DrinkItemData } from "./types";
 import { MenuPage } from "./MenuPage";
 import { SectionHeader } from "./SectionHeader";
 import { PriceLeader } from "./PriceLeader";
+import { FoodImage } from "./FoodImage";
 
 export function DrinksPage({ drinks }: { drinks: DrinkItemData[] }) {
   const wines = drinks.filter((d) => d.group === "wine");
@@ -18,8 +19,11 @@ export function DrinksPage({ drinks }: { drinks: DrinkItemData[] }) {
           </h3>
           <ul className="space-y-2.5">
             {wines.map((w) => (
-              <li key={w.id} className="flex items-baseline gap-1">
-                <span className="font-serif text-[14px]" style={{ color: "var(--ink)" }}>{w.name}</span>
+              <li key={w.id} className="flex items-baseline gap-2">
+                <div className="flex items-center gap-3">
+                  <FoodImage src={w.imageUrl} variant="circle" size="small" />
+                  <span className="font-serif text-[14px]" style={{ color: "var(--ink)" }}>{w.name}</span>
+                </div>
                 <PriceLeader />
                 <span className="font-serif text-[14px] tabular-nums" style={{ color: "var(--ink-mute)" }}>
                   ${w.price}
@@ -36,10 +40,13 @@ export function DrinksPage({ drinks }: { drinks: DrinkItemData[] }) {
           <ul className="space-y-4">
             {cocktails.map((c) => (
               <li key={c.id}>
-                <div className="flex items-baseline gap-1">
-                  <span className="font-serif text-[14px] font-semibold" style={{ color: "var(--ink)" }}>
-                    {c.name}
-                  </span>
+                <div className="flex items-baseline gap-2">
+                  <div className="flex items-center gap-3">
+                    <FoodImage src={c.imageUrl} variant="circle" size="small" />
+                    <span className="font-serif text-[14px] font-semibold" style={{ color: "var(--ink)" }}>
+                      {c.name}
+                    </span>
+                  </div>
                   <PriceLeader />
                   <span className="font-serif text-[14px] tabular-nums" style={{ color: "var(--ink-mute)" }}>
                     ${c.price}

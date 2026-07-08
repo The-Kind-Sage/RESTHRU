@@ -148,7 +148,7 @@ export async function getBookMenuData(restaurantId: string) {
       const catRecord = categoryRecords.find((c) => c.id === item.categoryId);
       const sectionName = item.menuSection && item.menuSection.trim()
         ? normalizeMenuSection(item.menuSection)
-        : (catRecord?.name || "Appetizers");
+        : normalizeMenuSection(catRecord?.name || undefined);
       const details: string[] = [];
 
       if (item.calories) details.push(`${item.calories} kcal`);
@@ -165,6 +165,7 @@ export async function getBookMenuData(restaurantId: string) {
           price: Number(item.price),
           group: drinks.length % 2 === 0 ? "wine" : "cocktail",
           featured: false,
+          imageUrl: item.imageUrl || null,
         });
         continue;
       }
