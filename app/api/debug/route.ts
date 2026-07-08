@@ -3,8 +3,12 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const dbUrl = process.env.DATABASE_URL || "";
+  const hostMatch = dbUrl.match(/@([^\/\?]+)/);
+  const host = hostMatch ? hostMatch[1] : "unknown";
+
   const vars = {
-    DATABASE_URL: process.env.DATABASE_URL ? `SET (port: ${process.env.DATABASE_URL.match(/:(\d+)\//)?.[1] || "?"})` : "NOT SET",
+    DATABASE_URL: dbUrl ? `SET (host: ${host})` : "NOT SET",
     DIRECT_URL: process.env.DIRECT_URL ? "SET" : "NOT SET",
     JWT_SECRET: process.env.JWT_SECRET ? "SET" : "NOT SET (using fallback)",
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? "SET" : "NOT SET",
