@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ShieldCheck,
   FileText,
@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { formatNumber } from '@/lib/format';
+import { getComplianceData } from '@/lib/actions/admin';
 
 const StatusBadge = ({ status }: { status: string }) => {
   const colors: Record<string, string> = {
@@ -29,6 +31,12 @@ const VerifiedBadge = ({ status }: { status: string }) => {
 };
 
 export default function AdminCompliance() {
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    getComplianceData().then(setData);
+  }, []);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -43,11 +51,34 @@ export default function AdminCompliance() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="bg-card border-border shadow-sm col-span-full">
-          <CardContent>
-            <div className="text-center py-12 text-muted-foreground text-sm">No compliance data available</div>
-          </CardContent>
-        </Card>
+        {!data ? (
+          <Card className="bg-card border-border shadow-sm col-span-full">
+            <CardContent>
+              <div className="text-center py-12 text-muted-foreground text-sm">No compliance data available</div>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <Card className="bg-card border-border shadow-sm">
+              <CardContent className="py-6 px-6 text-center">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Restaurants</p>
+                <p className="text-2xl font-bold text-foreground mt-1">{formatNumber(data.total)}</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-card border-border shadow-sm">
+              <CardContent className="py-6 px-6 text-center">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Compliant</p>
+                <p className="text-2xl font-bold text-primary mt-1">{formatNumber(data.compliant)}</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-card border-border shadow-sm">
+              <CardContent className="py-6 px-6 text-center">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Action Required</p>
+                <p className="text-2xl font-bold text-accent mt-1">{formatNumber(data.actionRequired)}</p>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       <Card className="bg-card border-border shadow-sm">
@@ -58,7 +89,21 @@ export default function AdminCompliance() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No PAN/VAT data</div>
+          {!data || data.restaurants.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">No PAN/VAT data</div>
+          ) : (
+            <div className="space-y-2">
+              {data.restaurants.slice(0, 10).map((r: any) => (
+                <div key={r.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{r.name}</p>
+                    <p className="text-xs text-muted-foreground">{r.city} | GST: {r.gstNumber || "N/A"}</p>
+                  </div>
+                  <VerifiedBadge status={r.panVatVerified} />
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

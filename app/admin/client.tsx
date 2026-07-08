@@ -1,16 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, TrendingUp, UserPlus, ShoppingCart, Activity } from "lucide-react";
+import { Building2, TrendingUp, UserPlus, ShoppingCart, Activity, CreditCard } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatRelativeTime } from "@/lib/format";
+
+const PLAN_COLORS: Record<string, string> = {
+  free: "#6b7280",
+  basic: "#3b82f6",
+  pro: "#8b5cf6",
+  enterprise: "#ef4444",
+};
 
 export default function AdminClient({
   stats,
   recentOrders,
 }: {
-  stats: { totalRestaurants: number; activeToday: number; newSignups: number; totalOrders: number; todayGMV: number } | null;
+  stats: {
+    totalRestaurants: number;
+    activeToday: number;
+    newSignups: number;
+    totalOrders: number;
+    todayGMV: number;
+    subscriptionDistribution: { name: string; type: string; value: number }[];
+  } | null;
   recentOrders: any[];
 }) {
   const [time, setTime] = useState("");
@@ -54,13 +68,55 @@ export default function AdminClient({
       </div>
 
       {stats && (
-        <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">Today's Revenue</CardTitle></CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-primary">{formatCurrency(stats.todayGMV)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Gross Merchandise Value</p>
-          </CardContent>
-        </Card>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader><CardTitle className="text-sm font-medium">Today's Revenue</CardTitle></CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-primary">{formatCurrency(stats.todayGMV)}</div>
+                <p className="text-xs text-muted-foreground mt-1">Gross Merchandise Value</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  Subscription Distribution
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {stats.subscriptionDistribution.length > 0 ? (
+                  <div className="space-y-3">
+                    {stats.subscriptionDistribution.map((plan) => {
+                      const total = stats.subscriptionDistribution.reduce((s, p) => s + p.value, 0);
+                      const pct = total > 0 ? (plan.value / total) * 100 : 0;
+                      const color = PLAN_COLORS[plan.type] || "#6b7280";
+                      return (
+                        <div key={plan.type}>
+                          <div className="flex items-center justify-between text-sm mb-1">
+                            <span className="font-medium">{plan.name}</span>
+                            <span className="text-muted-foreground">
+                              {plan.value} ({pct.toFixed(1)}%)
+                            </span>
+                          </div>
+                          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{ width: `${pct}%`, backgroundColor: color }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-4 text-sm">No subscription data</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </>
       )}
 
       <Card>

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Search, Send, ChevronDown, Megaphone, BookOpen,
+  Search, Send, ChevronDown, Megaphone, BookOpen, Building2, ShoppingCart, Bell,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,24 +11,22 @@ import { Input } from '@/components/ui/input';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-
-interface Ticket {
-  id: string;
-  subject: string;
-  restaurant: string;
-  plan: string;
-  priority: string;
-  status: string;
-  created: string;
-  assignee: string;
-  healthScore: number;
-  pastTickets: number;
-}
+import { formatNumber, formatRelativeTime, formatDate } from '@/lib/format';
+import { getSupportQuickStats, getRecentNotifications } from '@/lib/actions/admin';
 
 export default function SupportCenter() {
   const [search, setSearch] = useState('');
+  const [stats, setStats] = useState<any>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
-  const filteredTickets: Ticket[] = [];
+  useEffect(() => {
+    getSupportQuickStats().then(setStats);
+    getRecentNotifications().then(setNotifications);
+  }, []);
+
+  const filteredTickets = notifications.filter((n) =>
+    !search || n.title.toLowerCase().includes(search.toLowerCase()) || n.message.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -40,7 +38,7 @@ export default function SupportCenter() {
         <div className="flex items-center gap-2">
           <Badge className="border-primary/30 text-primary bg-primary/5">
             <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
-            4 online
+            Live
           </Badge>
         </div>
       </div>
@@ -53,7 +51,7 @@ export default function SupportCenter() {
                 <div className="relative flex-1 min-w-[200px] max-w-sm">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search tickets by ID, subject, restaurant..."
+                    placeholder="Search notifications by title, message..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-9 bg-muted border-border text-foreground placeholder:text-muted-foreground text-sm h-9"
@@ -64,8 +62,35 @@ export default function SupportCenter() {
           </Card>
 
           <div className="space-y-3">
-            {filteredTickets.length === 0 && (
+            {filteredTickets.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground text-sm">No tickets found matching your filters</div>
+            ) : (
+              filteredTickets.map((n) => (
+                <Card key={n.id} className="bg-card border-border shadow-sm hover:border-primary/30 transition-colors">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3">
+                        <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                          n.type === "ALERT" ? "bg-destructive/10" : n.type === "INFO" ? "bg-info/10" : "bg-accent/10"
+                        }`}>
+                          <Bell className={`h-4 w-4 ${
+                            n.type === "ALERT" ? "text-destructive" : n.type === "INFO" ? "text-info" : "text-accent"
+                          }`} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{n.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <Badge className="border text-[10px] bg-muted text-muted-foreground border-border">{n.type}</Badge>
+                            <span className="text-[10px] text-muted-foreground">{n.restaurant?.name}</span>
+                            <span className="text-[10px] text-muted-foreground">{formatRelativeTime(n.createdAt)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
             )}
           </div>
         </div>
@@ -76,7 +101,47 @@ export default function SupportCenter() {
               <CardTitle className="text-sm font-medium text-foreground">Quick Stats</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground text-sm">No stats available</div>
+              {!stats ? (
+                <div className="text-center py-8 text-muted-foreground text-sm">No stats available</div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-primary" />
+                      <span className="text-sm text-foreground">Total Restaurants</span>
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{formatNumber(stats.totalRestaurants)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-primary" />
+                      <span className="text-sm text-foreground">Active</span>
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{formatNumber(stats.activeRestaurants)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ShoppingCart className="h-4 w-4 text-accent" />
+                      <span className="text-sm text-foreground">Total Orders</span>
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{formatNumber(stats.totalOrders)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ShoppingCart className="h-4 w-4 text-accent" />
+                      <span className="text-sm text-foreground">This Month</span>
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{formatNumber(stats.monthlyOrders)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Bell className="h-4 w-4 text-info" />
+                      <span className="text-sm text-foreground">Recent Notifications</span>
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{formatNumber(stats.totalNotifications)}</span>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

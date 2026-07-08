@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Download, Clock, BarChart3,
 } from 'lucide-react';
@@ -11,6 +11,7 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
+import { getAnalyticsOverview } from '@/lib/actions/admin';
 
 const datePresets = ['7D', '30D', '90D', '1Y'];
 
@@ -29,6 +30,11 @@ const ColoredBadge = ({ label, color }: { label: string; color: string }) => (
 
 export default function AdminAnalytics() {
   const [activePeriod, setActivePeriod] = useState('30D');
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    getAnalyticsOverview(activePeriod).then(setData);
+  }, [activePeriod]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -64,15 +70,32 @@ export default function AdminAnalytics() {
         ))}
       </div>
 
-      {/* KPI Row - Empty State */}
+      {/* KPI Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="bg-card border-border shadow-sm">
-            <CardContent className="py-12">
-              <div className="text-center text-muted-foreground text-sm">No data available</div>
-            </CardContent>
-          </Card>
-        ))}
+        <Card className="bg-card border-border shadow-sm">
+          <CardContent className="py-6 px-6">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Restaurants</p>
+            <p className="text-2xl font-bold text-foreground">{data ? data.totalRestaurants.toLocaleString() : "..."}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border shadow-sm">
+          <CardContent className="py-6 px-6">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Orders</p>
+            <p className="text-2xl font-bold text-foreground">{data ? data.totalOrders.toLocaleString() : "..."}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border shadow-sm">
+          <CardContent className="py-6 px-6">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Revenue</p>
+            <p className="text-2xl font-bold text-foreground">{data ? `NPR ${Math.round(data.totalRevenue).toLocaleString()}` : "..."}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border shadow-sm">
+          <CardContent className="py-6 px-6">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg Order Value</p>
+            <p className="text-2xl font-bold text-foreground">{data ? `NPR ${Math.round(data.avgOrderValue).toLocaleString()}` : "..."}</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Charts Row 1 */}
@@ -81,10 +104,30 @@ export default function AdminAnalytics() {
         <Card className="bg-card border-border shadow-sm">
           <CardHeader>
             <CardTitle className="text-sm font-medium text-foreground">Revenue Over Time</CardTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">Monthly revenue trend for the selected period</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Daily revenue trend for the selected period</p>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12 text-muted-foreground text-sm">No revenue data available</div>
+            {!data || data.revenueOverTime.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground text-sm">No revenue data available</div>
+            ) : (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={data.revenueOverTime}>
+                    <defs>
+                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                    <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} />
+                    <Area type="monotone" dataKey="amount" stroke="#6366f1" fillOpacity={1} fill="url(#colorRev)" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -92,10 +135,25 @@ export default function AdminAnalytics() {
         <Card className="bg-card border-border shadow-sm">
           <CardHeader>
             <CardTitle className="text-sm font-medium text-foreground">Popular Cuisines</CardTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">Order distribution by cuisine type</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Restaurant distribution by cuisine type</p>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12 text-muted-foreground text-sm">No cuisine data available</div>
+            {!data || data.cuisineData.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground text-sm">No cuisine data available</div>
+            ) : (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={data.cuisineData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                      {data.cuisineData.map((entry: any, idx: number) => (
+                        <Cell key={idx} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -109,7 +167,22 @@ export default function AdminAnalytics() {
             <p className="text-xs text-muted-foreground mt-0.5">Distribution across payment gateways</p>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12 text-muted-foreground text-sm">No payment data available</div>
+            {!data || data.paymentData.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground text-sm">No payment data available</div>
+            ) : (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={data.paymentData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                      {data.paymentData.map((entry: any, idx: number) => (
+                        <Cell key={idx} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -120,7 +193,21 @@ export default function AdminAnalytics() {
             <p className="text-xs text-muted-foreground mt-0.5">Revenue contribution by city</p>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12 text-muted-foreground text-sm">No city data available</div>
+            {!data || data.cityData.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground text-sm">No city data available</div>
+            ) : (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.cityData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                    <YAxis type="category" dataKey="city" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} width={80} />
+                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} />
+                    <Bar dataKey="amount" fill="#6366f1" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -131,7 +218,21 @@ export default function AdminAnalytics() {
             <p className="text-xs text-muted-foreground mt-0.5">Order volume by hour of day</p>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12 text-muted-foreground text-sm">No peak hours data available</div>
+            {!data || data.peakHoursData.every((d: any) => d.orders === 0) ? (
+              <div className="text-center py-12 text-muted-foreground text-sm">No peak hours data available</div>
+            ) : (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.peakHoursData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="hour" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} interval={2} />
+                    <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} />
+                    <Bar dataKey="orders" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -146,7 +247,23 @@ export default function AdminAnalytics() {
           <BarChart3 className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No feature adoption data available</div>
+          {!data || data.featureData.every((f: any) => f.adoption === 0) ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">No feature adoption data available</div>
+          ) : (
+            <div className="space-y-4">
+              {data.featureData.map((f: any) => (
+                <div key={f.name} className="space-y-1.5">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-foreground">{f.name}</span>
+                    <span className="text-muted-foreground">{f.adoption.toFixed(0)}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted border border-border overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${f.adoption}%`, backgroundColor: f.fill }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

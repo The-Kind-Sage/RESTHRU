@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Settings,
   ShieldCheck,
@@ -21,6 +21,8 @@ import { Input } from '@/components/ui/input';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { formatNumber, formatDate } from '@/lib/format';
+import { getAdminUsers, getPlatformStats } from '@/lib/actions/admin';
 
 const RoleCard = ({ role }: { role: { name: string; memberCount: number; color: string; permissions: string[] } }) => (
   <div className="p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors">
@@ -52,6 +54,14 @@ const StatusBadge = ({ status }: { status: string }) => {
 };
 
 export default function AdminSettings() {
+  const [adminData, setAdminData] = useState<any>(null);
+  const [stats, setStats] = useState<any>(null);
+
+  useEffect(() => {
+    getAdminUsers().then(setAdminData);
+    getPlatformStats().then(setStats);
+  }, []);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -72,7 +82,15 @@ export default function AdminSettings() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No role data available</div>
+          {!adminData ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">No role data available</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {adminData.roleGroups.map((role: any) => (
+                <RoleCard key={role.name} role={role} />
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -89,7 +107,29 @@ export default function AdminSettings() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No team members</div>
+          {!adminData || adminData.users.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">No team members</div>
+          ) : (
+            <div className="space-y-3">
+              {adminData.users.map((user: any) => (
+                <div key={user.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-sm font-medium text-primary">{user.firstName?.[0]}{user.lastName?.[0]}</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{user.firstName} {user.lastName}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={user.isActive ? "Active" : "Suspended"} />
+                    <span className="text-xs text-muted-foreground">Joined {formatDate(user.createdAt)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -157,7 +197,28 @@ export default function AdminSettings() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No configuration data</div>
+          {!stats ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">No configuration data</div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
+                <p className="text-2xl font-bold text-foreground">{formatNumber(stats.totalRestaurants)}</p>
+                <p className="text-xs text-muted-foreground">Restaurants</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
+                <p className="text-2xl font-bold text-foreground">{formatNumber(stats.totalUsers)}</p>
+                <p className="text-xs text-muted-foreground">Users</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
+                <p className="text-2xl font-bold text-foreground">{formatNumber(stats.totalOrders)}</p>
+                <p className="text-xs text-muted-foreground">Orders</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
+                <p className="text-2xl font-bold text-foreground">{formatNumber(stats.totalStaff)}</p>
+                <p className="text-xs text-muted-foreground">Staff</p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

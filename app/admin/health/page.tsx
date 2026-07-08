@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Activity, Server, Database, AlertTriangle, Wifi, Zap,
   Clock, CheckCircle, XCircle, Bell, Smartphone, Mail,
@@ -18,6 +18,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { formatCurrency, formatNumber, formatDate, formatRelativeTime, formatPercentage } from '@/lib/format';
+import { getHealthData } from '@/lib/actions/admin';
 
 const statusColors: Record<string, string> = {
   Operational: 'bg-primary/10 text-primary border-primary/30',
@@ -42,6 +43,11 @@ export default function SystemHealth() {
     sms: true,
     slack: false,
   });
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    getHealthData().then(setData);
+  }, []);
 
   const toggleChannel = (channel: keyof typeof alertChannels) => {
     setAlertChannels((prev) => ({ ...prev, [channel]: !prev[channel] }));
@@ -70,7 +76,33 @@ export default function SystemHealth() {
           <CardTitle className="text-sm font-medium text-foreground">System Status</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No data available</div>
+          {!data ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">No data available</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 border border-border">
+                <Server className="h-8 w-8 text-primary" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Restaurants</p>
+                  <p className="text-lg font-bold text-foreground">{formatNumber(data.totalRestaurants)}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 border border-border">
+                <Activity className="h-8 w-8 text-primary" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Active</p>
+                  <p className="text-lg font-bold text-foreground">{formatNumber(data.activeRestaurants)}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 border border-border">
+                <Database className="h-8 w-8 text-primary" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Orders</p>
+                  <p className="text-lg font-bold text-foreground">{formatNumber(data.totalOrders)}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -80,7 +112,29 @@ export default function SystemHealth() {
           <p className="text-xs text-muted-foreground mt-0.5">Current status of all platform services</p>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No data available</div>
+          {!data ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">No data available</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { name: "API Server", status: "Operational", icon: Server },
+                { name: "Database", status: "Operational", icon: Database },
+                { name: "Order Processing", status: data.totalOrders > 0 ? "Operational" : "Degraded", icon: Activity },
+                { name: "Notifications", status: "Operational", icon: Bell },
+              ].map((svc) => {
+                const Icon = svc.icon;
+                return (
+                  <div key={svc.name} className="p-4 rounded-lg bg-muted/50 border border-border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Icon className="h-4 w-4 text-primary" />
+                      <span className="text-xs text-foreground">{svc.name}</span>
+                    </div>
+                    <Badge className={`border text-[10px] ${statusColors[svc.status] || ''}`}>{svc.status}</Badge>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -91,7 +145,28 @@ export default function SystemHealth() {
             <p className="text-xs text-muted-foreground mt-0.5">Top 5 error-prone restaurants</p>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12 text-muted-foreground text-sm">No data available</div>
+            {!data || data.errorRates.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground text-sm">No data available</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Restaurant</TableHead>
+                    <TableHead>Error Count</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.errorRates.map((e: any) => (
+                    <TableRow key={e.id}>
+                      <TableCell className="text-foreground">{e.name}</TableCell>
+                      <TableCell>
+                        <Badge className="border text-[10px] bg-destructive/10 text-destructive border-destructive/30">{e.errors}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
@@ -183,7 +258,29 @@ export default function SystemHealth() {
           </Badge>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No data available</div>
+          {!data || data.recentAlerts.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">No data available</div>
+          ) : (
+            <div className="space-y-3">
+              {data.recentAlerts.map((alert: any) => (
+                <div key={alert.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+                  <div className={`h-2 w-2 rounded-full mt-1.5 ${
+                    alert.type === "error" || alert.type === "ERROR" ? "bg-destructive" : "bg-primary"
+                  }`} />
+                  <div className="flex-1">
+                    <p className="text-sm text-foreground">{alert.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <Badge className={`border text-[10px] ${alertTypeColors[alert.type === "error" ? "error" : "info"]}`}>
+                        {alert.type}
+                      </Badge>
+                      <span className="text-[10px] text-muted-foreground">{alert.restaurant}</span>
+                      <span className="text-[10px] text-muted-foreground">{formatRelativeTime(alert.createdAt)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

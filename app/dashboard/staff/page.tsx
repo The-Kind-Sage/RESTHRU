@@ -74,20 +74,17 @@ interface StaffMember {
 const mockStaffMembers: StaffMember[] = [];
 
 const roleColors: { [key: string]: string } = {
-  Waiter: 'bg-primary-light text-primary',
-  Kitchen:
-    'bg-accent-light text-warning',
-  Cashier:
-    'bg-primary-light text-primary',
-  Manager:
-    'bg-primary-light text-primary',
+  WAITER: 'bg-primary-light text-primary',
+  KITCHEN: 'bg-accent-light text-warning',
+  CASHIER: 'bg-primary-light text-primary',
+  MANAGER: 'bg-primary-light text-primary',
 };
 
 const avatarBgColors: { [key: string]: string } = {
-  Waiter: 'bg-primary',
-  Kitchen: 'bg-accent',
-  Cashier: 'bg-primary',
-  Manager: 'bg-primary',
+  WAITER: 'bg-primary',
+  KITCHEN: 'bg-accent',
+  CASHIER: 'bg-primary',
+  MANAGER: 'bg-primary',
 };
 
 function StaffAvatar({
@@ -99,11 +96,15 @@ function StaffAvatar({
 }) {
   return (
     <div
-      className={`${avatarBgColors[role] || 'bg-muted0'} h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold text-sm`}
+      className={`${avatarBgColors[role] || 'bg-muted'} h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold text-sm`}
     >
       {initials}
     </div>
   );
+}
+
+function formatRole(role: string): string {
+  return role.charAt(0) + role.slice(1).toLowerCase();
 }
 
 function StaffDetailDialog({ staff }: { staff: StaffMember }) {
@@ -119,7 +120,7 @@ function StaffDetailDialog({ staff }: { staff: StaffMember }) {
           <TableCell className="font-medium">{staff.name}</TableCell>
           <TableCell>
             <Badge className={roleColors[staff.role]}>
-              {staff.role}
+              {formatRole(staff.role)}
             </Badge>
           </TableCell>
           <TableCell className="text-sm">{staff.phone}</TableCell>
@@ -173,7 +174,7 @@ function StaffDetailDialog({ staff }: { staff: StaffMember }) {
             <div>
               <p className="text-sm text-muted-foreground">Role</p>
               <Badge className={roleColors[staff.role]}>
-                {staff.role}
+                {formatRole(staff.role)}
               </Badge>
             </div>
             <div>
@@ -303,7 +304,7 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
       onAdded({
         id: Date.now(),
         name: formData.fullName,
-        role: formData.role,
+        role: formData.role.toUpperCase(),
         phone: formData.phone,
         email: formData.email || '',
         status: 'Off Duty',
@@ -316,8 +317,9 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
       toast.success(`${formData.fullName} added successfully`);
       setIsOpen(false);
       resetForm();
-    } catch {
-      toast.error('An unexpected error occurred');
+    } catch (err) {
+      console.error('Add staff error:', err);
+      toast.error(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -501,25 +503,29 @@ export default function StaffPage() {
       setIsLoading(false);
       if (result.error) { toast.error('Failed to load staff: ' + result.error); return; }
       if (result.data) {
-        setStaffMembers(result.data.map((s: any) => ({
-          id:         s.id,
-          name:       s.firstName + ' ' + (s.lastName || ''),
-          role:       s.role,
-          phone:      s.phoneNumber || '',
-          email:      s.email || '',
-          status:     s.status === 'on_duty' ? 'On Duty' : 'Off Duty',
-          joinedDate: s.createdAt ? s.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
-          salary:     s.salary || 0,
-          avatar:     (s.firstName || '').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || 'ST',
-          avatarUrl:  null,
-        })));
+        setStaffMembers(result.data.map((s: any) => {
+          const role = s.role?.toUpperCase() || '';
+          const firstName = s.firstName || '';
+          return {
+            id:         s.id,
+            name:       firstName + ' ' + (s.lastName || ''),
+            role,
+            phone:      s.phoneNumber || '',
+            email:      s.email || '',
+            status:     s.status === 'ACTIVE' ? 'On Duty' : 'Off Duty',
+            joinedDate: s.createdAt ? new Date(s.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            salary:     s.salary || 0,
+            avatar:     (firstName.split(' ')[0]?.[0] || 'S').toUpperCase() + ((firstName.split(' ')[1]?.[0] || 'T').toUpperCase()),
+            avatarUrl:  null,
+          };
+        }));
       }
     });
   }, [restaurantId]);
 
   const onDutyCount  = staffMembers.filter(s => s.status === 'On Duty').length;
-  const waiterCount  = staffMembers.filter(s => s.role === 'waiter').length;
-  const kitchenCount = staffMembers.filter(s => s.role === 'kitchen').length;
+  const waiterCount  = staffMembers.filter(s => s.role === 'WAITER').length;
+  const kitchenCount = staffMembers.filter(s => s.role === 'KITCHEN').length;
 
   const filteredStaff = staffMembers.filter(staff => {
     const matchesSearch =
@@ -579,7 +585,7 @@ export default function StaffPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {mockStaffMembers.length}
+                {staffMembers.length}
               </div>
             </CardContent>
           </Card>
@@ -598,7 +604,7 @@ export default function StaffPage() {
                 {onDutyCount}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {Math.round((onDutyCount / mockStaffMembers.length) * 100)}% of
+                {staffMembers.length > 0 ? Math.round((onDutyCount / staffMembers.length) * 100) : 0}% of
                 total
               </p>
             </CardContent>

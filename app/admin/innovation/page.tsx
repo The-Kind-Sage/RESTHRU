@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   FlaskConical,
   Lightbulb,
@@ -8,6 +8,10 @@ import {
   FileText,
   BarChart3,
   ThumbsUp,
+  Building2,
+  ShoppingCart,
+  TrendingUp,
+  UtensilsCrossed,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +19,8 @@ import { Button } from '@/components/ui/button';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { formatNumber } from '@/lib/format';
+import { getInnovationData } from '@/lib/actions/admin';
 
 const ImpactBadge = ({ impact }: { impact: string }) => {
   const colors: Record<string, string> = {
@@ -45,6 +51,12 @@ const FeatureStatusBadge = ({ status }: { status: string }) => {
 };
 
 export default function AdminInnovation() {
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    getInnovationData().then(setData);
+  }, []);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -65,7 +77,26 @@ export default function AdminInnovation() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No insights available</div>
+          {!data ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">No insights available</div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {data.insights.map((insight: any, idx: number) => {
+                const icons = [Building2, ShoppingCart, TrendingUp, UtensilsCrossed];
+                const Icon = icons[idx];
+                return (
+                  <Card key={idx} className="bg-card border-border shadow-sm">
+                    <CardContent className="py-4 px-4 text-center">
+                      <Icon className="h-5 w-5 text-primary mx-auto mb-2" />
+                      <p className="text-lg font-bold text-foreground">{insight.value}</p>
+                      <p className="text-[11px] text-muted-foreground">{insight.title}</p>
+                      <span className={`text-[10px] ${insight.trendUp ? 'text-primary' : 'text-destructive'}`}>{insight.trend}</span>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -78,7 +109,20 @@ export default function AdminInnovation() {
         </CardHeader>
         <CardContent>
           <p className="text-xs text-muted-foreground mb-4">Churn risk prediction — restaurants at risk by category</p>
-          <div className="text-center py-12 text-muted-foreground text-sm">No prediction data available</div>
+          {!data ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">No prediction data available</div>
+          ) : (
+            <div className="space-y-3">
+              {data.benchmarks.map((b: any) => (
+                <div key={b.type} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
+                  <span className="text-sm text-foreground">{b.type}</span>
+                  <Badge className="border text-[10px] bg-muted text-muted-foreground border-border">
+                    {formatNumber(b.count)} restaurants
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -135,6 +179,16 @@ export default function AdminInnovation() {
               <FileText className="h-4 w-4 mr-1.5" /> Generate PDF
             </Button>
           </div>
+          {data && data.benchmarks.length > 0 && (
+            <div className="mt-4 space-y-2">
+              {data.benchmarks.map((b: any) => (
+                <div key={b.type} className="flex items-center justify-between p-2 rounded bg-muted/30 border border-border text-xs">
+                  <span className="text-foreground">{b.type}</span>
+                  <span className="text-muted-foreground">{formatNumber(b.count)} restaurants</span>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   CreditCard, TrendingUp, Wallet, Users, ArrowUpRight, ArrowDownRight,
   RefreshCw, Mail, Plus, Search, Clock, AlertTriangle, CheckCircle2, XCircle,
@@ -21,6 +21,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { formatCurrency, formatNumber, formatDate, formatRelativeTime, formatPercentage } from '@/lib/format';
+import { getSubscriptionsOverview, getFailedPayments } from '@/lib/actions/admin';
 
 function KpiCard({ card }: { card: { title: string; value: string; subtitle?: string; icon: React.ComponentType<{ className?: string; strokeWidth?: number }>; trend?: string; trendUp?: boolean } }) {
   const Icon = card.icon;
@@ -78,8 +79,35 @@ function PlanBadge({ plan }: { plan: string }) {
 
 export default function AdminSubscriptions() {
   const [promoSearch, setPromoSearch] = useState('');
+  const [data, setData] = useState<any>(null);
+  const [failedPayments, setFailedPayments] = useState<any[]>([]);
+
+  useEffect(() => {
+    getSubscriptionsOverview().then(setData);
+    getFailedPayments().then(setFailedPayments);
+  }, []);
 
   const filteredPromos = [];
+
+  if (!data) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Subscription & Billing</h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage subscriptions, invoices, and promotional codes</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
+              Auto-billing active
+            </Badge>
+          </div>
+        </div>
+        <div className="text-center py-12 text-muted-foreground text-sm">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -96,18 +124,16 @@ export default function AdminSubscriptions() {
         </div>
       </div>
 
-      {/* KPI Cards - Empty State */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <Card key={i} className="bg-card border-border shadow-sm">
-            <CardContent className="flex items-center justify-center h-[120px]">
-              <p className="text-muted-foreground text-sm">No data</p>
-            </CardContent>
-          </Card>
-        ))}
+        <KpiCard card={{ title: "Total Subscriptions", value: formatNumber(data.totalSubscriptions), icon: CreditCard }} />
+        <KpiCard card={{ title: "Active", value: formatNumber(data.activeSubscriptions), subtitle: `${formatPercentage(1 - data.churnRate)} active rate`, icon: TrendingUp, trend: "Active", trendUp: true }} />
+        <KpiCard card={{ title: "Inactive", value: formatNumber(data.inactiveSubscriptions), subtitle: `${formatPercentage(data.churnRate)} churn`, icon: Users, trend: "Churned", trendUp: false }} />
+        <KpiCard card={{ title: "Monthly Recurring Revenue", value: formatCurrency(Math.round(data.mrr)), icon: Wallet }} />
+        <KpiCard card={{ title: "Churn Rate", value: formatPercentage(data.churnRate), icon: Percent }} />
       </div>
 
-      {/* MRR Trend Chart - Empty State */}
+      {/* MRR Trend Chart */}
       <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -120,11 +146,31 @@ export default function AdminSubscriptions() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No trend data available</div>
+          {data.mrrTrend.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">No trend data available</div>
+          ) : (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data.mrrTrend}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                  <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} />
+                  <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Upcoming Renewals - Empty State */}
+      {/* Upcoming Renewals */}
       <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -136,18 +182,43 @@ export default function AdminSubscriptions() {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No renewals data available</div>
+          {data.upcomingRenewals.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">No renewals data available</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Restaurant</TableHead>
+                  <TableHead>Plan</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>End Date</TableHead>
+                  <TableHead>Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.upcomingRenewals.map((s: any) => (
+                  <TableRow key={s.id}>
+                    <TableCell className="text-foreground">{s.restaurant.name}</TableCell>
+                    <TableCell><PlanBadge plan={s.plan.name} /></TableCell>
+                    <TableCell><StatusBadge status={s.status.toLowerCase()} /></TableCell>
+                    <TableCell className="text-muted-foreground text-xs">{formatDate(s.endDate)}</TableCell>
+                    <TableCell className="text-foreground font-medium">{formatCurrency(s.plan.monthlyPrice)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
-      {/* Failed Payments - Empty State */}
+      {/* Failed Payments */}
       <Card className="bg-card border-border shadow-sm border-l-2 border-l-[#DB3A3A]">
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-destructive" />
             <div>
               <CardTitle className="text-sm font-medium text-foreground">Failed Payments</CardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">0 payments require attention</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{failedPayments.length} payments require attention</p>
             </div>
           </div>
           <Button variant="outline" size="sm" className="border-border text-destructive hover:text-foreground">
@@ -155,11 +226,34 @@ export default function AdminSubscriptions() {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No failed payments</div>
+          {failedPayments.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">No failed payments</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Restaurant</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Method</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {failedPayments.map((p: any) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="text-foreground">{p.restaurant}</TableCell>
+                    <TableCell className="text-destructive font-medium">{formatCurrency(p.amount)}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">{formatDate(p.date)}</TableCell>
+                    <TableCell><StatusBadge status="failed" /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
-      {/* Invoice Management - Empty State */}
+      {/* Invoice Management */}
       <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -180,14 +274,44 @@ export default function AdminSubscriptions() {
             </TabsList>
             {['all', 'paid', 'pending', 'overdue'].map((tab) => (
               <TabsContent key={tab} value={tab} className="mt-0">
-                <div className="text-center py-12 text-muted-foreground text-sm">No invoices</div>
+                {data.allSubscriptions.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground text-sm">No invoices</div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Restaurant</TableHead>
+                        <TableHead>Plan</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Start Date</TableHead>
+                        <TableHead>End Date</TableHead>
+                        <TableHead>Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.allSubscriptions
+                        .filter((s: any) => tab === "all" || s.status.toLowerCase() === tab)
+                        .slice(0, 10)
+                        .map((s: any) => (
+                          <TableRow key={s.id}>
+                            <TableCell className="text-foreground">{s.restaurant.name}</TableCell>
+                            <TableCell><PlanBadge plan={s.plan.name} /></TableCell>
+                            <TableCell><StatusBadge status={s.status.toLowerCase()} /></TableCell>
+                            <TableCell className="text-muted-foreground text-xs">{formatDate(s.startDate)}</TableCell>
+                            <TableCell className="text-muted-foreground text-xs">{formatDate(s.endDate)}</TableCell>
+                            <TableCell className="text-foreground font-medium">{formatCurrency(s.plan.monthlyPrice)}</TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                )}
               </TabsContent>
             ))}
           </Tabs>
         </CardContent>
       </Card>
 
-      {/* Promo Code Management - Empty State */}
+      {/* Promo Code Management */}
       <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
