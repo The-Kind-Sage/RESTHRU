@@ -69,8 +69,9 @@ export async function createSessionFromSupabaseLogin(userId: string, email: stri
 
 export async function login(username: string, password: string, redirectTo?: string) {
   try {
+    // Allow login by email OR username
     const user = await prisma.user.findFirst({
-      where: { username, isActive: true },
+      where: { OR: [{ username }, { email: username }], isActive: true },
     });
 
     if (!user || !user.passwordHash) {
@@ -133,27 +134,95 @@ export async function createRestaurant(data: {
       },
     });
 
-    // Also create in Supabase for backwards compatibility
-    const { supabase } = await import('@/lib/supabase');
-    if (supabase) {
-      const slug = data.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-        + '-' + Math.random().toString(36).slice(2, 7);
-      await supabase.from('restaurants').insert([{
-        id: restaurant.id,
-        owner_id: data.ownerId,
-        name: data.name,
-        slug,
-        type: data.type,
-        address: data.address || '',
-        city: data.city || '',
-        phone: data.phone || '',
-        num_tables: data.numTables || 0,
-      }]).select('id').maybeSingle();
-    }
-
     return { restaurantId: restaurant.id };
   } catch (err: any) {
     return { error: err?.message || 'Failed to create restaurant' };
+  }
+}
+
+export async function register(data: {
+  email: string;
+  password: string;
+  fullName: string;
+  phone?: string;
+  restaurantName: string;
+  restaurantType: string;
+  address?: string;
+  city?: string;
+  restaurantPhone?: string;
+  planId?: string;
+}) {
+  try {
+    const existing = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existing) {
+      return { error: "An account with this email already exists" };
+    }
+
+    const passwordHash = await bcrypt.hash(data.password, 12);
+    const nameParts = data.fullName.trim().split(" ");
+
+    const user = await prisma.user.create({
+      data: {
+        email: data.email,
+        username: generateUsername(data.email),
+        passwordHash,
+        firstName: nameParts[0] || "",
+        lastName: nameParts.slice(1).join(" ") || "",
+        phoneNumber: data.phone || "",
+        role: "STAFF",
+        isActive: true,
+      },
+    });
+
+    const restaurant = await prisma.restaurant.create({
+      data: {
+        ownerId: user.id,
+        name: data.restaurantName,
+        type: data.restaurantType.toUpperCase().replace(/\s+/g, '_'),
+        street: data.address || '',
+        city: data.city || '',
+        phoneNumber: data.restaurantPhone || '',
+        totalTables: 0,
+        isActive: true,
+      },
+    });
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { restaurantId: restaurant.id },
+    });
+
+    if (data.planId) {
+      const plan = await prisma.plan.findUnique({ where: { id: data.planId } });
+      if (plan) {
+        await prisma.subscription.create({
+          data: {
+            restaurantId: restaurant.id,
+            planId: plan.id,
+            status: "ACTIVE",
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+            billingCycle: "MONTHLY",
+          },
+        });
+      }
+    }
+
+    await createSession({
+      id: user.id,
+      username: user.username || "",
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      restaurantId: restaurant.id,
+    });
+
+    return { success: true, redirectTo: "/dashboard" };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("register error:", message, err instanceof Error ? err.stack : "");
+    return { error: "Failed to create account" };
   }
 }
 

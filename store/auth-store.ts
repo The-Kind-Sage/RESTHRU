@@ -61,43 +61,42 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
   initialize: async () => {
     set({ isLoading: true });
     try {
-      if (!supabase) {
-        set({ isLoading: false });
-        return;
+      // Try Supabase session first (if configured)
+      let session: any = null;
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        session = data?.session;
       }
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
 
       if (session?.user) {
-        // Pull the real owner name from the restaurants table
-        const { data: restaurantData } = await supabase
-          .from('restaurants')
-          .select('id, name, owner_id')
-          .eq('owner_id', session.user.id)
-          .maybeSingle();
+        let restaurantData = null;
+        if (supabase) {
+          const { data } = await supabase
+            .from('restaurants')
+            .select('id, name, owner_id')
+            .eq('owner_id', session.user.id)
+            .maybeSingle();
+          restaurantData = data;
+        }
 
-        // The user's full name is stored in auth metadata set during signUp
         const meta = session.user.user_metadata || {};
         const rawName: string = meta.full_name || session.user.email || '';
         const parts = rawName.trim().split(' ');
         const firstName = parts[0] || '';
         const lastName = parts.slice(1).join(' ') || '';
 
-        const user: User = {
-          id: session.user.id,
-          email: session.user.email || '',
-          firstName,
-          lastName,
-          phoneNumber: meta.phone || '',
-          role: 'STAFF',
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-
         set({
-          user,
+          user: {
+            id: session.user.id,
+            email: session.user.email || '',
+            firstName,
+            lastName,
+            phoneNumber: meta.phone || '',
+            role: 'STAFF',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
           restaurant: restaurantData
             ? { id: restaurantData.id, name: restaurantData.name } as any
             : null,
@@ -130,8 +129,9 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
             isLoading: false,
           });
         } else {
-          // Clear any stale Supabase tokens
-          await supabase.auth.signOut();
+          if (supabase) {
+            await supabase.auth.signOut();
+          }
           set({
             user: null,
             isAuthenticated: false,

@@ -27,8 +27,7 @@ import {
   FormItem,
   FormMessage,
 } from '@/components/ui/form';
-import { supabase } from '@/lib/supabase';
-import { createSessionFromSupabaseLogin } from '@/lib/actions/auth';
+import { login } from '@/lib/actions/auth';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -55,30 +54,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      if (!supabase) {
-        toast.error('Supabase is not configured. Please set environment variables.');
-        return;
-      }
-      const { data: signInData, error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
-      if (error) {
-        toast.error(error.message || 'Failed to sign in');
-        return;
-      }
-
-      const user = signInData?.user;
-      if (!user) {
-        toast.error('Could not retrieve user session');
-        return;
-      }
-
-      const result = await createSessionFromSupabaseLogin(
-        user.id,
-        user.email || '',
-        user.user_metadata?.full_name as string | undefined
-      );
+      const result = await login(data.email, data.password);
 
       if (result?.error) {
         toast.error(result.error);
@@ -87,7 +63,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 
       toast.success('Welcome back to Resthru!');
       onOpenChange(false);
-      router.push('/dashboard');
+      router.push(result.redirectTo || '/dashboard');
     } catch {
       toast.error('An unexpected error occurred');
     } finally {
