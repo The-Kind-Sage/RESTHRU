@@ -69,6 +69,26 @@ function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+function normalizeMenuSection(section?: string | null): string {
+  const raw = (section || "").trim();
+  const normalized = raw.toLowerCase();
+
+  if (["appetizer", "appetizers", "starter", "starters", "small plate", "small plates", "hors d'oeuvre", "hors doeuvre"].includes(normalized)) {
+    return "Appetizers";
+  }
+  if (["main course", "main courses", "mains", "entree", "entrees", "signature", "special", "specials", "plat", "plats", "grill", "grills"].includes(normalized)) {
+    return "Main Courses";
+  }
+  if (["dessert", "desserts", "sweet", "sweets", "cake", "cakes", "pastry", "pastries", "ice cream", "ice-cream", "pudding", "puddings", "bakery"].includes(normalized)) {
+    return "Desserts";
+  }
+  if (["beverage", "beverages", "drink", "drinks", "cocktail", "cocktails", "wine", "wines", "tea", "coffee", "juice"].includes(normalized)) {
+    return "Beverages";
+  }
+
+  return raw || "Appetizers";
+}
+
 export async function getBookMenuData(restaurantId: string) {
   try {
     const restaurant = await prisma.restaurant.findUnique({
@@ -80,7 +100,7 @@ export async function getBookMenuData(restaurantId: string) {
 
     if (!restaurant) return null;
 
-    const categories = await prisma.category.findMany({
+    const categoryRecords = await prisma.category.findMany({
       where: { restaurantId, isActive: true },
       orderBy: { displayOrder: "asc" },
     });
@@ -101,9 +121,6 @@ export async function getBookMenuData(restaurantId: string) {
     const addressParts = [restaurant.street, restaurant.city, restaurant.state].filter(Boolean);
     const address = addressParts.length > 0 ? addressParts.join(", ") : "Address not set";
 
-    const catMap = new Map<string, typeof categories[0]>();
-    for (const c of categories) catMap.set(c.id, c);
-
     const grouped = new Map<string, {
       id: string;
       name: string;
@@ -121,20 +138,10 @@ export async function getBookMenuData(restaurantId: string) {
       }[];
     }>();
 
+    const drinks: Array<{ id: string; name: string; description?: string; price: number; group: "wine" | "cocktail"; featured: boolean }> = [];
+
     for (const item of items) {
-      const cat = catMap.get(item.categoryId);
-      if (!cat) continue;
-
-      if (!grouped.has(cat.id)) {
-        grouped.set(cat.id, {
-          id: cat.id,
-          name: cat.name,
-          slug: slugify(cat.name),
-          items: [],
-        });
-      }
-
-      const g = grouped.get(cat.id)!;
+      const sectionName = normalizeMenuSection(item.menuSection);
       const details: string[] = [];
 
       if (item.calories) details.push(`${item.calories} kcal`);
@@ -142,39 +149,62 @@ export async function getBookMenuData(restaurantId: string) {
       if (item.spiceLevel && item.spiceLevel !== "NONE") details.push(item.spiceLevel.replace(/_/g, " ").toLowerCase());
       if (item.allergens?.length) details.push(`contains ${item.allergens.join(", ")}`);
 
+      if (sectionName === "Beverages") {
+        drinks.push({
+          id: item.id,
+          name: item.name,
+          description: item.description || undefined,
+          price: Number(item.price),
+          group: drinks.length % 2 === 0 ? "wine" : "cocktail",
+          featured: false,
+        });
+        continue;
+      }
+
+      if (!grouped.has(sectionName)) {
+        grouped.set(sectionName, {
+          id: sectionName,
+          name: sectionName,
+          slug: slugify(sectionName),
+          items: [],
+        });
+      }
+
+      const g = grouped.get(sectionName)!;
       g.items.push({
         id: item.id,
         name: item.name,
         description: item.description || "",
         price: Number(item.price),
         imageUrl: item.imageUrl,
-        category: slugify(cat.name),
+        category: slugify(sectionName),
         tags: buildTags(item.foodType, item.spiceLevel),
         details,
         featured: false,
       });
     }
 
-    const catEntries = Array.from(grouped.values());
-
-    const drinksCat = catEntries.find(
-      (c) => c.slug.includes("drink") || c.slug.includes("beverage") || c.slug.includes("beer") || c.slug.includes("wine") || c.slug.includes("cocktail") || c.name.toLowerCase().includes("drink") || c.name.toLowerCase().includes("beverage")
-    );
-    const drinksItems = drinksCat?.items ?? [];
-
-    const normalCats = catEntries.filter((c) => c.id !== drinksCat?.id);
-
-    const drinkGroups: ("wine" | "cocktail")[] = ["wine", "cocktail"];
-    const drinks = drinksItems.length > 0
-      ? drinksItems.map((item, i) => ({
-          id: item.id,
-          name: item.name,
-          description: item.description || undefined,
-          price: item.price,
-          group: drinkGroups[i % 2],
-          featured: item.featured,
-        }))
-      : [];
+    const sectionOrder = ["Appetizers", "Main Courses", "Desserts"];
+    const orderedSections = sectionOrder
+      .map((sectionName) => Array.from(grouped.values()).find((entry) => entry.name === sectionName))
+      .filter(Boolean) as Array<{
+        id: string;
+        name: string;
+        slug: string;
+        items: {
+          id: string;
+          name: string;
+          description: string;
+          price: number;
+          imageUrl: string | null;
+          category: string;
+          tags: string[];
+          details: string[];
+          featured: boolean;
+        }[];
+      }>;
+    const remainingSections = Array.from(grouped.values()).filter((entry) => !sectionOrder.includes(entry.name));
+    const categories = [...orderedSections, ...remainingSections];
 
     return {
       restaurant: {
@@ -187,7 +217,7 @@ export async function getBookMenuData(restaurantId: string) {
         website: restaurant.websiteUrl || "Website not set",
         social: restaurant.email ? `@${restaurant.email.split("@")[0]}` : "",
       },
-      categories: normalCats,
+      categories,
       drinks,
     };
   } catch {

@@ -212,6 +212,7 @@ model MenuItem {
   imageUrl      String?  @map("image_url")
   price         Float
   discountPrice Float?   @map("discount_price")
+  menuSection   String?  @map("menu_section")
   itemType      String   @default("FOOD") @map("item_type")
   foodType      String   @default("VEG") @map("food_type")
   subType       String   @default("VEG") @map("sub_type")

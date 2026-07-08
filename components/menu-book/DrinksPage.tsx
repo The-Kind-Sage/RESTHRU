@@ -9,7 +9,7 @@ export function DrinksPage({ drinks }: { drinks: DrinkItemData[] }) {
 
   return (
     <MenuPage pageNumber={5}>
-      <SectionHeader title="Cellar" kicker="Wine · Cocktails" />
+      <SectionHeader title="Beverages" kicker="Wine · Cocktails" />
 
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-8">
         <div>

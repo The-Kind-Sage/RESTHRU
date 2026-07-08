@@ -1,4 +1,4 @@
-const LABELS = ["Cover", "Appetizers", "Mains", "Desserts", "Cellar", "Contact"];
+const LABELS = ["Cover", "Appetizers", "Main Courses", "Desserts", "Beverages", "Contact"];
 
 export function PageNav({
   current,

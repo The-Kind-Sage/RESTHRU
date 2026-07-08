@@ -99,6 +99,7 @@ export async function addMenuItem(data: {
   description?: string | null;
   price: number;
   discountPrice?: number | null;
+  menuSection?: string | null;
   itemType?: string;
   foodType?: string;
   subType?: string;
@@ -123,6 +124,7 @@ export async function addMenuItem(data: {
         description: data.description || null,
         price: data.price,
         discountPrice: data.discountPrice || null,
+        menuSection: data.menuSection?.trim() || null,
         itemType: (data.itemType || "food").toUpperCase(),
         foodType: (data.foodType || "veg").toUpperCase(),
         subType: (data.subType || "veg").toUpperCase(),
@@ -153,6 +155,7 @@ export async function updateMenuItem(id: string, data: Record<string, any>) {
       description: "description",
       price: "price",
       discountPrice: "discountPrice",
+      menuSection: "menuSection",
       categoryId: "categoryId",
       itemType: "itemType",
       foodType: "foodType",

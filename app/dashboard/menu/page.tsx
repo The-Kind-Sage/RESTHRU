@@ -68,6 +68,7 @@ interface MenuItem {
   description: string;
   price: number;
   discountPrice?: number;
+  menuSection: string;
   itemType: 'food' | 'item' | 'beverage';
   foodType: 'veg' | 'non_veg' | 'vegan' | 'fish';
   subType: 'veg' | 'chicken' | 'buff' | 'pork' | 'mutton';
@@ -104,6 +105,7 @@ interface MenuSettings {
 const EMPTY_FORM: Partial<MenuItem> = {
   nameEn: '', nameNp: '', description: '',
   price: 0, discountPrice: undefined,
+  menuSection: 'Appetizers',
   itemType: 'food',
   foodType: 'veg', subType: 'veg',
   spiceLevel: 'none', prepTime: 15,
@@ -174,6 +176,7 @@ export default function MenuPage() {
           id: i.id, nameEn: i.name, nameNp: undefined,
           category: i.categoryId, description: i.description || '',
           price: i.price, discountPrice: i.discountPrice,
+          menuSection: i.menuSection || 'Appetizers',
           itemType: (i.itemType || 'FOOD').toLowerCase() as MenuItem['itemType'],
           foodType: (i.foodType || 'VEG').toLowerCase() as MenuItem['foodType'],
           subType: (i.subType || 'VEG').toLowerCase() as MenuItem['subType'],
@@ -244,6 +247,7 @@ export default function MenuPage() {
           description: formData.description || null,
           price: formData.price || 0,
           discountPrice: formData.discountPrice || null,
+          menuSection: formData.menuSection || 'Appetizers',
           itemType: formData.itemType || 'food',
           foodType: formData.foodType || 'veg',
           subType: formData.subType || 'veg',
@@ -268,6 +272,7 @@ export default function MenuPage() {
           description: formData.description || null,
           price: formData.price || 0,
           discountPrice: formData.discountPrice || null,
+          menuSection: formData.menuSection || 'Appetizers',
           itemType: formData.itemType || 'food',
           foodType: formData.foodType || 'veg',
           subType: formData.subType || 'veg',
@@ -287,6 +292,7 @@ export default function MenuPage() {
           category: formData.category || selectedCategory,
           description: formData.description || '', price: formData.price || 0,
           discountPrice: formData.discountPrice,
+          menuSection: result.data.menuSection || formData.menuSection || 'Appetizers',
           itemType: (result.data.itemType || 'FOOD').toLowerCase() as MenuItem['itemType'],
           foodType: (result.data.foodType || 'VEG').toLowerCase() as MenuItem['foodType'],
           subType: (result.data.subType || 'VEG').toLowerCase() as MenuItem['subType'],
@@ -677,6 +683,17 @@ export default function MenuPage() {
                 <Select value={formData.category || selectedCategory} onValueChange={v => setFormData({ ...formData, category: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.emoji} {c.name}</SelectItem>)}</SelectContent>
+                </Select></div>
+
+              <div><label className="text-sm font-medium mb-1.5 block">Menu Page</label>
+                <Select value={formData.menuSection || 'Appetizers'} onValueChange={v => setFormData({ ...formData, menuSection: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Appetizers">Appetizers</SelectItem>
+                    <SelectItem value="Main Courses">Main Courses</SelectItem>
+                    <SelectItem value="Desserts">Desserts</SelectItem>
+                    <SelectItem value="Beverages">Beverages</SelectItem>
+                  </SelectContent>
                 </Select></div>
 
               <div><label className="text-sm font-medium mb-1.5 block">Description</label>
