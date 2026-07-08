@@ -25,8 +25,8 @@ import {
   SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/auth-store';
+import { getTables, addTable, updateTableStatus, updateTablePosition, deleteTable } from '@/lib/actions/tables';
 import { FLOORS } from '@/lib/constants';
 
 interface Table {
@@ -230,9 +230,8 @@ function TableDetailDialog({ table, restaurantId, isOpen, onClose, onStatusChang
   const statusLabel = table.status.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
   const handleStatusChange = async () => {
-    if (!supabase) return;
-    const { error } = await supabase.from('tables').update({ status: newStatus }).eq('id', table.id);
-    if (error) { toast.error(error.message); return; }
+    const result = await updateTableStatus(table.id, newStatus);
+    if (result.error) { toast.error(result.error); return; }
     onStatusChange(table.id, newStatus);
     toast.success('Table status updated');
     onClose();
@@ -295,7 +294,7 @@ function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultF
   }, [isOpen, existingCount, defaultFloor]);
 
   const handleAdd = async () => {
-    if (!tableNumber || !supabase) return;
+    if (!tableNumber) return;
     setIsSaving(true);
 
     const GRID_COLS = 5;
@@ -305,33 +304,32 @@ function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultF
     const x = 50 + col * 150;
     const y = 50 + row * 150;
 
-    const { data, error } = await supabase.from('tables').insert([{
-      restaurant_id: restaurantId,
-      table_number: parseInt(tableNumber),
-      name: tableName || null,
+    const result = await addTable({
+      restaurantId,
+      tableNumber: parseInt(tableNumber),
+      name: tableName || undefined,
       capacity: parseInt(capacity),
       shape,
       floor,
-      status: 'available',
-      position_x: x,
-      position_y: y,
-    }]).select('*').single();
+      positionX: x,
+      positionY: y,
+    });
 
     setIsSaving(false);
-    if (error) { toast.error(error.message); return; }
+    if (result.error) { toast.error(result.error); return; }
 
     onAdded({
-      id: data.id,
-      number: data.table_number,
-      name: data.name,
-      capacity: data.capacity,
-      shape: data.shape,
-      status: data.status,
-      floor: data.floor,
-      position_x: data.position_x,
-      position_y: data.position_y,
+      id: result.data!.id,
+      number: parseInt(tableNumber),
+      name: tableName,
+      capacity: parseInt(capacity),
+      shape,
+      status: 'available',
+      floor,
+      position_x: x,
+      position_y: y,
     });
-    toast.success(`Table ${data.table_number} added`);
+    toast.success(`Table ${tableNumber} added`);
     onClose();
     setTableNumber(''); setTableName(''); setCapacity('4'); setShape('square'); setFloor('Ground Floor');
   };
@@ -409,11 +407,11 @@ export default function TableMapPage() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleDeleteTable = async () => {
-    if (!deleteTarget || !supabase) return;
+    if (!deleteTarget) return;
     setIsDeleting(true);
-    const { error } = await supabase.from('tables').delete().eq('id', deleteTarget.id);
+    const result = await deleteTable(deleteTarget.id);
     setIsDeleting(false);
-    if (error) { toast.error(error.message); return; }
+    if (result.error) { toast.error(result.error); return; }
     setTables(prev => prev.filter(t => t.id !== deleteTarget.id));
     toast.success(`Table ${deleteTarget.number} deleted`);
     setDeleteTarget(null);
@@ -426,30 +424,26 @@ export default function TableMapPage() {
     // Debounce the DB write
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      if (!supabase) return;
-      const { error } = await supabase
-        .from('tables')
-        .update({ position_x: Math.round(x), position_y: Math.round(y) })
-        .eq('id', id);
-      if (error) {
-        console.error('Table position save error:', error);
-        toast.error(`Position save failed: ${error.message}`);
+      const result = await updateTablePosition(id, Math.round(x), Math.round(y));
+      if (result.error) {
+        console.error('Table position save error:', result.error);
+        toast.error(`Position save failed: ${result.error}`);
       }
     }, 600);
   };
 
   useEffect(() => {
-    if (!supabase || !restaurantId) return;
+    if (!restaurantId) return;
     setIsLoading(true);
-    supabase.from('tables').select('*').eq('restaurant_id', restaurantId).then(({ data, error }) => {
+    getTables(restaurantId).then(result => {
       setIsLoading(false);
-      if (error) { toast.error('Failed to load tables'); return; }
-      if (data) setTables(data.map((t: any) => ({
-        id: t.id, number: t.table_number, name: t.name,
-        capacity: t.capacity, shape: t.shape || 'square',
-        status: t.status || 'available', floor: t.floor || 'Ground Floor',
-        position_x: t.position_x || 50, position_y: t.position_y || 50,
-        qr_code_url: t.qr_code_url,
+      if (result.error) { toast.error(result.error); return; }
+      if (result.data) setTables(result.data.map((t: any) => ({
+        id: t.id, number: t.tableNumber, name: t.name,
+        capacity: t.capacity, shape: (t.shape || 'SQUARE').toLowerCase(),
+        status: (t.status || 'AVAILABLE').toLowerCase(), floor: t.floor || 'Ground Floor',
+        position_x: t.positionX || 50, position_y: t.positionY || 50,
+        qr_code_url: t.qrCodeUrl,
       })));
     });
   }, [restaurantId]);

@@ -11,9 +11,12 @@ import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Bell, Loader2, Plus, Trash2, Upload } from 'lucide-react';
 import { uploadImage } from '@/lib/upload';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
+import {
+  getRestaurant, getSettingsData, getActiveSubscription,
+  updateRestaurant, upsertSettings, updateRestaurantDirect, updateCoverPhoto, setUserPassword,
+} from '@/lib/actions/settings';
 
 interface RestaurantData {
   name: string;
@@ -74,7 +77,7 @@ const DEFAULT_NOTIF = {
 };
 
 export default function SettingsPage() {
-  const { restaurant: authRestaurant } = useAuthStore();
+  const { restaurant: authRestaurant, user } = useAuthStore();
   const restaurantId = authRestaurant?.id;
 
   const [activeTab, setActiveTab] = useState('general');
@@ -114,7 +117,7 @@ export default function SettingsPage() {
   });
 
   const loadData = useCallback(async () => {
-    if (!supabase || !restaurantId) {
+    if (!restaurantId) {
       setIsLoading(false);
       return;
     }
@@ -122,32 +125,32 @@ export default function SettingsPage() {
     setIsLoading(true);
     try {
       const [restRes, setRes, subRes] = await Promise.all([
-        supabase.from('restaurants').select('*').eq('id', restaurantId).single(),
-        supabase.from('restaurant_settings').select('*').eq('restaurant_id', restaurantId).single(),
-        supabase.from('subscriptions').select('*, plans(name, price, features)').eq('restaurant_id', restaurantId).eq('status', 'active').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        getRestaurant(restaurantId),
+        getSettingsData(restaurantId),
+        getActiveSubscription(restaurantId),
       ]);
 
       if (restRes.data) {
-        const r = restRes.data;
-        const rawH = r.operating_hours ?? {};
+        const r = restRes.data as any;
+        const rawH = r.operatingHours ?? {};
         const hours = Object.fromEntries(
           DAYS.map((day) => [day, rawH[day] ?? rawH[day.toLowerCase()] ?? { open: '07:00', close: '22:00', enabled: true }])
         );
         setRestaurant({
           name: r.name ?? '',
-          address: r.address ?? '',
-          phone: r.phone ?? '',
+          address: r.street ?? '',
+          phone: r.phoneNumber ?? '',
           email: r.email ?? '',
-          cover_url: r.cover_url ?? '',
-          pan_number: r.pan_number ?? '',
-          vat_registered: r.vat_registered ?? false,
-          vat_number: r.vat_number ?? '',
+          cover_url: r.bannerImageUrl ?? '',
+          pan_number: r.panNumber ?? '',
+          vat_registered: r.vatRegistered ?? false,
+          vat_number: r.vatNumber ?? '',
           operating_hours: hours,
           language: r.language ?? 'en',
           currency: r.currency ?? 'NPR',
           timezone: r.timezone ?? 'Asia/Kathmandu',
         });
-        if (r.cover_url) setCoverPreview(r.cover_url);
+        if (r.bannerImageUrl) setCoverPreview(r.bannerImageUrl);
       }
 
       if (setRes.data) {
@@ -167,11 +170,11 @@ export default function SettingsPage() {
       if (subRes.data) {
         const s = subRes.data as any;
         setSubscription({
-          plan_name: s.plans?.name ?? 'Free',
-          price: s.plans?.price ?? 0,
+          plan_name: s.plan?.name ?? 'Free',
+          price: s.plan?.monthlyPrice ?? 0,
           status: s.status ?? 'active',
-          current_period_end: s.current_period_end ?? null,
-          features: s.plans?.features ?? [],
+          current_period_end: s.endDate ?? null,
+          features: s.plan?.features ?? [],
         });
       }
     } catch (error) {
@@ -185,68 +188,64 @@ export default function SettingsPage() {
     loadData();
   }, [loadData]);
 
-  const upsert = async (patch: object) => {
-    if (!supabase || !restaurantId) return false;
-    const { error } = await supabase.from('restaurant_settings').upsert({ restaurant_id: restaurantId, ...patch }, { onConflict: 'restaurant_id' });
-    if (error) {
-      toast.error(error.message);
-      return false;
-    }
-    return true;
-  };
-
   const saveGeneral = async () => {
-    if (!supabase || !restaurantId) return;
+    if (!restaurantId) return;
     setIsSaving(true);
-    const { error } = await supabase.from('restaurants').update({
+    const result = await updateRestaurant(restaurantId, {
       name: restaurant.name,
-      address: restaurant.address,
-      phone: restaurant.phone,
+      street: restaurant.address,
+      phoneNumber: restaurant.phone,
       email: restaurant.email,
-      pan_number: restaurant.pan_number,
-      vat_registered: restaurant.vat_registered,
-      vat_number: restaurant.vat_number,
-      operating_hours: restaurant.operating_hours,
-      language: restaurant.language,
-    }).eq('id', restaurantId);
+    });
     setIsSaving(false);
-    error ? toast.error(error.message) : toast.success('General settings saved');
+    result.error ? toast.error(result.error) : toast.success('General settings saved');
   };
 
   const saveBilling = async () => {
+    if (!restaurantId) return;
     setIsSaving(true);
-    if (await upsert({ vat_rate: settings.vat_rate, bill_footer_message: settings.bill_footer_message, vat_on_receipt: settings.vat_on_receipt })) {
-      toast.success('Billing settings saved');
-    }
+    const result = await upsertSettings(restaurantId, {
+      vat_rate: settings.vat_rate,
+      bill_footer_message: settings.bill_footer_message,
+      vat_on_receipt: settings.vat_on_receipt,
+    });
+    result.error ? toast.error(result.error) : toast.success('Billing settings saved');
     setIsSaving(false);
   };
 
   const savePayments = async () => {
+    if (!restaurantId) return;
     setIsSaving(true);
-    if (await upsert({ esewa_config: settings.esewa_config, khalti_config: settings.khalti_config, fonepay_config: settings.fonepay_config })) {
-      toast.success('Payment settings saved');
-    }
+    const result = await upsertSettings(restaurantId, {
+      esewa_config: settings.esewa_config,
+      khalti_config: settings.khalti_config,
+      fonepay_config: settings.fonepay_config,
+    });
+    result.error ? toast.error(result.error) : toast.success('Payment settings saved');
     setIsSaving(false);
   };
 
   const savePrinters = async () => {
+    if (!restaurantId) return;
     setIsSaving(true);
-    if (await upsert({ printer_config: settings.printer_config })) {
-      toast.success('Printer settings saved');
-    }
+    const result = await upsertSettings(restaurantId, {
+      printer_config: settings.printer_config,
+    });
+    result.error ? toast.error(result.error) : toast.success('Printer settings saved');
     setIsSaving(false);
   };
 
   const saveNotifications = async () => {
+    if (!restaurantId) return;
     setIsSaving(true);
-    if (await upsert({ notification_preferences: settings.notification_preferences })) {
-      toast.success('Notification settings saved');
-    }
+    const result = await upsertSettings(restaurantId, {
+      notification_preferences: settings.notification_preferences,
+    });
+    result.error ? toast.error(result.error) : toast.success('Notification settings saved');
     setIsSaving(false);
   };
 
   const changePassword = async () => {
-    if (!supabase) return;
     if (!newPwd) {
       toast.error('Enter a new password');
       return;
@@ -255,16 +254,13 @@ export default function SettingsPage() {
       toast.error('Passwords do not match');
       return;
     }
-
     setIsSavingPwd(true);
-    const { error } = await supabase.auth.updateUser({ password: newPwd });
+    const result = await setUserPassword(user?.id || '', newPwd);
     setIsSavingPwd(false);
-
-    if (error) {
-      toast.error(error.message);
+    if (result.error) {
+      toast.error(result.error);
       return;
     }
-
     toast.success('Password updated');
     setNewPwd('');
     setConfirmPwd('');
@@ -273,10 +269,14 @@ export default function SettingsPage() {
   const handleCoverUpload = async (file: File) => {
     setIsUploadingCover(true);
     const url = await uploadImage(file, 'covers');
-    if (url && supabase) {
-      await supabase.from('restaurants').update({ cover_url: url }).eq('id', restaurantId!);
-      setRestaurant((prev) => ({ ...prev, cover_url: url }));
-      toast.success('Cover uploaded');
+    if (url) {
+      const result = await updateCoverPhoto(restaurantId!, url);
+      if (!result.error) {
+        setRestaurant((prev) => ({ ...prev, cover_url: url }));
+        toast.success('Cover uploaded');
+      } else {
+        toast.error('Cover upload failed');
+      }
     } else {
       toast.error('Cover upload failed');
     }

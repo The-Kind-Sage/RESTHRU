@@ -53,9 +53,9 @@ import {
 } from '@/components/ui/table';
 import { formatDate, formatCurrency } from '@/lib/format';
 import { uploadImage } from '@/lib/upload';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
+import { getStaff, addStaff } from '@/lib/actions/staff';
 
 interface StaffMember {
   id: number | string;
@@ -252,7 +252,7 @@ function StaffDetailDialog({ staff }: { staff: StaffMember }) {
   );
 }
 
-function AddStaffDialog({ onAdded }: { onAdded: (member: StaffMember) => void }) {
+function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdded: (member: StaffMember) => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -274,7 +274,7 @@ function AddStaffDialog({ onAdded }: { onAdded: (member: StaffMember) => void })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supabase) { toast.error('Supabase not configured'); return; }
+    if (!restaurantId) { toast.error('Restaurant not found'); return; }
     if (formData.password && formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -282,35 +282,22 @@ function AddStaffDialog({ onAdded }: { onAdded: (member: StaffMember) => void })
 
     setIsLoading(true);
     try {
-      // Upload avatar if provided
       let avatar_url: string | null = null;
       if (avatarFile) {
         avatar_url = await uploadImage(avatarFile, 'avatars');
         if (!avatar_url) toast.error('Avatar upload failed — continuing without photo');
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { toast.error('Not authenticated'); return; }
-
-      // Get the restaurant id for this owner
-      const { data: restaurant } = await supabase
-        .from('restaurants')
-        .select('id')
-        .eq('owner_id', session.user.id)
-        .single();
-
-      if (!restaurant) { toast.error('Restaurant not found'); return; }
-
-      const { error } = await supabase.from('staff').insert([{
-        restaurant_id: restaurant.id,
+      const result = await addStaff({
+        restaurantId,
         name: formData.fullName,
         role: formData.role,
         phone: formData.phone,
-        email: formData.email || null,
-        ...(avatar_url && { avatar_url }),
-      }]);
+        email: formData.email || undefined,
+        avatarUrl: avatar_url,
+      });
 
-      if (error) { toast.error(error.message || 'Failed to add staff'); return; }
+      if (result.error) { toast.error(result.error || 'Failed to add staff'); return; }
 
       const initials = formData.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
       onAdded({
@@ -507,33 +494,27 @@ export default function StaffPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
 
-  // Load staff from Supabase on mount
   useEffect(() => {
-    if (!supabase || !restaurantId) return;
+    if (!restaurantId) return;
     setIsLoading(true);
-    supabase
-      .from('staff')
-      .select('*')
-      .eq('restaurant_id', restaurantId)
-      .order('joined_at', { ascending: false })
-      .then(({ data, error }) => {
-        setIsLoading(false);
-        if (error) { toast.error('Failed to load staff: ' + error.message); return; }
-        if (data) {
-          setStaffMembers(data.map((s: any) => ({
-            id:         s.id,
-            name:       s.name,
-            role:       s.role,
-            phone:      s.phone || '',
-            email:      s.email || '',
-            status:     s.status === 'on_duty' ? 'On Duty' : 'Off Duty',
-            joinedDate: s.joined_at ? s.joined_at.split('T')[0] : new Date().toISOString().split('T')[0],
-            salary:     s.salary || 0,
-            avatar:     s.name ? s.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'ST',
-            avatarUrl:  s.avatar_url || null,
-          })));
-        }
-      });
+    getStaff(restaurantId).then((result) => {
+      setIsLoading(false);
+      if (result.error) { toast.error('Failed to load staff: ' + result.error); return; }
+      if (result.data) {
+        setStaffMembers(result.data.map((s: any) => ({
+          id:         s.id,
+          name:       s.firstName + ' ' + (s.lastName || ''),
+          role:       s.role,
+          phone:      s.phoneNumber || '',
+          email:      s.email || '',
+          status:     s.status === 'on_duty' ? 'On Duty' : 'Off Duty',
+          joinedDate: s.createdAt ? s.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+          salary:     s.salary || 0,
+          avatar:     (s.firstName || '').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || 'ST',
+          avatarUrl:  null,
+        })));
+      }
+    });
   }, [restaurantId]);
 
   const onDutyCount  = staffMembers.filter(s => s.status === 'On Duty').length;
@@ -577,7 +558,7 @@ export default function StaffPage() {
             <Badge variant="secondary" className="text-base px-3 py-1">
               {staffMembers.length} Staff Members
             </Badge>
-            <AddStaffDialog onAdded={member => setStaffMembers(prev => [member, ...prev])} />
+            <AddStaffDialog restaurantId={restaurantId} onAdded={member => setStaffMembers(prev => [member, ...prev])} />
           </div>
         </div>
       </motion.div>

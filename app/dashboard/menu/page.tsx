@@ -26,9 +26,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { FOOD_TYPES, FOOD_SUB_TYPES, SPICE_LEVELS, ALLERGENS } from '@/lib/constants';
 import { uploadImage } from '@/lib/upload';
-import { supabase } from '@/lib/supabase';
-import { addCategory, updateCategory, deleteCategory as deleteCategoryAction, toggleCategoryActive as toggleCategoryActiveAction } from '@/lib/actions/menu';
 import { useAuthStore } from '@/store/auth-store';
+import {
+  addCategory, updateCategory, deleteCategory as deleteCategoryAction,
+  toggleCategoryActive as toggleCategoryActiveAction,
+  getMenuItems, addMenuItem, updateMenuItem,
+  deleteMenuItem as deleteMenuItemAction,
+  toggleMenuItemAvailable as toggleMenuItemAvailableAction,
+  getCategories, getMenuSettings, updateMenuSettings,
+} from '@/lib/actions/menu';
 
 const ITEM_TYPES = [
   { value: 'food', label: 'Food', emoji: '🍽️', description: 'Cooked dishes, meals, snacks' },
@@ -142,22 +148,22 @@ export default function MenuPage() {
     name: '', nameNp: '', emoji: '📂', sortOrder: 0, active: true,
   });
 
-  // ── Load categories & items from Supabase ──────────────────────────────────
+  // ── Load categories & items from server actions ───────────────────────────
   const loadData = useCallback(async () => {
-    if (!supabase || !restaurantId) return;
+    if (!restaurantId) return;
     setIsLoadingItems(true);
     try {
-      const [catRes, itemRes, restRes] = await Promise.all([
-          supabase.from('categories').select('*').eq('restaurant_id', restaurantId).order('display_order'),
-        supabase.from('menu_items').select('*').eq('restaurant_id', restaurantId).order('created_at'),
-        supabase.from('restaurants').select('menu_bg_url,menu_custom_url').eq('id', restaurantId).single(),
+      const [catRes, itemRes, settingRes] = await Promise.all([
+        getCategories(restaurantId),
+        getMenuItems(restaurantId),
+        getMenuSettings(restaurantId),
       ]);
 
       if (catRes.data) {
         const cats: Category[] = catRes.data.map((c: any) => ({
-          id: c.id, name: c.name, nameNp: c.name_np,
-          emoji: c.icon || '📂', itemCount: 0,
-          active: c.is_active, sortOrder: c.display_order ?? c.sort_order ?? 0,
+          id: c.id, name: c.name, nameNp: undefined,
+          emoji: '📂', itemCount: 0,
+          active: c.isActive, sortOrder: c.displayOrder ?? 0,
         }));
         setCategories(cats);
         if (!selectedCategory && cats.length > 0) setSelectedCategory(cats[0].id);
@@ -166,27 +172,29 @@ export default function MenuPage() {
       if (itemRes.data) {
         const mapped: MenuItem[] = itemRes.data.map((i: any) => ({
           id: i.id, nameEn: i.name, nameNp: undefined,
-          category: i.category_id, description: i.description || '',
-          price: i.price, discountPrice: i.discount_price,
-          itemType: i.item_type || 'food',
-          foodType: i.food_type || 'veg', subType: i.sub_type || 'veg',
-          spiceLevel: i.spice_level || 'none', prepTime: i.prep_time || 15,
-          available: i.is_available, isPopular: false,
+          category: i.categoryId, description: i.description || '',
+          price: i.price, discountPrice: i.discountPrice,
+          itemType: (i.itemType || 'FOOD').toLowerCase() as MenuItem['itemType'],
+          foodType: (i.foodType || 'VEG').toLowerCase() as MenuItem['foodType'],
+          subType: (i.subType || 'VEG').toLowerCase() as MenuItem['subType'],
+          spiceLevel: (i.spiceLevel || 'NONE').toLowerCase() as MenuItem['spiceLevel'],
+          prepTime: i.prepTime || 15,
+          available: i.isAvailable, isPopular: false,
           isNew: false, allergens: i.allergens || [],
-          variants: [], emoji: '🍽️', image: i.image_url,
-          temperature: i.temperature || 'cold',
+          variants: [], emoji: '🍽️', image: i.imageUrl,
+          temperature: (i.temperature || 'COLD').toLowerCase() as MenuItem['temperature'],
           volume: i.volume || undefined,
-          sizeOptions: i.size_options || DEFAULT_SIZE_OPTIONS,
+          sizeOptions: (i.sizeOptions || DEFAULT_SIZE_OPTIONS) as unknown as SizeOption[],
         }));
         setItems(mapped);
       }
 
-      if (restRes.data) {
+      if (settingRes.data) {
         setMenuSettings({
-          bgUrl: restRes.data.menu_bg_url || null,
-          customMenuUrl: restRes.data.menu_custom_url || null,
+          bgUrl: settingRes.data.menuBgUrl || null,
+          customMenuUrl: settingRes.data.menuCustomUrl || null,
         });
-        setBgPreview(restRes.data.menu_bg_url || null);
+        setBgPreview(settingRes.data.menuBgUrl || null);
       }
     } finally {
       setIsLoadingItems(false);
@@ -220,59 +228,77 @@ export default function MenuPage() {
   };
 
   const handleSaveItem = async () => {
-    if (!formData.nameEn || !restaurantId || !supabase) return;
+    if (!formData.nameEn || !restaurantId) return;
     setIsSavingItem(true);
     try {
-      let image_url = formData.image;
+      let imageUrl = formData.image;
       if (imageFile) {
         const url = await uploadImage(imageFile, 'menu-items');
-        if (url) image_url = url;
+        if (url) imageUrl = url;
       }
 
-      const payload: Record<string, any> = {
-        restaurant_id: restaurantId,
-        category_id:   formData.category || selectedCategory,
-        name:          formData.nameEn,
-        description:   formData.description || null,
-        price:         formData.price || 0,
-        discount_price: formData.discountPrice || null,
-        item_type:     formData.itemType || 'food',
-        food_type:     formData.foodType || 'veg',
-        sub_type:      formData.subType  || 'veg',
-        spice_level:   formData.spiceLevel || 'none',
-        prep_time:     formData.prepTime || 15,
-        is_available:  formData.available ?? true,
-        allergens:     formData.allergens || [],
-        image_url,
-        temperature:   formData.temperature || null,
-        volume:        formData.volume || null,
-        size_options:  formData.sizeOptions ? JSON.parse(JSON.stringify(formData.sizeOptions)) : null,
-      };
-
       if (editingItem) {
-        const { error } = await supabase.from('menu_items').update(payload).eq('id', editingItem.id);
-        if (error) { toast.error(error.message); return; }
+        const result = await updateMenuItem(editingItem.id, {
+          name: formData.nameEn,
+          categoryId: formData.category || selectedCategory,
+          description: formData.description || null,
+          price: formData.price || 0,
+          discountPrice: formData.discountPrice || null,
+          itemType: formData.itemType || 'food',
+          foodType: formData.foodType || 'veg',
+          subType: formData.subType || 'veg',
+          spiceLevel: formData.spiceLevel || 'none',
+          prepTime: formData.prepTime || 15,
+          isAvailable: formData.available ?? true,
+          allergens: formData.allergens || [],
+          imageUrl,
+          temperature: formData.temperature || null,
+          volume: formData.volume || null,
+          sizeOptions: formData.sizeOptions || null,
+        });
+        if (result.error) { toast.error(result.error); return; }
         setItems(items.map(i => i.id === editingItem.id
-          ? { ...editingItem, ...formData, image: image_url || undefined } : i));
+          ? { ...editingItem, ...formData, image: imageUrl || undefined } : i));
         toast.success('Item updated');
       } else {
-        const { data, error } = await supabase.from('menu_items').insert([payload]).select('id').single();
-        if (error) { toast.error(error.message); return; }
+        const result = await addMenuItem({
+          restaurantId,
+          categoryId: formData.category || selectedCategory,
+          name: formData.nameEn!,
+          description: formData.description || null,
+          price: formData.price || 0,
+          discountPrice: formData.discountPrice || null,
+          itemType: formData.itemType || 'food',
+          foodType: formData.foodType || 'veg',
+          subType: formData.subType || 'veg',
+          spiceLevel: formData.spiceLevel || 'none',
+          prepTime: formData.prepTime || 15,
+          isAvailable: formData.available ?? true,
+          allergens: formData.allergens || [],
+          imageUrl,
+          temperature: formData.temperature || null,
+          volume: formData.volume || null,
+          sizeOptions: formData.sizeOptions || null,
+        });
+        if (result.error) { toast.error(result.error); return; }
+        if (!result.data) return;
         const newItem: MenuItem = {
-          id: data.id, nameEn: formData.nameEn!, nameNp: formData.nameNp,
+          id: result.data.id, nameEn: formData.nameEn!, nameNp: formData.nameNp,
           category: formData.category || selectedCategory,
           description: formData.description || '', price: formData.price || 0,
           discountPrice: formData.discountPrice,
-          itemType: formData.itemType || 'food',
-          foodType: formData.foodType || 'veg',
-          subType: formData.subType || 'veg', spiceLevel: formData.spiceLevel || 'none',
-          prepTime: formData.prepTime || 15, available: formData.available ?? true,
+          itemType: (result.data.itemType || 'FOOD').toLowerCase() as MenuItem['itemType'],
+          foodType: (result.data.foodType || 'VEG').toLowerCase() as MenuItem['foodType'],
+          subType: (result.data.subType || 'VEG').toLowerCase() as MenuItem['subType'],
+          spiceLevel: (result.data.spiceLevel || 'NONE').toLowerCase() as MenuItem['spiceLevel'],
+          prepTime: result.data.prepTime || 15,
+          available: result.data.isAvailable ?? true,
           isPopular: formData.isPopular ?? false, isNew: formData.isNew ?? false,
-          allergens: formData.allergens || [], variants: [],
-          emoji: '🍽️', image: image_url || undefined,
-          temperature: formData.temperature || undefined,
-          volume: formData.volume || undefined,
-          sizeOptions: formData.sizeOptions || [],
+          allergens: result.data.allergens || [], variants: [],
+          emoji: '🍽️', image: imageUrl || undefined,
+          temperature: (result.data.temperature || 'COLD').toLowerCase() as MenuItem['temperature'],
+          volume: result.data.volume || undefined,
+          sizeOptions: (result.data.sizeOptions || []) as unknown as SizeOption[],
         };
         setItems([...items, newItem]);
         setCategories(categories.map(c =>
@@ -284,14 +310,16 @@ export default function MenuPage() {
   };
 
   const handleDeleteItem = async (id: string) => {
-    if (supabase) await supabase.from('menu_items').delete().eq('id', id);
+    const result = await deleteMenuItemAction(id);
+    if (result.error) { toast.error(result.error); return; }
     setItems(items.filter(i => i.id !== id));
     setCategories(categories.map(c =>
       c.id === selectedCategory ? { ...c, itemCount: Math.max(0, c.itemCount - 1) } : c));
   };
 
   const handleToggleAvailable = async (id: string, val: boolean) => {
-    if (supabase) await supabase.from('menu_items').update({ is_available: val }).eq('id', id);
+    const result = await toggleMenuItemAvailableAction(id, val);
+    if (result.error) { toast.error(result.error); return; }
     setItems(items.map(i => i.id === id ? { ...i, available: val } : i));
   };
 
@@ -364,7 +392,7 @@ export default function MenuPage() {
 
   // ── Edit Menu (appearance) save ───────────────────────────────────────────
   const handleSaveMenuAppearance = async () => {
-    if (!supabase || !restaurantId) return;
+    if (!restaurantId) return;
     setIsSavingMenu(true);
     try {
       const updates: Record<string, string | null> = {};
@@ -377,7 +405,8 @@ export default function MenuPage() {
         if (url) { updates.menu_custom_url = url; setMenuSettings(s => ({ ...s, customMenuUrl: url })); }
       }
       if (Object.keys(updates).length > 0) {
-        await supabase.from('restaurants').update(updates).eq('id', restaurantId);
+        const result = await updateMenuSettings(restaurantId, updates);
+        if (result.error) { toast.error(result.error); return; }
         toast.success('Menu appearance saved');
       }
       setIsEditMenuOpen(false);

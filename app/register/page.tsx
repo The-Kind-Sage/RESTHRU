@@ -28,8 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { supabase } from '@/lib/supabase';
-import { createSessionFromSupabaseLogin } from '@/lib/actions/auth';
+import { register } from '@/lib/actions/auth';
 import { NEPAL_CITIES, RESTAURANT_TYPES, PLANS } from '@/lib/constants';
 
 const step1Schema = z.object({
@@ -126,75 +125,21 @@ export default function RegisterPage() {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      if (!supabase) {
-        toast.error('Supabase is not configured. Please set environment variables.');
-        return;
-      }
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const result = await register({
         email: formData.step1.email!,
         password: formData.step1.password!,
-        options: { data: { full_name: formData.step1.fullName, phone: formData.step1.phone } },
-      });
-
-      if (authError) {
-        toast.error(authError.message || 'Failed to create account');
-        return;
-      }
-
-      if (!authData.user) {
-        toast.error('Failed to create account');
-        return;
-      }
-
-      let authUser = authData.user;
-
-      if (!authData.session) {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: formData.step1.email!,
-          password: formData.step1.password!,
-        });
-
-        if (signInError) {
-          toast.error('Account created but could not sign in automatically. Please go to the login page.');
-          return;
-        }
-
-        if (signInData?.user) {
-          authUser = signInData.user;
-        }
-      }
-
-      // Create restaurant via server action so it's in the Prisma-managed table
-      const { createRestaurant } = await import('@/lib/actions/auth');
-      const restResult = await createRestaurant({
-        ownerId: authData.user.id,
-        name: formData.step2.restaurantName!,
-        type: formData.step2.restaurantType || 'CASUAL_DINING',
+        fullName: formData.step1.fullName!,
+        phone: formData.step1.phone,
+        restaurantName: formData.step2.restaurantName!,
+        restaurantType: formData.step2.restaurantType || 'CASUAL_DINING',
         address: formData.step2.address,
         city: formData.step2.city,
-        phone: formData.step2.restaurantPhone,
+        restaurantPhone: formData.step2.restaurantPhone,
+        planId: formData.step3.selectedPlan,
       });
 
-      if (restResult?.error) {
-        toast.error(restResult.error);
-        return;
-      }
-
-      if (restResult?.restaurantId && formData.step3.selectedPlan) {
-        await supabase.from('subscriptions').insert([{
-          restaurantId: restResult.restaurantId,
-          planId: formData.step3.selectedPlan,
-          status: 'active',
-        }]);
-      }
-
-      const sessionResult = await createSessionFromSupabaseLogin(
-        authData.user.id,
-        authUser.email || '',
-        formData.step1.fullName
-      );
-      if (sessionResult?.error) {
-        toast.error('Account created but session could not be established.');
+      if (result?.error) {
+        toast.error(result.error);
         return;
       }
 

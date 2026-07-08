@@ -1,5 +1,4 @@
 import { Suspense } from 'react';
-import { cookies } from 'next/headers';
 import {
   getDashboardStats,
   getRecentOrders,
@@ -11,36 +10,13 @@ import DashboardClient from './client';
 import {
   DashboardPageSkeleton,
 } from '@/components/dashboard/skeletons';
-import { createClient } from '@supabase/supabase-js';
+import { getSession } from '@/lib/auth';
 
-// Resolve the real restaurantId server-side from the Supabase session cookie
-// so we never fall back to the hardcoded "demo" string.
+// Resolve the real restaurantId from the JWT session
 async function getRestaurantId(): Promise<string | null> {
   try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('sb-access-token')?.value
-      ?? cookieStore.get(`sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`)?.value;
-
-    if (!accessToken || !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      return null;
-    }
-
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      { global: { headers: { Authorization: `Bearer ${accessToken}` } } }
-    );
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-
-    const { data: restaurant } = await supabase
-      .from('restaurants')
-      .select('id')
-      .eq('owner_id', user.id)
-      .single();
-
-    return restaurant?.id ?? null;
+    const session = await getSession();
+    return session?.restaurantId ?? null;
   } catch {
     return null;
   }

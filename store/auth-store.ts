@@ -2,7 +2,6 @@
 
 import { create } from 'zustand';
 import { User, Restaurant } from '@/types';
-import { supabase } from '@/lib/supabase';
 import { logout as clearServerSession, getRestaurantFromSession, getUserFromSession } from '@/lib/actions/auth';
 
 interface AuthStoreState {
@@ -41,9 +40,6 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
   logout: async () => {
     set({ isLoading: true });
     try {
-      if (supabase) {
-        await supabase.auth.signOut();
-      }
       await clearServerSession();
       set({
         user: null,
@@ -61,38 +57,19 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
   initialize: async () => {
     set({ isLoading: true });
     try {
-      // Try Supabase session first (if configured)
-      let session: any = null;
-      if (supabase) {
-        const { data } = await supabase.auth.getSession();
-        session = data?.session;
-      }
-
-      if (session?.user) {
-        let restaurantData = null;
-        if (supabase) {
-          const { data } = await supabase
-            .from('restaurants')
-            .select('id, name, owner_id')
-            .eq('owner_id', session.user.id)
-            .maybeSingle();
-          restaurantData = data;
-        }
-
-        const meta = session.user.user_metadata || {};
-        const rawName: string = meta.full_name || session.user.email || '';
-        const parts = rawName.trim().split(' ');
-        const firstName = parts[0] || '';
-        const lastName = parts.slice(1).join(' ') || '';
-
+      const [restaurantData, userData] = await Promise.all([
+        getRestaurantFromSession(),
+        getUserFromSession(),
+      ]);
+      if (userData) {
         set({
           user: {
-            id: session.user.id,
-            email: session.user.email || '',
-            firstName,
-            lastName,
-            phoneNumber: meta.phone || '',
-            role: 'STAFF',
+            id: userData.id,
+            email: userData.email,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            role: userData.role as User['role'],
+            phoneNumber: '',
             isActive: true,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -104,46 +81,14 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
           isLoading: false,
         });
       } else {
-        // No Supabase session — try custom JWT auth
-        const [restaurantData, userData] = await Promise.all([
-          getRestaurantFromSession(),
-          getUserFromSession(),
-        ]);
-        if (userData) {
-          set({
-            user: {
-              id: userData.id,
-              email: userData.email,
-              firstName: userData.firstName,
-              lastName: userData.lastName,
-              role: userData.role as User['role'],
-              phoneNumber: '',
-              isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            },
-            restaurant: restaurantData
-              ? { id: restaurantData.id, name: restaurantData.name } as any
-              : null,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-        } else {
-          if (supabase) {
-            await supabase.auth.signOut();
-          }
-          set({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-          });
-        }
+        set({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
       }
     } catch (error) {
       console.error('Auth initialization error:', error);
-      if (supabase) {
-        await supabase.auth.signOut();
-      }
       set({
         user: null,
         isAuthenticated: false,

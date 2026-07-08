@@ -1,15 +1,15 @@
 'use client';
 
 import { create } from 'zustand';
-import { supabase } from '@/lib/supabase';
+import { getNotifications, markNotificationRead, markAllNotificationsRead } from '@/lib/actions/notifications';
 
 export interface AppNotification {
   id: string;
   type: 'order' | 'stock' | 'bill' | 'system';
   title: string;
   message: string;
-  is_read: boolean;
-  created_at: string;
+  isRead: boolean;
+  createdAt: Date;
 }
 
 interface NotificationsState {
@@ -28,45 +28,30 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   unreadCount: 0,
 
   fetch: async (restaurantId: string) => {
-    if (!supabase) return;
     set({ isLoading: true });
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('restaurant_id', restaurantId)
-      .order('created_at', { ascending: false })
-      .limit(30);
-
-    if (!error && data) {
-      const notifications = data as AppNotification[];
-      set({
-        notifications,
-        unreadCount: notifications.filter((n) => !n.is_read).length,
-      });
-    }
-    set({ isLoading: false });
+    const data = await getNotifications(restaurantId);
+    const notifications = data as AppNotification[];
+    set({
+      notifications,
+      unreadCount: notifications.filter((n) => !n.isRead).length,
+      isLoading: false,
+    });
   },
 
   markRead: async (id: string) => {
-    if (!supabase) return;
-    await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+    await markNotificationRead(id);
     set((state) => {
       const notifications = state.notifications.map((n) =>
-        n.id === id ? { ...n, is_read: true } : n
+        n.id === id ? { ...n, isRead: true } : n
       );
-      return { notifications, unreadCount: notifications.filter((n) => !n.is_read).length };
+      return { notifications, unreadCount: notifications.filter((n) => !n.isRead).length };
     });
   },
 
   markAllRead: async (restaurantId: string) => {
-    if (!supabase) return;
-    await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('restaurant_id', restaurantId)
-      .eq('is_read', false);
+    await markAllNotificationsRead(restaurantId);
     set((state) => ({
-      notifications: state.notifications.map((n) => ({ ...n, is_read: true })),
+      notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
       unreadCount: 0,
     }));
   },
@@ -74,7 +59,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   dismiss: (id: string) => {
     set((state) => {
       const notifications = state.notifications.filter((n) => n.id !== id);
-      return { notifications, unreadCount: notifications.filter((n) => !n.is_read).length };
+      return { notifications, unreadCount: notifications.filter((n) => !n.isRead).length };
     });
   },
 }));

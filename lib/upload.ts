@@ -1,29 +1,24 @@
-import { supabase } from '@/lib/supabase';
+'use server';
 
-const BUCKET = 'uploads';
+import { writeFile, mkdir } from 'fs/promises';
+import path from 'path';
 
-/**
- * Uploads a file to Supabase Storage and returns the public URL.
- * @param file     The File object to upload
- * @param folder   Sub-folder inside the bucket, e.g. 'logos', 'avatars', 'menu-items', 'covers'
- * @returns        Public URL string, or null on failure
- */
 export async function uploadImage(file: File, folder: string): Promise<string | null> {
-  if (!supabase) return null;
+  try {
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
-  const ext = file.name.split('.').pop();
-  const filename = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const ext = file.name.split('.').pop() || 'png';
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const dir = path.join(process.cwd(), 'public', 'uploads', folder);
+    const filepath = path.join(dir, filename);
 
-  const { error } = await supabase.storage.from(BUCKET).upload(filename, file, {
-    cacheControl: '3600',
-    upsert: false,
-  });
+    await mkdir(dir, { recursive: true });
+    await writeFile(filepath, buffer);
 
-  if (error) {
-    console.error('Upload error:', error.message);
+    return `/uploads/${folder}/${filename}`;
+  } catch (err) {
+    console.error('Upload error:', err);
     return null;
   }
-
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(filename);
-  return data.publicUrl;
 }

@@ -25,8 +25,8 @@ import {
 } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { formatRelativeTime } from '@/lib/format';
-import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/auth-store';
+import { getInventoryItems, addInventoryItem } from '@/lib/actions/inventory';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
@@ -228,36 +228,38 @@ function AddInventoryDialog({ restaurantId, onAdded }: {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supabase || !restaurantId) { toast.error('Not authenticated'); return; }
+    if (!restaurantId) { toast.error('Not authenticated'); return; }
     if (!formData.itemName || !formData.currentStock || !formData.minThreshold) {
       toast.error('Please fill all required fields'); return;
     }
     setIsSaving(true);
     const stock   = parseFloat(formData.currentStock);
     const minThr  = parseFloat(formData.minThreshold);
-    const { data, error } = await supabase.from('inventory_items').insert([{
-      restaurant_id: restaurantId,
+    const result = await addInventoryItem({
+      restaurantId,
       name:          formData.itemName,
-      category:      formData.category || null,
-      current_stock: stock,
+      category:      formData.category || '',
+      currentStock:  stock,
       unit:          formData.unit,
-      min_threshold: minThr,
-    }]).select('*').single();
+      minThreshold:  minThr,
+    });
 
     setIsSaving(false);
-    if (error) { toast.error(error.message || 'Failed to add item'); return; }
+    if (result.error) { toast.error(result.error); return; }
+    if (!result.data) return;
 
+    const item = result.data;
     onAdded({
-      id:           data.id,
-      name:         data.name,
-      category:     data.category || '',
-      currentStock: data.current_stock,
-      unit:         data.unit,
-      minThreshold: data.min_threshold,
-      lastUpdated:  new Date(data.last_updated || Date.now()),
-      status:       getItemStatus(data.current_stock, data.min_threshold),
+      id:           item.id,
+      name:         item.name,
+      category:     item.description || '',
+      currentStock: item.currentQuantity,
+      unit:         item.unit,
+      minThreshold: item.reorderLevel,
+      lastUpdated:  new Date(item.updatedAt),
+      status:       getItemStatus(item.currentQuantity, item.reorderLevel),
     });
-    toast.success(`${data.name} added to inventory`);
+    toast.success(`${item.name} added to inventory`);
     setIsOpen(false);
     resetForm();
   };
@@ -381,31 +383,26 @@ export default function InventoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [alertDismissed, setAlertDismissed] = useState(false);
 
-  // Load items from Supabase on mount
+  // Load items from server action on mount
   useEffect(() => {
-    if (!supabase || !restaurantId) return;
+    if (!restaurantId) return;
     setIsLoading(true);
-    supabase
-      .from('inventory_items')
-      .select('*')
-      .eq('restaurant_id', restaurantId)
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        setIsLoading(false);
-        if (error) { toast.error('Failed to load inventory'); return; }
-        if (data) {
-          setInventoryItems(data.map((i: any) => ({
-            id:           i.id,
-            name:         i.name,
-            category:     i.category || '',
-            currentStock: i.current_stock,
-            unit:         i.unit,
-            minThreshold: i.min_threshold,
-            lastUpdated:  new Date(i.last_updated || i.created_at),
-            status:       getItemStatus(i.current_stock, i.min_threshold),
-          })));
-        }
-      });
+    getInventoryItems(restaurantId).then(result => {
+      setIsLoading(false);
+      if (result.error) { toast.error(result.error); return; }
+      if (result.data) {
+        setInventoryItems(result.data.map((i: any) => ({
+          id:           i.id,
+          name:         i.name,
+          category:     i.description || '',
+          currentStock: i.currentQuantity,
+          unit:         i.unit,
+          minThreshold: i.reorderLevel,
+          lastUpdated:  new Date(i.updatedAt),
+          status:       getItemStatus(i.currentQuantity, i.reorderLevel),
+        })));
+      }
+    });
   }, [restaurantId]);
 
   const totalItems     = inventoryItems.length;

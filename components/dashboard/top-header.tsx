@@ -76,9 +76,9 @@ function NotificationItem({
     <div
       className={cn(
         'group flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer',
-        !notification.is_read && 'bg-primary/5'
+        !notification.isRead && 'bg-primary/5'
       )}
-      onClick={() => !notification.is_read && onRead(notification.id)}
+      onClick={() => !notification.isRead && onRead(notification.id)}
     >
       {/* Icon */}
       <div className="mt-0.5 flex-shrink-0 h-8 w-8 rounded-full bg-muted flex items-center justify-center">
@@ -87,7 +87,7 @@ function NotificationItem({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className={cn('text-sm leading-snug', !notification.is_read ? 'font-semibold text-foreground' : 'font-medium text-foreground/80')}>
+        <p className={cn('text-sm leading-snug', !notification.isRead ? 'font-semibold text-foreground' : 'font-medium text-foreground/80')}>
           {notification.title}
         </p>
         {notification.message && (
@@ -96,13 +96,13 @@ function NotificationItem({
           </p>
         )}
         <p className="text-[11px] text-muted-foreground/70 mt-1">
-          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
         </p>
       </div>
 
       {/* Unread dot + dismiss */}
       <div className="flex flex-col items-center gap-2 flex-shrink-0">
-        {!notification.is_read && (
+        {!notification.isRead && (
           <span className="h-2 w-2 rounded-full bg-primary mt-1" />
         )}
         <button

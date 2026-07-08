@@ -20,8 +20,7 @@ import {
   FormItem,
   FormMessage,
 } from '@/components/ui/form';
-import { supabase } from '@/lib/supabase';
-import { createSessionFromSupabaseLogin } from '@/lib/actions/auth';
+import { login } from '@/lib/actions/auth';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -52,35 +51,13 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      if (!supabase) {
-        toast.error('Supabase is not configured. Please set environment variables.');
+      const result = await login(data.email, data.password);
+      if (result?.error) {
+        toast.error(result.error);
         return;
       }
-      const { data: signInData, error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
-
-      if (error) {
-        toast.error(error.message || 'Failed to sign in');
-        return;
-      }
-
-      const user = signInData?.user;
-      if (user) {
-        const result = await createSessionFromSupabaseLogin(
-          user.id,
-          user.email || '',
-          user.user_metadata?.full_name as string | undefined
-        );
-        if (result?.error) {
-          toast.error(result.error);
-          return;
-        }
-      }
-
       toast.success('Welcome back to Resthru!');
-      router.push('/dashboard');
+      router.push(result.redirectTo || '/dashboard');
     } catch {
       toast.error('An unexpected error occurred');
     } finally {
