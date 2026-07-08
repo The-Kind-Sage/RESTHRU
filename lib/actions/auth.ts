@@ -193,7 +193,7 @@ export async function register(data: {
     });
 
     if (data.planId) {
-      const plan = await prisma.plan.findUnique({ where: { id: data.planId } });
+      const plan = await prisma.plan.findUnique({ where: { type: data.planId.toUpperCase() } });
       if (plan) {
         await prisma.subscription.create({
           data: {

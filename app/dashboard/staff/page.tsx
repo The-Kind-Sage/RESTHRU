@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
   Plus,
   Edit2,
@@ -107,61 +106,19 @@ function formatRole(role: string): string {
   return role.charAt(0) + role.slice(1).toLowerCase();
 }
 
-function StaffDetailDialog({ staff }: { staff: StaffMember }) {
+function StaffDetailDialog({ staff, open, onOpenChange }: { staff: StaffMember; open: boolean; onOpenChange: (open: boolean) => void }) {
   const [showSalary, setShowSalary] = useState(false);
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <TableRow className="cursor-pointer hover:bg-muted/50">
-          <TableCell>
-            <StaffAvatar initials={staff.avatar} role={staff.role} />
-          </TableCell>
-          <TableCell className="font-medium">{staff.name}</TableCell>
-          <TableCell>
-            <Badge className={roleColors[staff.role]}>
-              {formatRole(staff.role)}
-            </Badge>
-          </TableCell>
-          <TableCell className="text-sm">{staff.phone}</TableCell>
-          <TableCell>
-            <div className="flex items-center gap-2">
-              <span
-                className={`h-2 w-2 rounded-full ${staff.status === 'On Duty' ? 'bg-primary' : 'bg-muted-foreground'}`}
-              />
-              {staff.status}
-            </div>
-          </TableCell>
-          <TableCell className="text-sm">
-            {formatDate(staff.joinedDate)}
-          </TableCell>
-          <TableCell>
-            <div className="flex items-center gap-2">
-              <Button size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
-                <Edit2 className="h-4 w-4" />
-              </Button>
-              <Button size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
-                <QrCode className="h-4 w-4" />
-              </Button>
-              <Button size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
-                {staff.status === 'On Duty' ? (
-                  <Unlock className="h-4 w-4" />
-                ) : (
-                  <Lock className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          </TableCell>
-        </TableRow>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md" onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle>Staff Details</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="flex justify-center">
             <div
-              className={`${avatarBgColors[staff.role] || 'bg-muted0'} h-20 w-20 rounded-full flex items-center justify-center text-white font-bold text-2xl`}
+              className={`${avatarBgColors[staff.role] || 'bg-muted'} h-20 w-20 rounded-full flex items-center justify-center text-white font-bold text-2xl`}
             >
               {staff.avatar}
             </div>
@@ -493,14 +450,17 @@ export default function StaffPage() {
 
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
 
   useEffect(() => {
     if (!restaurantId) return;
     setIsLoading(true);
     getStaff(restaurantId).then((result) => {
       setIsLoading(false);
+      setInitialized(true);
       if (result.error) { toast.error('Failed to load staff: ' + result.error); return; }
       if (result.data) {
         setStaffMembers(result.data.map((s: any) => {
@@ -537,22 +497,11 @@ export default function StaffPage() {
     return matchesSearch && matchesRole;
   });
 
-  const containerVariants = {
-    hidden:  { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-  };
-  const itemVariants = {
-    hidden:  { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-  };
+  const showTable = initialized && !isLoading;
 
   return (
     <div className="space-y-6 p-6">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
+      <div>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Staff Management</h1>
@@ -567,86 +516,69 @@ export default function StaffPage() {
             <AddStaffDialog restaurantId={restaurantId} onAdded={member => setStaffMembers(prev => [member, ...prev])} />
           </div>
         </div>
-      </motion.div>
+      </div>
 
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="grid gap-4 md:grid-cols-4"
-      >
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Staff
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {staffMembers.length}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Staff
+            </CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {staffMembers.length}
+            </div>
+          </CardContent>
+        </Card>
 
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                On Duty Today
-              </CardTitle>
-              <Clock className="h-4 w-4 text-success" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">
-                {onDutyCount}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {staffMembers.length > 0 ? Math.round((onDutyCount / staffMembers.length) * 100) : 0}% of
-                total
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              On Duty Today
+            </CardTitle>
+            <Clock className="h-4 w-4 text-success" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">
+              {onDutyCount}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {staffMembers.length > 0 ? Math.round((onDutyCount / staffMembers.length) * 100) : 0}% of
+              total
+            </p>
+          </CardContent>
+        </Card>
 
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Waiters</CardTitle>
-              <div className="h-4 w-4 rounded-full bg-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">
-                {waiterCount}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Waiters</CardTitle>
+            <div className="h-4 w-4 rounded-full bg-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">
+              {waiterCount}
+            </div>
+          </CardContent>
+        </Card>
 
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Kitchen Staff
-              </CardTitle>
-              <div className="h-4 w-4 rounded-full bg-accent" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-accent">
-                {kitchenCount}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </motion.div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Kitchen Staff
+            </CardTitle>
+            <div className="h-4 w-4 rounded-full bg-accent" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-accent">
+              {kitchenCount}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
-      >
+      <div>
         <Card>
           <CardHeader>
             <CardTitle>Staff Directory</CardTitle>
@@ -679,42 +611,90 @@ export default function StaffPage() {
               </Select>
             </div>
 
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">Avatar</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredStaff.length > 0 ? (
-                    filteredStaff.map((staff) => (
-                      <StaffDetailDialog
-                        key={staff.id}
-                        staff={staff}
-                      />
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-6">
-                        <p className="text-muted-foreground">
-                          No staff members found
-                        </p>
+            {showTable ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[72px] whitespace-nowrap">Avatar</TableHead>
+                  <TableHead className="w-[200px] whitespace-nowrap">Name</TableHead>
+                  <TableHead className="w-[110px] whitespace-nowrap">Role</TableHead>
+                  <TableHead className="w-[160px] whitespace-nowrap">Phone</TableHead>
+                  <TableHead className="w-[110px] whitespace-nowrap">Status</TableHead>
+                  <TableHead className="w-[120px] whitespace-nowrap">Joined</TableHead>
+                  <TableHead className="whitespace-nowrap">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredStaff.length > 0 ? (
+                  filteredStaff.map((staff) => (
+                    <TableRow key={staff.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedStaff(staff)}>
+                      <TableCell className="whitespace-nowrap">
+                        <StaffAvatar initials={staff.avatar} role={staff.role} />
+                      </TableCell>
+                      <TableCell className="font-medium whitespace-nowrap truncate">{staff.name}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <Badge className={roleColors[staff.role]}>
+                          {formatRole(staff.role)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm whitespace-nowrap">{staff.phone}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`h-2 w-2 rounded-full ${staff.status === 'On Duty' ? 'bg-primary' : 'bg-muted-foreground'}`}
+                          />
+                          {staff.status}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm whitespace-nowrap">
+                        {formatDate(staff.joinedDate)}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <div className="flex items-center gap-1">
+                          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); }}>
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); }}>
+                            <QrCode className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); }}>
+                            {staff.status === 'On Duty' ? (
+                              <Unlock className="h-4 w-4" />
+                            ) : (
+                              <Lock className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-6">
+                      <p className="text-muted-foreground">
+                        No staff members found
+                      </p>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+            ) : (
+              <div className="flex items-center justify-center py-8">
+                <p className="text-muted-foreground text-sm">Loading staff data...</p>
+              </div>
+            )}
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
+
+      {selectedStaff && (
+        <StaffDetailDialog
+          staff={selectedStaff}
+          open={!!selectedStaff}
+          onOpenChange={(open) => { if (!open) setSelectedStaff(null); }}
+        />
+      )}
     </div>
   );
 }
