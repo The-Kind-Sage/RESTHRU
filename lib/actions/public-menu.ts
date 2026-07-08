@@ -144,7 +144,11 @@ export async function getBookMenuData(restaurantId: string) {
     const drinks: Array<{ id: string; name: string; description?: string; price: number; group: "wine" | "cocktail"; featured: boolean }> = [];
 
     for (const item of items) {
-      const sectionName = normalizeMenuSection(item.menuSection);
+      // Prefer explicit menuSection when provided; otherwise fall back to category name
+      const catRecord = categoryRecords.find((c) => c.id === item.categoryId);
+      const sectionName = item.menuSection && item.menuSection.trim()
+        ? normalizeMenuSection(item.menuSection)
+        : (catRecord?.name || "Appetizers");
       const details: string[] = [];
 
       if (item.calories) details.push(`${item.calories} kcal`);
@@ -152,7 +156,8 @@ export async function getBookMenuData(restaurantId: string) {
       if (item.spiceLevel && item.spiceLevel !== "NONE") details.push(item.spiceLevel.replace(/_/g, " ").toLowerCase());
       if (item.allergens?.length) details.push(`contains ${item.allergens.join(", ")}`);
 
-      if (sectionName === "Beverages") {
+      // Also treat items explicitly marked as beverages by type as beverages
+      if (sectionName === "Beverages" || (item.itemType || "").toUpperCase() === "BEVERAGE") {
         drinks.push({
           id: item.id,
           name: item.name,
@@ -179,7 +184,7 @@ export async function getBookMenuData(restaurantId: string) {
         name: item.name,
         description: item.description || "",
         price: Number(item.price),
-        imageUrl: item.imageUrl,
+        imageUrl: item.imageUrl || null,
         category: slugify(sectionName),
         tags: buildTags(item.foodType, item.spiceLevel),
         details,
