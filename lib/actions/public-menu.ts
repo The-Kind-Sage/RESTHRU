@@ -76,7 +76,7 @@ function normalizeMenuSection(section?: string | null): string {
   if (["appetizer", "appetizers", "starter", "starters", "small plate", "small plates", "hors d'oeuvre", "hors doeuvre"].includes(normalized)) {
     return "Appetizers";
   }
-  if (["main course", "main courses", "mains", "entree", "entrees", "signature", "special", "specials", "plat", "plats", "grill", "grills"].includes(normalized)) {
+  if (["main", "main course", "main courses", "mains", "entree", "entrees", "signature", "special", "specials", "plat", "plats", "grill", "grills"].includes(normalized)) {
     return "Main Courses";
   }
   if (["dessert", "desserts", "sweet", "sweets", "cake", "cakes", "pastry", "pastries", "ice cream", "ice-cream", "pudding", "puddings", "bakery"].includes(normalized)) {
@@ -110,6 +110,21 @@ export async function getBookMenuData(restaurantId: string) {
 
     const items = await prisma.menuItem.findMany({
       where: { restaurantId, isAvailable: true },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        discountPrice: true,
+        imageUrl: true,
+        categoryId: true,
+        calories: true,
+        prepTime: true,
+        allergens: true,
+        menuSection: true,
+        itemType: true,
+        spiceLevel: true,
+      },
       orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }],
     });
 
@@ -141,7 +156,7 @@ export async function getBookMenuData(restaurantId: string) {
       }[];
     }>();
 
-    const drinks: Array<{ id: string; name: string; description?: string; price: number; group: "wine" | "cocktail"; featured: boolean }> = [];
+    const drinks: Array<{ id: string; name: string; description?: string; price: number; group: "wine" | "cocktail"; featured: boolean; imageUrl?: string | null }> = [];
 
     for (const item of items) {
       // Prefer explicit menuSection when provided; otherwise fall back to category name
@@ -187,7 +202,7 @@ export async function getBookMenuData(restaurantId: string) {
         price: Number(item.price),
         imageUrl: item.imageUrl || null,
         category: slugify(sectionName),
-        tags: buildTags(item.foodType, item.spiceLevel),
+        tags: buildTags(item.itemType || "FOOD", item.spiceLevel),
         details,
         featured: false,
       });

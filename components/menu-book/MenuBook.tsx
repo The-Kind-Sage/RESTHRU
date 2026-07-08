@@ -62,23 +62,38 @@ export function MenuBook({ data }: { data: MenuData }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [go, page]);
 
-  const findCategory = (categoryList: typeof data.categories, keywords: string[]) => {
+  const findCategory = (
+    categoryList: typeof data.categories,
+    exactName: string,
+    keywords: string[]
+  ) => {
+    const exact = categoryList.find(
+      (category) => category.name.toLowerCase() === exactName.toLowerCase()
+    );
+    if (exact) return exact;
+
     const normalized = keywords.map((keyword) => keyword.toLowerCase());
     return (
       categoryList.find((category) => {
         const name = category.name.toLowerCase();
         return normalized.some((keyword) => name.includes(keyword));
-      }) ?? categoryList[0] ?? null
+      }) ?? null
     );
   };
 
-  const appetizerCategory = findCategory(data.categories, ["appetizer", "starter", "snack", "small plate", "hors"]);
+  const appetizerCategory = findCategory(
+    data.categories,
+    "Appetizers",
+    ["appetizer", "starter", "snack", "small plate", "hors"]
+  );
   const mainCategory = findCategory(
     data.categories.filter((category) => category.id !== appetizerCategory?.id),
+    "Main Courses",
     ["main", "entree", "special", "signature", "grill", "plat"]
   );
   const dessertCategory = findCategory(
     data.categories.filter((category) => category.id !== appetizerCategory?.id && category.id !== mainCategory?.id),
+    "Desserts",
     ["dessert", "sweet", "cake", "pastry", "ice cream", "pudding", "bakery"]
   );
 
@@ -86,6 +101,7 @@ export function MenuBook({ data }: { data: MenuData }) {
     data.categories.filter(
       (category) => category.id !== appetizerCategory?.id && category.id !== mainCategory?.id && category.id !== dessertCategory?.id
     ),
+    "Extra",
     ["extra", "extras", "side", "sides", "misc", "other", "others"]
   );
 
