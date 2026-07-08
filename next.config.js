@@ -1,9 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   // ── Images ────────────────────────────────────────────────────────────────
   images: {
     unoptimized: false, // Enable Next.js image optimisation (WebP/AVIF auto-convert)
