@@ -22,7 +22,8 @@ export async function getPublicMenuData(restaurantId: string) {
       select: {
         id: true, name: true, description: true, price: true,
         discountPrice: true, foodType: true, spiceLevel: true,
-        imageUrl: true, categoryId: true,
+        imageUrl: true, categoryId: true, calories: true,
+        prepTime: true, allergens: true,
       },
       orderBy: { createdAt: "asc" },
     });
@@ -115,6 +116,7 @@ export async function getBookMenuData(restaurantId: string) {
         imageUrl: string | null;
         category: string;
         tags: string[];
+        details: string[];
         featured: boolean;
       }[];
     }>();
@@ -133,6 +135,13 @@ export async function getBookMenuData(restaurantId: string) {
       }
 
       const g = grouped.get(cat.id)!;
+      const details: string[] = [];
+
+      if (item.calories) details.push(`${item.calories} kcal`);
+      if (item.prepTime) details.push(`${item.prepTime} min`);
+      if (item.spiceLevel && item.spiceLevel !== "NONE") details.push(item.spiceLevel.replace(/_/g, " ").toLowerCase());
+      if (item.allergens?.length) details.push(`contains ${item.allergens.join(", ")}`);
+
       g.items.push({
         id: item.id,
         name: item.name,
@@ -141,6 +150,7 @@ export async function getBookMenuData(restaurantId: string) {
         imageUrl: item.imageUrl,
         category: slugify(cat.name),
         tags: buildTags(item.foodType, item.spiceLevel),
+        details,
         featured: false,
       });
     }

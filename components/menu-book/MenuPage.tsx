@@ -12,7 +12,7 @@ export function MenuPage({
 }) {
   return (
     <div
-      className="paper-texture relative flex h-full w-full flex-col overflow-hidden px-6 py-10 sm:px-10 sm:py-14 lg:px-14"
+      className="paper-texture relative flex h-full w-full flex-col overflow-hidden px-4 py-5 sm:px-7 sm:py-7 lg:px-10 lg:py-8"
       style={{
         backgroundColor: tint ? "var(--paper-warm)" : "var(--paper)",
         boxShadow: "0 10px 40px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.05)",

@@ -57,6 +57,19 @@ export function DishRow({
         <p className="mt-1 max-w-[52ch] font-sans text-[12.5px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
           {item.description}
         </p>
+        {item.details && item.details.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {item.details.map((detail) => (
+              <span
+                key={detail}
+                className="inline-flex rounded-full border px-2 py-0.5 font-sans text-[9px] font-medium uppercase tracking-[0.15em]"
+                style={{ borderColor: "rgba(197,165,90,0.35)", color: "var(--ink-mute)" }}
+              >
+                {detail}
+              </span>
+            ))}
+          </div>
+        )}
         {item.tags && item.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {item.tags.map((tag) => {

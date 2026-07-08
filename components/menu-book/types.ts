@@ -6,6 +6,7 @@ export interface MenuItemData {
   imageUrl?: string | null;
   category: string;
   tags?: string[];
+  details?: string[];
   featured?: boolean;
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type TouchEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Filter, Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react";
 import type { MenuData } from "./types";
@@ -20,6 +20,7 @@ export function MenuBook({ data }: { data: MenuData }) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [dark, setDark] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -38,6 +39,19 @@ export function MenuBook({ data }: { data: MenuData }) {
     setPage(Math.max(0, Math.min(TOTAL_PAGES - 1, to)));
   }, [page]);
 
+  const handleTouchStart = (e: TouchEvent<HTMLElement>) => {
+    if (!isMobile) return;
+    setTouchStartX(e.touches[0]?.clientX ?? null);
+  };
+
+  const handleTouchEnd = (e: TouchEvent<HTMLElement>) => {
+    if (!isMobile || touchStartX === null) return;
+    const delta = (e.changedTouches[0]?.clientX ?? 0) - touchStartX;
+    if (delta < -50) go(page + 1);
+    else if (delta > 50) go(page - 1);
+    setTouchStartX(null);
+  };
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") go(page + 1);
@@ -48,19 +62,29 @@ export function MenuBook({ data }: { data: MenuData }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [go, page]);
 
-  const appetizers = data.categories.find(
-    (c) => c.slug === "appetizers" || c.name.toLowerCase().includes("appetizer")
+  const findCategory = (categoryList: typeof data.categories, keywords: string[]) => {
+    const normalized = keywords.map((keyword) => keyword.toLowerCase());
+    return (
+      categoryList.find((category) => {
+        const name = category.name.toLowerCase();
+        return normalized.some((keyword) => name.includes(keyword));
+      }) ?? categoryList[0] ?? null
+    );
+  };
+
+  const appetizerCategory = findCategory(data.categories, ["appetizer", "starter", "snack", "small plate", "hors"]);
+  const mainCategory = findCategory(
+    data.categories.filter((category) => category.id !== appetizerCategory?.id),
+    ["main", "entree", "special", "signature", "grill", "plat"]
   );
-  const mains = data.categories.find(
-    (c) => c.slug === "mains" || c.name.toLowerCase().includes("main")
-  );
-  const desserts = data.categories.find(
-    (c) => c.slug === "desserts" || c.name.toLowerCase().includes("dessert")
+  const dessertCategory = findCategory(
+    data.categories.filter((category) => category.id !== appetizerCategory?.id && category.id !== mainCategory?.id),
+    ["dessert", "sweet", "cake", "pastry", "ice cream", "pudding", "bakery"]
   );
 
-  const appetizerItems = appetizers?.items ?? [];
-  const mainItems = mains?.items ?? [];
-  const dessertItems = desserts?.items ?? [];
+  const appetizerItems = appetizerCategory?.items ?? [];
+  const mainItems = mainCategory?.items ?? [];
+  const dessertItems = dessertCategory?.items ?? [];
   const mainSig = mainItems.find((m) => m.tags?.includes("signature"));
 
   const renderPage = (i: number) => {
@@ -116,7 +140,7 @@ export function MenuBook({ data }: { data: MenuData }) {
       style={{ backgroundColor: dark ? "#0f0c0a" : "#efe8db" }}
     >
       {/* Top bar */}
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center justify-between p-4 sm:p-6">
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center justify-between p-3 sm:p-4 lg:p-5">
         <div className="pointer-events-auto">
           <p
             className="font-sans text-[10px] uppercase tracking-[0.4em]"
@@ -154,12 +178,12 @@ export function MenuBook({ data }: { data: MenuData }) {
       <PageNav current={page} total={TOTAL_PAGES} onGo={go} />
 
       {/* Book stage */}
-      <div className="flex items-center justify-center px-2 py-6 sm:py-10 lg:px-8" style={{ height: "100dvh" }}>
+      <div className="flex h-[100dvh] items-center justify-center overflow-hidden px-0 py-0 sm:px-1 lg:px-2">
         <div
-          className={`book-spine relative w-full ${
-            isCover ? "max-w-[640px]" : "max-w-[640px] lg:max-w-[1280px]"
+          className={`book-spine relative h-full w-full ${
+            isCover ? "max-w-[700px]" : "max-w-[700px] lg:max-w-[1280px]"
           }`}
-          style={{ height: "min(90dvh, 960px)" }}
+          style={{ height: "100dvh" }}
         >
           <AnimatePresence mode="wait" custom={dir}>
             <motion.div
@@ -172,6 +196,8 @@ export function MenuBook({ data }: { data: MenuData }) {
               drag={isMobile ? "x" : false}
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.1}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
               onDragEnd={(_, info) => {
                 const threshold = 40;
                 const velocity = info.velocity.x;
@@ -179,7 +205,7 @@ export function MenuBook({ data }: { data: MenuData }) {
                 else if (info.offset.x > threshold || velocity > 300) go(page - 1);
               }}
               className="grid h-full w-full grid-cols-1 gap-0 lg:grid-cols-2 cursor-grab active:cursor-grabbing"
-              style={{ perspective: "1600px" }}
+              style={{ perspective: "1600px", touchAction: "pan-y" }}
             >
               {isCover ? (
                 <div className="col-span-full h-full">{renderPage(page)}</div>
