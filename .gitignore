@@ -34,6 +34,9 @@ yarn-error.log*
 # local uploads (migrated to Cloudinary)
 /public/uploads/
 
+# original TanStack menu app (adapted version lives in /components/menu-book/)
+/components/menu/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

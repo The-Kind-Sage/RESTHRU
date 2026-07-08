@@ -10,6 +10,8 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-serif)', 'Playfair Display', 'Cormorant Garamond', 'ui-serif', 'Georgia', 'serif'],
+        display: ['Cormorant Garamond', 'Playfair Display', 'ui-serif', 'Georgia', 'serif'],
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -52,6 +54,18 @@ const config: Config = {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
+
+        /* book menu colors */
+        paper: 'var(--paper)',
+        'paper-warm': 'var(--paper-warm)',
+        ink: 'var(--ink)',
+        'ink-soft': 'var(--ink-soft)',
+        'ink-mute': 'var(--ink-mute)',
+        burgundy: 'var(--burgundy)',
+        'burgundy-deep': 'var(--burgundy-deep)',
+        gold: 'var(--gold)',
+        'gold-soft': 'var(--gold-soft)',
+        rule: 'var(--rule)',
         chart: {
           '1': 'hsl(var(--chart-1))',
           '2': 'hsl(var(--chart-2))',

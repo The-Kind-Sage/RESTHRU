@@ -270,3 +270,107 @@
 .admin-layout .recharts-default-tooltip .recharts-tooltip-item {
   color: hsl(216 16% 54%) !important;
 }
+
+/* ==============================================
+   BOOK MENU THEME
+   ============================================== */
+:root {
+  --paper: #fbf7f0;
+  --paper-warm: #f5f0e8;
+  --ink: #1a1a1a;
+  --ink-soft: #5c5c5c;
+  --ink-mute: #8b6f3a;
+  --burgundy: #8b2e2e;
+  --burgundy-deep: #6b1f1f;
+  --gold: #c5a55a;
+  --gold-soft: #d9c088;
+  --rule: #e8dfd0;
+}
+
+.dark {
+  --paper: #1a1614;
+  --paper-warm: #221d1a;
+  --ink: #f2ebdc;
+  --ink-soft: #b5aa96;
+  --ink-mute: #c5a55a;
+  --burgundy: #c26a6a;
+  --burgundy-deep: #a04848;
+  --gold: #d9b96a;
+  --gold-soft: #e6cd94;
+  --rule: #3a312c;
+}
+
+/* Paper noise texture */
+.paper-texture {
+  position: relative;
+  isolation: isolate;
+}
+.paper-texture::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.paper-texture > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Dotted price leader */
+.price-leader {
+  flex: 1;
+  min-width: 1.5rem;
+  background-image: radial-gradient(circle, var(--gold) 1px, transparent 1.2px);
+  background-size: 6px 2px;
+  background-repeat: repeat-x;
+  background-position: 0 center;
+  opacity: 0.55;
+  height: 2px;
+  align-self: center;
+  margin: 0 0.5rem;
+}
+
+/* Spine shadow */
+.book-spine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 60px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(0, 0, 0, 0.06) 40%,
+    rgba(0, 0, 0, 0.14) 50%,
+    rgba(0, 0, 0, 0.06) 60%,
+    transparent 100%
+  );
+  z-index: 5;
+}
+
+/* Shimmer for placeholders */
+@keyframes book-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.book-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--paper-warm) 0%,
+    rgba(197, 165, 90, 0.08) 50%,
+    var(--paper-warm) 100%
+  );
+  background-size: 200% 100%;
+  animation: book-shimmer 3.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-shimmer { animation: none; }
+}
