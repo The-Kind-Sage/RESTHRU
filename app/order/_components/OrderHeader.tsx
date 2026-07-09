@@ -6,12 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useWaiterOrderStore } from '@/store/waiter-order-store';
 import { useOrderSync } from '@/hooks/useOrderSync';
+import { useReadyNotifications } from '@/hooks/useReadyNotifications';
 
 const CATEGORIES = ['All', 'Appetizers', 'Mains', 'Drinks', 'Desserts'];
 
 export default function OrderHeader() {
   // Initialize sync and offline listeners
   useOrderSync();
+  // Poll for ORDER_READY notifications from the kitchen
+  useReadyNotifications();
   
   const { 
     searchQuery, setSearchQuery, 

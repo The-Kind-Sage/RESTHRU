@@ -154,11 +154,106 @@ export async function updateOrderStatus(orderId: string, status: string) {
         status,
         updatedAt: new Date(),
         ...(status === "READY" ? { completedAt: new Date() } : {})
-      }
+      },
+      include: { table: true },
     });
+
+    // When order is marked READY, notify the assigned waiter (or all waiters).
+    if (status === "READY") {
+      const tableLabel = (order as any).table?.tableNumber
+        ? `Table ${(order as any).table.tableNumber}`
+        : order.orderType;
+      const title = "🍽️ Food Ready!";
+      const message = `Order #${order.orderId} (${tableLabel}) is ready to serve.`;
+
+      if (order.assignedWaiterId) {
+        // Notify the specific waiter
+        await prisma.notification.create({
+          data: {
+            recipientUserId: order.assignedWaiterId,
+            restaurantId: session.restaurantId,
+            type: "ORDER_READY",
+            title,
+            message,
+            relatedEntityId: order.id,
+            relatedEntityType: "Order",
+          },
+        });
+      } else {
+        // No assigned waiter — notify all active WAITER users in the restaurant
+        const waiters = await prisma.user.findMany({
+          where: { restaurantId: session.restaurantId, role: "WAITER", isActive: true },
+          select: { id: true },
+        });
+        if (waiters.length > 0) {
+          await prisma.notification.createMany({
+            data: waiters.map((w) => ({
+              recipientUserId: w.id,
+              restaurantId: session.restaurantId as string,
+              type: "ORDER_READY",
+              title,
+              message,
+              relatedEntityId: order.id,
+              relatedEntityType: "Order",
+            })),
+          });
+        }
+      }
+    }
 
     return { data: order };
   } catch (err: any) {
     return { error: err?.message || "Failed to update order status" };
+  }
+}
+
+/**
+ * Fetches unread ORDER_READY notifications for the currently logged-in user.
+ * Called by the /order page on a polling interval so waiters see food-ready alerts.
+ */
+export async function getReadyOrderNotifications() {
+  const session = await getSession();
+  if (!session || !session.id) {
+    return { error: "Not authenticated" };
+  }
+
+  try {
+    const notifications = await prisma.notification.findMany({
+      where: {
+        recipientUserId: session.id,
+        type: "ORDER_READY",
+        isRead: false,
+      },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        message: true,
+        createdAt: true,
+        relatedEntityId: true,
+      },
+    });
+    return { data: notifications };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to fetch notifications" };
+  }
+}
+
+/**
+ * Marks a batch of ORDER_READY notifications as read.
+ * Called after displaying toasts so they don't re-appear on the next poll.
+ */
+export async function markNotificationsRead(ids: string[]) {
+  const session = await getSession();
+  if (!session || !session.id) return { error: "Not authenticated" };
+
+  try {
+    await prisma.notification.updateMany({
+      where: { id: { in: ids }, recipientUserId: session.id },
+      data: { isRead: true, readAt: new Date() },
+    });
+    return { data: true };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to mark notifications read" };
   }
 }
