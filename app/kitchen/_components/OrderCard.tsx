@@ -1,0 +1,220 @@
+'use client';
+
+import { Order, OrderStatus } from '@/types';
+import { useKitchenStore } from '@/store/kitchen-store';
+import { motion, useAnimation, PanInfo } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { CheckCircle2, Circle, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface OrderCardProps {
+  order: Order;
+}
+
+export function OrderCard({ order }: OrderCardProps) {
+  const { updateOrderStatus, toggleItemCheck, checkedItems } = useKitchenStore();
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const controls = useAnimation();
+
+  // Timer logic
+  useEffect(() => {
+    // Only increment timer for pending or preparing
+    if (order.status === 'READY' || order.status === 'SERVED') return;
+
+    const start = new Date(order.createdAt).getTime();
+    
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setElapsedSeconds(Math.floor((now - start) / 1000));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [order.createdAt, order.status]);
+
+  const formatTime = (totalSeconds: number) => {
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  // Badge colors based on time (e.g., > 10 mins = warning, > 20 mins = danger)
+  let badgeColor = 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+  let isFlashing = false;
+  if (elapsedSeconds > 1200) { // 20 mins
+    badgeColor = 'bg-red-500 text-white border-red-600';
+    isFlashing = true;
+  } else if (elapsedSeconds > 600) { // 10 mins
+    badgeColor = 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+  }
+
+  const handleDragEnd = async (event: any, info: PanInfo) => {
+    const threshold = 100; // swipe threshold in px
+    if (info.offset.x > threshold) {
+      // Swiped right
+      if (order.status === 'PENDING') {
+        updateOrderStatus(order.id, 'PREPARING');
+      } else if (order.status === 'PREPARING') {
+        updateOrderStatus(order.id, 'READY');
+      } else {
+        // Reset position if no action
+        controls.start({ x: 0 });
+      }
+    } else {
+      // Return to original position
+      controls.start({ x: 0 });
+    }
+  };
+
+  const nextActionText = order.status === 'PENDING' ? 'Tap to Cook' : order.status === 'PREPARING' ? 'Tap to Complete' : 'Completed';
+  
+  const handleActionTap = () => {
+    if (order.status === 'PENDING') {
+      updateOrderStatus(order.id, 'PREPARING');
+    } else if (order.status === 'PREPARING') {
+      updateOrderStatus(order.id, 'READY');
+    }
+  };
+
+  // Mutated alert simulation check (if an item was added very recently)
+  // Since we don't have a real stream, we'll simulate it by checking if updated_at is significantly newer than created_at
+  const isMutated = new Date(order.updatedAt).getTime() - new Date(order.createdAt).getTime() > 10000 && order.status !== 'READY';
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
+      className="relative mb-4 w-full"
+    >
+      <motion.div
+        drag={order.status !== 'READY' ? 'x' : false}
+        dragConstraints={{ left: 0, right: 0 }}
+        onDragEnd={handleDragEnd}
+        animate={controls}
+        className={cn(
+          "bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden",
+          isMutated && "ring-2 ring-blue-500 animate-pulse"
+        )}
+      >
+        {isMutated && (
+          <div className="bg-blue-500 text-white text-xs font-bold px-3 py-1 text-center animate-bounce">
+            UPDATED
+          </div>
+        )}
+
+        {/* Header */}
+        <div 
+          className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
+              {order.tableId ? `Table ${order.tableId}` : order.orderType}
+            </span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              #{order.orderId}
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className={cn("px-2 py-1 rounded-md border text-xs font-bold flex items-center gap-1", badgeColor, isFlashing && "animate-pulse")}>
+              <Clock className="w-3 h-3" />
+              {formatTime(elapsedSeconds)}
+            </div>
+            {isExpanded ? (
+              <ChevronUp className="w-5 h-5 text-slate-400" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-slate-400" />
+            )}
+          </div>
+        </div>
+
+        {/* Body */}
+        {isExpanded && (
+          <div className="p-4 space-y-4 bg-slate-50 dark:bg-slate-900/50">
+            {order.items.map((item, idx) => {
+              const isChecked = checkedItems[`${order.id}-${item.id}`];
+              
+              return (
+                <div 
+                  key={item.id || idx} 
+                  className={cn(
+                    "flex gap-3 transition-opacity",
+                    isChecked ? "opacity-50" : "opacity-100"
+                  )}
+                  onClick={() => toggleItemCheck(order.id, item.id)}
+                >
+                  <div className="mt-1">
+                    {isChecked ? (
+                      <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                    ) : (
+                      <Circle className="w-6 h-6 text-slate-300 dark:text-slate-600" />
+                    )}
+                  </div>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-start gap-2">
+                      <span className={cn(
+                        "text-lg font-bold min-w-[24px]",
+                        isChecked ? "text-slate-400" : "text-blue-600 dark:text-blue-400"
+                      )}>
+                        {item.quantity}x
+                      </span>
+                      <span className={cn(
+                        "text-lg font-semibold text-slate-800 dark:text-slate-200",
+                        isChecked && "line-through text-slate-500 dark:text-slate-500"
+                      )}>
+                        {item.menuItemName}
+                      </span>
+                    </div>
+                    
+                    {/* Modifiers */}
+                    {(item.specialInstructions || (item.selectedAddOns && item.selectedAddOns.length > 0)) && (
+                      <div className="mt-2 pl-8 flex flex-col gap-1">
+                        {item.specialInstructions && (
+                          <div className="bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-500 text-sm font-bold px-2 py-1 rounded inline-block w-fit uppercase">
+                            "{item.specialInstructions}"
+                          </div>
+                        )}
+                        {item.selectedAddOns?.map(addon => (
+                          <span key={addon.addOnId} className="text-sm text-slate-600 dark:text-slate-400">
+                            + {addon.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Bottom Action Bar */}
+        {order.status !== 'READY' && (
+          <button
+            onClick={handleActionTap}
+            className={cn(
+              "w-full py-4 text-center font-bold text-white transition-colors uppercase tracking-widest active:scale-95",
+              order.status === 'PENDING' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'
+            )}
+          >
+            {nextActionText}
+          </button>
+        )}
+      </motion.div>
+      
+      {/* Swipe Indicator Background (hidden under the card, revealed during drag) */}
+      {order.status !== 'READY' && (
+        <div className="absolute inset-0 bg-emerald-500 rounded-xl -z-10 flex items-center px-6">
+          <span className="text-white font-bold text-lg">
+            {order.status === 'PENDING' ? 'Cook' : 'Complete'}
+          </span>
+        </div>
+      )}
+    </motion.div>
+  );
+}
