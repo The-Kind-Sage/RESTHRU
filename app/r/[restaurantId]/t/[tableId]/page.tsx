@@ -34,271 +34,12 @@ import {
 import { useCartStore } from '@/store/cart-store';
 import { formatCurrency } from '@/lib/format';
 import { MenuItem, FoodType, SpiceLevel } from '@/types';
+import { getPublicMenuData } from '@/lib/actions/public-menu';
 
-// Mock menu data
-const MOCK_MENU_DATA: MenuItem[] = [
-  {
-    id: '1',
-    restaurantId: 'rest-1',
-    categoryId: 'cat-starters',
-    name: 'Veg Momo',
-    description: 'Steamed vegetable dumplings with special sauce',
-    price: 250,
-    foodType: FoodType.VEG,
-    spiceLevel: SpiceLevel.MILD,
-    allergens: [],
-    prepTime: 10,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 1,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '2',
-    restaurantId: 'rest-1',
-    categoryId: 'cat-starters',
-    name: 'Chicken Momo',
-    description: 'Steamed chicken dumplings with secret spice blend',
-    price: 350,
-    foodType: FoodType.NON_VEG,
-    spiceLevel: SpiceLevel.MEDIUM,
-    allergens: [],
-    prepTime: 12,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 2,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '3',
-    restaurantId: 'rest-1',
-    categoryId: 'cat-starters',
-    name: 'Samosa',
-    description: 'Crispy pastry with potato and spice filling',
-    price: 150,
-    foodType: FoodType.VEG,
-    spiceLevel: SpiceLevel.MEDIUM,
-    allergens: [],
-    prepTime: 8,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 3,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '4',
-    restaurantId: 'rest-1',
-    categoryId: 'cat-main',
-    name: 'Thakali Set',
-    description: 'Traditional Thakali platter with dal, rice, and curry',
-    price: 450,
-    foodType: FoodType.NON_VEG,
-    spiceLevel: SpiceLevel.MEDIUM,
-    allergens: [],
-    prepTime: 20,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 4,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '5',
-    restaurantId: 'rest-1',
-    categoryId: 'cat-main',
-    name: 'Dal Bhat',
-    description: 'Lentil soup with steamed rice and vegetable curry',
-    price: 300,
-    foodType: FoodType.VEG,
-    spiceLevel: SpiceLevel.MILD,
-    allergens: [],
-    prepTime: 15,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 5,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '6',
-    restaurantId: 'rest-1',
-    categoryId: 'cat-main',
-    name: 'Newari Khaja Set',
-    description: 'Special Newari meal set with side dishes',
-    price: 500,
-    foodType: FoodType.NON_VEG,
-    spiceLevel: SpiceLevel.HOT,
-    allergens: [],
-    prepTime: 25,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 6,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '7',
-    restaurantId: 'rest-1',
-    categoryId: 'cat-main',
-    name: 'Chicken Curry',
-    description: 'Tender chicken cooked in aromatic spices',
-    price: 380,
-    foodType: FoodType.NON_VEG,
-    spiceLevel: SpiceLevel.MEDIUM,
-    allergens: [],
-    prepTime: 18,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 7,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '8',
-    restaurantId: 'rest-1',
-    categoryId: 'cat-drinks',
-    name: 'Masala Tea',
-    description: 'Traditional Nepali spiced tea with milk',
-    price: 80,
-    foodType: FoodType.VEG,
-    spiceLevel: SpiceLevel.MILD,
-    allergens: [],
-    prepTime: 5,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 8,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '9',
-    restaurantId: 'rest-1',
-    categoryId: 'cat-drinks',
-    name: 'Lassi',
-    description: 'Refreshing yogurt-based drink',
-    price: 120,
-    foodType: FoodType.VEG,
-    spiceLevel: SpiceLevel.NONE,
-    allergens: [],
-    prepTime: 3,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 9,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '10',
-    restaurantId: 'rest-1',
-    categoryId: 'cat-drinks',
-    name: 'Mo:Mo Soup',
-    description: 'Hot soup with dumpling pieces',
-    price: 180,
-    foodType: FoodType.VEG,
-    spiceLevel: SpiceLevel.MEDIUM,
-    allergens: [],
-    prepTime: 8,
-    addOns: [],
-    isAvailable: false,
-    displayOrder: 10,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '11',
-    restaurantId: 'rest-1',
-    categoryId: 'cat-dessert',
-    name: 'Juju Dhau',
-    description: 'Sweet milk pudding with nuts',
-    price: 150,
-    foodType: FoodType.VEG,
-    spiceLevel: SpiceLevel.NONE,
-    allergens: [],
-    prepTime: 5,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 11,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '12',
-    restaurantId: 'rest-1',
-    categoryId: 'cat-dessert',
-    name: 'Rasbari',
-    description: 'Soft cheese balls in sweet syrup',
-    price: 100,
-    foodType: FoodType.VEG,
-    spiceLevel: SpiceLevel.NONE,
-    allergens: [],
-    prepTime: 5,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 12,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '13',
-    restaurantId: 'rest-1',
-    categoryId: 'cat-special',
-    name: 'Tandoori Chicken',
-    description: 'Marinated chicken cooked in traditional tandoor',
-    price: 550,
-    foodType: FoodType.NON_VEG,
-    spiceLevel: SpiceLevel.MEDIUM,
-    allergens: [],
-    prepTime: 30,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 13,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '14',
-    restaurantId: 'rest-1',
-    categoryId: 'cat-special',
-    name: 'Sekuwa',
-    description: 'Grilled meat skewers with spices',
-    price: 420,
-    foodType: FoodType.NON_VEG,
-    spiceLevel: SpiceLevel.HOT,
-    allergens: [],
-    prepTime: 25,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 14,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
-
-type CategoryKey = 'all' | 'starters' | 'main' | 'drinks' | 'desserts' | 'specials';
-
-const CATEGORIES: { key: CategoryKey; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'starters', label: 'Starters' },
-  { key: 'main', label: 'Main Course' },
-  { key: 'drinks', label: 'Drinks' },
-  { key: 'desserts', label: 'Desserts' },
-  { key: 'specials', label: 'Specials' },
-];
-
-const getCategoryId = (key: CategoryKey): string => {
-  const map: Record<CategoryKey, string> = {
-    all: '',
-    starters: 'cat-starters',
-    main: 'cat-main',
-    drinks: 'cat-drinks',
-    desserts: 'cat-dessert',
-    specials: 'cat-special',
-  };
-  return map[key];
-};
+interface CategoryTab {
+  id: string;
+  name: string;
+}
 
 const getSpiceEmojis = (level: SpiceLevel): string => {
   const map: Record<SpiceLevel, string> = {
@@ -320,7 +61,11 @@ export default function CustomerMenuPage() {
   const restaurantId = params.restaurantId as string;
   const tableId = params.tableId as string;
 
-  const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('all');
+  const [restaurant, setRestaurant] = useState<{ name: string; tagline?: string } | null>(null);
+  const [categories, setCategories] = useState<CategoryTab[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [language, setLanguage] = useState<'EN' | 'NP'>('EN');
   const [orderSheetOpen, setOrderSheetOpen] = useState(false);
   const [billDialogOpen, setBillDialogOpen] = useState(false);
@@ -332,9 +77,41 @@ export default function CustomerMenuPage() {
   const { items, addItem, removeItem, updateQuantity, addNote, getItemCount, getSubtotal, getTax, getTotal, clearCart } =
     useCartStore();
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const data = await getPublicMenuData(restaurantId);
+      if (data.restaurant) {
+        setRestaurant({ name: data.restaurant.name, tagline: data.restaurant.address });
+        setCategories(data.categories.map((c) => ({ id: c.id, name: c.name })));
+        setMenuItems(data.items.map((item) => ({
+          id: item.id,
+          restaurantId,
+          categoryId: item.categoryId,
+          name: item.name,
+          description: item.description || '',
+          imageUrl: item.image,
+          price: item.price,
+          discountPrice: item.discountPrice,
+          foodType: item.foodType as FoodType,
+          spiceLevel: item.spiceLevel as SpiceLevel,
+          allergens: [],
+          prepTime: 0,
+          addOns: [],
+          isAvailable: true,
+          displayOrder: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })));
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, [restaurantId]);
+
   const filteredMenuItems = selectedCategory === 'all'
-    ? MOCK_MENU_DATA
-    : MOCK_MENU_DATA.filter((item) => item.categoryId === getCategoryId(selectedCategory));
+    ? menuItems
+    : menuItems.filter((item) => item.categoryId === selectedCategory);
 
   const handleAddToCart = (item: MenuItem) => {
     if (item.isAvailable) {
@@ -370,7 +147,7 @@ export default function CustomerMenuPage() {
       <header className="sticky top-0 z-40 bg-card border-b">
         <div className="p-4 flex items-center justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h1 className="font-bold text-lg truncate">Himalayan Kitchen</h1>
+            <h1 className="font-bold text-lg truncate">{restaurant?.name || 'Menu'}</h1>
             <Badge variant="default" className="mt-1 bg-primary w-fit">
               Table {tableId}
             </Badge>
@@ -399,38 +176,74 @@ export default function CustomerMenuPage() {
       </header>
 
       {/* RESTAURANT HERO */}
-      <div className="relative h-[200px] bg-gradient-to-br from-accent-light to-accent-light overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-          <h2 className="text-xl font-bold">Himalayan Kitchen</h2>
-          <p className="text-sm opacity-90">Newari & Thakali Cuisine</p>
+      {restaurant && (
+        <div className="relative h-[200px] bg-gradient-to-br from-accent-light to-accent-light overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+            <h2 className="text-xl font-bold">{restaurant.name}</h2>
+            {restaurant.tagline && (
+              <p className="text-sm opacity-90">{restaurant.tagline}</p>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* CATEGORY TABS */}
-      <div
-        ref={setCategoryScrollRef}
-        className="sticky top-[73px] z-30 bg-card border-b"
-      >
-        <div className="flex flex-wrap gap-2 p-3">
-          {CATEGORIES.map((cat) => (
+      {categories.length > 0 && (
+        <div
+          ref={setCategoryScrollRef}
+          className="sticky top-[73px] z-30 bg-card border-b"
+        >
+          <div className="flex flex-wrap gap-2 p-3">
             <button
-              key={cat.key}
-              onClick={() => setSelectedCategory(cat.key)}
+              onClick={() => setSelectedCategory('all')}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-                selectedCategory === cat.key
+                selectedCategory === 'all'
                   ? 'bg-primary text-white'
                   : 'bg-muted text-muted-foreground hover:bg-muted/80'
               }`}
             >
-              {cat.label}
+              All
             </button>
-          ))}
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
+                  selectedCategory === cat.id
+                    ? 'bg-primary text-white'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* MENU ITEMS LIST */}
       <div className="pb-24 px-3 py-4 space-y-3">
+        {loading ? (
+          [1, 2, 3, 4].map((i) => (
+            <Card key={i} className="overflow-hidden">
+              <CardContent className="p-3">
+                <div className="flex gap-3">
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
+                    <div className="h-3 bg-muted rounded w-full animate-pulse" />
+                    <div className="h-3 bg-muted rounded w-1/4 animate-pulse" />
+                  </div>
+                  <div className="w-[100px] h-[100px] bg-muted rounded-lg animate-pulse" />
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : menuItems.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>No menu items available</p>
+          </div>
+        ) : (
         <AnimatePresence mode="wait">
           {filteredMenuItems.map((item, index) => {
             const cartItem = items.find((ci) => ci.menuItemId === item.id);
@@ -462,22 +275,6 @@ export default function CustomerMenuPage() {
                           <span>{getFoodTypeDot(item.foodType)}</span>
                           {getSpiceEmojis(item.spiceLevel) && (
                             <span>{getSpiceEmojis(item.spiceLevel)}</span>
-                          )}
-                          {item.id === '13' && (
-                            <Badge
-                              variant="secondary"
-                              className="text-xs bg-accent-light text-warning"
-                            >
-                              Popular
-                            </Badge>
-                          )}
-                          {item.id === '14' && (
-                            <Badge
-                              variant="secondary"
-                              className="text-xs bg-primary-light text-primary"
-                            >
-                              New
-                            </Badge>
                           )}
                         </div>
                       </div>
@@ -530,6 +327,7 @@ export default function CustomerMenuPage() {
             );
           })}
         </AnimatePresence>
+      )}
       </div>
 
       {/* FLOATING CART BAR */}
