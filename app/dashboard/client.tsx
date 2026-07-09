@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useTransition, useCallback } from "react";
+import { useState, useTransition, useCallback, useEffect } from "react";
 import { useAuthStore } from "@/store/auth-store";
 import { formatCurrency, formatRelativeTime } from "@/lib/format";
 import { getGreeting } from "@/lib/helpers";
@@ -17,7 +17,7 @@ import type {
   TopItem,
   Activity,
 } from "@/lib/actions/dashboard";
-import { getRevenueChartData } from "@/lib/actions/dashboard";
+import { getRevenueChartData, getDashboardStats, getRecentOrders, getRecentActivity } from "@/lib/actions/dashboard";
 import { ChartSkeleton } from "@/components/dashboard/skeletons";
 
 // ── Lazy-load heavy libraries ─────────────────────────────────────────────
@@ -54,10 +54,14 @@ export default function DashboardClient({
   topItems,
   activities,
 }: DashboardData) {
-  const { user } = useAuthStore();
+  const { user, restaurant } = useAuthStore();
+  const restaurantId = restaurant?.id;
   const [period, setPeriod] = useState<"week" | "month">("week");
   const [chartData, setChartData] = useState<ChartPoint[]>(initialChartData);
   const [isPending, startTransition] = useTransition();
+  const [liveStats, setLiveStats] = useState(stats);
+  const [liveOrders, setLiveOrders] = useState(orders);
+  const [liveActivities, setLiveActivities] = useState(activities);
 
   // Period toggle now re-fetches chart data from the server action.
   // useTransition keeps the UI interactive while the fetch is in-flight.
@@ -66,14 +70,30 @@ export default function DashboardClient({
       if (p === period) return;
       setPeriod(p);
       startTransition(async () => {
-        const restaurantId = stats ? (stats as any).restaurantId : null;
         if (!restaurantId) return;
         const fresh = await getRevenueChartData(restaurantId, p).catch(() => null);
         if (fresh) setChartData(fresh);
       });
     },
-    [period, stats]
+    [period, restaurantId]
   );
+
+  useEffect(() => {
+    if (!restaurantId) return;
+    const poll = async () => {
+      const [freshStats, freshOrders, freshActivities] = await Promise.all([
+        getDashboardStats(restaurantId).catch(() => null),
+        getRecentOrders(restaurantId, 10).catch(() => []),
+        getRecentActivity(restaurantId).catch(() => []),
+      ]);
+      if (freshStats) setLiveStats(freshStats);
+      if (freshOrders) setLiveOrders(freshOrders);
+      if (freshActivities) setLiveActivities(freshActivities);
+    };
+    poll();
+    const interval = setInterval(poll, 15_000);
+    return () => clearInterval(interval);
+  }, [restaurantId]);
 
   const statusColors: Record<string, string> = {
     PENDING: "bg-accent",
@@ -93,15 +113,15 @@ export default function DashboardClient({
               {getGreeting()}, {user?.firstName || "Owner"}!
             </h1>
             <p className="text-muted-foreground text-lg">
-              {stats?.todayOrders
-                ? `Served ${stats.todayOrders} customers today.`
+              {liveStats?.todayOrders
+                ? `Served ${liveStats.todayOrders} customers today.`
                 : "Ready to serve!"}
             </p>
           </div>
           <div className="text-right">
             <p className="text-sm text-muted-foreground mb-1">Revenue Today</p>
             <p className="text-3xl font-bold text-primary">
-              {formatCurrency(stats?.todayRevenue ?? 0)}
+              {formatCurrency(liveStats?.todayRevenue ?? 0)}
             </p>
           </div>
         </CardContent>
@@ -114,28 +134,28 @@ export default function DashboardClient({
             {
               icon: TrendingUp,
               title: "Today's Revenue",
-              value: formatCurrency(stats?.todayRevenue ?? 0),
-              change: stats?.todayOrders ? `${stats.todayOrders} orders today` : "No orders yet",
+              value: formatCurrency(liveStats?.todayRevenue ?? 0),
+              change: liveStats?.todayOrders ? `${liveStats.todayOrders} orders today` : "No orders yet",
               color: "text-success",
             },
             {
               icon: ShoppingBag,
               title: "Total Orders",
-              value: stats?.totalOrders ?? 0,
-              change: stats?.todayOrders ? `${stats.todayOrders} today` : "No orders yet",
+              value: liveStats?.totalOrders ?? 0,
+              change: liveStats?.todayOrders ? `${liveStats.todayOrders} today` : "No orders yet",
               color: "text-primary",
             },
             {
               icon: LayoutGrid,
               title: "Active Tables",
-              value: stats ? `${stats.occupiedTables}/${stats.totalTables}` : "0/0",
-              change: stats ? `${stats.occupiedTables} occupied` : "No tables",
+              value: liveStats ? `${liveStats.occupiedTables}/${liveStats.totalTables}` : "0/0",
+              change: liveStats ? `${liveStats.occupiedTables} occupied` : "No tables",
               color: "text-accent",
             },
             {
               icon: Clock,
               title: "Pending Orders",
-              value: stats?.pendingOrders ?? 0,
+              value: liveStats?.pendingOrders ?? 0,
               change: "In kitchen",
               color: "text-destructive",
               pulse: true,
@@ -262,14 +282,14 @@ export default function DashboardClient({
               </div>
             </CardHeader>
             <CardContent>
-              {stats && stats.totalTables > 0 ? (
+              {liveStats && liveStats.totalTables > 0 ? (
                 <>
                   <div className="grid grid-cols-5 gap-2 mb-6">
-                    {Array.from({ length: stats.totalTables }).map((_, idx) => (
+                    {Array.from({ length: liveStats.totalTables }).map((_, idx) => (
                       <div
                         key={idx}
                         className={`aspect-square rounded-lg ${
-                          idx < stats.occupiedTables
+                          idx < liveStats.occupiedTables
                             ? "bg-red-500"
                             : "bg-green-500"
                         }`}
@@ -279,11 +299,11 @@ export default function DashboardClient({
                   <div className="flex justify-between text-xs text-muted-foreground border-t pt-4">
                     <span className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-red-500 rounded-sm" />
-                      {stats.occupiedTables} Occupied
+                      {liveStats.occupiedTables} Occupied
                     </span>
                     <span className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-green-500 rounded-sm" />
-                      {stats.availableTables} Available
+                      {liveStats.availableTables} Available
                     </span>
                   </div>
                 </>
@@ -312,9 +332,9 @@ export default function DashboardClient({
             </div>
           </CardHeader>
           <CardContent>
-            {orders.length > 0 ? (
+            {liveOrders.length > 0 ? (
               <div className="space-y-3">
-                {orders.slice(0, 5).map((order) => (
+                {liveOrders.slice(0, 5).map((order) => (
                   <div
                     key={order.id}
                     className="flex items-center justify-between p-3 bg-muted rounded-lg"
@@ -356,9 +376,9 @@ export default function DashboardClient({
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            {activities.length > 0 ? (
+            {liveActivities.length > 0 ? (
               <div className="space-y-4">
-                {activities.map((a) => (
+                {liveActivities.map((a) => (
                   <div key={a.id} className="flex gap-4 items-start">
                     <div
                       className={`w-3 h-3 rounded-full flex-shrink-0 mt-1.5 ${
