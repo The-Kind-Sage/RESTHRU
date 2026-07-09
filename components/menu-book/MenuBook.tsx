@@ -170,7 +170,7 @@ export function MenuBook({ data }: { data: MenuData }) {
 
   return (
     <div
-      className="paper-texture relative min-h-screen w-full overflow-hidden"
+      className="paper-texture relative min-h-screen w-full overflow-x-hidden"
       style={{ backgroundColor: dark ? "#0f0c0a" : "#efe8db" }}
     >
       {/* Top bar */}
@@ -212,7 +212,7 @@ export function MenuBook({ data }: { data: MenuData }) {
       <PageNav current={page} total={TOTAL_PAGES} onGo={go} />
 
       {/* Book stage */}
-      <div className="flex h-[100dvh] items-center justify-center overflow-hidden px-0 py-0 sm:px-1 lg:px-2">
+      <div className={`flex ${isMobile ? '' : 'h-[100dvh]'} items-center justify-center ${isMobile ? 'overflow-x-hidden' : 'overflow-hidden'} px-0 py-0 sm:px-1 lg:px-2`}>
         <div
           className={`book-spine relative h-full w-full ${
             isCover ? "max-w-[700px]" : "max-w-[700px] lg:max-w-[1280px]"

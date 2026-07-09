@@ -410,9 +410,9 @@ export default function CustomerMenuPage() {
       {/* CATEGORY TABS */}
       <div
         ref={setCategoryScrollRef}
-        className="sticky top-[73px] z-30 bg-card border-b overflow-x-auto scrollbar-hide"
+        className="sticky top-[73px] z-30 bg-card border-b"
       >
-        <div className="flex gap-2 p-3 min-w-min">
+        <div className="flex flex-wrap gap-2 p-3">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.key}
