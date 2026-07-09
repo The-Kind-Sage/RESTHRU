@@ -22,7 +22,7 @@ export default async function OrderPage() {
   }
 
   const result = await getMenuItems(session.restaurantId);
-  const menuItems: MenuItem[] = (result.data as MenuItem[]) || [];
+  const menuItems: MenuItem[] = (result.data as unknown as MenuItem[]) || [];
 
   return (
     <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto bg-gray-50 overflow-hidden relative sm:border-x sm:border-gray-200">

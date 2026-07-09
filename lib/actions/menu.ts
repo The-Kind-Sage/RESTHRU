@@ -84,6 +84,7 @@ export async function getMenuItems(restaurantId: string) {
   try {
     const items = await prisma.menuItem.findMany({
       where: { restaurantId },
+      include: { addOns: true },
       orderBy: { createdAt: "desc" },
     });
     return { data: items };
