@@ -107,6 +107,23 @@ export const getRecentOrders = cache(
   }
 );
 
+// ─── 2b. Full Orders with Items — for the dashboard/orders page ────────────
+// Includes items and special requests for the kanban detail view.
+export const getOrdersWithItems = cache(
+  async (restaurantId: string, limit = 50): Promise<any[]> => {
+    const orders = await prisma.order.findMany({
+      where: { restaurantId },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      include: {
+        items: true,
+        table: { select: { tableNumber: true } },
+      },
+    });
+    return orders;
+  }
+);
+
 // ─── 3. Revenue Chart — aggregated in DB, not in JS ────────────────────────
 // Previously: fetched all matching orders into memory, grouped in JS (O(n)).
 // Now: uses groupBy + _sum pushed to the database.

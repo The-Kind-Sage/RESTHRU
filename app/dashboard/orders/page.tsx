@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatRelativeTime } from "@/lib/format";
-import { getRecentOrders } from "@/lib/actions/dashboard";
+import { getOrdersWithItems } from "@/lib/actions/dashboard";
+import { useAuthStore } from "@/store/auth-store";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,8 @@ const statusConfig: Record<OrderStatus, { label: string; bgColor: string; nextSt
 };
 
 export default function LiveOrdersPage() {
+  const { restaurant } = useAuthStore();
+  const restaurantId = restaurant?.id;
   const [orders, setOrders] = useState<any[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<OrderStatus | "all">("all");
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -36,12 +39,13 @@ export default function LiveOrdersPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
-    getRecentOrders("demo", 50).then(setOrders).catch(() => setOrders([]));
+    if (!restaurantId) return;
+    getOrdersWithItems(restaurantId, 50).then(setOrders).catch(() => setOrders([]));
     const interval = setInterval(() => {
-      getRecentOrders("demo", 50).then(setOrders).catch(() => {});
-    }, 30000);
+      getOrdersWithItems(restaurantId, 50).then(setOrders).catch(() => {});
+    }, 15_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [restaurantId]);
 
   const filteredOrders = useMemo(() => {
     if (selectedFilter === "all") return orders;
