@@ -8,21 +8,22 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { useState } from 'react';
+import { OrderStatus } from '@/types';
 
 export function KitchenHeader() {
   const { activeTab, setActiveTab, orders, getPrepTotals } = useKitchenStore();
   const [isPrepOpen, setIsPrepOpen] = useState(false);
 
-  const pendingCount = orders.filter((o) => o.status === 'PENDING').length;
-  const cookingCount = orders.filter((o) => o.status === 'PREPARING').length;
+  const pendingCount = orders.filter((o) => o.status === OrderStatus.PENDING).length;
+  const cookingCount = orders.filter((o) => o.status === OrderStatus.PREPARING).length;
 
   const prepTotals = getPrepTotals();
   const prepKeys = Object.keys(prepTotals);
 
   const tabs: { id: KitchenTab; label: string; count?: number; icon: any }[] = [
-    { id: 'PENDING', label: 'Pending', count: pendingCount, icon: ListTodo },
-    { id: 'PREPARING', label: 'Cooking', count: cookingCount, icon: ChefHat },
-    { id: 'READY', label: 'Ready', icon: CheckCircle2 },
+    { id: 'PENDING' as KitchenTab, label: 'Pending', count: pendingCount, icon: ListTodo },
+    { id: 'PREPARING' as KitchenTab, label: 'Cooking', count: cookingCount, icon: ChefHat },
+    { id: 'READY' as KitchenTab, label: 'Ready', icon: CheckCircle2 },
   ];
 
   return (

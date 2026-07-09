@@ -3,86 +3,15 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import { useWaiterOrderStore } from '@/store/waiter-order-store';
-import { MenuItem, FoodType, SpiceLevel } from '@/types';
+import { MenuItem, SpiceLevel } from '@/types';
 
-// Mock Data for scaffolding
-const MOCK_MENU: MenuItem[] = [
-  {
-    id: 'm1',
-    restaurantId: 'r1',
-    categoryId: 'Appetizers',
-    name: 'Truffle Fries',
-    description: 'Crispy fries with truffle oil and parmesan',
-    price: 8.50,
-    foodType: FoodType.VEG,
-    spiceLevel: SpiceLevel.NONE,
-    allergens: [],
-    prepTime: 10,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 1,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 'm2',
-    restaurantId: 'r1',
-    categoryId: 'Mains',
-    name: 'Spicy Chicken Burger',
-    description: 'Crispy chicken breast with spicy mayo',
-    price: 14.00,
-    foodType: FoodType.NON_VEG,
-    spiceLevel: SpiceLevel.HOT,
-    allergens: [],
-    prepTime: 15,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 2,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 'm3',
-    restaurantId: 'r1',
-    categoryId: 'Mains',
-    name: 'Margherita Pizza',
-    description: 'Classic tomato and mozzarella',
-    price: 16.00,
-    foodType: FoodType.VEG,
-    spiceLevel: SpiceLevel.NONE,
-    allergens: [],
-    prepTime: 20,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 3,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 'm4',
-    restaurantId: 'r1',
-    categoryId: 'Drinks',
-    name: 'Craft Cola',
-    price: 4.50,
-    foodType: FoodType.VEG,
-    spiceLevel: SpiceLevel.NONE,
-    allergens: [],
-    prepTime: 2,
-    addOns: [],
-    isAvailable: true,
-    displayOrder: 4,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
-
-export default function MenuGrid() {
+export default function MenuGrid({ menuItems }: { menuItems: MenuItem[] }) {
   const { searchQuery, selectedCategory, draftItems, addItem, updateQuantity, orderState } = useWaiterOrderStore();
   const [longPressTimeout, setLongPressTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Filter logic
   const filteredMenu = useMemo(() => {
-    return MOCK_MENU.filter((item) => {
+    return menuItems.filter((item) => {
       const matchesSearch = 
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
         item.id.includes(searchQuery); // using id as a mock "short code" for now
@@ -91,7 +20,7 @@ export default function MenuGrid() {
       
       return matchesSearch && matchesCategory;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, menuItems]);
 
   const handleTouchStart = (item: MenuItem) => {
     // If order is locked, don't allow modifiers

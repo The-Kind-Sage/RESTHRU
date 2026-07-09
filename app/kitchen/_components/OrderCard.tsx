@@ -20,7 +20,7 @@ export function OrderCard({ order }: OrderCardProps) {
   // Timer logic
   useEffect(() => {
     // Only increment timer for pending or preparing
-    if (order.status === 'READY' || order.status === 'SERVED') return;
+    if (order.status === OrderStatus.READY || order.status === OrderStatus.SERVED) return;
 
     const start = new Date(order.createdAt).getTime();
     
@@ -52,10 +52,10 @@ export function OrderCard({ order }: OrderCardProps) {
     const threshold = 100; // swipe threshold in px
     if (info.offset.x > threshold) {
       // Swiped right
-      if (order.status === 'PENDING') {
-        updateOrderStatus(order.id, 'PREPARING');
-      } else if (order.status === 'PREPARING') {
-        updateOrderStatus(order.id, 'READY');
+      if (order.status === OrderStatus.PENDING) {
+        updateOrderStatus(order.id, OrderStatus.PREPARING);
+      } else if (order.status === OrderStatus.PREPARING) {
+        updateOrderStatus(order.id, OrderStatus.READY);
       } else {
         // Reset position if no action
         controls.start({ x: 0 });
@@ -66,19 +66,19 @@ export function OrderCard({ order }: OrderCardProps) {
     }
   };
 
-  const nextActionText = order.status === 'PENDING' ? 'Tap to Cook' : order.status === 'PREPARING' ? 'Tap to Complete' : 'Completed';
+  const nextActionText = order.status === OrderStatus.PENDING ? 'Tap to Cook' : order.status === OrderStatus.PREPARING ? 'Tap to Complete' : 'Completed';
   
   const handleActionTap = () => {
-    if (order.status === 'PENDING') {
-      updateOrderStatus(order.id, 'PREPARING');
-    } else if (order.status === 'PREPARING') {
-      updateOrderStatus(order.id, 'READY');
+    if (order.status === OrderStatus.PENDING) {
+      updateOrderStatus(order.id, OrderStatus.PREPARING);
+    } else if (order.status === OrderStatus.PREPARING) {
+      updateOrderStatus(order.id, OrderStatus.READY);
     }
   };
 
   // Mutated alert simulation check (if an item was added very recently)
   // Since we don't have a real stream, we'll simulate it by checking if updated_at is significantly newer than created_at
-  const isMutated = new Date(order.updatedAt).getTime() - new Date(order.createdAt).getTime() > 10000 && order.status !== 'READY';
+  const isMutated = new Date(order.updatedAt).getTime() - new Date(order.createdAt).getTime() > 10000 && order.status !== OrderStatus.READY;
 
   return (
     <motion.div
@@ -90,7 +90,7 @@ export function OrderCard({ order }: OrderCardProps) {
       className="relative mb-4 w-full"
     >
       <motion.div
-        drag={order.status !== 'READY' ? 'x' : false}
+        drag={order.status !== OrderStatus.READY ? 'x' : false}
         dragConstraints={{ left: 0, right: 0 }}
         onDragEnd={handleDragEnd}
         animate={controls}
@@ -194,12 +194,12 @@ export function OrderCard({ order }: OrderCardProps) {
         )}
 
         {/* Bottom Action Bar */}
-        {order.status !== 'READY' && (
+        {order.status !== OrderStatus.READY && (
           <button
             onClick={handleActionTap}
             className={cn(
               "w-full py-4 text-center font-bold text-white transition-colors uppercase tracking-widest active:scale-95",
-              order.status === 'PENDING' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'
+              order.status === OrderStatus.PENDING ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'
             )}
           >
             {nextActionText}
@@ -208,10 +208,10 @@ export function OrderCard({ order }: OrderCardProps) {
       </motion.div>
       
       {/* Swipe Indicator Background (hidden under the card, revealed during drag) */}
-      {order.status !== 'READY' && (
+      {order.status !== OrderStatus.READY && (
         <div className="absolute inset-0 bg-emerald-500 rounded-xl -z-10 flex items-center px-6">
           <span className="text-white font-bold text-lg">
-            {order.status === 'PENDING' ? 'Cook' : 'Complete'}
+            {order.status === OrderStatus.PENDING ? 'Cook' : 'Complete'}
           </span>
         </div>
       )}

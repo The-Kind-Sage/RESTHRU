@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShoppingBag, ChevronUp, X, CheckCircle2 } from 'lucide-react';
+import { ShoppingBag, ChevronUp, X, CheckCircle2, Loader2 } from 'lucide-react';
 import { useWaiterOrderStore } from '@/store/waiter-order-store';
 import {
   Drawer,
@@ -15,26 +15,50 @@ import {
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import { createOrder } from '@/lib/actions/orders';
 
 export default function ActiveOrderSheet() {
   const { 
     draftItems, getTotalItems, getTotalPrice, 
-    removeItem, orderState, setOrderState, clearDraft 
+    removeItem, orderState, setOrderState, clearDraft, tableNumber, guestCount
   } = useWaiterOrderStore();
   
   const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
 
-  const handleConfirmOrder = () => {
+  const handleConfirmOrder = async () => {
     if (totalItems === 0) return;
     
-    // Optimistic Update
+    setIsSubmitting(true);
+    
+    // Prepare payload
+    const payload = {
+      draftItems: draftItems.map(item => ({
+        menuItem: { id: item.menuItem.id, name: item.menuItem.name, price: item.menuItem.price },
+        quantity: item.quantity,
+        notes: item.notes
+      })),
+      tableNumber,
+      guestCount
+    };
+
+    const result = await createOrder(payload);
+    
+    setIsSubmitting(false);
+
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+
     setOrderState('CONFIRMED');
     setIsOpen(false);
     toast.success('Order Sent to Kitchen', {
       icon: <CheckCircle2 className="text-green-500" />
     });
+    clearDraft(); // clear after confirmed
   };
 
   const handleCancelOrder = () => {
@@ -137,13 +161,16 @@ export default function ActiveOrderSheet() {
             <>
               <Button 
                 onClick={handleConfirmOrder} 
+                disabled={isSubmitting || draftItems.length === 0}
                 className="w-full h-14 text-lg font-bold rounded-xl bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
               >
-                Confirm & Send to Kitchen
+                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
+                {isSubmitting ? 'Sending...' : 'Confirm & Send to Kitchen'}
               </Button>
               <Button 
                 variant="outline" 
                 onClick={handleCancelOrder}
+                disabled={isSubmitting}
                 className="w-full h-12 rounded-xl border-gray-200 text-gray-600"
               >
                 Cancel Order
@@ -158,7 +185,7 @@ export default function ActiveOrderSheet() {
                 }} 
                 className="w-full h-14 text-lg font-bold rounded-xl"
               >
-                Modify Active Order
+                Start New Order
               </Button>
             </>
           )}
