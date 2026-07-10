@@ -19,18 +19,22 @@ export function OrderCard({ order }: OrderCardProps) {
 
   // Timer logic
   useEffect(() => {
-    // Only increment timer for pending or preparing
-    if (order.status === OrderStatus.READY || order.status === OrderStatus.SERVED) return;
-
     const start = new Date(order.createdAt).getTime();
-    
+
+    // READY/SERVED orders show the final cook time, frozen
+    if (order.status === OrderStatus.READY || order.status === OrderStatus.SERVED) {
+      const end = new Date(order.updatedAt).getTime();
+      setElapsedSeconds(Math.max(0, Math.floor((end - start) / 1000)));
+      return;
+    }
+
     const interval = setInterval(() => {
       const now = Date.now();
       setElapsedSeconds(Math.floor((now - start) / 1000));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [order.createdAt, order.status]);
+  }, [order.createdAt, order.updatedAt, order.status]);
 
   const formatTime = (totalSeconds: number) => {
     const m = Math.floor(totalSeconds / 60);
@@ -48,37 +52,33 @@ export function OrderCard({ order }: OrderCardProps) {
     badgeColor = 'bg-amber-500/10 text-amber-500 border-amber-500/20';
   }
 
+  const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
+    [OrderStatus.PENDING]: OrderStatus.PREPARING,
+    [OrderStatus.PREPARING]: OrderStatus.READY,
+    [OrderStatus.READY]: OrderStatus.SERVED,
+  };
+
   const handleDragEnd = async (event: any, info: PanInfo) => {
     const threshold = 100; // swipe threshold in px
-    if (info.offset.x > threshold) {
-      // Swiped right
-      if (order.status === OrderStatus.PENDING) {
-        updateOrderStatus(order.id, OrderStatus.PREPARING);
-      } else if (order.status === OrderStatus.PREPARING) {
-        updateOrderStatus(order.id, OrderStatus.READY);
-      } else {
-        // Reset position if no action
-        controls.start({ x: 0 });
-      }
+    const next = NEXT_STATUS[order.status];
+    if (info.offset.x > threshold && next) {
+      updateOrderStatus(order.id, next);
     } else {
       // Return to original position
       controls.start({ x: 0 });
     }
   };
 
-  const nextActionText = order.status === OrderStatus.PENDING ? 'Tap to Cook' : order.status === OrderStatus.PREPARING ? 'Tap to Complete' : 'Completed';
-  
-  const handleActionTap = () => {
-    if (order.status === OrderStatus.PENDING) {
-      updateOrderStatus(order.id, OrderStatus.PREPARING);
-    } else if (order.status === OrderStatus.PREPARING) {
-      updateOrderStatus(order.id, OrderStatus.READY);
-    }
-  };
+  const nextActionText =
+    order.status === OrderStatus.PENDING ? 'Tap to Cook'
+    : order.status === OrderStatus.PREPARING ? 'Tap to Complete'
+    : order.status === OrderStatus.READY ? 'Mark Served / Picked Up'
+    : 'Done';
 
-  // Mutated alert simulation check (if an item was added very recently)
-  // Since we don't have a real stream, we'll simulate it by checking if updated_at is significantly newer than created_at
-  const isMutated = new Date(order.updatedAt).getTime() - new Date(order.createdAt).getTime() > 10000 && order.status !== OrderStatus.READY;
+  const handleActionTap = () => {
+    const next = NEXT_STATUS[order.status];
+    if (next) updateOrderStatus(order.id, next);
+  };
 
   return (
     <motion.div
@@ -90,29 +90,20 @@ export function OrderCard({ order }: OrderCardProps) {
       className="relative mb-4 w-full"
     >
       <motion.div
-        drag={order.status !== OrderStatus.READY ? 'x' : false}
+        drag={NEXT_STATUS[order.status] ? 'x' : false}
         dragConstraints={{ left: 0, right: 0 }}
         onDragEnd={handleDragEnd}
         animate={controls}
-        className={cn(
-          "bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden",
-          isMutated && "ring-2 ring-blue-500 animate-pulse"
-        )}
+        className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden"
       >
-        {isMutated && (
-          <div className="bg-blue-500 text-white text-xs font-bold px-3 py-1 text-center animate-bounce">
-            UPDATED
-          </div>
-        )}
-
         {/* Header */}
-        <div 
+        <div
           className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="flex flex-col">
             <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
-              {order.tableId ? `Table ${order.tableId}` : order.orderType}
+              {order.table?.tableNumber ? `Table ${order.table.tableNumber}` : order.orderType}
             </span>
             <span className="text-xs text-slate-500 dark:text-slate-400">
               #{order.orderId}
@@ -194,24 +185,26 @@ export function OrderCard({ order }: OrderCardProps) {
         )}
 
         {/* Bottom Action Bar */}
-        {order.status !== OrderStatus.READY && (
+        {NEXT_STATUS[order.status] && (
           <button
             onClick={handleActionTap}
             className={cn(
               "w-full py-4 text-center font-bold text-white transition-colors uppercase tracking-widest active:scale-95",
-              order.status === OrderStatus.PENDING ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'
+              order.status === OrderStatus.PENDING ? 'bg-blue-600 hover:bg-blue-700'
+              : order.status === OrderStatus.PREPARING ? 'bg-emerald-600 hover:bg-emerald-700'
+              : 'bg-slate-600 hover:bg-slate-700'
             )}
           >
             {nextActionText}
           </button>
         )}
       </motion.div>
-      
+
       {/* Swipe Indicator Background (hidden under the card, revealed during drag) */}
-      {order.status !== OrderStatus.READY && (
+      {NEXT_STATUS[order.status] && (
         <div className="absolute inset-0 bg-emerald-500 rounded-xl -z-10 flex items-center px-6">
           <span className="text-white font-bold text-lg">
-            {order.status === OrderStatus.PENDING ? 'Cook' : 'Complete'}
+            {order.status === OrderStatus.PENDING ? 'Cook' : order.status === OrderStatus.PREPARING ? 'Complete' : 'Serve'}
           </span>
         </div>
       )}

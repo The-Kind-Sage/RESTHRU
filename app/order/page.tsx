@@ -1,13 +1,10 @@
 import React from 'react';
 import { Metadata } from 'next';
-import OrderHeader from './_components/OrderHeader';
-import MenuGrid from './_components/MenuGrid';
-import ActiveOrderSheet from './_components/ActiveOrderSheet';
-import TableSelectorModal from './_components/TableSelectorModal';
-import ItemModifierModal from './_components/ItemModifierModal';
+import OrderPageClient from './_components/OrderPageClient';
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { getMenuItems } from '@/lib/actions/menu';
+import { getMenuItems, getCategories } from '@/lib/actions/menu';
+import { getTables } from '@/lib/actions/tables';
 import { MenuItem } from '@/types';
 
 export const metadata: Metadata = {
@@ -21,36 +18,28 @@ export default async function OrderPage() {
     redirect('/login');
   }
 
-  const result = await getMenuItems(session.restaurantId);
-  const menuItems: MenuItem[] = (result.data as unknown as MenuItem[]) || [];
+  const [menuResult, categoriesResult, tablesResult] = await Promise.all([
+    getMenuItems(session.restaurantId, { availableOnly: true }),
+    getCategories(session.restaurantId),
+    getTables(session.restaurantId),
+  ]);
+
+  const menuItems: MenuItem[] = (menuResult.data as unknown as MenuItem[]) || [];
+  const categories = (categoriesResult.data || [])
+    .filter((c: any) => c.isActive)
+    .map((c: any) => ({ id: c.id, name: c.name }));
+  const tables = (tablesResult.data || []).map((t: any) => ({
+    id: t.id,
+    tableNumber: t.tableNumber,
+    status: t.status,
+    capacity: t.capacity,
+  }));
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto bg-gray-50 overflow-hidden relative sm:border-x sm:border-gray-200">
-      {/* 
-        Header Area (Sticky)
-        Includes Search, Category Pills, and offline indicator
-      */}
-      <OrderHeader />
-
-      {/* 
-        Main Menu Area (Scrollable)
-        Takes remaining height, adds padding at bottom so last items aren't hidden by the cart sheet 
-      */}
-      <main className="flex-1 overflow-y-auto pb-24">
-        <MenuGrid menuItems={menuItems} />
-      </main>
-
-      {/* 
-        Bottom Sheet for Active Order 
-      */}
-      <ActiveOrderSheet />
-
-      {/* 
-        Modals 
-      */}
-      <TableSelectorModal />
-      <ItemModifierModal />
-    </div>
+    <OrderPageClient
+      menuItems={menuItems}
+      categories={categories}
+      tables={tables}
+    />
   );
 }
-

@@ -16,6 +16,7 @@ export function KitchenHeader() {
 
   const pendingCount = orders.filter((o) => o.status === OrderStatus.PENDING).length;
   const cookingCount = orders.filter((o) => o.status === OrderStatus.PREPARING).length;
+  const readyCount   = orders.filter((o) => o.status === OrderStatus.READY).length;
 
   const prepTotals = getPrepTotals();
   const prepKeys = Object.keys(prepTotals);
@@ -23,7 +24,7 @@ export function KitchenHeader() {
   const tabs: { id: KitchenTab; label: string; count?: number; icon: any }[] = [
     { id: 'PENDING' as KitchenTab, label: 'Pending', count: pendingCount, icon: ListTodo },
     { id: 'PREPARING' as KitchenTab, label: 'Cooking', count: cookingCount, icon: ChefHat },
-    { id: 'READY' as KitchenTab, label: 'Ready', icon: CheckCircle2 },
+    { id: 'READY' as KitchenTab, label: 'Ready', count: readyCount, icon: CheckCircle2 },
   ];
 
   return (

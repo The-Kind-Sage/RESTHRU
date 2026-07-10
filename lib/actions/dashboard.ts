@@ -118,6 +118,7 @@ export const getOrdersWithItems = cache(
       include: {
         items: true,
         table: { select: { tableNumber: true } },
+        bills: { select: { id: true } },
       },
     });
     return orders;
@@ -138,14 +139,15 @@ export const getRevenueChartData = unstable_cache(
     startDate.setHours(0, 0, 0, 0);
 
     // Raw SQL via $queryRaw to get date-truncated aggregates in one round-trip.
+    // NOTE: uses the mapped physical names (@@map/@map) — table "orders", snake_case columns.
     const rows = await prisma.$queryRaw<{ day: Date; total: number }[]>`
       SELECT
-        DATE_TRUNC('day', "createdAt") AS day,
-        COALESCE(SUM("totalAmount"), 0)::float AS total
-      FROM "Order"
+        DATE_TRUNC('day', "created_at") AS day,
+        COALESCE(SUM("total_amount"), 0)::float AS total
+      FROM "orders"
       WHERE
-        "restaurantId" = ${restaurantId}
-        AND "createdAt" >= ${startDate}
+        "restaurant_id" = ${restaurantId}
+        AND "created_at" >= ${startDate}
         AND "status" != 'CANCELLED'
       GROUP BY day
       ORDER BY day ASC
@@ -169,29 +171,36 @@ export const getRevenueChartData = unstable_cache(
 );
 
 // ─── 4. Top Selling Items ──────────────────────────────────────────────────
+// Revenue = SUM(quantity × unit price), joined with menu_items for veg/non-veg.
 export const getTopSellingItems = unstable_cache(
   async (restaurantId: string, limit = 5): Promise<TopItem[]> => {
-    const items = await prisma.orderItem.groupBy({
-      by: ["menuItemName"],
-      where: { order: { restaurantId, status: { not: "CANCELLED" } } },
-      _sum: { quantity: true, pricePerUnit: true },
-      orderBy: { _sum: { quantity: "desc" } },
-      take: limit,
-    });
+    const rows = await prisma.$queryRaw<
+      { name: string; orders: number; revenue: number; food_type: string | null }[]
+    >`
+      SELECT
+        oi."menu_item_name" AS name,
+        SUM(oi."quantity")::int AS orders,
+        SUM(oi."quantity" * oi."price_per_unit")::float AS revenue,
+        MAX(mi."food_type") AS food_type
+      FROM "order_items" oi
+      JOIN "orders" o ON o."id" = oi."order_id"
+      LEFT JOIN "menu_items" mi ON mi."id" = oi."menu_item_id"
+      WHERE o."restaurant_id" = ${restaurantId}
+        AND o."status" != 'CANCELLED'
+      GROUP BY oi."menu_item_name"
+      ORDER BY orders DESC
+      LIMIT ${limit}
+    `;
 
-    const maxOrders = items[0]?._sum.quantity ?? 1;
+    const maxOrders = rows[0]?.orders ?? 1;
 
-    return items.map((item) => {
-      const orders  = item._sum.quantity ?? 0;
-      const revenue = item._sum.pricePerUnit ?? 0; // sum of all unit prices = total revenue
-      return {
-        name:       item.menuItemName,
-        orders,
-        revenue,
-        percentage: Math.round((orders / maxOrders) * 100),
-        isVeg:      true,
-      };
-    });
+    return rows.map((row) => ({
+      name:       row.name,
+      orders:     row.orders,
+      revenue:    row.revenue,
+      percentage: Math.round((row.orders / maxOrders) * 100),
+      isVeg:      row.food_type !== "NON_VEG",
+    }));
   },
   ["top-items"],
   { revalidate: 120 }

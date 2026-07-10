@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { createOrder } from '@/lib/actions/orders';
+import { formatCurrency } from '@/lib/format';
 
 export default function ActiveOrderSheet() {
   const { 
@@ -45,12 +46,15 @@ export default function ActiveOrderSheet() {
     };
 
     const result = await createOrder(payload);
-    
+
     setIsSubmitting(false);
 
-    if (result.error) {
+    if ('error' in result && result.error) {
       toast.error(result.error);
       return;
+    }
+    if ('warning' in result && result.warning) {
+      toast.warning(result.warning);
     }
 
     setOrderState('CONFIRMED');
@@ -97,7 +101,7 @@ export default function ActiveOrderSheet() {
 
             <div className="flex items-center gap-4">
               <span className="font-bold text-lg text-primary">
-                ${totalPrice.toFixed(2)}
+                {formatCurrency(totalPrice)}
               </span>
               <ChevronUp className="text-gray-400" size={20} />
             </div>
@@ -129,7 +133,7 @@ export default function ActiveOrderSheet() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-medium text-gray-900">
-                    ${(item.menuItem.price * item.quantity).toFixed(2)}
+                    {formatCurrency((item.menuItem.discountPrice ?? item.menuItem.price) * item.quantity)}
                   </span>
                   {orderState === 'DRAFT' && (
                     <button 
@@ -153,8 +157,8 @@ export default function ActiveOrderSheet() {
 
         <DrawerFooter className="border-t border-gray-100 pt-4 pb-safe gap-3">
           <div className="flex justify-between items-center px-2 mb-2">
-            <span className="text-gray-500 font-medium">Total</span>
-            <span className="text-2xl font-bold text-gray-900">${totalPrice.toFixed(2)}</span>
+            <span className="text-gray-500 font-medium">Subtotal (before 13% VAT)</span>
+            <span className="text-2xl font-bold text-gray-900">{formatCurrency(totalPrice)}</span>
           </div>
           
           {orderState === 'DRAFT' ? (

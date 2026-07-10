@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import { useWaiterOrderStore } from '@/store/waiter-order-store';
 import { MenuItem, SpiceLevel } from '@/types';
+import { formatCurrency } from '@/lib/format';
 
 export default function MenuGrid({ menuItems }: { menuItems: MenuItem[] }) {
   const { searchQuery, selectedCategory, draftItems, addItem, updateQuantity, orderState } = useWaiterOrderStore();
@@ -68,8 +69,13 @@ export default function MenuGrid({ menuItems }: { menuItems: MenuItem[] }) {
               {item.description && (
                 <p className="text-sm text-gray-500 line-clamp-1 mb-2">{item.description}</p>
               )}
-              <div className="font-semibold text-primary">
-                ${item.price.toFixed(2)}
+              <div className="font-semibold text-primary flex items-center gap-2">
+                {formatCurrency(item.discountPrice ?? item.price)}
+                {item.discountPrice != null && item.discountPrice < item.price && (
+                  <span className="text-xs text-gray-400 line-through font-normal">
+                    {formatCurrency(item.price)}
+                  </span>
+                )}
               </div>
             </div>
 

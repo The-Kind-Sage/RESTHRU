@@ -342,6 +342,8 @@ export interface Order {
   id: string;
   restaurantId: string;
   tableId?: string;
+  table?: { tableNumber: number } | null; // included by kitchen/waiter queries
+  bills?: { id: string }[]; // included by waiter active-orders query
   orderId: string; // user-friendly order number
   orderType: 'DINE_IN' | 'TAKEAWAY' | 'DELIVERY';
   status: OrderStatus;

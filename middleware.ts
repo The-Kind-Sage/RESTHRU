@@ -43,9 +43,18 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Staff-facing routes (waiter POS and kitchen display) need a session too
+  if (pathname.startsWith("/order") || pathname.startsWith("/kitchen")) {
+    if (!session) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/dashboard/:path*"],
+  matcher: ["/admin/:path*", "/dashboard/:path*", "/order/:path*", "/order", "/kitchen/:path*", "/kitchen"],
 };

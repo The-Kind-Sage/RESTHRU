@@ -77,13 +77,16 @@ export async function toggleCategoryActive(id: string, active: boolean) {
 
 // ── Menu Items ──────────────────────────────────────────────────────────────
 
-export async function getMenuItems(restaurantId: string) {
+export async function getMenuItems(restaurantId: string, opts?: { availableOnly?: boolean }) {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
   try {
     const items = await prisma.menuItem.findMany({
-      where: { restaurantId },
+      where: {
+        restaurantId,
+        ...(opts?.availableOnly ? { isAvailable: true } : {}),
+      },
       include: { addOns: true },
       orderBy: { createdAt: "desc" },
     });

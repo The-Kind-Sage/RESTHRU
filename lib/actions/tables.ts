@@ -29,12 +29,13 @@ export async function addTable(data: {
   positionY: number;
 }) {
   const session = await getSession();
-  if (!session) return { error: "Not authenticated" };
+  if (!session || !session.restaurantId) return { error: "Not authenticated" };
 
   try {
     const table = await prisma.restaurantTable.create({
       data: {
-        restaurantId: data.restaurantId,
+        // Always create under the caller's own restaurant
+        restaurantId: session.restaurantId,
         tableNumber: data.tableNumber,
         name: data.name || null,
         capacity: data.capacity,
@@ -46,19 +47,23 @@ export async function addTable(data: {
     });
     return { data: { id: table.id } };
   } catch (err: any) {
+    if (err?.code === "P2002") {
+      return { error: `Table ${data.tableNumber} already exists` };
+    }
     return { error: err?.message || "Failed to add table" };
   }
 }
 
 export async function updateTableStatus(id: string, status: string) {
   const session = await getSession();
-  if (!session) return { error: "Not authenticated" };
+  if (!session || !session.restaurantId) return { error: "Not authenticated" };
 
   try {
-    await prisma.restaurantTable.update({
-      where: { id },
-      data: { status: status as any },
+    const result = await prisma.restaurantTable.updateMany({
+      where: { id, restaurantId: session.restaurantId },
+      data: { status },
     });
+    if (result.count === 0) return { error: "Table not found" };
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to update table status" };
@@ -67,13 +72,14 @@ export async function updateTableStatus(id: string, status: string) {
 
 export async function updateTablePosition(id: string, x: number, y: number) {
   const session = await getSession();
-  if (!session) return { error: "Not authenticated" };
+  if (!session || !session.restaurantId) return { error: "Not authenticated" };
 
   try {
-    await prisma.restaurantTable.update({
-      where: { id },
+    const result = await prisma.restaurantTable.updateMany({
+      where: { id, restaurantId: session.restaurantId },
       data: { positionX: x, positionY: y },
     });
+    if (result.count === 0) return { error: "Table not found" };
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to update table position" };
@@ -82,10 +88,22 @@ export async function updateTablePosition(id: string, x: number, y: number) {
 
 export async function deleteTable(id: string) {
   const session = await getSession();
-  if (!session) return { error: "Not authenticated" };
+  if (!session || !session.restaurantId) return { error: "Not authenticated" };
 
   try {
-    await prisma.restaurantTable.delete({ where: { id } });
+    // Don't delete a table that still has orders attached — history would break
+    const hasOrders = await prisma.order.findFirst({
+      where: { tableId: id },
+      select: { id: true },
+    });
+    if (hasOrders) {
+      return { error: "This table has order history. Mark it unavailable instead of deleting." };
+    }
+
+    const result = await prisma.restaurantTable.deleteMany({
+      where: { id, restaurantId: session.restaurantId },
+    });
+    if (result.count === 0) return { error: "Table not found" };
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to delete table" };

@@ -254,7 +254,7 @@ model Order {
   id              String   @id @default(cuid())
   restaurantId    String   @map("restaurant_id")
   tableId         String?  @map("table_id")
-  orderId         String   @unique @map("order_id")
+  orderId         String   @map("order_id")
   orderType       String   @default("DINE_IN") @map("order_type")
   status          String   @default("PENDING")
   subtotal        Float    @default(0)
@@ -276,6 +276,7 @@ model Order {
   items       OrderItem[]
   bills       Bill[]
 
+  @@unique([restaurantId, orderId])
   @@map("orders")
 }
 
@@ -339,7 +340,7 @@ model Bill {
   id              String   @id @default(cuid())
   restaurantId    String   @map("restaurant_id")
   orderId         String   @map("order_id")
-  billNumber      String   @unique @map("bill_number")
+  billNumber      String   @map("bill_number")
   subtotal        Float    @default(0)
   taxAmount       Float    @default(0) @map("tax_amount")
   serviceCharge   Float    @default(0) @map("service_charge")
@@ -359,6 +360,7 @@ model Bill {
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   order      Order      @relation(fields: [orderId], references: [id])
 
+  @@unique([restaurantId, billNumber])
   @@map("bills")
 }
 

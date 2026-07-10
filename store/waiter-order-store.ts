@@ -121,8 +121,10 @@ export const useWaiterOrderStore = create<WaiterOrderStore>()(
       },
 
       getTotalPrice: () => {
+        // Uses the discounted price when set — matches what the server charges
         return get().draftItems.reduce(
-          (total, item) => total + item.menuItem.price * item.quantity,
+          (total, item) =>
+            total + (item.menuItem.discountPrice ?? item.menuItem.price) * item.quantity,
           0
         );
       },
