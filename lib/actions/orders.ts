@@ -376,10 +376,19 @@ export async function settleOrder(data: {
   const restaurantId = session.restaurantId;
 
   try {
-    const order = await prisma.order.findFirst({
-      where: { id: data.orderId, restaurantId },
-      include: { bills: { select: { id: true } } },
-    });
+    // Order lookup and bill-number lookup are independent — run them together
+    // so the checkout tap pays one DB round-trip instead of two.
+    const [order, lastBill] = await Promise.all([
+      prisma.order.findFirst({
+        where: { id: data.orderId, restaurantId },
+        include: { bills: { select: { id: true } } },
+      }),
+      prisma.bill.findFirst({
+        where: { restaurantId },
+        orderBy: { createdAt: "desc" },
+        select: { billNumber: true },
+      }),
+    ]);
     if (!order) return { error: "Order not found" };
     if (order.status === "CANCELLED") return { error: "Cannot bill a cancelled order" };
     if (order.status === "PENDING" || order.status === "PREPARING") {
@@ -393,13 +402,6 @@ export async function settleOrder(data: {
     if (amountPaid < totalAmount - 0.01) {
       return { error: `Amount paid (${amountPaid}) is less than the total (${totalAmount.toFixed(2)})` };
     }
-
-    // Sequential bill number per restaurant
-    const lastBill = await prisma.bill.findFirst({
-      where: { restaurantId },
-      orderBy: { createdAt: "desc" },
-      select: { billNumber: true },
-    });
     const lastBillNum = parseInt(lastBill?.billNumber?.replace(/\D/g, "") ?? "", 10);
     let nextBillNumber = isNaN(lastBillNum) ? 1 : lastBillNum + 1;
 
@@ -543,14 +545,18 @@ export async function voidOrderItem(data: {
   if (!session || !session.restaurantId) return { error: "Not authenticated" };
   if (!data.reason?.trim()) return { error: "A void reason is required" };
 
-  const approval = await verifyManagerApproval(session.restaurantId, data.approverUsername, data.approverPassword);
-  if (!approval.ok) return { error: approval.error };
-
   try {
-    const item = await prisma.orderItem.findUnique({
-      where: { id: data.orderItemId },
-      include: { order: { include: { items: true, bills: { select: { status: true } } } } },
-    });
+    // bcrypt verification is the slow part (~100-200ms) — overlap it with the
+    // item fetch instead of paying for them back-to-back. Approval errors keep
+    // precedence over "not found" so failed logins read the same as before.
+    const [approval, item] = await Promise.all([
+      verifyManagerApproval(session.restaurantId, data.approverUsername, data.approverPassword),
+      prisma.orderItem.findUnique({
+        where: { id: data.orderItemId },
+        include: { order: { include: { items: true, bills: { select: { status: true } } } } },
+      }),
+    ]);
+    if (!approval.ok) return { error: approval.error };
     if (!item || item.order.restaurantId !== session.restaurantId) return { error: "Order item not found" };
     if (item.status === "CANCELLED") return { error: "Item is already voided" };
     if (item.order.bills.some((b) => b.status === "PAID")) {
@@ -618,14 +624,16 @@ export async function voidOrder(data: {
   if (!session || !session.restaurantId) return { error: "Not authenticated" };
   if (!data.reason?.trim()) return { error: "A void reason is required" };
 
-  const approval = await verifyManagerApproval(session.restaurantId, data.approverUsername, data.approverPassword);
-  if (!approval.ok) return { error: approval.error };
-
   try {
-    const order = await prisma.order.findFirst({
-      where: { id: data.orderId, restaurantId: session.restaurantId },
-      include: { bills: { select: { status: true } } },
-    });
+    // Same overlap as voidOrderItem — bcrypt + fetch run concurrently.
+    const [approval, order] = await Promise.all([
+      verifyManagerApproval(session.restaurantId, data.approverUsername, data.approverPassword),
+      prisma.order.findFirst({
+        where: { id: data.orderId, restaurantId: session.restaurantId },
+        include: { bills: { select: { status: true } } },
+      }),
+    ]);
+    if (!approval.ok) return { error: approval.error };
     if (!order) return { error: "Order not found" };
     if (order.status === "CANCELLED") return { error: "Order is already cancelled" };
     if (order.bills.some((b) => b.status === "PAID")) {

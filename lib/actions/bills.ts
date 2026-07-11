@@ -50,21 +50,22 @@ export async function createBillDraft(orderId: string) {
   if (!session?.restaurantId) return { error: "Not authenticated" };
 
   try {
-    const order = await prisma.order.findFirst({
-      where: { id: orderId, restaurantId: session.restaurantId },
-    });
+    // All three lookups are independent — one round-trip instead of three.
+    const [order, existing, lastBill] = await Promise.all([
+      prisma.order.findFirst({
+        where: { id: orderId, restaurantId: session.restaurantId },
+      }),
+      prisma.bill.findFirst({
+        where: { orderId, status: { in: ["PENDING", "HELD"] } },
+      }),
+      prisma.bill.findFirst({
+        where: { restaurantId: session.restaurantId },
+        orderBy: { createdAt: "desc" },
+        select: { billNumber: true },
+      }),
+    ]);
     if (!order) return { error: "Order not found" };
-
-    const existing = await prisma.bill.findFirst({
-      where: { orderId, status: { in: ["PENDING", "HELD"] } },
-    });
     if (existing) return { data: existing };
-
-    const lastBill = await prisma.bill.findFirst({
-      where: { restaurantId: session.restaurantId },
-      orderBy: { createdAt: "desc" },
-      select: { billNumber: true },
-    });
     const lastNum = parseInt(lastBill?.billNumber?.replace(/\D/g, "") ?? "", 10);
     const nextNum = isNaN(lastNum) ? 1 : lastNum + 1;
 
@@ -451,13 +452,16 @@ export async function voidBill(data: {
   if (!session?.restaurantId || !session?.id) return { error: "Not authenticated" };
   if (!data.reason?.trim()) return { error: "A void reason is required" };
 
-  const approval = await verifyManagerApproval(session.restaurantId, data.approverUsername, data.approverPassword);
-  if (!approval.ok) return { error: approval.error };
-
   try {
-    const bill = await prisma.bill.findFirst({
-      where: { id: data.billId, restaurantId: session.restaurantId },
-    });
+    // bcrypt verification is the slow part — overlap it with the bill fetch.
+    // Approval errors keep precedence so failed logins read the same as before.
+    const [approval, bill] = await Promise.all([
+      verifyManagerApproval(session.restaurantId, data.approverUsername, data.approverPassword),
+      prisma.bill.findFirst({
+        where: { id: data.billId, restaurantId: session.restaurantId },
+      }),
+    ]);
+    if (!approval.ok) return { error: approval.error };
     if (!bill) return { error: "Bill not found" };
     if (bill.voidedAt) return { error: "Bill is already voided" };
 

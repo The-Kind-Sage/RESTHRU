@@ -100,13 +100,22 @@ export async function getShiftSummary(shiftId: string) {
     if (!shift) return { error: "Shift not found" };
 
     const windowEnd = shift.closedAt ?? new Date();
-    const payments = await prisma.payment.findMany({
-      where: {
-        bill: { restaurantId: session.restaurantId },
-        createdAt: { gte: shift.openedAt, lte: windowEnd },
-      },
-      include: { bill: { select: { billNumber: true, status: true, voidedAt: true } } },
-    });
+    // Payments and voided-bill count only depend on the shift window — fetch together.
+    const [payments, voidedBillCount] = await Promise.all([
+      prisma.payment.findMany({
+        where: {
+          bill: { restaurantId: session.restaurantId },
+          createdAt: { gte: shift.openedAt, lte: windowEnd },
+        },
+        include: { bill: { select: { billNumber: true, status: true, voidedAt: true } } },
+      }),
+      prisma.bill.count({
+        where: {
+          restaurantId: session.restaurantId,
+          voidedAt: { gte: shift.openedAt, lte: windowEnd },
+        },
+      }),
+    ]);
 
     const validPayments = payments.filter((p) => !p.bill.voidedAt);
     const byMethod: Record<string, number> = {};
@@ -117,12 +126,6 @@ export async function getShiftSummary(shiftId: string) {
     const cashTotal = byMethod["CASH"] || 0;
 
     const billCount = new Set(validPayments.map((p) => p.billId)).size;
-    const voidedBillCount = await prisma.bill.count({
-      where: {
-        restaurantId: session.restaurantId,
-        voidedAt: { gte: shift.openedAt, lte: windowEnd },
-      },
-    });
 
     const expectedCash = shift.openingFloat + cashTotal;
 
