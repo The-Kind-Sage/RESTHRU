@@ -14,7 +14,7 @@ export interface User {
   lastName: string;
   phoneNumber: string;
   profileImage?: string;
-  role: 'SUPER_ADMIN' | 'RESTAURANT_OWNER' | 'MANAGER' | 'STAFF';
+  role: 'SUPER_ADMIN' | 'RESTAURANT_OWNER' | 'MANAGER' | 'STAFF' | 'RECEPTIONIST';
   restaurantId?: string;
   isActive: boolean;
   createdAt: Date;

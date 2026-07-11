@@ -274,7 +274,7 @@ export default function DashboardClient({
               <div className="flex items-center justify-between">
                 <CardTitle>Table Overview</CardTitle>
                 <Link
-                  href="/dashboard/tables"
+                  href="/reception/tables"
                   className="text-sm text-primary hover:underline flex items-center gap-1"
                 >
                   View Full Map <ArrowRight className="w-4 h-4" />
@@ -324,7 +324,7 @@ export default function DashboardClient({
             <div className="flex items-center justify-between">
               <CardTitle>Live Orders</CardTitle>
               <Link
-                href="/dashboard/orders"
+                href="/reception/orders"
                 className="text-sm text-primary hover:underline flex items-center gap-1"
               >
                 View All <ArrowRight className="w-4 h-4" />

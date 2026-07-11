@@ -34,13 +34,29 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Dashboard routes
+  // Dashboard routes — block RECEPTIONIST, redirect to /reception
   if (pathname.startsWith("/dashboard") && !publicDashboardPaths.includes(pathname)) {
     if (!session) {
       const loginUrl = new URL("/dashboard/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
+    if (session.role === "RECEPTIONIST") {
+      return NextResponse.redirect(new URL("/reception", request.url));
+    }
+  }
+
+  // Reception routes
+  if (pathname.startsWith("/reception")) {
+    if (!session) {
+      const loginUrl = new URL("/dashboard/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    if (session.role === "ADMIN") {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+    // Owners/MANAGER/STAFF/RECEPTIONIST all allowed through
   }
 
   // Staff-facing routes (waiter POS and kitchen display) need a session too
@@ -56,5 +72,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/dashboard/:path*", "/order/:path*", "/order", "/kitchen/:path*", "/kitchen"],
+  matcher: ["/admin/:path*", "/dashboard/:path*", "/reception/:path*", "/reception", "/order/:path*", "/order", "/kitchen/:path*", "/kitchen"],
 };

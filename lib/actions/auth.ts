@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { createSession, clearSession, getSession } from "@/lib/auth";
+import { isApproverRole } from "@/lib/manager-approval";
 
 function generateUsername(email: string): string {
   let base = email.split("@")[0] || "user";
@@ -98,7 +99,7 @@ export async function login(username: string, password: string, redirectTo?: str
       restaurantId: user.restaurantId,
     });
 
-    const destination = redirectTo || (user.role === "ADMIN" ? "/admin" : "/dashboard");
+    const destination = redirectTo || (user.role === "ADMIN" ? "/admin" : user.role === "RECEPTIONIST" ? "/reception" : "/dashboard");
     return { success: true, redirectTo: destination };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -306,6 +307,92 @@ export async function changePassword(
   });
 
   return { success: true };
+}
+
+export async function createReceptionLogin(data: {
+  firstName: string;
+  lastName?: string;
+  username: string;
+  password: string;
+}) {
+  const session = await getSession();
+  if (!session?.restaurantId || !session?.id) return { error: "Not authenticated" };
+  if (!isApproverRole(session.role) && session.role !== "STAFF") {
+    return { error: "Only owners and managers can create reception logins" };
+  }
+
+  if (!data.firstName || !data.username || !data.password) {
+    return { error: "First name, username, and password are required" };
+  }
+  if (data.password.length < 6) {
+    return { error: "Password must be at least 6 characters" };
+  }
+
+  try {
+    const existing = await prisma.user.findFirst({
+      where: { username: data.username, restaurantId: session.restaurantId },
+    });
+    if (existing) return { error: "Username already taken" };
+
+    const passwordHash = await bcrypt.hash(data.password, 12);
+    const user = await prisma.user.create({
+      data: {
+        username: data.username,
+        passwordHash,
+        firstName: data.firstName,
+        lastName: data.lastName || "",
+        email: `${data.username}@reception.local`,
+        role: "RECEPTIONIST",
+        restaurantId: session.restaurantId,
+        isActive: true,
+      },
+    });
+
+    return { data: { id: user.id, firstName: user.firstName, lastName: user.lastName, username: user.username, isActive: user.isActive, role: user.role } };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to create reception login" };
+  }
+}
+
+export async function getReceptionLogins() {
+  const session = await getSession();
+  if (!session?.restaurantId) return { error: "Not authenticated" };
+
+  try {
+    const users = await prisma.user.findMany({
+      where: { restaurantId: session.restaurantId, role: "RECEPTIONIST" },
+      select: { id: true, firstName: true, lastName: true, username: true, isActive: true, lastLoginAt: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return { data: users };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to fetch reception logins" };
+  }
+}
+
+export async function deactivateReceptionLogin(userId: string) {
+  const session = await getSession();
+  if (!session?.restaurantId) return { error: "Not authenticated" };
+  if (!isApproverRole(session.role) && session.role !== "STAFF") {
+    return { error: "Only owners and managers can manage reception logins" };
+  }
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: { id: userId, restaurantId: session.restaurantId, role: "RECEPTIONIST" },
+    });
+    if (!user) return { error: "Reception login not found" };
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { isActive: !user.isActive },
+      select: { id: true, isActive: true },
+    });
+
+    return { data: updated };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to toggle reception login" };
+  }
 }
 
 export async function resetPassword(username: string, newPassword: string) {

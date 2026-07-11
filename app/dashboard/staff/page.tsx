@@ -15,6 +15,8 @@ import {
   EyeOff,
   Upload,
   X,
+  UserPlus,
+  Loader2,
 } from 'lucide-react';
 import {
   Card,
@@ -54,6 +56,7 @@ import { formatDate, formatCurrency } from '@/lib/format';
 import { uploadImage } from '@/lib/upload';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
+import { createReceptionLogin, getReceptionLogins, deactivateReceptionLogin } from '@/lib/actions/auth';
 import { getStaff, addStaff } from '@/lib/actions/staff';
 
 interface StaffMember {
@@ -695,6 +698,112 @@ export default function StaffPage() {
           onOpenChange={(open) => { if (!open) setSelectedStaff(null); }}
         />
       )}
+
+      <ReceptionLoginsSection />
     </div>
+  );
+}
+
+function ReceptionLoginsSection() {
+  const { user } = useAuthStore();
+  const [logins, setLogins] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [form, setForm] = useState({ firstName: "", lastName: "", username: "", password: "" });
+  const [creating, setCreating] = useState(false);
+
+  const fetchLogins = async () => {
+    setLoading(true);
+    const res = await getReceptionLogins();
+    if ("data" in res && res.data) setLogins(res.data);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchLogins(); }, []);
+
+  const handleCreate = async () => {
+    if (!form.firstName || !form.username || !form.password) {
+      toast.error("First name, username, and password are required");
+      return;
+    }
+    setCreating(true);
+    const res = await createReceptionLogin(form);
+    setCreating(false);
+    if ("error" in res) { toast.error(res.error); return; }
+    toast.success("Reception login created");
+    setShowCreate(false);
+    setForm({ firstName: "", lastName: "", username: "", password: "" });
+    fetchLogins();
+  };
+
+  const handleToggle = async (id: string) => {
+    const res = await deactivateReceptionLogin(id);
+    if ("error" in res) { toast.error(res.error); return; }
+    toast.success("Login toggled");
+    fetchLogins();
+  };
+
+  if (user?.role === "RECEPTIONIST") return null;
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg">Reception Logins</CardTitle>
+            <CardDescription>Create and manage receptionist accounts</CardDescription>
+          </div>
+          <Button size="sm" onClick={() => setShowCreate(!showCreate)}>
+            <UserPlus className="w-4 h-4 mr-1" /> New Login
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {showCreate && (
+          <div className="mb-4 p-4 border rounded-lg space-y-3 bg-muted/30">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Input placeholder="First name *" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+              <Input placeholder="Last name" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
+              <Input placeholder="Username *" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+              <Input type="password" placeholder="Password * (min 6 chars)" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setShowCreate(false)}>Cancel</Button>
+              <Button size="sm" disabled={creating} onClick={handleCreate}>
+                {creating ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null} Create
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {loading ? (
+          <p className="text-sm text-muted-foreground py-4">Loading...</p>
+        ) : logins.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4 text-center">No reception logins created yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {logins.map((l: any) => (
+              <div key={l.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{l.firstName} {l.lastName}</span>
+                    <span className="text-xs text-muted-foreground">@{l.username}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${l.isActive ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
+                      {l.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                  {l.lastLoginAt && (
+                    <p className="text-xs text-muted-foreground mt-0.5">Last login: {new Date(l.lastLoginAt).toLocaleString()}</p>
+                  )}
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => handleToggle(l.id)}>
+                  {l.isActive ? <Lock className="w-3 h-3 text-destructive" /> : <Unlock className="w-3 h-3 text-success" />}
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

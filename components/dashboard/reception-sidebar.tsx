@@ -7,14 +7,15 @@ import {
   UtensilsCrossed,
   ChevronLeft,
   ChevronRight,
-  LayoutDashboard,
-  ClipboardList,
-  Users,
-  Package,
-  BarChart3,
-  Settings,
+  ShoppingBag,
+  DollarSign,
+  ConciergeBell,
+  LayoutGrid,
+  Clock,
+  Receipt,
+  Star,
+  Printer,
   LogOut,
-  ArrowRight,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -30,28 +31,23 @@ import { useUIStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
 
-// ── Nav items defined OUTSIDE the component so the array reference is
-//    stable across renders. Previously the JSX icons were created inline,
-//    forcing React to allocate new objects on every render.
 interface NavItem {
   label: string;
   href: string;
-  // Store the component reference, not JSX — rendered once per item below.
   Icon: React.ElementType;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard',          href: '/dashboard',           Icon: LayoutDashboard },
-  { label: 'Reception Desk',     href: '/reception',           Icon: ArrowRight      },
-  { label: 'Menu Management',    href: '/dashboard/menu',      Icon: ClipboardList   },
-  { label: 'Staff Management',   href: '/dashboard/staff',     Icon: Users           },
-  { label: 'Inventory',          href: '/dashboard/inventory', Icon: Package         },
-  { label: 'Reports & Analytics',href: '/dashboard/reports',   Icon: BarChart3       },
-  { label: 'Settings',           href: '/dashboard/settings',  Icon: Settings        },
+  { label: 'Live Orders',   href: '/reception/orders',    Icon: ShoppingBag     },
+  { label: 'Checkout',      href: '/reception/checkout',  Icon: DollarSign      },
+  { label: 'Reception',     href: '/reception',           Icon: ConciergeBell   },
+  { label: 'Table Map',     href: '/reception/tables',    Icon: LayoutGrid      },
+  { label: 'Shifts',        href: '/reception/shifts',    Icon: Clock           },
+  { label: 'Invoices',      href: '/reception/invoices',  Icon: Receipt         },
+  { label: 'CRM',           href: '/reception/crm',       Icon: Star            },
+  { label: 'Print Center',  href: '/reception/prints',    Icon: Printer         },
 ];
 
-// ── Memoised nav item — only re-renders when active state or
-//    collapsed state changes, not on every pathname update.
 const NavLink = memo(function NavLink({
   item,
   active,
@@ -98,9 +94,7 @@ const NavLink = memo(function NavLink({
   );
 });
 
-// ── Main sidebar — memo prevents re-render when parent re-renders
-//    for reasons unrelated to sidebar state.
-const Sidebar = memo(function Sidebar() {
+const ReceptionSidebar = memo(function ReceptionSidebar() {
   const pathname = usePathname();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const { user, restaurant, logout } = useAuthStore();
@@ -112,10 +106,9 @@ const Sidebar = memo(function Sidebar() {
     return 'U';
   }, [user?.firstName, user?.lastName]);
 
-  // Stable isActive — uses useCallback so NavLink memo comparisons work.
   const isActive = useCallback(
     (href: string) => {
-      if (href === '/dashboard') return pathname === '/dashboard';
+      if (href === '/reception') return pathname === '/reception';
       return pathname.startsWith(href);
     },
     [pathname]
@@ -127,12 +120,10 @@ const Sidebar = memo(function Sidebar() {
         className={cn(
           'fixed left-0 top-0 h-screen flex flex-col z-50',
           'bg-gradient-to-b from-gray-950 to-gray-900 border-r border-white/5',
-          // Use will-change only during the transition, not permanently.
           'transition-[width] duration-300 ease-in-out',
           sidebarCollapsed ? 'w-[68px]' : 'w-[248px]'
         )}
       >
-        {/* ── Logo ── */}
         <div
           className={cn(
             'flex items-center gap-3 px-4 h-16 border-b border-white/5 flex-shrink-0',
@@ -151,13 +142,12 @@ const Sidebar = memo(function Sidebar() {
                 </p>
               </div>
               <Badge className="bg-primary/20 text-primary border-0 text-[10px] px-1.5 py-0 h-4 flex-shrink-0">
-                Pro
+                Reception
               </Badge>
             </>
           )}
         </div>
 
-        {/* ── Navigation ── */}
         <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
           {NAV_ITEMS.map((item) => (
             <NavLink
@@ -169,7 +159,6 @@ const Sidebar = memo(function Sidebar() {
           ))}
         </nav>
 
-        {/* ── Bottom: user + collapse ── */}
         <div className="flex-shrink-0 border-t border-white/5 p-2 space-y-1">
           {!sidebarCollapsed ? (
             <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5">
@@ -185,7 +174,7 @@ const Sidebar = memo(function Sidebar() {
                     : 'Account'}
                 </p>
                 <p className="text-[11px] text-white/40 truncate">
-                  {user?.role || 'Owner'}
+                  {user?.role || 'Reception'}
                 </p>
               </div>
               <Tooltip>
@@ -242,4 +231,4 @@ const Sidebar = memo(function Sidebar() {
   );
 });
 
-export default Sidebar;
+export default ReceptionSidebar;

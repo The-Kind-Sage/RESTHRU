@@ -46,16 +46,19 @@ import { formatDistanceToNow } from 'date-fns';
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
-  '/dashboard/orders': 'Live Orders',
-  '/dashboard/tables': 'Table Map',
   '/dashboard/menu': 'Menu Management',
   '/dashboard/staff': 'Staff Management',
-  '/dashboard/shifts': 'Shift Management',
-  '/dashboard/invoices': 'Invoice History',
   '/dashboard/inventory': 'Inventory',
   '/dashboard/reports': 'Reports & Analytics',
-  '/dashboard/prints': 'Print Center',
   '/dashboard/settings': 'Settings',
+  '/reception': 'Reception Desk',
+  '/reception/orders': 'Live Orders',
+  '/reception/checkout': 'Checkout',
+  '/reception/tables': 'Table Map',
+  '/reception/shifts': 'Shift Management',
+  '/reception/invoices': 'Invoice History',
+  '/reception/crm': 'CRM & Discounts',
+  '/reception/prints': 'Print Center',
 };
 
 const NOTIF_ICONS: Record<AppNotification['type'], React.ReactNode> = {
@@ -253,8 +256,7 @@ export default function TopHeader() {
               )}
             </ScrollArea>
 
-            {/* Footer */}
-            {notifications.length > 0 && (
+            {user?.role !== "RECEPTIONIST" && notifications.length > 0 && (
               <>
                 <Separator />
                 <div className="px-4 py-2.5">
@@ -289,12 +291,16 @@ export default function TopHeader() {
               <p className="text-xs text-muted-foreground font-normal">{user?.email}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
-              <User className="mr-2 h-4 w-4" /> Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
-              <Settings className="mr-2 h-4 w-4" /> Settings
-            </DropdownMenuItem>
+            {user?.role !== "RECEPTIONIST" && (
+              <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+                <User className="mr-2 h-4 w-4" /> Profile
+              </DropdownMenuItem>
+            )}
+            {user?.role !== "RECEPTIONIST" && (
+              <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+                <Settings className="mr-2 h-4 w-4" /> Settings
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem>
               <HelpCircle className="mr-2 h-4 w-4" /> Help & Support
             </DropdownMenuItem>
