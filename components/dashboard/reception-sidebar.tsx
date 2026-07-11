@@ -15,6 +15,7 @@ import {
   Receipt,
   Star,
   Printer,
+  ChefHat,
   LogOut,
 } from 'lucide-react';
 
@@ -46,6 +47,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Invoices',      href: '/reception/invoices',  Icon: Receipt         },
   { label: 'CRM',           href: '/reception/crm',       Icon: Star            },
   { label: 'Print Center',  href: '/reception/prints',    Icon: Printer         },
+  { label: 'Kitchen Display',href: '/reception/kitchen',  Icon: ChefHat         },
 ];
 
 const NavLink = memo(function NavLink({

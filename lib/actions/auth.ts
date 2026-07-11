@@ -29,7 +29,7 @@ export async function createSessionFromSupabaseLogin(userId: string, email: stri
           username: generateUsername(email),
           firstName: nameParts[0] || "",
           lastName: nameParts.slice(1).join(" ") || "",
-          role: "STAFF",
+          role: "RESTAURANT_OWNER",
           isActive: true,
         },
       });
@@ -99,7 +99,7 @@ export async function login(username: string, password: string, redirectTo?: str
       restaurantId: user.restaurantId,
     });
 
-    const destination = redirectTo || (user.role === "ADMIN" || user.role === "SUPER_ADMIN" ? "/superadmin" : user.role === "RECEPTIONIST" ? "/reception" : "/dashboard");
+    const destination = redirectTo || (user.role === "ADMIN" || user.role === "SUPER_ADMIN" ? "/superadmin" : user.role === "RECEPTIONIST" ? "/reception" : user.role === "WAITER" ? "/order" : "/dashboard");
     return { success: true, redirectTo: destination };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -170,7 +170,7 @@ export async function register(data: {
         firstName: nameParts[0] || "",
         lastName: nameParts.slice(1).join(" ") || "",
         phoneNumber: data.phone || "",
-        role: "STAFF",
+        role: "RESTAURANT_OWNER",
         isActive: true,
       },
     });
@@ -317,7 +317,7 @@ export async function createReceptionLogin(data: {
 }) {
   const session = await getSession();
   if (!session?.restaurantId || !session?.id) return { error: "Not authenticated" };
-  if (!isApproverRole(session.role) && session.role !== "STAFF") {
+  if (!isApproverRole(session.role) && session.role !== "RESTAURANT_OWNER") {
     return { error: "Only owners and managers can create reception logins" };
   }
 
@@ -373,7 +373,7 @@ export async function getReceptionLogins() {
 export async function deactivateReceptionLogin(userId: string) {
   const session = await getSession();
   if (!session?.restaurantId) return { error: "Not authenticated" };
-  if (!isApproverRole(session.role) && session.role !== "STAFF") {
+  if (!isApproverRole(session.role) && session.role !== "RESTAURANT_OWNER") {
     return { error: "Only owners and managers can manage reception logins" };
   }
 
@@ -392,6 +392,94 @@ export async function deactivateReceptionLogin(userId: string) {
     return { data: updated };
   } catch (err: any) {
     return { error: err?.message || "Failed to toggle reception login" };
+  }
+}
+
+// ── Waiter logins ──
+
+export async function createWaiterLogin(data: {
+  firstName: string;
+  lastName?: string;
+  username: string;
+  password: string;
+}) {
+  const session = await getSession();
+  if (!session?.restaurantId || !session?.id) return { error: "Not authenticated" };
+  if (!isApproverRole(session.role) && session.role !== "RESTAURANT_OWNER") {
+    return { error: "Only owners and managers can create waiter logins" };
+  }
+
+  if (!data.firstName || !data.username || !data.password) {
+    return { error: "First name, username, and password are required" };
+  }
+  if (data.password.length < 6) {
+    return { error: "Password must be at least 6 characters" };
+  }
+
+  try {
+    const existing = await prisma.user.findFirst({
+      where: { username: data.username, restaurantId: session.restaurantId },
+    });
+    if (existing) return { error: "Username already taken" };
+
+    const passwordHash = await bcrypt.hash(data.password, 12);
+    const user = await prisma.user.create({
+      data: {
+        username: data.username,
+        passwordHash,
+        firstName: data.firstName,
+        lastName: data.lastName || "",
+        email: `${data.username}@waiter.local`,
+        role: "WAITER",
+        restaurantId: session.restaurantId,
+        isActive: true,
+      },
+    });
+
+    return { data: { id: user.id, firstName: user.firstName, lastName: user.lastName, username: user.username, isActive: user.isActive, role: user.role } };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to create waiter login" };
+  }
+}
+
+export async function getWaiterLogins() {
+  const session = await getSession();
+  if (!session?.restaurantId) return { error: "Not authenticated" };
+
+  try {
+    const users = await prisma.user.findMany({
+      where: { restaurantId: session.restaurantId, role: "WAITER" },
+      select: { id: true, firstName: true, lastName: true, username: true, isActive: true, lastLoginAt: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return { data: users };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to fetch waiter logins" };
+  }
+}
+
+export async function deactivateWaiterLogin(userId: string) {
+  const session = await getSession();
+  if (!session?.restaurantId) return { error: "Not authenticated" };
+  if (!isApproverRole(session.role) && session.role !== "RESTAURANT_OWNER") {
+    return { error: "Only owners and managers can manage waiter logins" };
+  }
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: { id: userId, restaurantId: session.restaurantId, role: "WAITER" },
+    });
+    if (!user) return { error: "Waiter login not found" };
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { isActive: !user.isActive },
+      select: { id: true, isActive: true },
+    });
+
+    return { data: updated };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to toggle waiter login" };
   }
 }
 

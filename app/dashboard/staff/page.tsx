@@ -56,7 +56,10 @@ import { formatDate, formatCurrency } from '@/lib/format';
 import { uploadImage } from '@/lib/upload';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
-import { createReceptionLogin, getReceptionLogins, deactivateReceptionLogin } from '@/lib/actions/auth';
+import {
+  createReceptionLogin, getReceptionLogins, deactivateReceptionLogin,
+  createWaiterLogin, getWaiterLogins, deactivateWaiterLogin,
+} from '@/lib/actions/auth';
 import { getStaff, addStaff } from '@/lib/actions/staff';
 
 interface StaffMember {
@@ -699,12 +702,41 @@ export default function StaffPage() {
         />
       )}
 
-      <ReceptionLoginsSection />
+      <StaffLoginsSection
+        role="RECEPTIONIST"
+        title="Reception Logins"
+        description="Create and manage receptionist accounts"
+        createFn={createReceptionLogin}
+        listFn={getReceptionLogins}
+        toggleFn={deactivateReceptionLogin}
+      />
+      <StaffLoginsSection
+        role="WAITER"
+        title="Waiter Logins"
+        description="Create and manage waiter accounts"
+        createFn={createWaiterLogin}
+        listFn={getWaiterLogins}
+        toggleFn={deactivateWaiterLogin}
+      />
     </div>
   );
 }
 
-function ReceptionLoginsSection() {
+function StaffLoginsSection({
+  role,
+  title,
+  description,
+  createFn,
+  listFn,
+  toggleFn,
+}: {
+  role: string;
+  title: string;
+  description: string;
+  createFn: (data: { firstName: string; lastName?: string; username: string; password: string }) => Promise<any>;
+  listFn: () => Promise<any>;
+  toggleFn: (id: string) => Promise<any>;
+}) {
   const { user } = useAuthStore();
   const [logins, setLogins] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -714,7 +746,7 @@ function ReceptionLoginsSection() {
 
   const fetchLogins = async () => {
     setLoading(true);
-    const res = await getReceptionLogins();
+    const res = await listFn();
     if ("data" in res && res.data) setLogins(res.data);
     setLoading(false);
   };
@@ -727,31 +759,31 @@ function ReceptionLoginsSection() {
       return;
     }
     setCreating(true);
-    const res = await createReceptionLogin(form);
+    const res = await createFn(form);
     setCreating(false);
     if ("error" in res) { toast.error(res.error); return; }
-    toast.success("Reception login created");
+    toast.success(`${title.slice(0, -1)} created`);
     setShowCreate(false);
     setForm({ firstName: "", lastName: "", username: "", password: "" });
     fetchLogins();
   };
 
   const handleToggle = async (id: string) => {
-    const res = await deactivateReceptionLogin(id);
+    const res = await toggleFn(id);
     if ("error" in res) { toast.error(res.error); return; }
     toast.success("Login toggled");
     fetchLogins();
   };
 
-  if (user?.role === "RECEPTIONIST") return null;
+  if (user?.role === role) return null;
 
   return (
     <Card className="mt-6">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-lg">Reception Logins</CardTitle>
-            <CardDescription>Create and manage receptionist accounts</CardDescription>
+            <CardTitle className="text-lg">{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
           </div>
           <Button size="sm" onClick={() => setShowCreate(!showCreate)}>
             <UserPlus className="w-4 h-4 mr-1" /> New Login
@@ -779,7 +811,7 @@ function ReceptionLoginsSection() {
         {loading ? (
           <p className="text-sm text-muted-foreground py-4">Loading...</p>
         ) : logins.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-4 text-center">No reception logins created yet.</p>
+          <p className="text-sm text-muted-foreground py-4 text-center">No {title.toLowerCase()} created yet.</p>
         ) : (
           <div className="space-y-2">
             {logins.map((l: any) => (

@@ -4,7 +4,7 @@ import { jwtVerify } from "jose";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET || "fallback-secret");
 
-const publicAdminPaths = ["/superadmin/login"];
+const publicSuperadminPaths = ["/superadmin/login"];
 const publicDashboardPaths = ["/dashboard/login", "/dashboard/forgot-password", "/dashboard/password-reset"];
 
 export async function middleware(request: NextRequest) {
@@ -21,56 +21,50 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Superadmin routes
-  if (pathname.startsWith("/superadmin") && !publicAdminPaths.includes(pathname)) {
-    if (!session) {
-      const loginUrl = new URL("/superadmin/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    if (session.role !== "ADMIN" && session.role !== "SUPER_ADMIN") {
-      const loginUrl = new URL("/dashboard/login", request.url);
-      return NextResponse.redirect(loginUrl);
+  // Helper: redirect to login preserving the original path
+  const toLogin = (base: string) => {
+    const loginUrl = new URL(base, request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
+  };
+
+  const role = session?.role;
+
+  // SUPER_ADMIN / ADMIN can only access /superadmin
+  if (role === "SUPER_ADMIN" || role === "ADMIN") {
+    if (!pathname.startsWith("/superadmin")) {
+      return NextResponse.redirect(new URL("/superadmin", request.url));
     }
   }
 
-  // Dashboard routes — block RECEPTIONIST, redirect to /reception
+  // Superadmin routes — gate for non-admin
+  if (pathname.startsWith("/superadmin") && !publicSuperadminPaths.includes(pathname)) {
+    if (!session) return toLogin("/superadmin/login");
+    // role check already handled above
+  }
+
+  // Dashboard routes
   if (pathname.startsWith("/dashboard") && !publicDashboardPaths.includes(pathname)) {
-    if (!session) {
-      const loginUrl = new URL("/dashboard/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    if (session.role === "RECEPTIONIST") {
-      return NextResponse.redirect(new URL("/reception", request.url));
-    }
+    if (!session) return toLogin("/dashboard/login");
+    if (role === "RECEPTIONIST") return NextResponse.redirect(new URL("/reception", request.url));
+    if (role === "WAITER") return NextResponse.redirect(new URL("/order", request.url));
   }
 
   // Reception routes
   if (pathname.startsWith("/reception")) {
-    if (!session) {
-      const loginUrl = new URL("/dashboard/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    if (session.role === "SUPER_ADMIN" || session.role === "ADMIN") {
-      return NextResponse.redirect(new URL("/superadmin", request.url));
-    }
-    // Owners/MANAGER/STAFF/RECEPTIONIST all allowed through
+    if (!session) return toLogin("/dashboard/login");
+    if (role === "WAITER") return NextResponse.redirect(new URL("/order", request.url));
   }
 
-  // Staff-facing routes (waiter POS and kitchen display) need a session too
-  if (pathname.startsWith("/order") || pathname.startsWith("/kitchen")) {
-    if (!session) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+  // Order routes
+  if (pathname.startsWith("/order")) {
+    if (!session) return toLogin("/login");
+    if (role === "RECEPTIONIST") return NextResponse.redirect(new URL("/reception", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/superadmin/:path*", "/dashboard/:path*", "/reception/:path*", "/reception", "/order/:path*", "/order", "/kitchen/:path*", "/kitchen"],
+  matcher: ["/superadmin/:path*", "/dashboard/:path*", "/reception/:path*", "/reception", "/order/:path*", "/order"],
 };

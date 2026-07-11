@@ -5,14 +5,14 @@ import { OrderCard } from './_components/OrderCard';
 import { UndoSnackbar } from './_components/UndoSnackbar';
 import { useKitchenStore } from '@/store/kitchen-store';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Order, OrderStatus } from '@/types';
+import { Order } from '@/types';
 import { AnimatePresence } from 'framer-motion';
 import { getKitchenOrders } from '@/lib/actions/orders';
 import { Loader2, RefreshCw } from 'lucide-react';
 
-const POLL_INTERVAL_MS = 10_000; // 10 seconds
+const POLL_INTERVAL_MS = 10_000;
 
-export default function KitchenPage() {
+export default function ReceptionKitchenPage() {
   const { activeTab, orders, setOrders, addOrder } = useKitchenStore();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,18 +33,13 @@ export default function KitchenPage() {
 
     const fetched = (result.data ?? []) as unknown as Order[];
 
-    // Detect truly new orders (not yet in our set) to trigger sound/haptic
     fetched.forEach((order) => {
       if (!previousOrderIds.current.has(order.id)) {
-        if (!isInitial) {
-          // Only fire alert for orders arriving after the first load
-          addOrder(order);
-        }
+        if (!isInitial) addOrder(order);
         previousOrderIds.current.add(order.id);
       }
     });
 
-    // Always sync the full list so status changes from other sessions are reflected
     setOrders(fetched);
     if (isInitial) setIsLoading(false);
   }, [addOrder, setOrders]);
@@ -52,23 +47,22 @@ export default function KitchenPage() {
   useEffect(() => {
     setIsClient(true);
     fetchOrders(true);
-
     const interval = setInterval(() => fetchOrders(false), POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
   if (!isClient || isLoading) {
     return (
-      <div className="flex flex-col h-screen bg-slate-100 dark:bg-black items-center justify-center gap-4">
+      <div className="flex flex-col h-full min-h-[60vh] items-center justify-center gap-4 text-slate-400">
         <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
-        <p className="text-slate-500 font-medium">Loading Kitchen View…</p>
+        <p className="font-medium">Loading Kitchen View…</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col h-screen bg-slate-100 dark:bg-black items-center justify-center gap-4 px-6 text-center">
+      <div className="flex flex-col h-full min-h-[60vh] items-center justify-center gap-4 px-6 text-center">
         <span className="text-5xl">⚠️</span>
         <p className="text-red-500 font-semibold text-lg">Failed to load orders</p>
         <p className="text-slate-400 text-sm">{error}</p>
@@ -86,9 +80,8 @@ export default function KitchenPage() {
   const displayedOrders = orders.filter((o) => o.status === activeTab);
 
   return (
-    <div className="flex flex-col h-screen bg-slate-100 dark:bg-black font-sans overflow-hidden">
+    <div className="flex flex-col h-full min-h-[calc(100vh-10rem)] bg-slate-100 dark:bg-black rounded-xl overflow-hidden border border-border">
       <KitchenHeader />
-
       <div className="flex-1 overflow-y-auto px-4 py-6 pb-24 scroll-smooth">
         <AnimatePresence>
           {displayedOrders.length === 0 ? (
@@ -104,7 +97,6 @@ export default function KitchenPage() {
           )}
         </AnimatePresence>
       </div>
-
       <UndoSnackbar />
     </div>
   );

@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 /** Roles allowed to authorize a void / comp / manager-gated action. */
-const APPROVER_ROLES = ["OWNER", "ADMIN", "MANAGER"];
+const APPROVER_ROLES = ["RESTAURANT_OWNER", "ADMIN", "SUPER_ADMIN", "MANAGER"];
 
 /**
  * Verifies a manager's username/password against the restaurant's own user
