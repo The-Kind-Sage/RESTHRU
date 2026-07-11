@@ -1,5 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import prisma from "@/lib/prisma";
+
+// Payment gateways must sign each webhook with HMAC-SHA256 over the raw request
+// body using the shared PAYMENT_WEBHOOK_SECRET, sent as a hex digest in the
+// x-webhook-signature header (a leading "sha256=" is tolerated). Without this,
+// anyone able to POST to this URL could mark arbitrary payments as verified.
+const SIGNATURE_HEADER = "x-webhook-signature";
+
+function verifySignature(rawBody: string, provided: string, secret: string): boolean {
+  const expected = crypto.createHmac("sha256", secret).update(rawBody, "utf8").digest("hex");
+  const providedHex = provided.startsWith("sha256=") ? provided.slice(7) : provided;
+  const a = Buffer.from(providedHex, "utf8");
+  const b = Buffer.from(expected, "utf8");
+  // timingSafeEqual throws on length mismatch, so length-check first.
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
 
 /**
  * POST /api/webhooks/payment
@@ -12,7 +29,28 @@ import prisma from "@/lib/prisma";
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const secret = process.env.PAYMENT_WEBHOOK_SECRET;
+    if (!secret) {
+      // Fail closed: a payment-verification endpoint must never accept unsigned
+      // calls, so if the secret isn't configured we cannot authenticate anyone.
+      console.error("PAYMENT_WEBHOOK_SECRET is not set; rejecting payment webhook.");
+      return NextResponse.json({ error: "Webhook not configured" }, { status: 503 });
+    }
+
+    // HMAC is computed over the exact bytes received, so read the raw text
+    // before parsing — JSON.parse + re-stringify would change the bytes.
+    const rawBody = await request.text();
+    const provided = request.headers.get(SIGNATURE_HEADER) || "";
+    if (!provided || !verifySignature(rawBody, provided, secret)) {
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+
+    let body: any;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
     const { ref, transactionId, method, amount, status } = body;
 
     if (!ref || !transactionId || !method || !amount || !status) {
