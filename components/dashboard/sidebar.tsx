@@ -35,7 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard',          href: '/dashboard',           Icon: LayoutDashboard },
   { label: 'Reception Desk',     href: '/reception',           Icon: ArrowRight      },
   { label: 'Menu Management',    href: '/dashboard/menu',      Icon: ClipboardList   },
-  { label: 'Staff Management',   href: '/dashboard/staff',     Icon: Users           },
+  { label: 'Owner',              href: '/dashboard/staff',     Icon: Users           },
   { label: 'Inventory',          href: '/dashboard/inventory', Icon: Package         },
   { label: 'Reports & Analytics',href: '/dashboard/reports',   Icon: BarChart3       },
   { label: 'Settings',           href: '/dashboard/settings',  Icon: Settings        },
