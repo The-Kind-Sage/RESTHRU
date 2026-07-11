@@ -12,7 +12,7 @@ import { login } from "@/lib/actions/auth";
 function AdminLoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const redirectTo = searchParams.get("redirect") || "/admin";
+  const redirectTo = searchParams.get("redirect") || "/superadmin";
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

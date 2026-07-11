@@ -43,7 +43,7 @@ export default function RestaurantDetail() {
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/admin/restaurants">
+            <Link href="/superadmin/restaurants">
               <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted">
                 <ArrowLeft className="h-4.5 w-4.5" />
               </Button>
@@ -65,7 +65,7 @@ export default function RestaurantDetail() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/admin/restaurants">
+          <Link href="/superadmin/restaurants">
             <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted">
               <ArrowLeft className="h-4.5 w-4.5" />
             </Button>

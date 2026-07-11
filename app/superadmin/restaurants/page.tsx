@@ -28,7 +28,7 @@ export default async function AdminRestaurants() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {restaurants.map((r) => (
-            <Link key={r.id} href={`/admin/restaurants/${r.id}`}>
+            <Link key={r.id} href={`/superadmin/restaurants/${r.id}`}>
               <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-3">

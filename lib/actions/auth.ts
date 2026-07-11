@@ -99,7 +99,7 @@ export async function login(username: string, password: string, redirectTo?: str
       restaurantId: user.restaurantId,
     });
 
-    const destination = redirectTo || (user.role === "ADMIN" ? "/admin" : user.role === "RECEPTIONIST" ? "/reception" : "/dashboard");
+    const destination = redirectTo || (user.role === "ADMIN" || user.role === "SUPER_ADMIN" ? "/superadmin" : user.role === "RECEPTIONIST" ? "/reception" : "/dashboard");
     return { success: true, redirectTo: destination };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

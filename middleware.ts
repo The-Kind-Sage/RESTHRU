@@ -4,7 +4,7 @@ import { jwtVerify } from "jose";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET || "fallback-secret");
 
-const publicAdminPaths = ["/admin/login"];
+const publicAdminPaths = ["/superadmin/login"];
 const publicDashboardPaths = ["/dashboard/login", "/dashboard/forgot-password", "/dashboard/password-reset"];
 
 export async function middleware(request: NextRequest) {
@@ -21,14 +21,14 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Admin routes
-  if (pathname.startsWith("/admin") && !publicAdminPaths.includes(pathname)) {
+  // Superadmin routes
+  if (pathname.startsWith("/superadmin") && !publicAdminPaths.includes(pathname)) {
     if (!session) {
-      const loginUrl = new URL("/admin/login", request.url);
+      const loginUrl = new URL("/superadmin/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    if (session.role !== "ADMIN") {
+    if (session.role !== "ADMIN" && session.role !== "SUPER_ADMIN") {
       const loginUrl = new URL("/dashboard/login", request.url);
       return NextResponse.redirect(loginUrl);
     }
@@ -53,8 +53,8 @@ export async function middleware(request: NextRequest) {
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    if (session.role === "ADMIN") {
-      return NextResponse.redirect(new URL("/admin", request.url));
+    if (session.role === "SUPER_ADMIN" || session.role === "ADMIN") {
+      return NextResponse.redirect(new URL("/superadmin", request.url));
     }
     // Owners/MANAGER/STAFF/RECEPTIONIST all allowed through
   }
@@ -72,5 +72,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/dashboard/:path*", "/reception/:path*", "/reception", "/order/:path*", "/order", "/kitchen/:path*", "/kitchen"],
+  matcher: ["/superadmin/:path*", "/dashboard/:path*", "/reception/:path*", "/reception", "/order/:path*", "/order", "/kitchen/:path*", "/kitchen"],
 };

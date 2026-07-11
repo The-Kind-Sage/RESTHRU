@@ -17,23 +17,23 @@ import { logout, getCurrentUser } from '@/lib/actions/auth';
 // ── Lazy-load the command palette — it's heavy (all 12 nav icon refs +
 //    keyboard handler + overlay) and only needed when Cmd+K is pressed.
 const AdminCommandPalette = dynamic(
-  () => import('@/components/admin/command-palette'),
+  () => import('@/components/superadmin/command-palette'),
   { ssr: false }
 );
 
 const adminNavItems = [
-  { label: 'Dashboard',      icon: LayoutDashboard, href: '/admin'               },
-  { label: 'Restaurants',    icon: Building2,        href: '/admin/restaurants'   },
-  { label: 'Subscriptions',  icon: CreditCard,       href: '/admin/subscriptions' },
-  { label: 'Analytics',      icon: TrendingUp,       href: '/admin/analytics'     },
-  { label: 'Support Center', icon: Headphones,       href: '/admin/support'       },
-  { label: 'System Health',  icon: Activity,         href: '/admin/health'        },
-  { label: 'Sales Pipeline', icon: Users,            href: '/admin/pipeline'      },
-  { label: 'Marketing Tools',icon: Megaphone,        href: '/admin/marketing'     },
-  { label: 'Compliance',     icon: ShieldCheck,      href: '/admin/compliance'    },
-  { label: 'Financials',     icon: Wallet,           href: '/admin/financials'    },
-  { label: 'Innovation Lab', icon: FlaskConical,     href: '/admin/innovation'    },
-  { label: 'Settings',       icon: Settings,         href: '/admin/settings'      },
+  { label: 'Dashboard',      icon: LayoutDashboard, href: '/superadmin'               },
+  { label: 'Restaurants',    icon: Building2,        href: '/superadmin/restaurants'   },
+  { label: 'Subscriptions',  icon: CreditCard,       href: '/superadmin/subscriptions' },
+  { label: 'Analytics',      icon: TrendingUp,       href: '/superadmin/analytics'     },
+  { label: 'Support Center', icon: Headphones,       href: '/superadmin/support'       },
+  { label: 'System Health',  icon: Activity,         href: '/superadmin/health'        },
+  { label: 'Sales Pipeline', icon: Users,            href: '/superadmin/pipeline'      },
+  { label: 'Marketing Tools',icon: Megaphone,        href: '/superadmin/marketing'     },
+  { label: 'Compliance',     icon: ShieldCheck,      href: '/superadmin/compliance'    },
+  { label: 'Financials',     icon: Wallet,           href: '/superadmin/financials'    },
+  { label: 'Innovation Lab', icon: FlaskConical,     href: '/superadmin/innovation'    },
+  { label: 'Settings',       icon: Settings,         href: '/superadmin/settings'      },
 ];
 
 // ── Memoised nav link so it only re-renders when its active state changes.
@@ -95,7 +95,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const isActive = useCallback(
     (href: string) =>
-      pathname === href || (href !== '/admin' && pathname.startsWith(href)),
+      pathname === href || (href !== '/superadmin' && pathname.startsWith(href)),
     [pathname]
   );
 
@@ -105,7 +105,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   // Login page renders without the admin shell
-  if (pathname === '/admin/login') {
+  if (pathname === '/superadmin/login') {
     return <>{children}</>;
   }
 
