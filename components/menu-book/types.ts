@@ -20,6 +20,16 @@ export interface DrinkItemData {
   imageUrl?: string | null;
 }
 
+// A renderable menu section (built client-side from MenuData.categories —
+// empty categories are dropped so they never produce blank pages).
+export interface SectionData {
+  id: string;
+  title: string;
+  kicker?: string;
+  items: MenuItemData[];
+  tint?: boolean;
+}
+
 export interface MenuData {
   restaurant: {
     name: string;

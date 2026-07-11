@@ -1,12 +1,33 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring, useInView } from 'framer-motion';
+import { useRef } from 'react';
 import { Star, TrendingUp, Users, Clock } from 'lucide-react';
 
+function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-50px' });
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'start center'] });
+  const raw = useTransform(scrollYProgress, [0, 1], [0, value]);
+  const count = useSpring(raw, { stiffness: 60, damping: 30 });
+  const rounded = useTransform(count, (v) => Math.round(v).toLocaleString());
+
+  return (
+    <span ref={ref}>
+      {isInView ? (
+        <motion.span>{rounded}</motion.span>
+      ) : (
+        <span>0</span>
+      )}
+      {suffix}
+    </span>
+  );
+}
+
 const stats = [
-  { icon: Users, value: '500+', label: 'Restaurants' },
-  { icon: TrendingUp, value: '2M+', label: 'Orders' },
-  { icon: Clock, value: '99.9%', label: 'Uptime' },
+  { icon: Users, value: 500, suffix: '+', label: 'Restaurants' },
+  { icon: TrendingUp, value: 2000000, suffix: '+', label: 'Orders' },
+  { icon: Clock, value: 99.9, suffix: '%', label: 'Uptime' },
 ];
 
 const restaurants = [
@@ -35,7 +56,13 @@ export function SocialProofBar() {
                 <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-primary/8">
                   <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 </div>
-                <p className="text-lg sm:text-xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-lg sm:text-xl font-bold text-foreground">
+                  {stat.value >= 1000 ? (
+                    <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+                  ) : (
+                    <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+                  )}
+                </p>
                 <p className="text-xs sm:text-xs text-muted-foreground">{stat.label}</p>
               </div>
             );

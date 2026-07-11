@@ -4,9 +4,9 @@ type Variant = "circle" | "rectangle" | "featured";
 type Size = "small" | "medium" | "large" | "hero";
 
 const sizes: Record<Size, string> = {
-  small: "h-20 w-20",
-  medium: "h-24 w-24",
-  large: "h-32 w-32",
+  small: "h-16 w-16 sm:h-20 sm:w-20",
+  medium: "h-20 w-20 sm:h-24 sm:w-24",
+  large: "h-28 w-28 sm:h-32 sm:w-32",
   hero: "h-full w-full aspect-[16/9]",
 };
 

@@ -1,6 +1,7 @@
 import type { MenuItemData } from "./types";
 import { FoodImage } from "./FoodImage";
 import { PriceLeader } from "./PriceLeader";
+import { formatPrice } from "./format";
 import { Flame, Leaf, WheatOff, Award, Star } from "lucide-react";
 
 const TAG_META: Record<string, { label: string; icon: typeof Flame }> = {
@@ -43,15 +44,15 @@ export function DishRow({
           </span>
         )}
         <div className="flex items-baseline gap-1">
-          <h3 className="font-serif text-[17px] font-semibold sm:text-[18px]" style={{ color: "var(--ink)" }}>
+          <h3 className="min-w-0 font-serif text-[16px] font-semibold leading-snug sm:text-[18px]" style={{ color: "var(--ink)" }}>
             {item.name}
           </h3>
           <PriceLeader />
           <span
-            className="font-serif text-[16px] font-medium tabular-nums"
+            className="shrink-0 whitespace-nowrap font-serif text-[15px] font-medium tabular-nums sm:text-[16px]"
             style={{ color: "var(--ink-mute)", fontVariantNumeric: "tabular-nums" }}
           >
-            ${item.price}
+            {formatPrice(item.price)}
           </span>
         </div>
         <p className="mt-1 max-w-[52ch] font-sans text-[12.5px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>

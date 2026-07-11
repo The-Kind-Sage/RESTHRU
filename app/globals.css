@@ -334,6 +334,24 @@
   margin: 0 0.5rem;
 }
 
+/* Spine shadow — only meaningful on the two-page desktop spread. Below lg the
+   book renders a single page, so the centre line would cut straight through
+   the middle of one page (the "mystery line" on mobile). */
+@media (max-width: 1023.98px) {
+  .book-spine::after {
+    display: none;
+  }
+}
+
+/* Hide scrollbar on the mobile category chip rail (it stays swipeable) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Spine shadow */
 .book-spine::after {
   content: "";

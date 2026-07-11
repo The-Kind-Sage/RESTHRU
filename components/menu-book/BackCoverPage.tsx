@@ -3,12 +3,16 @@ import { MenuPage } from "./MenuPage";
 
 export function BackCoverPage({
   restaurant,
+  pageNumber,
+  flow = false,
 }: {
   restaurant: { name: string; address: string; hours: string; phone: string; website: string; social: string };
+  pageNumber?: number;
+  flow?: boolean;
 }) {
   return (
-    <MenuPage pageNumber={6}>
-      <div className="flex h-full flex-col items-center justify-center text-center">
+    <MenuPage pageNumber={pageNumber} flow={flow}>
+      <div className={`flex flex-col items-center justify-center text-center ${flow ? "py-10" : "h-full"}`}>
         <p className="font-serif italic text-[15px]" style={{ color: "var(--ink-soft)" }}>
           Thank you for dining with us.
         </p>

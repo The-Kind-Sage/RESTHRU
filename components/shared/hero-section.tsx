@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Play, Check, ArrowRight, Star } from 'lucide-react';
+import { Play, Check, ArrowRight, Star, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function HeroSection() {
+  const [showVideo, setShowVideo] = useState(false);
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -77,6 +79,7 @@ export function HeroSection() {
               <Button
                 variant="ghost"
                 size="lg"
+                onClick={() => setShowVideo(true)}
                 className="w-full sm:w-auto h-11 sm:h-12 rounded-xl border border-white/15 bg-white/[0.06] px-5 text-[15px] sm:text-[15px] font-medium text-white/90 backdrop-blur-sm transition-all hover:border-white/25 hover:bg-white/[0.12]"
               >
                 <Play className="mr-2 h-4 w-4 fill-current" />
@@ -174,6 +177,40 @@ export function HeroSection() {
           </motion.div>
         </div>
       </div>
+
+      {/* Video Modal */}
+      {showVideo && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setShowVideo(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="relative w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowVideo(false)}
+              className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white/80 hover:bg-black/70 hover:text-white transition-all backdrop-blur-sm"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="aspect-video bg-black flex items-center justify-center">
+              <div className="text-center p-8">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/10">
+                  <Play className="h-8 w-8 text-white ml-1" />
+                </div>
+                <p className="text-white/70 text-sm">Product demo video coming soon</p>
+                <p className="text-white/40 text-xs mt-1">In the meantime, start your free trial above</p>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </section>
   );
 }
