@@ -1,11 +1,11 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import {
   ShoppingCart,
-  Search,
   Minus,
   Plus,
   X,
@@ -13,6 +13,9 @@ import {
   ChevronRight,
   Droplet,
   Flame,
+  Loader2,
+  AlertCircle,
+  BookOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -35,6 +38,8 @@ import { useCartStore } from '@/store/cart-store';
 import { formatCurrency } from '@/lib/format';
 import { MenuItem, FoodType, SpiceLevel } from '@/types';
 import { getPublicMenuData } from '@/lib/actions/public-menu';
+import { createPublicOrder, getPublicOrderStatus, requestPublicBill } from '@/lib/actions/public-order';
+import { generatePublicPaymentQR } from '@/lib/actions/payments';
 
 interface CategoryTab {
   id: string;
@@ -65,49 +70,98 @@ export default function CustomerMenuPage() {
   const [categories, setCategories] = useState<CategoryTab[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [menuError, setMenuError] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [language, setLanguage] = useState<'EN' | 'NP'>('EN');
   const [orderSheetOpen, setOrderSheetOpen] = useState(false);
   const [billDialogOpen, setBillDialogOpen] = useState(false);
-  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [placedOrder, setPlacedOrder] = useState<{ id: string; orderId: string; status: string } | null>(null);
+  const [isRequestingBill, setIsRequestingBill] = useState(false);
   const [splitBillCount, setSplitBillCount] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState('CASH');
+  const [paymentQR, setPaymentQR] = useState<{ url: string; loading: boolean; error: string | null }>({
+    url: '',
+    loading: false,
+    error: null,
+  });
   const [categoryScrollRef, setCategoryScrollRef] = useState<HTMLDivElement | null>(null);
 
   const { items, addItem, removeItem, updateQuantity, addNote, getItemCount, getSubtotal, getTax, getTotal, clearCart } =
     useCartStore();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const data = await getPublicMenuData(restaurantId);
-      if (data.restaurant) {
-        setRestaurant({ name: data.restaurant.name, tagline: data.restaurant.address });
-        setCategories(data.categories.map((c) => ({ id: c.id, name: c.name })));
-        setMenuItems(data.items.map((item) => ({
-          id: item.id,
-          restaurantId,
-          categoryId: item.categoryId,
-          name: item.name,
-          description: item.description || '',
-          imageUrl: item.image,
-          price: item.price,
-          discountPrice: item.discountPrice,
-          foodType: item.foodType as FoodType,
-          spiceLevel: item.spiceLevel as SpiceLevel,
-          allergens: [],
-          prepTime: 0,
-          addOns: [],
-          isAvailable: true,
-          displayOrder: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })));
-      }
-      setLoading(false);
-    };
-    fetchData();
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setMenuError(false);
+    const data = await getPublicMenuData(restaurantId);
+    if (data.restaurant) {
+      setRestaurant({ name: data.restaurant.name, tagline: data.restaurant.address });
+      setCategories(data.categories.map((c) => ({ id: c.id, name: c.name })));
+      setMenuItems(data.items.map((item) => ({
+        id: item.id,
+        restaurantId,
+        categoryId: item.categoryId,
+        name: item.name,
+        description: item.description || '',
+        imageUrl: item.image,
+        price: item.price,
+        discountPrice: item.discountPrice,
+        foodType: item.foodType as FoodType,
+        spiceLevel: item.spiceLevel as SpiceLevel,
+        allergens: [],
+        prepTime: 0,
+        addOns: [],
+        isAvailable: true,
+        displayOrder: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })));
+    } else {
+      setMenuError(true);
+    }
+    setLoading(false);
   }, [restaurantId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Poll the real order status while a just-placed order hasn't reached a terminal
+  // state, so the tracker below reflects the kitchen's actual progress rather than a
+  // static "Received" — falls back gracefully (silent no-op) if a poll fails.
+  useEffect(() => {
+    if (!placedOrder || ['SERVED', 'CANCELLED'].includes(placedOrder.status)) return;
+    const interval = setInterval(async () => {
+      const res = await getPublicOrderStatus(placedOrder.id, restaurantId);
+      if (res.data) {
+        setPlacedOrder((prev) => (prev ? { ...prev, status: res.data!.status } : prev));
+      }
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [placedOrder, restaurantId]);
+
+  // Fetch a real payment QR whenever a non-cash method is selected in the Request
+  // Bill dialog, instead of the placeholder emoji.
+  useEffect(() => {
+    const currentTotal = getTotal(13);
+    if (!billDialogOpen || paymentMethod === 'CASH' || currentTotal <= 0) {
+      setPaymentQR({ url: '', loading: false, error: null });
+      return;
+    }
+    let cancelled = false;
+    setPaymentQR({ url: '', loading: true, error: null });
+    generatePublicPaymentQR({ restaurantId, tableId, method: paymentMethod, amount: currentTotal }).then((res) => {
+      if (cancelled) return;
+      if (res.error || !res.data) {
+        setPaymentQR({ url: '', loading: false, error: res.error || 'Failed to generate QR code' });
+      } else {
+        setPaymentQR({ url: res.data.qrDataUrl, loading: false, error: null });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [billDialogOpen, paymentMethod, restaurantId, tableId]);
 
   const filteredMenuItems = selectedCategory === 'all'
     ? menuItems
@@ -119,13 +173,58 @@ export default function CustomerMenuPage() {
     }
   };
 
-  const handlePlaceOrder = () => {
-    setOrderPlaced(true);
-    clearCart();
-    setTimeout(() => {
-      setOrderPlaced(false);
-      setOrderSheetOpen(false);
-    }, 3000);
+  const handlePlaceOrder = async () => {
+    if (items.length === 0 || isPlacingOrder) return;
+    setIsPlacingOrder(true);
+    try {
+      const result = await createPublicOrder({
+        restaurantId,
+        tableId,
+        items: items.map((i) => ({
+          menuItemId: i.menuItemId,
+          quantity: i.quantity,
+          notes: i.specialInstructions,
+        })),
+      });
+
+      if (result.error || !result.data) {
+        toast.error(result.error || 'Failed to place order. Please try again.');
+        return;
+      }
+      if (result.warning) {
+        toast.warning(result.warning);
+      }
+
+      setPlacedOrder({ id: result.data.id, orderId: result.data.orderId, status: result.data.status });
+      clearCart();
+    } catch {
+      toast.error('Failed to place order. Please try again.');
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    if (isRequestingBill) return;
+    setIsRequestingBill(true);
+    try {
+      const result = await requestPublicBill({
+        restaurantId,
+        tableId,
+        paymentMethod,
+        splitCount: splitBillCount > 1 ? splitBillCount : undefined,
+      });
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success('Bill requested — a staff member will be with you shortly.');
+      setBillDialogOpen(false);
+    } catch {
+      toast.error('Failed to request bill. Please try again.');
+    } finally {
+      setIsRequestingBill(false);
+    }
   };
 
   const itemCount = getItemCount();
@@ -141,6 +240,24 @@ export default function CustomerMenuPage() {
     return emojis[hash % emojis.length];
   };
 
+  if (!loading && menuError) {
+    return (
+      <div className="max-w-[430px] mx-auto min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+          <AlertCircle className="w-8 h-8 text-destructive" />
+        </div>
+        <div>
+          <h1 className="font-bold text-lg">Menu unavailable</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            We couldn&apos;t find this restaurant&apos;s menu. The QR code may be out of date,
+            or the restaurant may no longer be active.
+          </p>
+        </div>
+        <Button onClick={() => fetchData()}>Try Again</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-[430px] mx-auto min-h-screen bg-background overflow-x-hidden">
       {/* HEADER BAR */}
@@ -153,23 +270,14 @@ export default function CustomerMenuPage() {
             </Badge>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="flex items-center gap-1 text-xs font-medium">
-              <button
-                onClick={() => setLanguage('EN')}
-                className={`px-2 py-1 ${language === 'EN' ? 'font-bold' : 'text-muted-foreground'}`}
-              >
-                EN
-              </button>
-              <span className="text-muted-foreground">|</span>
-              <button
-                onClick={() => setLanguage('NP')}
-                className={`px-2 py-1 ${language === 'NP' ? 'font-bold' : 'text-muted-foreground'}`}
-              >
-                NP
-              </button>
-            </div>
-            <Button size="icon" variant="ghost" className="h-8 w-8">
-              <Search className="w-4 h-4" />
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8"
+              title="Browse full menu"
+              onClick={() => window.open(`/r/${restaurantId}`, '_blank')}
+            >
+              <BookOpen className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -370,7 +478,7 @@ export default function CustomerMenuPage() {
           </DrawerHeader>
 
           <AnimatePresence>
-            {orderPlaced ? (
+            {placedOrder ? (
               <motion.div
                 key="success"
                 initial={{ opacity: 0 }}
@@ -380,37 +488,63 @@ export default function CustomerMenuPage() {
                 <motion.div
                   animate={{ scale: [1, 1.1, 1] }}
                   transition={{ duration: 0.6 }}
-                  className="w-16 h-16 bg-primary-light rounded-full flex items-center justify-center"
+                  className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                    placedOrder.status === 'CANCELLED' ? 'bg-destructive/10' : 'bg-primary-light'
+                  }`}
                 >
-                  <Check className="w-8 h-8 text-success" />
+                  {placedOrder.status === 'CANCELLED' ? (
+                    <AlertCircle className="w-8 h-8 text-destructive" />
+                  ) : (
+                    <Check className="w-8 h-8 text-success" />
+                  )}
                 </motion.div>
                 <p className="text-lg font-bold text-center">
-                  Your order is on its way to the kitchen!
+                  {placedOrder.status === 'CANCELLED'
+                    ? 'This order was cancelled. Please speak to a staff member.'
+                    : 'Your order is on its way to the kitchen!'}
                 </p>
-                <Badge className="bg-info/10 text-info">Order #ORD-2024-00523</Badge>
+                <Badge className="bg-info/10 text-info">Order #{placedOrder.orderId}</Badge>
 
-                {/* Order Status Tracker */}
-                <div className="w-full px-4 mt-6 space-y-3">
-                  {[
-                    { label: 'Received', done: true },
-                    { label: 'Preparing', done: false },
-                    { label: 'Ready', done: false },
-                    { label: 'Served', done: false },
-                  ].map((step, i) => (
-                    <div key={step.label} className="flex items-center gap-3">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                          step.done
-                            ? 'bg-success text-white'
-                            : 'bg-muted text-muted-foreground'
-                        }`}
-                      >
-                        {step.done ? <Check className="w-4 h-4" /> : i + 1}
-                      </div>
-                      <span className="text-sm">{step.label}</span>
-                    </div>
-                  ))}
-                </div>
+                {/* Order Status Tracker — driven by the real order status, polled every 8s */}
+                {placedOrder.status !== 'CANCELLED' && (
+                  <div className="w-full px-4 mt-6 space-y-3">
+                    {(() => {
+                      const steps = [
+                        { key: 'PENDING', label: 'Received' },
+                        { key: 'PREPARING', label: 'Preparing' },
+                        { key: 'READY', label: 'Ready' },
+                        { key: 'SERVED', label: 'Served' },
+                      ];
+                      const currentIndex = Math.max(0, steps.findIndex((s) => s.key === placedOrder.status));
+                      return steps.map((step, i) => {
+                        const done = i <= currentIndex;
+                        return (
+                          <div key={step.label} className="flex items-center gap-3">
+                            <div
+                              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                                done ? 'bg-success text-white' : 'bg-muted text-muted-foreground'
+                              }`}
+                            >
+                              {done ? <Check className="w-4 h-4" /> : i + 1}
+                            </div>
+                            <span className="text-sm">{step.label}</span>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                )}
+
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => {
+                    setPlacedOrder(null);
+                    setOrderSheetOpen(false);
+                  }}
+                >
+                  Continue Browsing
+                </Button>
               </motion.div>
             ) : (
               <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -497,9 +631,17 @@ export default function CustomerMenuPage() {
                 <div className="border-t p-4 space-y-3">
                   <Button
                     onClick={handlePlaceOrder}
+                    disabled={isPlacingOrder || items.length === 0}
                     className="w-full bg-primary hover:bg-primary-hover h-11 font-bold"
                   >
-                    Place Order
+                    {isPlacingOrder ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Placing Order...
+                      </>
+                    ) : (
+                      'Place Order'
+                    )}
                   </Button>
                   <Button
                     variant="outline"
@@ -572,17 +714,34 @@ export default function CustomerMenuPage() {
             </div>
 
             {paymentMethod !== 'CASH' && (
-              <div className="bg-muted p-4 rounded-lg flex items-center justify-center h-32">
+              <div className="bg-muted p-4 rounded-lg flex items-center justify-center min-h-32">
                 <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-br from-muted to-muted rounded-lg mx-auto mb-2 flex items-center justify-center text-2xl">
-                    📱
-                  </div>
-                  <p className="text-xs text-muted-foreground">QR Code for {paymentMethod}</p>
+                  {paymentQR.loading ? (
+                    <div className="w-20 h-20 mx-auto mb-2 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : paymentQR.error ? (
+                    <p className="text-xs text-destructive px-2">{paymentQR.error}</p>
+                  ) : paymentQR.url ? (
+                    <img
+                      src={paymentQR.url}
+                      alt={`Payment QR code for ${paymentMethod}`}
+                      className="w-28 h-28 mx-auto mb-2 rounded-lg bg-white p-1"
+                    />
+                  ) : null}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Scan to pay with {paymentMethod}
+                  </p>
                 </div>
               </div>
             )}
 
-            <Button className="w-full bg-primary hover:bg-primary-hover">
+            <Button
+              className="w-full bg-primary hover:bg-primary-hover"
+              onClick={handleConfirmPayment}
+              disabled={isRequestingBill}
+            >
+              {isRequestingBill ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               Confirm Payment
             </Button>
           </div>

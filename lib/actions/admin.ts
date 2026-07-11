@@ -427,6 +427,63 @@ export async function getRecentNotifications() {
   });
 }
 
+// Platform-wide unread count, used for the superadmin header's notification
+// bell badge (C1 — previously the bell had no badge/count at all).
+export async function getUnreadNotificationCount() {
+  return prisma.notification.count({ where: { isRead: false } });
+}
+
+// Mass Communication (Support Center) — previously "Send" had no handler at
+// all. Real email/SMS delivery infrastructure doesn't exist in this app, so
+// this creates real in-app Notification rows for every user of every
+// targeted restaurant, which is the one channel that's actually wired up
+// end-to-end (users see it via the existing notification system). The UI
+// reports honestly that delivery is in-app, regardless of which "channel"
+// was selected in the form.
+export async function sendMassCommunication(input: {
+  audience: "all" | "plan" | "city";
+  audienceValue?: string;
+  subject: string;
+  message: string;
+}) {
+  if (!input.subject?.trim() || !input.message?.trim()) {
+    return { error: "Subject and message are required" };
+  }
+
+  const restaurantWhere: any = { isActive: true };
+  if (input.audience === "city" && input.audienceValue) {
+    restaurantWhere.city = input.audienceValue;
+  }
+  if (input.audience === "plan" && input.audienceValue) {
+    restaurantWhere.subscriptions = {
+      some: { status: "ACTIVE", plan: { name: input.audienceValue } },
+    };
+  }
+
+  const restaurants = await prisma.restaurant.findMany({
+    where: restaurantWhere,
+    select: { id: true, users: { select: { id: true } } },
+  });
+
+  const recipients = restaurants.flatMap((r) =>
+    r.users.map((u) => ({
+      recipientUserId: u.id,
+      restaurantId: r.id,
+      type: "ANNOUNCEMENT",
+      title: input.subject.trim(),
+      message: input.message.trim(),
+    }))
+  );
+
+  if (recipients.length === 0) {
+    return { error: "No matching restaurants with users found for that audience" };
+  }
+
+  await prisma.notification.createMany({ data: recipients });
+
+  return { data: { restaurantCount: restaurants.length, recipientCount: recipients.length } };
+}
+
 // === Compliance ===
 
 export async function getComplianceData() {
@@ -511,7 +568,7 @@ export async function getPipelineData() {
         city: true,
         isActive: true,
         createdAt: true,
-        _count: { select: { orders: true, users: true } },
+        _count: { select: { orders: true, users: true, menuItems: true } },
       },
     }),
     prisma.activityLog.findMany({

@@ -55,13 +55,22 @@ export default function StatusPage() {
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">System Status</h1>
-            <p className="mt-4 text-lg text-white/70">Real-time status of all Resthru services.</p>
+            <p className="mt-4 text-lg text-white/70">Illustrative example of what a Resthru status page will show.</p>
           </motion.div>
         </div>
       </section>
 
       <section className="py-20">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-8 flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-warning">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span>
+              <strong className="font-semibold">Illustrative example</strong> — this page is not yet
+              connected to a live monitoring backend. Statuses and uptime figures below are sample
+              data, not real-time.
+            </span>
+          </div>
+
           {/* Overall Status */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

@@ -5,6 +5,7 @@ import {
   getRevenueChartData,
   getTopSellingItems,
   getRecentActivity,
+  getTableOverview,
 } from '@/lib/actions/dashboard';
 import DashboardClient from './client';
 import {
@@ -28,21 +29,25 @@ async function DashboardData() {
   const restaurantId = await getRestaurantId();
 
   // All five queries fire in parallel; individual failures are isolated.
-  const [stats, orders, chartData, topItems, activities] = await Promise.all([
+  const errors: string[] = [];
+  const [stats, orders, chartData, topItems, activities, tables] = await Promise.all([
     restaurantId
-      ? getDashboardStats(restaurantId).catch(() => null)
+      ? getDashboardStats(restaurantId).catch((e) => { errors.push(`Stats: ${e?.message || e}`); return null; })
       : Promise.resolve(null),
     restaurantId
-      ? getRecentOrders(restaurantId, 10).catch(() => [])
+      ? getRecentOrders(restaurantId, 10).catch((e) => { errors.push(`Orders: ${e?.message || e}`); return []; })
       : Promise.resolve([]),
     restaurantId
-      ? getRevenueChartData(restaurantId, 'week').catch(() => [])
+      ? getRevenueChartData(restaurantId, 'week').catch((e) => { errors.push(`Chart: ${e?.message || e}`); return []; })
       : Promise.resolve([]),
     restaurantId
-      ? getTopSellingItems(restaurantId).catch(() => [])
+      ? getTopSellingItems(restaurantId).catch((e) => { errors.push(`Top items: ${e?.message || e}`); return []; })
       : Promise.resolve([]),
     restaurantId
-      ? getRecentActivity(restaurantId).catch(() => [])
+      ? getRecentActivity(restaurantId).catch((e) => { errors.push(`Activity: ${e?.message || e}`); return []; })
+      : Promise.resolve([]),
+    restaurantId
+      ? getTableOverview(restaurantId).catch((e) => { errors.push(`Tables: ${e?.message || e}`); return []; })
       : Promise.resolve([]),
   ]);
 
@@ -53,6 +58,8 @@ async function DashboardData() {
       chartData={chartData}
       topItems={topItems}
       activities={activities}
+      tables={tables}
+      errors={errors}
     />
   );
 }

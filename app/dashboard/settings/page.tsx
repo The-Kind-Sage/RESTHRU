@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,13 +9,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Bell, Loader2, Plus, Trash2, Upload, Percent } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Bell, Loader2, Plus, Trash2, Upload, Percent, AlertTriangle } from 'lucide-react';
 import { uploadImage } from '@/lib/upload';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
 import {
   getRestaurant, getSettingsData, getActiveSubscription,
-  updateRestaurant, upsertSettings, updateRestaurantDirect, updateCoverPhoto, setUserPassword,
+  updateRestaurant, upsertSettings, updateRestaurantDirect, updateCoverPhoto, setUserPassword, cancelSubscription,
 } from '@/lib/actions/settings';
 import {
   getTaxRates, createTaxRate, updateTaxRate, deleteTaxRate,
@@ -96,6 +101,11 @@ export default function SettingsPage() {
   const [showNewTaxRate, setShowNewTaxRate] = useState(false);
   const [newTaxRate, setNewTaxRate] = useState({ name: "VAT", rate: "13", type: "VAT", isDefault: true, appliesToItemTypes: "" });
   const [creatingTaxRate, setCreatingTaxRate] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [pendingTab, setPendingTab] = useState<string | null>(null);
+  const [showTabConfirm, setShowTabConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const [restaurant, setRestaurant] = useState<RestaurantData>({
     name: '',
@@ -162,7 +172,7 @@ export default function SettingsPage() {
 
       if (setRes.data) {
         const s = setRes.data;
-        setSettings({
+        const parsedSettings = {
           vat_rate: s.vat_rate ?? 13,
           bill_footer_message: s.bill_footer_message ?? '',
           vat_on_receipt: s.vat_on_receipt ?? true,
@@ -171,7 +181,8 @@ export default function SettingsPage() {
           fonepay_config: s.fonepay_config ?? { merchant_id: '', secret: '', enabled: false },
           notification_preferences: s.notification_preferences ?? DEFAULT_NOTIF,
           printer_config: s.printer_config ?? [],
-        });
+        };
+        setSettings(parsedSettings);
       }
 
       if (subRes.data) {
@@ -184,6 +195,8 @@ export default function SettingsPage() {
           features: s.plan?.features ?? [],
         });
       }
+
+      setIsDirty(false);
 
       const taxRes = await getTaxRates();
       if ("data" in taxRes && taxRes.data) setTaxRates(taxRes.data);
@@ -206,9 +219,13 @@ export default function SettingsPage() {
       street: restaurant.address,
       phoneNumber: restaurant.phone,
       email: restaurant.email,
+      currency: restaurant.currency,
+      timezone: restaurant.timezone,
     });
     setIsSaving(false);
-    result.error ? toast.error(result.error) : toast.success('General settings saved');
+    if (result.error) { toast.error(result.error); return; }
+    setIsDirty(false);
+    toast.success('General settings saved');
   };
 
   const saveBilling = async () => {
@@ -219,7 +236,9 @@ export default function SettingsPage() {
       bill_footer_message: settings.bill_footer_message,
       vat_on_receipt: settings.vat_on_receipt,
     });
-    result.error ? toast.error(result.error) : toast.success('Billing settings saved');
+    if (result.error) { toast.error(result.error); setIsSaving(false); return; }
+    setIsDirty(false);
+    toast.success('Billing settings saved');
     setIsSaving(false);
   };
 
@@ -231,7 +250,9 @@ export default function SettingsPage() {
       khalti_config: settings.khalti_config,
       fonepay_config: settings.fonepay_config,
     });
-    result.error ? toast.error(result.error) : toast.success('Payment settings saved');
+    if (result.error) { toast.error(result.error); setIsSaving(false); return; }
+    setIsDirty(false);
+    toast.success('Payment settings saved');
     setIsSaving(false);
   };
 
@@ -241,7 +262,9 @@ export default function SettingsPage() {
     const result = await upsertSettings(restaurantId, {
       printer_config: settings.printer_config,
     });
-    result.error ? toast.error(result.error) : toast.success('Printer settings saved');
+    if (result.error) { toast.error(result.error); setIsSaving(false); return; }
+    setIsDirty(false);
+    toast.success('Printer settings saved');
     setIsSaving(false);
   };
 
@@ -251,7 +274,9 @@ export default function SettingsPage() {
     const result = await upsertSettings(restaurantId, {
       notification_preferences: settings.notification_preferences,
     });
-    result.error ? toast.error(result.error) : toast.success('Notification settings saved');
+    if (result.error) { toast.error(result.error); setIsSaving(false); return; }
+    setIsDirty(false);
+    toast.success('Notification settings saved');
     setIsSaving(false);
   };
 
@@ -294,6 +319,7 @@ export default function SettingsPage() {
   };
 
   const setHours = (day: string, field: 'open' | 'close' | 'enabled', value: string | boolean) => {
+    setIsDirty(true);
     setRestaurant((prev) => ({
       ...prev,
       operating_hours: { ...prev.operating_hours, [day]: { ...prev.operating_hours[day], [field]: value } },
@@ -301,6 +327,7 @@ export default function SettingsPage() {
   };
 
   const setNotif = (key: string, value: boolean | string) => {
+    setIsDirty(true);
     setSettings((prev) => ({
       ...prev,
       notification_preferences: { ...prev.notification_preferences, [key]: value },
@@ -335,7 +362,14 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">Manage your restaurant configuration and preferences</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex gap-6 lg:gap-8">
+      <Tabs value={activeTab} onValueChange={(v) => {
+        if (isDirty && v !== activeTab) {
+          setPendingTab(v);
+          setShowTabConfirm(true);
+        } else {
+          setActiveTab(v);
+        }
+      }} className="flex gap-6 lg:gap-8">
         <TabsList className="sticky top-4 flex h-fit w-full flex-col space-y-0.5 self-start bg-transparent p-0 lg:w-56">
           {[
             { value: 'general', label: 'General' },
@@ -360,7 +394,7 @@ export default function SettingsPage() {
                 <CardDescription>Update your restaurant details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-2"><Label>Restaurant Name</Label><Input value={restaurant.name} onChange={(event) => setRestaurant((prev) => ({ ...prev, name: event.target.value }))} placeholder="Enter restaurant name" /></div>
+                <div className="space-y-2"><Label>Restaurant Name</Label><Input value={restaurant.name} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, name: event.target.value })); }} placeholder="Enter restaurant name" /></div>
                 <div className="space-y-2">
                   <Label>Cover Photo</Label>
                   <label className="block w-full cursor-pointer overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/25 transition-colors hover:border-primary">
@@ -387,9 +421,9 @@ export default function SettingsPage() {
                   </label>
                 </div>
                 <Separator />
-                <div className="space-y-2"><Label>Address</Label><Input value={restaurant.address} onChange={(event) => setRestaurant((prev) => ({ ...prev, address: event.target.value }))} placeholder="Street address" /></div>
-                <div className="space-y-2"><Label>Phone</Label><Input value={restaurant.phone} onChange={(event) => setRestaurant((prev) => ({ ...prev, phone: event.target.value }))} placeholder="+977-9XXXXXXXXX" /></div>
-                <div className="space-y-2"><Label>Email</Label><Input type="email" value={restaurant.email} onChange={(event) => setRestaurant((prev) => ({ ...prev, email: event.target.value }))} placeholder="restaurant@example.com" /></div>
+                <div className="space-y-2"><Label>Address</Label><Input value={restaurant.address} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, address: event.target.value })); }} placeholder="Street address" /></div>
+                <div className="space-y-2"><Label>Phone</Label><Input value={restaurant.phone} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, phone: event.target.value })); }} placeholder="+977-9XXXXXXXXX" /></div>
+                <div className="space-y-2"><Label>Email</Label><Input type="email" value={restaurant.email} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, email: event.target.value })); }} placeholder="restaurant@example.com" /></div>
                 <Separator />
                 <div className="space-y-4">
                   <h3 className="font-semibold">Operating Hours</h3>
@@ -412,15 +446,17 @@ export default function SettingsPage() {
                     <div className="flex gap-4">
                       {[{ value: 'en', label: 'English' }, { value: 'ne', label: 'Nepali' }].map((option) => (
                         <label key={option.value} className="flex cursor-pointer items-center gap-2">
-                          <input type="radio" name="language" checked={restaurant.language === option.value} onChange={() => setRestaurant((prev) => ({ ...prev, language: option.value }))} />
+                          <input type="radio" name="language" checked={restaurant.language === option.value} onChange={() => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, language: option.value })); }} />
                           <span className="text-sm">{option.label}</span>
                         </label>
                       ))}
                     </div>
                   </div>
-                  <div className="space-y-2"><Label>Currency</Label><Input disabled value={restaurant.currency} /></div>
+                  <div className="space-y-2"><Label>Currency</Label><Input value={restaurant.currency} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, currency: event.target.value })); }} placeholder="NPR" />
+                    <p className="text-xs text-muted-foreground mt-1">Currently-locked currency. Contact support to change your billing currency.</p>
+                  </div>
                 </div>
-                <div className="space-y-2"><Label>Timezone</Label><Input disabled value={restaurant.timezone} /></div>
+                <div className="space-y-2"><Label>Timezone</Label><Input value={restaurant.timezone} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, timezone: event.target.value })); }} placeholder="Asia/Kathmandu" /></div>
                 <SaveBtn onClick={saveGeneral} />
               </CardContent>
             </Card>
@@ -433,17 +469,19 @@ export default function SettingsPage() {
                 <CardDescription>Configure tax and billing details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-2"><Label>PAN Number</Label><Input value={restaurant.pan_number} onChange={(event) => setRestaurant((prev) => ({ ...prev, pan_number: event.target.value }))} placeholder="Enter PAN number" /></div>
+                <div className="space-y-2"><Label>PAN Number</Label><Input value={restaurant.pan_number} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, pan_number: event.target.value })); }} placeholder="Enter PAN number" /></div>
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div><p className="font-medium">VAT Registered</p><p className="text-sm text-muted-foreground">Is your restaurant VAT registered?</p></div>
-                  <Switch checked={restaurant.vat_registered} onCheckedChange={(value) => setRestaurant((prev) => ({ ...prev, vat_registered: value }))} />
+                  <Switch checked={restaurant.vat_registered} onCheckedChange={(value) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, vat_registered: value })); }} />
                 </div>
-                {restaurant.vat_registered && <div className="space-y-2"><Label>VAT Registration Number</Label><Input value={restaurant.vat_number} onChange={(event) => setRestaurant((prev) => ({ ...prev, vat_number: event.target.value }))} placeholder="Enter VAT number" /></div>}
-                <div className="space-y-2"><Label>Tax Rate (%)</Label><Input type="number" value={settings.vat_rate} onChange={(event) => setSettings((prev) => ({ ...prev, vat_rate: parseFloat(event.target.value) || 0 }))} placeholder="13" /></div>
-                <div className="space-y-2"><Label>Bill Footer Message</Label><textarea className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder="Thank you for your visit!" value={settings.bill_footer_message} onChange={(event) => setSettings((prev) => ({ ...prev, bill_footer_message: event.target.value }))} /></div>
+                {restaurant.vat_registered && <div className="space-y-2"><Label>VAT Registration Number</Label><Input value={restaurant.vat_number} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, vat_number: event.target.value })); }} placeholder="Enter VAT number" /></div>}
+                <div className="space-y-2"><Label>Default Tax Rate (%)</Label><Input type="number" value={settings.vat_rate} onChange={(event) => { setIsDirty(true); setSettings((prev) => ({ ...prev, vat_rate: parseFloat(event.target.value) || 0 })); }} placeholder="13" />
+                  <p className="text-xs text-muted-foreground">Fallback rate used when no specific tax rate applies. Add specific rates below.</p>
+                </div>
+                <div className="space-y-2"><Label>Bill Footer Message</Label><textarea className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder="Thank you for your visit!" value={settings.bill_footer_message} onChange={(event) => { setIsDirty(true); setSettings((prev) => ({ ...prev, bill_footer_message: event.target.value })); }} /></div>
                 <Separator />
                 <div className="space-y-3"><h3 className="font-semibold">Receipt Preview</h3><div className="mx-auto w-full max-w-sm space-y-1 rounded-lg border bg-muted/30 p-4 font-mono text-xs"><p className="text-center font-bold">{restaurant.name || 'Your Restaurant'}</p>{restaurant.address && <p className="text-center text-[10px]">{restaurant.address}</p>}<div className="my-2 border-b" /><p className="text-center text-[10px] italic text-muted-foreground">Items will appear here</p><div className="my-2 border-b" />{restaurant.vat_registered && settings.vat_on_receipt && <p className="flex justify-between"><span>VAT ({settings.vat_rate}%):</span><span>—</span></p>}<div className="my-2 border-b" />{settings.bill_footer_message && <p className="text-center text-[10px]">{settings.bill_footer_message}</p>}</div></div>
-                <div className="flex items-center justify-between"><Label>Enable VAT on Receipt</Label><Switch checked={settings.vat_on_receipt} onCheckedChange={(value) => setSettings((prev) => ({ ...prev, vat_on_receipt: value }))} /></div>
+                <div className="flex items-center justify-between"><Label>Enable VAT on Receipt</Label><Switch checked={settings.vat_on_receipt} onCheckedChange={(value) => { setIsDirty(true); setSettings((prev) => ({ ...prev, vat_on_receipt: value })); }} /></div>
                 <SaveBtn onClick={saveBilling} />
               </CardContent>
             </Card>
@@ -577,9 +615,9 @@ export default function SettingsPage() {
             <Card>
               <CardHeader><CardTitle>Payment Gateways</CardTitle><CardDescription>Configure payment integrations</CardDescription></CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-4 rounded-lg border p-4"><div className="flex items-center justify-between"><div><h3 className="font-semibold">eSewa</h3><p className="text-sm text-muted-foreground">Enable eSewa payments</p></div><Switch checked={settings.esewa_config.enabled} onCheckedChange={(value) => setSettings((prev) => ({ ...prev, esewa_config: { ...prev.esewa_config, enabled: value } }))} /></div>{settings.esewa_config.enabled && <><Separator /><div className="space-y-3"><div className="space-y-2"><Label>Merchant ID</Label><Input value={settings.esewa_config.merchant_id} onChange={(event) => setSettings((prev) => ({ ...prev, esewa_config: { ...prev.esewa_config, merchant_id: event.target.value } }))} placeholder="Enter merchant ID" /></div><div className="space-y-2"><Label>Secret Key</Label><Input type="password" value={settings.esewa_config.secret} onChange={(event) => setSettings((prev) => ({ ...prev, esewa_config: { ...prev.esewa_config, secret: event.target.value } }))} placeholder="Enter secret key" /></div></div></>}</div>
-                <div className="space-y-4 rounded-lg border p-4"><div className="flex items-center justify-between"><div><h3 className="font-semibold">Khalti</h3><p className="text-sm text-muted-foreground">Enable Khalti payments</p></div><Switch checked={settings.khalti_config.enabled} onCheckedChange={(value) => setSettings((prev) => ({ ...prev, khalti_config: { ...prev.khalti_config, enabled: value } }))} /></div>{settings.khalti_config.enabled && <><Separator /><div className="space-y-3"><div className="space-y-2"><Label>API Key</Label><Input value={settings.khalti_config.api_key} onChange={(event) => setSettings((prev) => ({ ...prev, khalti_config: { ...prev.khalti_config, api_key: event.target.value } }))} placeholder="Enter API key" /></div><div className="space-y-2"><Label>Secret Key</Label><Input type="password" value={settings.khalti_config.secret} onChange={(event) => setSettings((prev) => ({ ...prev, khalti_config: { ...prev.khalti_config, secret: event.target.value } }))} placeholder="Enter secret key" /></div></div></>}</div>
-                <div className="space-y-4 rounded-lg border p-4"><div className="flex items-center justify-between"><div><h3 className="font-semibold">Fonepay</h3><p className="text-sm text-muted-foreground">Enable Fonepay payments</p></div><Switch checked={settings.fonepay_config.enabled} onCheckedChange={(value) => setSettings((prev) => ({ ...prev, fonepay_config: { ...prev.fonepay_config, enabled: value } }))} /></div>{settings.fonepay_config.enabled && <><Separator /><div className="space-y-3"><div className="space-y-2"><Label>Merchant ID</Label><Input value={settings.fonepay_config.merchant_id} onChange={(event) => setSettings((prev) => ({ ...prev, fonepay_config: { ...prev.fonepay_config, merchant_id: event.target.value } }))} placeholder="Enter merchant ID" /></div><div className="space-y-2"><Label>Secret Key</Label><Input type="password" value={settings.fonepay_config.secret} onChange={(event) => setSettings((prev) => ({ ...prev, fonepay_config: { ...prev.fonepay_config, secret: event.target.value } }))} placeholder="Enter secret key" /></div></div></>}</div>
+                <div className="space-y-4 rounded-lg border p-4"><div className="flex items-center justify-between"><div><h3 className="font-semibold">eSewa</h3><p className="text-sm text-muted-foreground">Enable eSewa payments</p></div><Switch checked={settings.esewa_config.enabled} onCheckedChange={(value) => { setIsDirty(true); setSettings((prev) => ({ ...prev, esewa_config: { ...prev.esewa_config, enabled: value } })); }} /></div>{settings.esewa_config.enabled && <><Separator /><div className="space-y-3"><div className="space-y-2"><Label>Merchant ID</Label><Input value={settings.esewa_config.merchant_id} onChange={(event) => { setIsDirty(true); setSettings((prev) => ({ ...prev, esewa_config: { ...prev.esewa_config, merchant_id: event.target.value } })); }} placeholder="Enter merchant ID" /></div><div className="space-y-2"><Label>Secret Key</Label><Input type="password" value={settings.esewa_config.secret} onChange={(event) => { setIsDirty(true); setSettings((prev) => ({ ...prev, esewa_config: { ...prev.esewa_config, secret: event.target.value } })); }} placeholder="Enter secret key" /></div></div></>}</div>
+                <div className="space-y-4 rounded-lg border p-4"><div className="flex items-center justify-between"><div><h3 className="font-semibold">Khalti</h3><p className="text-sm text-muted-foreground">Enable Khalti payments</p></div><Switch checked={settings.khalti_config.enabled} onCheckedChange={(value) => { setIsDirty(true); setSettings((prev) => ({ ...prev, khalti_config: { ...prev.khalti_config, enabled: value } })); }} /></div>{settings.khalti_config.enabled && <><Separator /><div className="space-y-3"><div className="space-y-2"><Label>API Key</Label><Input value={settings.khalti_config.api_key} onChange={(event) => { setIsDirty(true); setSettings((prev) => ({ ...prev, khalti_config: { ...prev.khalti_config, api_key: event.target.value } })); }} placeholder="Enter API key" /></div><div className="space-y-2"><Label>Secret Key</Label><Input type="password" value={settings.khalti_config.secret} onChange={(event) => { setIsDirty(true); setSettings((prev) => ({ ...prev, khalti_config: { ...prev.khalti_config, secret: event.target.value } })); }} placeholder="Enter secret key" /></div></div></>}</div>
+                <div className="space-y-4 rounded-lg border p-4"><div className="flex items-center justify-between"><div><h3 className="font-semibold">Fonepay</h3><p className="text-sm text-muted-foreground">Enable Fonepay payments</p></div><Switch checked={settings.fonepay_config.enabled} onCheckedChange={(value) => { setIsDirty(true); setSettings((prev) => ({ ...prev, fonepay_config: { ...prev.fonepay_config, enabled: value } })); }} /></div>{settings.fonepay_config.enabled && <><Separator /><div className="space-y-3"><div className="space-y-2"><Label>Merchant ID</Label><Input value={settings.fonepay_config.merchant_id} onChange={(event) => { setIsDirty(true); setSettings((prev) => ({ ...prev, fonepay_config: { ...prev.fonepay_config, merchant_id: event.target.value } })); }} placeholder="Enter merchant ID" /></div><div className="space-y-2"><Label>Secret Key</Label><Input type="password" value={settings.fonepay_config.secret} onChange={(event) => { setIsDirty(true); setSettings((prev) => ({ ...prev, fonepay_config: { ...prev.fonepay_config, secret: event.target.value } })); }} placeholder="Enter secret key" /></div></div></>}</div>
                 <div className="space-y-4 rounded-lg border p-4 opacity-60"><div className="flex items-center justify-between"><div><h3 className="font-semibold">Cash Payment</h3><p className="text-sm text-muted-foreground">Always enabled</p></div><Switch disabled checked /></div></div>
                 <SaveBtn onClick={savePayments} />
               </CardContent>
@@ -590,7 +628,7 @@ export default function SettingsPage() {
             <Card>
               <CardHeader><CardTitle>Printer Configuration</CardTitle><CardDescription>Manage receipt and kitchen printers</CardDescription></CardHeader>
               <CardContent className="space-y-6">
-                {settings.printer_config.length === 0 ? <p className="py-4 text-center text-sm text-muted-foreground">No printers configured yet.</p> : <div className="space-y-3">{settings.printer_config.map((printer, index) => <div key={`${printer.name}-${index}`} className="flex items-center justify-between rounded-lg border p-4"><div><Input className="h-auto border-0 p-0 text-sm font-semibold focus-visible:ring-0" value={printer.name} onChange={(event) => setSettings((prev) => ({ ...prev, printer_config: prev.printer_config.map((item, itemIndex) => itemIndex === index ? { ...item, name: event.target.value } : item) }))} /><Input className="h-auto border-0 p-0 text-xs text-muted-foreground focus-visible:ring-0" value={printer.ip} onChange={(event) => setSettings((prev) => ({ ...prev, printer_config: prev.printer_config.map((item, itemIndex) => itemIndex === index ? { ...item, ip: event.target.value } : item) }))} placeholder="192.168.1.xxx" /></div><Button variant="ghost" size="sm" onClick={() => setSettings((prev) => ({ ...prev, printer_config: prev.printer_config.filter((_, itemIndex) => itemIndex !== index) }))}><Trash2 className="h-4 w-4 text-destructive" /></Button></div>)}</div>}
+                {settings.printer_config.length === 0 ? <p className="py-4 text-center text-sm text-muted-foreground">No printers configured yet.</p> : <div className="space-y-3">{settings.printer_config.map((printer, index) => <div key={`${printer.name}-${index}`} className="flex items-center justify-between rounded-lg border p-4"><div className="flex-1 space-y-2"><Input value={printer.name} onChange={(event) => { setIsDirty(true); setSettings((prev) => ({ ...prev, printer_config: prev.printer_config.map((item, itemIndex) => itemIndex === index ? { ...item, name: event.target.value } : item) })); }} placeholder="Printer name" /><Input className="font-mono text-xs" value={printer.ip} onChange={(event) => { setIsDirty(true); setSettings((prev) => ({ ...prev, printer_config: prev.printer_config.map((item, itemIndex) => itemIndex === index ? { ...item, ip: event.target.value } : item) })); }} placeholder="192.168.1.xxx" /></div><Button variant="ghost" size="sm" onClick={() => setSettings((prev) => ({ ...prev, printer_config: prev.printer_config.filter((_, itemIndex) => itemIndex !== index) }))}><Trash2 className="h-4 w-4 text-destructive" /></Button></div>)}</div>}
                 <Button variant="outline" className="w-full gap-2" onClick={() => setSettings((prev) => ({ ...prev, printer_config: [...prev.printer_config, { name: `Printer ${prev.printer_config.length + 1}`, type: 'ESC/POS', ip: '192.168.1.' }] }))}><Plus className="h-4 w-4" /> Add Printer</Button>
                 <SaveBtn onClick={savePrinters} />
               </CardContent>
@@ -638,7 +676,7 @@ export default function SettingsPage() {
             ) : (
               <Card><CardContent className="py-12 text-center"><p className="mb-4 text-muted-foreground">No active subscription found.</p><Button>View Plans</Button></CardContent></Card>
             )}
-            <div className="space-y-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4"><h3 className="font-semibold text-destructive">Danger Zone</h3><p className="text-sm text-muted-foreground">Cancel your subscription. Your data will be retained for 30 days.</p><Button variant="destructive">Cancel Subscription</Button></div>
+            <div className="space-y-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4"><h3 className="font-semibold text-destructive">Danger Zone</h3><p className="text-sm text-muted-foreground">Cancel your subscription. Your data will be retained for 30 days.</p><Button variant="destructive" onClick={() => setShowCancelConfirm(true)}>Cancel Subscription</Button></div>
           </TabsContent>
 
           {/* ══ SECURITY ═════════════════════════════════════════════════ */}
@@ -665,6 +703,66 @@ export default function SettingsPage() {
           </TabsContent>
         </div>
       </Tabs>
+      {/* Unsaved changes confirmation */}
+      <AlertDialog open={showTabConfirm} onOpenChange={setShowTabConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Unsaved Changes
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Switching tabs will discard them. Are you sure?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay on this tab</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setShowTabConfirm(false);
+              setIsDirty(false);
+              if (pendingTab) setActiveTab(pendingTab);
+            }}>
+              Discard & Switch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel subscription confirmation */}
+      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Cancel Subscription?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Your data will be retained for 30 days after cancellation.
+              After that, all data associated with your subscription will be permanently deleted.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={isCancelling}
+              onClick={async () => {
+                if (!restaurantId) return;
+                setIsCancelling(true);
+                const result = await cancelSubscription(restaurantId);
+                setIsCancelling(false);
+                setShowCancelConfirm(false);
+                if (result.error) { toast.error(result.error); return; }
+                toast.success('Subscription cancelled');
+                loadData();
+              }}
+            >
+              {isCancelling ? 'Cancelling...' : 'Yes, Cancel Subscription'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

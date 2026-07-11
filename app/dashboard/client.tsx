@@ -8,7 +8,7 @@ import { getGreeting } from "@/lib/helpers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp, ShoppingBag, LayoutGrid, Clock, ArrowRight } from "lucide-react";
+import { TrendingUp, ShoppingBag, LayoutGrid, Clock, ArrowRight, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import type {
   DashboardStats,
@@ -16,8 +16,9 @@ import type {
   ChartPoint,
   TopItem,
   Activity,
+  TableOverviewItem,
 } from "@/lib/actions/dashboard";
-import { getRevenueChartData, getDashboardStats, getRecentOrders, getRecentActivity } from "@/lib/actions/dashboard";
+import { getRevenueChartData, getDashboardStats, getRecentOrders, getRecentActivity, getTableOverview } from "@/lib/actions/dashboard";
 import { ChartSkeleton } from "@/components/dashboard/skeletons";
 
 // ── Lazy-load heavy libraries ─────────────────────────────────────────────
@@ -44,6 +45,17 @@ type DashboardData = {
   chartData: ChartPoint[];
   topItems: TopItem[];
   activities: Activity[];
+  tables: TableOverviewItem[];
+  errors?: string[];
+};
+
+// Table status → theme token, shared visual language with the rest of the app
+// (Front Desk / Table Map use the same semantic colors for these statuses).
+const TABLE_STATUS_STYLES: Record<string, string> = {
+  AVAILABLE: "bg-success text-white",
+  OCCUPIED: "bg-destructive text-white",
+  RESERVED: "bg-warning text-white",
+  MAINTENANCE: "bg-muted text-muted-foreground",
 };
 
 // ── Component ─────────────────────────────────────────────────────────────
@@ -53,6 +65,8 @@ export default function DashboardClient({
   chartData: initialChartData,
   topItems,
   activities,
+  tables,
+  errors: serverErrors,
 }: DashboardData) {
   const { user, restaurant } = useAuthStore();
   const restaurantId = restaurant?.id;
@@ -62,6 +76,8 @@ export default function DashboardClient({
   const [liveStats, setLiveStats] = useState(stats);
   const [liveOrders, setLiveOrders] = useState(orders);
   const [liveActivities, setLiveActivities] = useState(activities);
+  const [liveTables, setLiveTables] = useState(tables);
+  const [pollError, setPollError] = useState<string | null>(null);
 
   // Period toggle now re-fetches chart data from the server action.
   // useTransition keeps the UI interactive while the fetch is in-flight.
@@ -81,14 +97,24 @@ export default function DashboardClient({
   useEffect(() => {
     if (!restaurantId) return;
     const poll = async () => {
-      const [freshStats, freshOrders, freshActivities] = await Promise.all([
-        getDashboardStats(restaurantId).catch(() => null),
-        getRecentOrders(restaurantId, 10).catch(() => []),
-        getRecentActivity(restaurantId).catch(() => []),
+      const failures: string[] = [];
+      const [freshStats, freshOrders, freshActivities, freshTables] = await Promise.all([
+        getDashboardStats(restaurantId).catch(() => { failures.push("stats"); return null; }),
+        getRecentOrders(restaurantId, 10).catch(() => { failures.push("orders"); return null; }),
+        getRecentActivity(restaurantId).catch(() => { failures.push("activity"); return null; }),
+        getTableOverview(restaurantId).catch(() => { failures.push("tables"); return null; }),
       ]);
       if (freshStats) setLiveStats(freshStats);
       if (freshOrders) setLiveOrders(freshOrders);
       if (freshActivities) setLiveActivities(freshActivities);
+      if (freshTables) setLiveTables(freshTables);
+      // Surface a persistent live-update failure rather than silently leaving
+      // the owner looking at stale data with no indication anything is wrong.
+      setPollError(
+        failures.length > 0
+          ? `Live updates for ${failures.join(", ")} are currently failing — showing last known data.`
+          : null
+      );
     };
     poll();
     const interval = setInterval(poll, 15_000);
@@ -126,6 +152,31 @@ export default function DashboardClient({
           </div>
         </CardContent>
       </Card>
+
+      {/* ── Error banner ── */}
+      {serverErrors && serverErrors.length > 0 && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="p-4 flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-destructive">Some data failed to load</p>
+              <ul className="text-xs text-muted-foreground mt-1 list-disc list-inside">
+                {serverErrors.map((e, i) => <li key={i}>{e}</li>)}
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Live-poll error banner (background refresh failures) ── */}
+      {pollError && (
+        <Card className="border-warning/50 bg-warning/5">
+          <CardContent className="p-4 flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-warning">{pollError}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── KPI cards ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -217,9 +268,7 @@ export default function DashboardClient({
             </CardHeader>
             <CardContent>
               {isPending ? (
-                <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">
-                  Loading chart…
-                </div>
+                <ChartSkeleton />
               ) : (
                 <RevenueChart data={chartData} />
               )}
@@ -240,7 +289,7 @@ export default function DashboardClient({
                         <div className="flex items-center gap-2 flex-1">
                           <div
                             className={`w-3 h-3 rounded-full ${
-                              item.isVeg ? "bg-green-500" : "bg-red-500"
+                              item.isVeg ? "bg-success" : "bg-destructive"
                             }`}
                           />
                           <span className="text-sm font-medium flex-1">
@@ -282,28 +331,37 @@ export default function DashboardClient({
               </div>
             </CardHeader>
             <CardContent>
-              {liveStats && liveStats.totalTables > 0 ? (
+              {liveTables.length > 0 ? (
                 <>
+                  {/* Each tile shows the table's real number and real status —
+                      previously this rendered N generic squares (occupied-count
+                      red, rest green) with no link to which physical table was
+                      actually occupied. */}
                   <div className="grid grid-cols-5 gap-2 mb-6">
-                    {Array.from({ length: liveStats.totalTables }).map((_, idx) => (
+                    {liveTables.map((table) => (
                       <div
-                        key={idx}
-                        className={`aspect-square rounded-lg ${
-                          idx < liveStats.occupiedTables
-                            ? "bg-red-500"
-                            : "bg-green-500"
+                        key={table.id}
+                        title={`Table ${table.tableNumber} — ${table.status.charAt(0) + table.status.slice(1).toLowerCase()}`}
+                        className={`aspect-square rounded-lg flex items-center justify-center text-xs font-bold ${
+                          TABLE_STATUS_STYLES[table.status] ?? "bg-muted text-muted-foreground"
                         }`}
-                      />
+                      >
+                        {table.tableNumber}
+                      </div>
                     ))}
                   </div>
-                  <div className="flex justify-between text-xs text-muted-foreground border-t pt-4">
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground border-t pt-4">
                     <span className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-red-500 rounded-sm" />
-                      {liveStats.occupiedTables} Occupied
+                      <div className="w-3 h-3 bg-success rounded-sm" />
+                      {liveTables.filter((t) => t.status === "AVAILABLE").length} Available
                     </span>
                     <span className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-green-500 rounded-sm" />
-                      {liveStats.availableTables} Available
+                      <div className="w-3 h-3 bg-destructive rounded-sm" />
+                      {liveTables.filter((t) => t.status === "OCCUPIED").length} Occupied
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-warning rounded-sm" />
+                      {liveTables.filter((t) => t.status === "RESERVED").length} Reserved
                     </span>
                   </div>
                 </>
@@ -383,10 +441,10 @@ export default function DashboardClient({
                     <div
                       className={`w-3 h-3 rounded-full flex-shrink-0 mt-1.5 ${
                         a.type === "order"
-                          ? "bg-green-500"
+                          ? "bg-success"
                           : a.type === "payment"
-                          ? "bg-blue-500"
-                          : "bg-red-500"
+                          ? "bg-info"
+                          : "bg-destructive"
                       }`}
                     />
                     <div className="flex-1 min-w-0">

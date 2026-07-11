@@ -218,6 +218,31 @@ export const BILL_STATUS_COLORS: Record<string, string> = {
   VOID: 'bg-destructive/10 text-destructive',
 };
 
+// Superadmin badge tone classes (G5). Every superadmin page used to
+// re-declare its own `Record<string, string>` mapping a status label to the
+// exact same handful of Tailwind combos (bg-primary/10 text-primary
+// border-primary/30, etc). This is the one shared source for those combos —
+// pages still define which *label* maps to which tone (their vocabulary
+// differs: "Compliant" vs "Published" vs "ACTIVE"), but the actual color
+// values live here once.
+export const ADMIN_TONE_CLASSES = {
+  positive: 'bg-primary/10 text-primary border-primary/30',
+  warning: 'bg-accent/10 text-accent border-accent/30',
+  negative: 'bg-destructive/10 text-destructive border-destructive/30',
+  info: 'bg-info/10 text-info border-info/30',
+  neutral: 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30',
+} as const;
+
+export type AdminTone = keyof typeof ADMIN_TONE_CLASSES;
+
+// Dashboard routes that render without the authenticated shell (sidebar/header) — the single
+// source of truth so middleware.ts and app/dashboard/shell.tsx can't drift out of sync.
+export const DASHBOARD_AUTH_ROUTES = [
+  '/dashboard/login',
+  '/dashboard/forgot-password',
+  '/dashboard/password-reset',
+] as const;
+
 // Operating Hours Default
 export const OPERATING_HOURS_DEFAULT = {
   monday: { open: '10:00', close: '22:00' },

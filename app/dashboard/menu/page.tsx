@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Search, LayoutGrid, List, Eye, Edit2, Trash2,
   Upload, X, QrCode, Palette, Download, FileImage,
+  UtensilsCrossed, Package, CupSoda, Beef, Percent, CheckSquare,
+  Coffee, Snowflake, IceCream, ListChecks, Tags, Info, Sparkles,
 } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { Button } from '@/components/ui/button';
@@ -12,12 +14,18 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
   Dialog, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Select, SelectContent, SelectItem,
   SelectTrigger, SelectValue,
@@ -34,19 +42,39 @@ import {
   deleteMenuItem as deleteMenuItemAction,
   toggleMenuItemAvailable as toggleMenuItemAvailableAction,
   getCategories, getMenuSettings, updateMenuSettings,
+  bulkUpdateItemsAvailable, bulkAdjustItemPrices,
 } from '@/lib/actions/menu';
 
 const ITEM_TYPES = [
-  { value: 'food', label: 'Food', emoji: '🍽️', description: 'Cooked dishes, meals, snacks' },
-  { value: 'item', label: 'Items', emoji: '📦', description: 'General items, merchandise, packaged goods' },
-  { value: 'beverage', label: 'Beverages', emoji: '🥤', description: 'Drinks, juices, tea, coffee' },
+  { value: 'food', label: 'Food', icon: 'UtensilsCrossed', description: 'Cooked dishes, meals, snacks' },
+  { value: 'item', label: 'Items', icon: 'Package', description: 'General items, merchandise, packaged goods' },
+  { value: 'beverage', label: 'Beverages', icon: 'CupSoda', description: 'Drinks, juices, tea, coffee' },
 ];
 
+// Renders the lucide icon for an item type — single source instead of the
+// same ternary being copy-pasted at every place an item-type icon is shown.
+function ItemTypeIcon({ itemType, className }: { itemType: string; className?: string }) {
+  if (itemType === 'beverage') return <CupSoda className={className} />;
+  if (itemType === 'item') return <Package className={className} />;
+  return <UtensilsCrossed className={className} />;
+}
+
 const TEMPERATURE_OPTIONS = [
-  { value: 'hot', label: 'Hot', emoji: '☕' },
-  { value: 'cold', label: 'Cold', emoji: '🧊' },
-  { value: 'iced', label: 'Iced', emoji: '❄️' },
+  { value: 'hot', label: 'Hot', icon: Coffee },
+  { value: 'cold', label: 'Cold', icon: Snowflake },
+  { value: 'iced', label: 'Iced', icon: IceCream },
 ];
+
+// Food sub-type badge colors — mapped onto the app's existing semantic
+// tokens instead of the per-subtype inline hex from lib/constants.ts
+// (FOOD_SUB_TYPES.color), so this respects dark mode / theme changes.
+const SUBTYPE_BADGE_STYLES: Record<string, string> = {
+  veg: 'bg-success text-white',
+  chicken: 'bg-warning text-white',
+  buff: 'bg-destructive text-white',
+  pork: 'bg-accent text-white',
+  mutton: 'bg-info text-white',
+};
 
 const DEFAULT_SIZE_OPTIONS: SizeOption[] = [
   { name: 'Small', price: 0 },
@@ -144,6 +172,11 @@ export default function MenuPage() {
   const [customMenuFile, setCustomMenuFile] = useState<File | null>(null);
   const [customMenuName, setCustomMenuName] = useState<string | null>(null);
   const [isSavingMenu, setIsSavingMenu] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'item' | 'category'; id: string; name: string } | null>(null);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [bulkPriceAdjust, setBulkPriceAdjust] = useState(0);
+  const [bulkPriceMode, setBulkPriceMode] = useState<'set' | 'percent'>('set');
 
   const [formData, setFormData] = useState<Partial<MenuItem>>(EMPTY_FORM);
   const [categoryFormData, setCategoryFormData] = useState<Partial<Category>>({
@@ -396,6 +429,62 @@ export default function MenuPage() {
     setCategories(categories.map(c => c.id === id ? { ...c, active: !c.active } : c));
   };
 
+  // ── Delete confirmation (item + category share one AlertDialog) ───────────
+  const [isDeleting, setIsDeleting] = useState(false);
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirm) return;
+    setIsDeleting(true);
+    try {
+      if (deleteConfirm.type === 'item') {
+        await handleDeleteItem(deleteConfirm.id);
+      } else {
+        await handleDeleteCategory(deleteConfirm.id);
+      }
+      setDeleteConfirm(null);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // ── Bulk actions ────────────────────────────────────────────────────────
+  const toggleBulkSelect = (id: string) => {
+    setSelectedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const exitBulkMode = () => { setBulkMode(false); setSelectedItems(new Set()); };
+
+  const handleBulkAvailability = async (available: boolean) => {
+    if (selectedItems.size === 0) { toast.error('Select at least one item'); return; }
+    const ids = Array.from(selectedItems);
+    const result = await bulkUpdateItemsAvailable(ids, available);
+    if (result.error) { toast.error(result.error); return; }
+    setItems(items.map(i => ids.includes(i.id) ? { ...i, available } : i));
+    toast.success(`${ids.length} item${ids.length === 1 ? '' : 's'} marked ${available ? 'available' : 'unavailable'}`);
+    exitBulkMode();
+  };
+
+  const handleBulkPriceAdjust = async () => {
+    if (selectedItems.size === 0) { toast.error('Select at least one item'); return; }
+    if (!bulkPriceAdjust) { toast.error('Enter a price or percentage'); return; }
+    const ids = Array.from(selectedItems);
+    const result = await bulkAdjustItemPrices(ids, bulkPriceMode, bulkPriceAdjust);
+    if (result.error) { toast.error(result.error); return; }
+    setItems(items.map(i => {
+      if (!ids.includes(i.id)) return i;
+      const price = bulkPriceMode === 'set'
+        ? bulkPriceAdjust
+        : Math.max(0, Math.round(i.price * (1 + bulkPriceAdjust / 100) * 100) / 100);
+      return { ...i, price };
+    }));
+    toast.success(`Updated price for ${ids.length} item${ids.length === 1 ? '' : 's'}`);
+    setBulkPriceAdjust(0);
+    exitBulkMode();
+  };
+
   // ── Edit Menu (appearance) save ───────────────────────────────────────────
   const handleSaveMenuAppearance = async () => {
     if (!restaurantId) return;
@@ -471,7 +560,7 @@ export default function MenuPage() {
                         <Edit2 className="w-3 h-3" />
                       </Button>
                       <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive"
-                        onClick={e => { e.stopPropagation(); handleDeleteCategory(cat.id); }}>
+                        onClick={e => { e.stopPropagation(); setDeleteConfirm({ type: 'category', id: cat.id, name: cat.name }); }}>
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
@@ -508,6 +597,12 @@ export default function MenuPage() {
               <Button onClick={handleAddItem} disabled={!selectedCategory}>
                 <Plus className="w-4 h-4 mr-2" />Add Item
               </Button>
+              <Button
+                variant={bulkMode ? 'secondary' : 'outline'}
+                onClick={() => (bulkMode ? exitBulkMode() : setBulkMode(true))}
+              >
+                <ListChecks className="w-4 h-4 mr-2" />{bulkMode ? 'Cancel Bulk Edit' : 'Bulk Edit'}
+              </Button>
               <Button variant="outline" onClick={() => window.open(`/r/${restaurantId}`, '_blank')}>
                 <Eye className="w-4 h-4 mr-2" />Preview
               </Button>
@@ -523,6 +618,41 @@ export default function MenuPage() {
               <Button size="sm" variant={viewMode === 'list' ? 'default' : 'ghost'} onClick={() => setViewMode('list')} className="h-8 w-9"><List className="w-4 h-4" /></Button>
             </div>
           </div>
+
+          {/* ── Bulk action toolbar — appears once at least Bulk Edit mode is on ── */}
+          {bulkMode && (
+            <div className="mt-3 flex flex-wrap items-center gap-3 p-3 rounded-lg border bg-muted/40">
+              <span className="text-sm font-medium">
+                {selectedItems.size} selected
+              </span>
+              <Separator orientation="vertical" className="h-6" />
+              <div className="flex items-center gap-1.5">
+                <Select value={bulkPriceMode} onValueChange={v => setBulkPriceMode(v as 'set' | 'percent')}>
+                  <SelectTrigger className="h-8 w-[110px] text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="set">Set price</SelectItem>
+                    <SelectItem value="percent">Adjust %</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  className="h-8 w-24 text-xs"
+                  placeholder={bulkPriceMode === 'set' ? 'NPR' : '+/- %'}
+                  value={bulkPriceAdjust || ''}
+                  onChange={e => setBulkPriceAdjust(parseFloat(e.target.value) || 0)}
+                />
+                <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleBulkPriceAdjust}>
+                  <Percent className="w-3.5 h-3.5" /> Apply
+                </Button>
+              </div>
+              <Separator orientation="vertical" className="h-6" />
+              <div className="flex items-center gap-1.5">
+                <Button size="sm" variant="outline" className="h-8" onClick={() => handleBulkAvailability(true)}>Mark Available</Button>
+                <Button size="sm" variant="outline" className="h-8" onClick={() => handleBulkAvailability(false)}>Mark Unavailable</Button>
+              </div>
+              <Button size="sm" variant="ghost" className="h-8 ml-auto" onClick={exitBulkMode}>Done</Button>
+            </div>
+          )}
         </div>
 
         <ScrollArea className="flex-1">
@@ -542,34 +672,47 @@ export default function MenuPage() {
                     return (
                       <motion.div key={item.id}
                         initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
-                        <Card className="overflow-hidden group relative h-full">
+                        <Card className={`overflow-hidden group relative h-full ${bulkMode && selectedItems.has(item.id) ? 'ring-2 ring-primary' : ''}`}>
+                          {bulkMode && (
+                            <div className="absolute top-2 left-2 z-10 bg-white/90 rounded p-0.5">
+                              <Checkbox checked={selectedItems.has(item.id)} onCheckedChange={() => toggleBulkSelect(item.id)} />
+                            </div>
+                          )}
                           <div className="relative h-36 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
                             {item.image
                               ? <img src={item.image} alt={item.nameEn} className="w-full h-full object-cover" />
-                              : <span className="text-5xl">{ITEM_TYPES.find(t => t.value === item.itemType)?.emoji || '🍽️'}</span>}
-                            <div className="absolute top-2 left-2 flex gap-1">
-                              {item.itemType === 'beverage' && (
-                                <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white bg-blue-500">
-                                  {TEMPERATURE_OPTIONS.find(t => t.value === item.temperature)?.emoji} {TEMPERATURE_OPTIONS.find(t => t.value === item.temperature)?.label}
-                                </span>
-                              )}
+                              : <ItemTypeIcon itemType={item.itemType} className="w-10 h-10 text-muted-foreground" />}
+                            <div className={`absolute top-2 flex gap-1 ${bulkMode ? 'left-10' : 'left-2'}`}>
+                              {item.itemType === 'beverage' && (() => {
+                                const temp = TEMPERATURE_OPTIONS.find(t => t.value === item.temperature);
+                                const TempIcon = temp?.icon;
+                                return (
+                                  <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full text-white bg-info">
+                                    {TempIcon && <TempIcon className="w-3 h-3" />} {temp?.label}
+                                  </span>
+                                );
+                              })()}
                               {item.itemType === 'food' && sub && (
-                                <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: sub.color }}>
-                                  {sub.emoji} {sub.label}
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${SUBTYPE_BADGE_STYLES[item.subType] || 'bg-muted text-muted-foreground'}`}>
+                                  {sub.label}
                                 </span>
                               )}
                               {item.itemType === 'item' && (
-                                <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white bg-purple-500">
-                                  📦 Item
+                                <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full text-white bg-accent">
+                                  <Package className="w-3 h-3" /> Item
                                 </span>
                               )}
                             </div>
                             <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <Button size="sm" variant="secondary" className="h-7 w-7 p-0" onClick={() => handleEditItem(item)}><Edit2 className="w-3 h-3" /></Button>
-                              <Button size="sm" variant="destructive" className="h-7 w-7 p-0" onClick={() => handleDeleteItem(item.id)}><Trash2 className="w-3 h-3" /></Button>
+                              <Button size="sm" variant="destructive" className="h-7 w-7 p-0" onClick={() => setDeleteConfirm({ type: 'item', id: item.id, name: item.nameEn })}><Trash2 className="w-3 h-3" /></Button>
                             </div>
                           </div>
-                          <CardContent className="p-3 space-y-1">
+                          <CardContent
+                            className="p-3 space-y-1"
+                            onClick={() => bulkMode && toggleBulkSelect(item.id)}
+                            role={bulkMode ? 'button' : undefined}
+                          >
                             <p className="font-bold text-sm truncate">{item.nameEn}</p>
                             <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
                             <div className="flex items-center gap-1.5">
@@ -592,31 +735,43 @@ export default function MenuPage() {
               <div className="space-y-2">
                 {filteredItems.map(item => {
                   const sub = getSubTypeInfo(item.subType);
+                  const temp = TEMPERATURE_OPTIONS.find(t => t.value === item.temperature);
+                  const TempIcon = temp?.icon;
                   return (
-                    <div key={item.id} className="flex items-center gap-4 p-3 border rounded-lg hover:bg-muted/40 group">
+                    <div
+                      key={item.id}
+                      className={`flex items-center gap-4 p-3 border rounded-lg hover:bg-muted/40 group ${bulkMode && selectedItems.has(item.id) ? 'ring-2 ring-primary bg-primary/5' : ''}`}
+                      onClick={() => bulkMode && toggleBulkSelect(item.id)}
+                      role={bulkMode ? 'button' : undefined}
+                    >
+                      {bulkMode && (
+                        <Checkbox checked={selectedItems.has(item.id)} onCheckedChange={() => toggleBulkSelect(item.id)} onClick={e => e.stopPropagation()} />
+                      )}
                       <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {item.image ? <img src={item.image} alt={item.nameEn} className="w-full h-full object-cover rounded-lg" /> : <span className="text-2xl">{ITEM_TYPES.find(t => t.value === item.itemType)?.emoji || '🍽️'}</span>}
+                        {item.image ? <img src={item.image} alt={item.nameEn} className="w-full h-full object-cover rounded-lg" /> : <ItemTypeIcon itemType={item.itemType} className="w-6 h-6 text-muted-foreground" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{item.nameEn}</p>
                         <p className="text-xs text-muted-foreground truncate">{item.description}</p>
                       </div>
                       {item.itemType === 'beverage' && (
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white bg-blue-500 flex-shrink-0">
-                          {TEMPERATURE_OPTIONS.find(t => t.value === item.temperature)?.emoji} {TEMPERATURE_OPTIONS.find(t => t.value === item.temperature)?.label}
+                        <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full text-white bg-info flex-shrink-0">
+                          {TempIcon && <TempIcon className="w-3 h-3" />} {temp?.label}
                         </span>
                       )}
                       {item.itemType === 'food' && sub && (
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white flex-shrink-0" style={{ backgroundColor: sub.color }}>{sub.emoji} {sub.label}</span>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${SUBTYPE_BADGE_STYLES[item.subType] || 'bg-muted text-muted-foreground'}`}>{sub.label}</span>
                       )}
                       {item.itemType === 'item' && (
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white bg-purple-500 flex-shrink-0">📦 Item</span>
+                        <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full text-white bg-accent flex-shrink-0">
+                          <Package className="w-3 h-3" /> Item
+                        </span>
                       )}
                       <p className="font-bold text-primary text-sm flex-shrink-0">NPR {item.price}</p>
-                      <Switch checked={item.available} onCheckedChange={v => handleToggleAvailable(item.id, v)} />
+                      <Switch checked={item.available} onCheckedChange={v => handleToggleAvailable(item.id, v)} onClick={e => e.stopPropagation()} />
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100">
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleEditItem(item)}><Edit2 className="w-4 h-4" /></Button>
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive" onClick={() => handleDeleteItem(item.id)}><Trash2 className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={e => { e.stopPropagation(); handleEditItem(item); }}><Edit2 className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive" onClick={e => { e.stopPropagation(); setDeleteConfirm({ type: 'item', id: item.id, name: item.nameEn }); }}><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     </div>
                   );
@@ -649,7 +804,7 @@ export default function MenuPage() {
                       : 'border-border hover:border-primary/50'
                   }`}
                   onClick={() => setFormData({ ...formData, itemType: type.value as any })}>
-                  <span className="text-2xl">{type.emoji}</span>
+                  {type.icon === 'UtensilsCrossed' ? <UtensilsCrossed className="w-6 h-6" /> : type.icon === 'Package' ? <Package className="w-6 h-6" /> : <CupSoda className="w-6 h-6" />}
                   <span className="text-sm font-medium">{type.label}</span>
                   <span className="text-xs text-muted-foreground text-center">{type.description}</span>
                 </div>
@@ -660,6 +815,9 @@ export default function MenuPage() {
           <div className="grid grid-cols-2 gap-6 py-4">
             {/* Left */}
             <div className="space-y-4">
+              <h3 className="text-sm font-semibold flex items-center gap-1.5 text-muted-foreground">
+                <Info className="w-3.5 h-3.5" /> BASICS
+              </h3>
               {/* Image */}
               <div>
                 <label className="text-sm font-medium mb-2 block">
@@ -700,6 +858,10 @@ export default function MenuPage() {
               <div><label className="text-sm font-medium mb-1.5 block">Description</label>
                 <Textarea placeholder="Describe your item..." className="resize-none" rows={3} value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} /></div>
 
+              <Separator />
+              <h3 className="text-sm font-semibold flex items-center gap-1.5 text-muted-foreground">
+                <Percent className="w-3.5 h-3.5" /> PRICING
+              </h3>
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="text-sm font-medium mb-1.5 block">Price (NPR) *</label>
                   <Input type="number" placeholder="0" value={formData.price || 0} onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} /></div>
@@ -712,6 +874,9 @@ export default function MenuPage() {
             <div className="space-y-4">
               {formData.itemType === 'food' && (
                 <>
+                  <h3 className="text-sm font-semibold flex items-center gap-1.5 text-muted-foreground">
+                    <Tags className="w-3.5 h-3.5" /> DIETARY & ALLERGEN INFO
+                  </h3>
                   {/* Food Sub-type */}
                   <div>
                     <label className="text-sm font-medium mb-2 block">Food Sub-type</label>
@@ -720,9 +885,8 @@ export default function MenuPage() {
                         <div key={st.value}
                           className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border-2 cursor-pointer transition-all ${formData.subType === st.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
                           onClick={() => setFormData({ ...formData, subType: st.value as any, foodType: st.value === 'veg' ? 'veg' : 'non_veg' })}>
-                          <span className="text-base">{st.emoji}</span>
                           <span className="text-sm font-medium flex-1">{st.label}</span>
-                          <div className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: st.color }} />
+                          <div className={`h-3 w-3 rounded-full flex-shrink-0 ${(SUBTYPE_BADGE_STYLES[st.value] || 'bg-muted').split(' ')[0]}`} />
                         </div>
                       ))}
                     </div>
@@ -765,6 +929,9 @@ export default function MenuPage() {
 
               {formData.itemType === 'beverage' && (
                 <>
+                  <h3 className="text-sm font-semibold flex items-center gap-1.5 text-muted-foreground">
+                    <Tags className="w-3.5 h-3.5" /> ADD-ONS & SIZES
+                  </h3>
                   {/* Temperature */}
                   <div>
                     <label className="text-sm font-medium mb-2 block">Temperature</label>
@@ -777,7 +944,7 @@ export default function MenuPage() {
                               : 'border-border hover:border-primary/50'
                           }`}
                           onClick={() => setFormData({ ...formData, temperature: temp.value as any })}>
-                          <span className="text-xl">{temp.emoji}</span>
+                          <temp.icon className="w-5 h-5" />
                           <span className="text-xs font-medium">{temp.label}</span>
                         </div>
                       ))}
@@ -848,6 +1015,9 @@ export default function MenuPage() {
 
               {formData.itemType === 'item' && (
                 <>
+                  <h3 className="text-sm font-semibold flex items-center gap-1.5 text-muted-foreground">
+                    <Tags className="w-3.5 h-3.5" /> DETAILS
+                  </h3>
                   {/* Generic Item - minimal options */}
                   <div>
                     <label className="text-sm font-medium mb-1.5 block">SKU / Code (optional)</label>
@@ -862,7 +1032,10 @@ export default function MenuPage() {
               )}
 
               {/* Common toggles for all types */}
-              <div className="space-y-2.5 pt-2 border-t">
+              <h3 className="text-sm font-semibold flex items-center gap-1.5 text-muted-foreground pt-2 border-t">
+                <Sparkles className="w-3.5 h-3.5" /> VISIBILITY
+              </h3>
+              <div className="space-y-2.5">
                 {[['available','Available'], ['isPopular','Mark as Popular'], ['isNew','Mark as New']].map(([key, label]) => (
                   <div key={key} className="flex items-center justify-between">
                     <label className="text-sm font-medium">{label}</label>
@@ -993,7 +1166,7 @@ export default function MenuPage() {
                     {items.map(item => (
                       <div key={item.id} className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/40 group">
                         <div className="h-9 w-9 rounded-md bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                          {item.image ? <img src={item.image} alt={item.nameEn} className="w-full h-full object-cover rounded-md" /> : <span>🍽️</span>}
+                          {item.image ? <img src={item.image} alt={item.nameEn} className="w-full h-full object-cover rounded-md" /> : <ItemTypeIcon itemType={item.itemType} className="w-4 h-4 text-muted-foreground" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{item.nameEn}</p>
@@ -1057,6 +1230,34 @@ export default function MenuPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ═══════════════════════════════════════════════
+          Delete Confirmation (item or category)
+      ═══════════════════════════════════════════════ */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {deleteConfirm?.type === 'category' ? 'category' : 'item'} "{deleteConfirm?.name}"?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirm?.type === 'category'
+                ? 'This will also delete every item inside this category. This cannot be undone.'
+                : 'This will permanently remove the item from your menu. This cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

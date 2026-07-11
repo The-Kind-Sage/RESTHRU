@@ -2,55 +2,62 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  Activity, Server, Database, AlertTriangle, Wifi, Zap,
-  Clock, CheckCircle, XCircle, Bell, Smartphone, Mail,
-  MessageSquare, RefreshCw, ArrowUpRight, ArrowDownRight,
+  Activity, Server, Database, Bell, Smartphone, Mail,
+  MessageSquare, RefreshCw,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
-import { formatCurrency, formatNumber, formatDate, formatRelativeTime, formatPercentage } from '@/lib/format';
+import { formatNumber, formatRelativeTime } from '@/lib/format';
 import { getHealthData } from '@/lib/actions/admin';
+import { getHealthAlertChannels, updateHealthAlertChannel, type AlertChannels } from '@/lib/actions/admin-settings';
+import { ADMIN_TONE_CLASSES } from '@/lib/constants';
+import { SectionSkeleton } from '@/components/superadmin/skeletons';
+import { toast } from 'sonner';
 
 const statusColors: Record<string, string> = {
-  Operational: 'bg-primary/10 text-primary border-primary/30',
-  Degraded: 'bg-accent/10 text-accent border-accent/30',
-  Outage: 'bg-destructive/10 text-destructive border-destructive/30',
+  Operational: ADMIN_TONE_CLASSES.positive,
+  Degraded: ADMIN_TONE_CLASSES.warning,
+  Outage: ADMIN_TONE_CLASSES.negative,
 };
 
 const alertTypeColors: Record<string, string> = {
-  warning: 'bg-accent/10 text-accent border-accent/30',
-  error: 'bg-destructive/10 text-destructive border-destructive/30',
-  info: 'bg-info/10 text-info border-info/30',
-};
-
-const alertStatusColors: Record<string, string> = {
-  Pending: 'bg-accent/10 text-accent border-accent/30',
-  Acknowledged: 'bg-primary/10 text-primary border-primary/30',
+  warning: ADMIN_TONE_CLASSES.warning,
+  error: ADMIN_TONE_CLASSES.negative,
+  info: ADMIN_TONE_CLASSES.info,
 };
 
 export default function SystemHealth() {
-  const [alertChannels, setAlertChannels] = useState({
+  const [alertChannels, setAlertChannels] = useState<AlertChannels>({
     email: true,
     sms: true,
     slack: false,
   });
+  const [savingChannel, setSavingChannel] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
     getHealthData().then(setData);
+    getHealthAlertChannels().then((res) => {
+      if (res.data) setAlertChannels(res.data);
+    });
   }, []);
 
-  const toggleChannel = (channel: keyof typeof alertChannels) => {
-    setAlertChannels((prev) => ({ ...prev, [channel]: !prev[channel] }));
+  const toggleChannel = async (channel: keyof AlertChannels) => {
+    const next = !alertChannels[channel];
+    setAlertChannels((prev) => ({ ...prev, [channel]: next }));
+    setSavingChannel(channel);
+    const res = await updateHealthAlertChannel(channel, next);
+    setSavingChannel(null);
+    if (res.error) {
+      // Revert on failure — don't leave the UI claiming a save that didn't happen.
+      setAlertChannels((prev) => ({ ...prev, [channel]: !next }));
+      toast.error(res.error);
+    }
   };
 
   return (
@@ -77,7 +84,7 @@ export default function SystemHealth() {
         </CardHeader>
         <CardContent>
           {!data ? (
-            <div className="text-center py-12 text-muted-foreground text-sm">No data available</div>
+            <SectionSkeleton rows={3} />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 border border-border">
@@ -113,7 +120,7 @@ export default function SystemHealth() {
         </CardHeader>
         <CardContent>
           {!data ? (
-            <div className="text-center py-12 text-muted-foreground text-sm">No data available</div>
+            <SectionSkeleton rows={4} />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
@@ -145,8 +152,10 @@ export default function SystemHealth() {
             <p className="text-xs text-muted-foreground mt-0.5">Top 5 error-prone restaurants</p>
           </CardHeader>
           <CardContent>
-            {!data || data.errorRates.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground text-sm">No data available</div>
+            {!data ? (
+              <SectionSkeleton rows={3} />
+            ) : data.errorRates.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground text-sm">No errors reported — all restaurants healthy</div>
             ) : (
               <Table>
                 <TableHeader>
@@ -179,10 +188,7 @@ export default function SystemHealth() {
             <Bell className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-3">
-            <div
-              onClick={() => toggleChannel('email')}
-              className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors cursor-pointer"
-            >
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-lg bg-info/10 flex items-center justify-center">
                   <Mail className="h-4 w-4 text-info" />
@@ -192,18 +198,13 @@ export default function SystemHealth() {
                   <p className="text-xs text-muted-foreground">admin@resthru.com</p>
                 </div>
               </div>
-              <div className={`h-6 w-11 rounded-full transition-colors ${
-                alertChannels.email ? 'bg-primary' : 'bg-muted border border-border'
-              }`}>
-                <div className={`h-5 w-5 rounded-full bg-white shadow-sm transform transition-transform mt-0.5 ${
-                  alertChannels.email ? 'translate-x-[22px]' : 'translate-x-0.5'
-                }`} />
-              </div>
+              <Switch
+                checked={alertChannels.email}
+                disabled={savingChannel === 'email'}
+                onCheckedChange={() => toggleChannel('email')}
+              />
             </div>
-            <div
-              onClick={() => toggleChannel('sms')}
-              className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors cursor-pointer"
-            >
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-lg bg-accent/10 flex items-center justify-center">
                   <Smartphone className="h-4 w-4 text-accent" />
@@ -213,18 +214,13 @@ export default function SystemHealth() {
                   <p className="text-xs text-muted-foreground">+977 9801234567</p>
                 </div>
               </div>
-              <div className={`h-6 w-11 rounded-full transition-colors ${
-                alertChannels.sms ? 'bg-primary' : 'bg-muted border border-border'
-              }`}>
-                <div className={`h-5 w-5 rounded-full bg-white shadow-sm transform transition-transform mt-0.5 ${
-                  alertChannels.sms ? 'translate-x-[22px]' : 'translate-x-0.5'
-                }`} />
-              </div>
+              <Switch
+                checked={alertChannels.sms}
+                disabled={savingChannel === 'sms'}
+                onCheckedChange={() => toggleChannel('sms')}
+              />
             </div>
-            <div
-              onClick={() => toggleChannel('slack')}
-              className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors cursor-pointer"
-            >
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
                   <MessageSquare className="h-4 w-4 text-primary" />
@@ -234,13 +230,11 @@ export default function SystemHealth() {
                   <p className="text-xs text-muted-foreground">#alerts channel</p>
                 </div>
               </div>
-              <div className={`h-6 w-11 rounded-full transition-colors ${
-                alertChannels.slack ? 'bg-primary' : 'bg-muted border border-border'
-              }`}>
-                <div className={`h-5 w-5 rounded-full bg-white shadow-sm transform transition-transform mt-0.5 ${
-                  alertChannels.slack ? 'translate-x-[22px]' : 'translate-x-0.5'
-                }`} />
-              </div>
+              <Switch
+                checked={alertChannels.slack}
+                disabled={savingChannel === 'slack'}
+                onCheckedChange={() => toggleChannel('slack')}
+              />
             </div>
           </CardContent>
         </Card>
@@ -258,8 +252,10 @@ export default function SystemHealth() {
           </Badge>
         </CardHeader>
         <CardContent>
-          {!data || data.recentAlerts.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground text-sm">No data available</div>
+          {!data ? (
+            <SectionSkeleton rows={4} />
+          ) : data.recentAlerts.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">No recent activity</div>
           ) : (
             <div className="space-y-3">
               {data.recentAlerts.map((alert: any) => (

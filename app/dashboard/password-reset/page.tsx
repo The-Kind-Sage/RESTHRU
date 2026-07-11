@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { KeyRound, Eye, EyeOff, CheckCircle, ArrowLeft } from "lucide-react";
+import { KeyRound, Eye, EyeOff, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { changePassword, getCurrentUser } from "@/lib/actions/auth";
 
 export default function PasswordResetPage() {
@@ -52,15 +52,17 @@ export default function PasswordResetPage() {
 
   if (success) {
     return (
-      <div className="max-w-md mx-auto pt-8">
-        <Card>
-          <CardContent className="p-8 text-center space-y-4">
-            <CheckCircle className="h-12 w-12 text-success mx-auto" />
-            <div>
-              <h2 className="text-xl font-bold">Password Updated</h2>
-              <p className="text-sm text-muted-foreground mt-1">Your password has been changed successfully.</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+        <Card className="w-full max-w-md border-0 shadow-lg">
+          <CardHeader className="text-center space-y-2">
+            <div className="mx-auto h-14 w-14 rounded-xl bg-success flex items-center justify-center mb-2">
+              <CheckCircle className="h-7 w-7 text-white" />
             </div>
-            <Button onClick={() => router.push("/dashboard")}>Back to Dashboard</Button>
+            <CardTitle className="text-2xl font-bold">Password Updated</CardTitle>
+            <CardDescription>Your password has been changed successfully</CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Button onClick={() => router.push("/dashboard")} className="w-full">Back to Dashboard</Button>
           </CardContent>
         </Card>
       </div>
@@ -68,22 +70,14 @@ export default function PasswordResetPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto pt-4 space-y-6">
-      <div className="flex items-center gap-2">
-        <button onClick={() => router.back()} className="text-muted-foreground hover:text-foreground p-1">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold">Change Password</h1>
-          <p className="text-sm text-muted-foreground">Update your restaurant account password</p>
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <KeyRound className="h-4 w-4" /> Password Settings
-          </CardTitle>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+      <Card className="w-full max-w-md border-0 shadow-lg">
+        <CardHeader className="text-center space-y-2">
+          <div className="mx-auto h-14 w-14 rounded-xl bg-primary flex items-center justify-center mb-2">
+            <KeyRound className="h-7 w-7 text-primary-foreground" />
+          </div>
+          <CardTitle className="text-2xl font-bold">Change Password</CardTitle>
+          <CardDescription>Update your restaurant account password</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -106,6 +100,9 @@ export default function PasswordResetPage() {
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" disabled={loading} className="w-full">{loading ? "Updating..." : "Update Password"}</Button>
+            <div className="text-center text-sm">
+              <button type="button" onClick={() => router.push("/dashboard")} className="text-primary hover:underline">Back to dashboard</button>
+            </div>
           </form>
         </CardContent>
       </Card>

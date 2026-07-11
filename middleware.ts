@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { DASHBOARD_AUTH_ROUTES } from "@/lib/constants";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET || "fallback-secret");
 
 const publicSuperadminPaths = ["/superadmin/login"];
-const publicDashboardPaths = ["/dashboard/login", "/dashboard/forgot-password", "/dashboard/password-reset"];
+const publicDashboardPaths: readonly string[] = DASHBOARD_AUTH_ROUTES;
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

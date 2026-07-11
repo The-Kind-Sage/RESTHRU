@@ -11,8 +11,14 @@ import {
   Menu, Command, LogOut, ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { logout, getCurrentUser } from '@/lib/actions/auth';
+import { getUnreadNotificationCount } from '@/lib/actions/admin';
+import { AdminBreadcrumbs } from '@/components/superadmin/breadcrumbs';
 
 // ── Lazy-load the command palette — it's heavy (all 12 nav icon refs +
 //    keyboard handler + overlay) and only needed when Cmd+K is pressed.
@@ -71,11 +77,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen]   = useState(true);
   const [commandOpen, setCommandOpen]   = useState(false);
   const [adminUser, setAdminUser] = useState<{ firstName: string; lastName: string; email: string } | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     getCurrentUser().then((user) => {
       if (user) setAdminUser(user);
     });
+    getUnreadNotificationCount().then(setUnreadCount).catch(() => {});
   }, []);
 
   const initials    = adminUser ? `${adminUser.firstName.charAt(0)}${adminUser.lastName.charAt(0)}` : 'SA';
@@ -191,22 +199,59 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground hover:bg-muted h-9 w-9"
-            >
-              <Bell className="h-4 w-4" />
-            </Button>
+            <Link href="/superadmin/support" className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted h-9 w-9"
+                title={unreadCount > 0 ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}` : 'No unread notifications'}
+              >
+                <Bell className="h-4 w-4" />
+              </Button>
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 min-w-[16px] h-[16px] px-0.5 rounded-full bg-destructive text-destructive-foreground text-[9px] font-semibold flex items-center justify-center pointer-events-none">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Link>
 
-            <div className="flex items-center gap-2 pl-3 border-l border-border">
-              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-xs">
-                {initials}
-              </div>
-              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground hidden md:block" />
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 pl-3 border-l border-border cursor-pointer">
+                  <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-xs">
+                    {initials}
+                  </div>
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground hidden md:block" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-2 py-1.5">
+                  <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{adminUser?.email || 'admin@resthru.com'}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/superadmin/settings" className="cursor-pointer">
+                    <Settings className="h-4 w-4 mr-2" /> Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/superadmin/support" className="cursor-pointer">
+                    <Headphones className="h-4 w-4 mr-2" /> Support Center
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
+                  <LogOut className="h-4 w-4 mr-2" /> Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
+
+        <div className="h-10 border-b border-border/60 bg-background flex items-center px-4 lg:px-6 flex-shrink-0">
+          <AdminBreadcrumbs />
+        </div>
 
         <main className="flex-1 overflow-auto bg-background">
           <div className="p-4 lg:p-8">{children}</div>

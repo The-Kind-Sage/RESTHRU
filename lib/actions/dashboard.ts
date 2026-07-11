@@ -33,6 +33,7 @@ export type RecentOrder = {
 export type ChartPoint = { date: string; revenue: number };
 export type TopItem    = { name: string; orders: number; revenue: number; percentage: number; isVeg: boolean };
 export type Activity   = { id: string; type: "order" | "payment" | "cancelled"; title: string; time: Date };
+export type TableOverviewItem = { id: string; tableNumber: number; status: string };
 
 // ─── 1. Dashboard Stats ────────────────────────────────────────────────────
 // Cached for 60 s — avoids recalculating aggregate counts on every navigation.
@@ -204,6 +205,20 @@ export const getTopSellingItems = unstable_cache(
   },
   ["top-items"],
   { revalidate: 120 }
+);
+
+// ─── 4b. Table Overview — real per-table numbers + status for the Home grid ─
+// The Home page's "Table Overview" grid used to render N generic squares
+// (occupiedTables red, rest green) with no link to which physical table was
+// occupied. This returns the actual tables so the grid can show real numbers.
+export const getTableOverview = cache(
+  async (restaurantId: string): Promise<TableOverviewItem[]> => {
+    return prisma.restaurantTable.findMany({
+      where: { restaurantId },
+      orderBy: { tableNumber: "asc" },
+      select: { id: true, tableNumber: true, status: true },
+    });
+  }
 );
 
 // ─── 5. Recent Activity — single query, interleaved in DB ──────────────────

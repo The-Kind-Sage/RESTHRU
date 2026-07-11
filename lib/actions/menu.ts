@@ -213,6 +213,58 @@ export async function toggleMenuItemAvailable(id: string, isAvailable: boolean) 
   }
 }
 
+// ─── Bulk actions — used by the Menu page's multi-select bulk toolbar ──────
+// Availability: flip isAvailable for every selected item in one round-trip.
+export async function bulkUpdateItemsAvailable(ids: string[], isAvailable: boolean) {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+  if (ids.length === 0) return { error: "No items selected" };
+
+  try {
+    await prisma.menuItem.updateMany({ where: { id: { in: ids } }, data: { isAvailable } });
+    return { success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to update availability" };
+  }
+}
+
+// Price: either set every selected item to a fixed price, or adjust each by
+// a percentage of its own current price (a seasonal 86 / price-change pass).
+// Percent mode can't be expressed as a single `updateMany` (each row needs
+// its own current price read), so it runs as a batched transaction instead.
+export async function bulkAdjustItemPrices(
+  ids: string[],
+  mode: "set" | "percent",
+  value: number
+) {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+  if (ids.length === 0) return { error: "No items selected" };
+
+  try {
+    if (mode === "set") {
+      if (value < 0) return { error: "Price cannot be negative" };
+      await prisma.menuItem.updateMany({ where: { id: { in: ids } }, data: { price: value } });
+    } else {
+      const items = await prisma.menuItem.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, price: true },
+      });
+      await prisma.$transaction(
+        items.map((it) =>
+          prisma.menuItem.update({
+            where: { id: it.id },
+            data: { price: Math.max(0, Math.round(it.price * (1 + value / 100) * 100) / 100) },
+          })
+        )
+      );
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to adjust prices" };
+  }
+}
+
 export async function getCategories(restaurantId: string) {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };

@@ -4,6 +4,21 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import QRCode from "qrcode";
 
+/** Shared QR-code payload builder used by both the authenticated checkout flow and the public QR-ordering page. */
+async function buildPaymentQRDataUrl(payload: {
+  merchant: string;
+  method: string;
+  amount: number;
+  bill: string;
+  ref: string;
+}) {
+  return QRCode.toDataURL(JSON.stringify(payload), {
+    width: 300,
+    margin: 2,
+    color: { dark: "#000", light: "#fff" },
+  });
+}
+
 export async function generatePaymentQR(data: {
   billId: string;
   method: string;
@@ -20,7 +35,7 @@ export async function generatePaymentQR(data: {
     if (!bill) return { error: "Bill not found" };
 
     const ref = `PAY-${bill.billNumber}-${Date.now()}`;
-    const payload = JSON.stringify({
+    const qrDataUrl = await buildPaymentQRDataUrl({
       merchant: bill.restaurant.name,
       method: data.method,
       amount: data.amount,
@@ -28,10 +43,52 @@ export async function generatePaymentQR(data: {
       ref,
     });
 
-    const qrDataUrl = await QRCode.toDataURL(payload, {
-      width: 300,
-      margin: 2,
-      color: { dark: "#000", light: "#fff" },
+    return { data: { qrDataUrl, ref } };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to generate payment QR" };
+  }
+}
+
+/**
+ * Public (unauthenticated) counterpart of `generatePaymentQR`, for the customer QR
+ * table-ordering page's "Request Bill" dialog. There's no `Bill` row yet at that
+ * point (a Bill is only created when reception settles at `/reception/checkout`), so
+ * this validates restaurantId/tableId directly instead of a billId, and encodes the
+ * table's current order total rather than a bill number. Reuses the same
+ * `buildPaymentQRDataUrl` QR-generation helper as the real, staff-side flow.
+ */
+export async function generatePublicPaymentQR(data: {
+  restaurantId: string;
+  tableId: string;
+  method: string;
+  amount: number;
+}) {
+  try {
+    if (!data.restaurantId || !data.tableId) return { error: "Missing restaurant or table" };
+    if (!["ESEWA", "KHALTI", "FONEPAY"].includes(data.method)) {
+      return { error: "Unsupported payment method for QR" };
+    }
+    if (!(data.amount > 0)) return { error: "Invalid amount" };
+
+    const restaurant = await prisma.restaurant.findFirst({
+      where: { id: data.restaurantId, isActive: true },
+      select: { name: true },
+    });
+    if (!restaurant) return { error: "Restaurant not found" };
+
+    const table = await prisma.restaurantTable.findFirst({
+      where: { id: data.tableId, restaurantId: data.restaurantId },
+      select: { tableNumber: true },
+    });
+    if (!table) return { error: "Table not found for this restaurant" };
+
+    const ref = `TBL-${table.tableNumber}-${Date.now()}`;
+    const qrDataUrl = await buildPaymentQRDataUrl({
+      merchant: restaurant.name,
+      method: data.method,
+      amount: data.amount,
+      bill: `Table ${table.tableNumber}`,
+      ref,
     });
 
     return { data: { qrDataUrl, ref } };

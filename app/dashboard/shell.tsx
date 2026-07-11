@@ -8,8 +8,14 @@ import IdleTimeoutGuard from '@/components/dashboard/idle-timeout-guard';
 import OfflineBanner from '@/components/dashboard/offline-banner';
 import { useUIStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
-import { cn } from '@/lib/utils';
 import { startSync, stopSync } from '@/lib/sync';
+import { DASHBOARD_AUTH_ROUTES } from '@/lib/constants';
+
+// Sidebar collapse widths — kept as named constants (rather than Tailwind arbitrary values like
+// `ml-[68px]`) so the shell and any future consumer share one definition instead of a magic
+// number sprinkled through class strings.
+const SIDEBAR_COLLAPSED_WIDTH = 68;
+const SIDEBAR_EXPANDED_WIDTH = 248;
 
 export default function DashboardShell({
   children,
@@ -35,7 +41,7 @@ export default function DashboardShell({
     }
   }, []);
 
-  if (pathname === '/dashboard/login' || pathname === '/dashboard/forgot-password' || pathname === '/dashboard/password-reset') {
+  if (DASHBOARD_AUTH_ROUTES.includes(pathname as typeof DASHBOARD_AUTH_ROUTES[number])) {
     return <>{children}</>;
   }
 
@@ -45,10 +51,8 @@ export default function DashboardShell({
       <OfflineBanner />
       <Sidebar />
       <div
-        className={cn(
-          'flex-1 flex flex-col transition-all duration-300',
-          sidebarCollapsed ? 'ml-[68px]' : 'ml-[248px]'
-        )}
+        className="flex-1 flex flex-col transition-all duration-300"
+        style={{ marginLeft: sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH }}
       >
         <TopHeader />
         <main className="flex-1 overflow-auto pt-20">

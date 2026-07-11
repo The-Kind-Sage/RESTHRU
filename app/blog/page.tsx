@@ -1,8 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { Calendar, ArrowRight, Clock } from 'lucide-react';
+import { Calendar, Clock } from 'lucide-react';
 import Navbar from '@/components/shared/navbar';
 import Footer from '@/components/shared/footer';
 
@@ -113,14 +112,8 @@ export default function BlogPage() {
                       {post.readTime}
                     </span>
                   </div>
-                  <h2 className="text-lg font-semibold group-hover:text-primary transition-colors">{post.title}</h2>
+                  <h2 className="text-lg font-semibold">{post.title}</h2>
                   <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{post.excerpt}</p>
-                  <Link
-                    href={`/blog/${post.slug}`}
-                    className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-hover transition-colors"
-                  >
-                    Read more <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
                 </div>
               </motion.article>
             ))}
@@ -146,24 +139,12 @@ export default function BlogPage() {
             transition={{ delay: 0.1 }}
             className="mt-2 text-muted-foreground"
           >
-            Get the latest articles and product updates delivered to your inbox.
+            Get the latest articles and product updates by emailing us at{' '}
+            <a href="mailto:hello@resthru.com" className="font-semibold text-primary hover:underline">
+              hello@resthru.com
+            </a>
+            .
           </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="mt-6 flex max-w-md mx-auto gap-3"
-          >
-            <input
-              type="email"
-              placeholder="you@example.com"
-              className="flex-1 h-11 rounded-full border border-border/70 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-            />
-            <button className="h-11 rounded-full bg-primary px-6 text-sm font-semibold text-white hover:bg-primary-hover transition-colors">
-              Subscribe
-            </button>
-          </motion.div>
         </div>
       </section>
 

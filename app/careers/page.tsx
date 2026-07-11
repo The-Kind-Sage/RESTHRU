@@ -128,7 +128,7 @@ export default function CareersPage() {
                     href="/contact"
                     className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover transition-colors flex-shrink-0"
                   >
-                    Apply <ArrowRight className="h-4 w-4" />
+                    Contact us to apply <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
               </motion.div>

@@ -60,9 +60,9 @@ const faqItems = [
   },
   {
     id: '3',
-    question: 'Do you support thermal printers?',
+    question: 'Can I switch plans later?',
     answer:
-      'Yes, we support ESC/POS thermal printers out of the box. Perfect for kitchen receipts and order tickets. Available on Basic and Pro plans.',
+      'Yes, you can upgrade or downgrade your plan anytime from your account settings. Upgrades take effect immediately; downgrades apply at the start of your next billing cycle.',
   },
   {
     id: '4',
@@ -318,7 +318,7 @@ export default function PricingPage() {
               Start Free Trial
             </a>
             <a
-              href="#contact"
+              href="/contact"
               className="inline-flex items-center justify-center px-8 py-3 rounded-lg border border-input bg-background font-medium hover:bg-accent transition-colors"
             >
               Contact Sales

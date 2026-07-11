@@ -128,6 +128,29 @@ export async function updateCoverPhoto(restaurantId: string, coverUrl: string) {
   }
 }
 
+export async function cancelSubscription(restaurantId: string) {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  try {
+    const subscription = await prisma.subscription.findFirst({
+      where: { restaurantId, status: "ACTIVE" },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!subscription) return { error: "No active subscription found" };
+
+    await prisma.subscription.update({
+      where: { id: subscription.id },
+      data: { status: "CANCELLED", endDate: new Date() },
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to cancel subscription" };
+  }
+}
+
 export async function setUserPassword(userId: string, newPassword: string) {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };

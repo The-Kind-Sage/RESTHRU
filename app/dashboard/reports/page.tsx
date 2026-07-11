@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -36,25 +36,103 @@ import {
   TrendingDown,
   Star,
   ChevronDown,
+  Loader2,
 } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/lib/format';
+import { useAuthStore } from '@/store/auth-store';
+import {
+  getSalesReport,
+  getItemReport,
+  getStaffReport,
+  getTaxReport,
+} from '@/lib/actions/reports';
+import { toast } from 'sonner';
 
-// Chart and table data — will be populated from real DB queries
-const revenueData: { date: string; revenue: number; lastRevenue: number }[] = [];
-const hourlyData: { hour: string; orders: number; revenue: number }[] = [];
-const paymentData: { name: string; value: number; color: string }[] = [];
-const topItems: { rank: number; name: string; category: string; orders: number; revenue: number; trend: string }[] = [];
-const leastItems: { rank: number; name: string; category: string; orders: number; revenue: number }[] = [];
-const categoryData: { name: string; value: number }[] = [];
-const categoryColors: string[] = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-const staffData: { name: string; ordersHandled: number; revenue: number; avgOrderValue: number; rating: number }[] = [];
-const monthlyVATData: { month: string; taxable: number; vat: number }[] = [];
+const categoryColors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6'];
 
 export default function ReportsPage() {
+  const { restaurant } = useAuthStore();
+  const restaurantId = restaurant?.id;
+
   const [dateRange, setDateRange] = useState('month');
   const [nepaliDate, setNepaliDate] = useState(false);
   const [revenueView, setRevenueView] = useState('daily');
   const [showComparison, setShowComparison] = useState(false);
+  const [activeTab, setActiveTab] = useState('sales');
+  const [loading, setLoading] = useState(true);
+
+  // Data state
+  const [salesData, setSalesData] = useState<any>(null);
+  const [itemData, setItemData] = useState<any>(null);
+  const [staffData, setStaffData] = useState<any>(null);
+  const [taxData, setTaxData] = useState<any>(null);
+
+  const fetchData = useCallback(async () => {
+    if (!restaurantId) return;
+    setLoading(true);
+    try {
+      const [sales, items, staff, tax] = await Promise.all([
+        getSalesReport(restaurantId, dateRange),
+        getItemReport(restaurantId, dateRange),
+        getStaffReport(restaurantId, dateRange),
+        getTaxReport(restaurantId, dateRange),
+      ]);
+
+      if (sales.data) setSalesData(sales.data);
+      if (items.data) setItemData(items.data);
+      if (staff.data) setStaffData(staff.data);
+      if (tax.data) setTaxData(tax.data);
+    } catch (err) {
+      toast.error('Failed to load reports');
+    } finally {
+      setLoading(false);
+    }
+  }, [restaurantId, dateRange]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const sd = salesData || {
+    totalRevenue: 0, totalOrders: 0, totalDiscount: 0, totalTax: 0,
+    averageOrderValue: 0, paymentMethodBreakdown: [], orderTypeBreakdown: [],
+    topSellingItems: [], hourlyData: [], revenueData: [],
+  };
+
+  const id = itemData || { topItems: [], leastItems: [], categoryData: [] };
+  const std = staffData || [];
+  const td = taxData || { totalTaxable: 0, totalVAT: 0, netRevenue: 0, monthlyVATData: [] };
+
+  const handleExport = () => {
+    const csvRows: string[] = [];
+    csvRows.push('Report,Value');
+    csvRows.push(`Total Revenue,${sd.totalRevenue}`);
+    csvRows.push(`Total Orders,${sd.totalOrders}`);
+    csvRows.push(`Avg Order Value,${sd.averageOrderValue}`);
+    csvRows.push(`Total Tax,${sd.totalTax}`);
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `report-${dateRange}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Report exported');
+  };
+
+  const handleDownloadIRD = () => {
+    const csvRows: string[] = [];
+    csvRows.push('Month,Taxable Amount,VAT');
+    for (const row of td.monthlyVATData) {
+      csvRows.push(`${row.month},${row.taxable},${row.vat}`);
+    }
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `ird-report-${dateRange}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success('IRD report downloaded');
+  };
+
+  const topPayment = sd.paymentMethodBreakdown?.[0]?.name || '\u2014';
 
   return (
     <div className="space-y-6">
@@ -67,13 +145,11 @@ export default function ReportsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <div className="relative">
-            <Button variant="outline" size="sm" className="gap-2">
-              <Download className="h-4 w-4" />
-              Export
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
+            <Download className="h-4 w-4" />
+            Export
+            <ChevronDown className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -101,12 +177,13 @@ export default function ReportsPage() {
           >
             This Month
           </Button>
-          <Button variant="outline" size="sm">
-            Custom
+          <Button variant="outline" size="sm" onClick={() => setDateRange('year')}>
+            This Year
           </Button>
         </div>
 
         <div className="flex items-center gap-3">
+          {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
           <Label htmlFor="nepali-date" className="text-sm">
             Nepali Date
           </Label>
@@ -119,7 +196,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="sales" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="sales">Sales</TabsTrigger>
           <TabsTrigger value="items">Items</TabsTrigger>
@@ -136,8 +213,10 @@ export default function ReportsPage() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">NPR 0</div>
-                <p className="text-xs text-muted-foreground mt-1">No data yet</p>
+                <div className="text-2xl font-bold">{formatCurrency(sd.totalRevenue)}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {sd.totalOrders > 0 ? `${sd.totalOrders} orders` : 'No data yet'}
+                </p>
               </CardContent>
             </Card>
             <Card className="bg-gradient-to-br from-primary-light to-emerald-100">
@@ -145,8 +224,10 @@ export default function ReportsPage() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">Total Orders</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">0</div>
-                <p className="text-xs text-muted-foreground mt-1">No data yet</p>
+                <div className="text-2xl font-bold">{sd.totalOrders}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {sd.totalOrders > 0 ? `${formatCurrency(sd.totalRevenue / sd.totalOrders)} avg` : 'No data yet'}
+                </p>
               </CardContent>
             </Card>
             <Card className="bg-gradient-to-br from-accent-light to-accent-light">
@@ -154,8 +235,10 @@ export default function ReportsPage() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">Avg Order Value</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">NPR 0</div>
-                <p className="text-xs text-muted-foreground mt-1">No data yet</p>
+                <div className="text-2xl font-bold">{formatCurrency(sd.averageOrderValue)}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Discount: {formatCurrency(sd.totalDiscount)}
+                </p>
               </CardContent>
             </Card>
             <Card className="bg-gradient-to-br from-destructive/10 to-destructive/10">
@@ -163,8 +246,10 @@ export default function ReportsPage() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">Top Payment</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">—</div>
-                <p className="text-xs text-muted-foreground mt-1">No data yet</p>
+                <div className="text-2xl font-bold">{topPayment}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Tax: {formatCurrency(sd.totalTax)}
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -213,36 +298,42 @@ export default function ReportsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={revenueData}>
-                  <defs>
-                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="#4f46e5"
-                    fillOpacity={1}
-                    fill="url(#colorRevenue)"
-                  />
-                  {showComparison && (
-                    <Line
+              {sd.revenueData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={sd.revenueData}>
+                    <defs>
+                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Area
                       type="monotone"
-                      dataKey="lastRevenue"
-                      stroke="#9ca3af"
-                      strokeDasharray="5 5"
-                      dot={false}
+                      dataKey="revenue"
+                      stroke="#4f46e5"
+                      fillOpacity={1}
+                      fill="url(#colorRevenue)"
                     />
-                  )}
-                </AreaChart>
-              </ResponsiveContainer>
+                    {showComparison && (
+                      <Line
+                        type="monotone"
+                        dataKey="lastRevenue"
+                        stroke="#9ca3af"
+                        strokeDasharray="5 5"
+                        dot={false}
+                      />
+                    )}
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-muted-foreground text-sm">
+                  No revenue data for this period
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -253,22 +344,28 @@ export default function ReportsPage() {
               <CardDescription>Busiest hours throughout the day</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={hourlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="hour" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="revenue" radius={[8, 8, 0, 0]}>
-                    {hourlyData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={entry.revenue > 25000 ? '#f59e0b' : '#4f46e5'}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {sd.hourlyData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={sd.hourlyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="hour" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="revenue" radius={[8, 8, 0, 0]}>
+                      {sd.hourlyData.map((entry: any, index: number) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.revenue > 25000 ? '#f59e0b' : '#4f46e5'}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-muted-foreground text-sm">
+                  No hourly data for this period
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -279,40 +376,46 @@ export default function ReportsPage() {
               <CardDescription>Distribution of payment methods</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col gap-8 lg:flex-row lg:items-center">
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={paymentData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={(entry) => `${entry.name} ${entry.value}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {paymentData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="space-y-2">
-                  {paymentData.map((method) => (
-                    <div key={method.name} className="flex items-center gap-3">
-                      <div
-                        className="h-3 w-3 rounded-full"
-                        style={{ backgroundColor: method.color }}
-                      />
-                      <span className="text-sm">
-                        {method.name}: {method.value}%
-                      </span>
-                    </div>
-                  ))}
+              {sd.paymentMethodBreakdown.length > 0 ? (
+                <div className="flex flex-col gap-8 lg:flex-row lg:items-center">
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie
+                        data={sd.paymentMethodBreakdown}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={(entry: any) => `${entry.name} ${entry.value}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {sd.paymentMethodBreakdown.map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="space-y-2">
+                    {sd.paymentMethodBreakdown.map((method: any) => (
+                      <div key={method.name} className="flex items-center gap-3">
+                        <div
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: method.color }}
+                        />
+                        <span className="text-sm">
+                          {method.name}: {method.value}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center justify-center h-[250px] text-muted-foreground text-sm">
+                  No payment data for this period
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -323,94 +426,100 @@ export default function ReportsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Top Selling Items</CardTitle>
-              <CardDescription>Best performing menu items this month</CardDescription>
+              <CardDescription>Best performing menu items this period</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="border-b">
-                    <tr className="text-muted-foreground">
-                      <th className="text-left py-3 px-4 font-medium">Rank</th>
-                      <th className="text-left py-3 px-4 font-medium">Item</th>
-                      <th className="text-left py-3 px-4 font-medium">Category</th>
-                      <th className="text-right py-3 px-4 font-medium">Orders</th>
-                      <th className="text-right py-3 px-4 font-medium">Revenue</th>
-                      <th className="text-center py-3 px-4 font-medium">Trend</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {topItems.map((item) => (
-                      <tr key={item.rank} className="border-b hover:bg-muted/50">
-                        <td className="py-3 px-4">{item.rank}</td>
-                        <td className="py-3 px-4 font-medium">{item.name}</td>
-                        <td className="py-3 px-4 text-muted-foreground">
-                          {item.category}
-                        </td>
-                        <td className="py-3 px-4 text-right">{item.orders}</td>
-                        <td className="py-3 px-4 text-right">
-                          {formatCurrency(item.revenue)}
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          {item.trend === 'up' ? (
-                            <TrendingUp className="h-4 w-4 inline text-success" />
-                          ) : (
-                            <TrendingDown className="h-4 w-4 inline text-destructive" />
-                          )}
-                        </td>
+              {id.topItems.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b">
+                      <tr className="text-muted-foreground">
+                        <th className="text-left py-3 px-4 font-medium">Rank</th>
+                        <th className="text-left py-3 px-4 font-medium">Item</th>
+                        <th className="text-left py-3 px-4 font-medium">Category</th>
+                        <th className="text-right py-3 px-4 font-medium">Orders</th>
+                        <th className="text-right py-3 px-4 font-medium">Revenue</th>
+                        <th className="text-center py-3 px-4 font-medium">Trend</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {id.topItems.map((item: any) => (
+                        <tr key={item.rank} className="border-b hover:bg-muted/50">
+                          <td className="py-3 px-4">{item.rank}</td>
+                          <td className="py-3 px-4 font-medium">{item.name}</td>
+                          <td className="py-3 px-4 text-muted-foreground">
+                            {item.category}
+                          </td>
+                          <td className="py-3 px-4 text-right">{item.orders}</td>
+                          <td className="py-3 px-4 text-right">
+                            {formatCurrency(item.revenue)}
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            {item.trend === 'up' ? (
+                              <TrendingUp className="h-4 w-4 inline text-success" />
+                            ) : (
+                              <TrendingDown className="h-4 w-4 inline text-destructive" />
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="py-8 text-center text-muted-foreground text-sm">No item data for this period</div>
+              )}
             </CardContent>
           </Card>
 
           {/* Least Selling Items */}
-          <Card className="border-accent/20 bg-accent-light">
-            <CardHeader>
-              <div className="flex items-start gap-3">
-                <div className="mt-1 h-5 w-5 rounded-full bg-accent flex-shrink-0" />
-                <div>
-                  <CardTitle className="text-base">
-                    Consider removing or promoting these items
-                  </CardTitle>
-                  <CardDescription>
-                    Low-performing items with minimal orders
-                  </CardDescription>
+          {id.leastItems.length > 0 && (
+            <Card className="border-accent/20 bg-accent-light">
+              <CardHeader>
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 h-5 w-5 rounded-full bg-accent flex-shrink-0" />
+                  <div>
+                    <CardTitle className="text-base">
+                      Consider removing or promoting these items
+                    </CardTitle>
+                    <CardDescription>
+                      Low-performing items with minimal orders
+                    </CardDescription>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="border-b">
-                    <tr className="text-muted-foreground">
-                      <th className="text-left py-3 px-4 font-medium">Rank</th>
-                      <th className="text-left py-3 px-4 font-medium">Item</th>
-                      <th className="text-left py-3 px-4 font-medium">Category</th>
-                      <th className="text-right py-3 px-4 font-medium">Orders</th>
-                      <th className="text-right py-3 px-4 font-medium">Revenue</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {leastItems.map((item) => (
-                      <tr key={item.rank} className="border-b">
-                        <td className="py-3 px-4">{item.rank}</td>
-                        <td className="py-3 px-4 font-medium">{item.name}</td>
-                        <td className="py-3 px-4 text-muted-foreground">
-                          {item.category}
-                        </td>
-                        <td className="py-3 px-4 text-right">{item.orders}</td>
-                        <td className="py-3 px-4 text-right">
-                          {formatCurrency(item.revenue)}
-                        </td>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b">
+                      <tr className="text-muted-foreground">
+                        <th className="text-left py-3 px-4 font-medium">Rank</th>
+                        <th className="text-left py-3 px-4 font-medium">Item</th>
+                        <th className="text-left py-3 px-4 font-medium">Category</th>
+                        <th className="text-right py-3 px-4 font-medium">Orders</th>
+                        <th className="text-right py-3 px-4 font-medium">Revenue</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+                    </thead>
+                    <tbody>
+                      {id.leastItems.map((item: any) => (
+                        <tr key={item.rank} className="border-b">
+                          <td className="py-3 px-4">{item.rank}</td>
+                          <td className="py-3 px-4 font-medium">{item.name}</td>
+                          <td className="py-3 px-4 text-muted-foreground">
+                            {item.category}
+                          </td>
+                          <td className="py-3 px-4 text-right">{item.orders}</td>
+                          <td className="py-3 px-4 text-right">
+                            {formatCurrency(item.revenue)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Category Performance */}
           <Card>
@@ -419,26 +528,32 @@ export default function ReportsPage() {
               <CardDescription>Revenue distribution by category</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.name} ${entry.value}%`}
-                    innerRadius={60}
-                    outerRadius={100}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={categoryColors[index]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              {id.categoryData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={id.categoryData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={(entry: any) => `${entry.name} ${entry.value}%`}
+                      innerRadius={60}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {id.categoryData.map((_: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={categoryColors[index % categoryColors.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-muted-foreground text-sm">
+                  No category data for this period
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -451,37 +566,41 @@ export default function ReportsPage() {
               <CardDescription>Individual staff member metrics</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="border-b">
-                    <tr className="text-muted-foreground">
-                      <th className="text-left py-3 px-4 font-medium">Name</th>
-                      <th className="text-right py-3 px-4 font-medium">Orders Handled</th>
-                      <th className="text-right py-3 px-4 font-medium">Revenue Generated</th>
-                      <th className="text-right py-3 px-4 font-medium">Avg Order Value</th>
-                      <th className="text-center py-3 px-4 font-medium">Rating</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {staffData.map((staff) => (
-                      <tr key={staff.name} className="border-b hover:bg-muted/50">
-                        <td className="py-3 px-4 font-medium">{staff.name}</td>
-                        <td className="py-3 px-4 text-right">{staff.ordersHandled}</td>
-                        <td className="py-3 px-4 text-right">
-                          {formatCurrency(staff.revenue)}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          {formatCurrency(staff.avgOrderValue)}
-                        </td>
-                        <td className="py-3 px-4 text-center flex items-center justify-center gap-1">
-                          <span className="font-medium">{staff.rating}</span>
-                          <Star className="h-4 w-4 fill-accent text-accent" />
-                        </td>
+              {std.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b">
+                      <tr className="text-muted-foreground">
+                        <th className="text-left py-3 px-4 font-medium">Name</th>
+                        <th className="text-right py-3 px-4 font-medium">Orders Handled</th>
+                        <th className="text-right py-3 px-4 font-medium">Revenue Generated</th>
+                        <th className="text-right py-3 px-4 font-medium">Avg Order Value</th>
+                        <th className="text-center py-3 px-4 font-medium">Rating</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {std.map((staff: any) => (
+                        <tr key={staff.name} className="border-b hover:bg-muted/50">
+                          <td className="py-3 px-4 font-medium">{staff.name}</td>
+                          <td className="py-3 px-4 text-right">{staff.ordersHandled}</td>
+                          <td className="py-3 px-4 text-right">
+                            {formatCurrency(staff.revenue)}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            {formatCurrency(staff.avgOrderValue)}
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <span className="font-medium">{staff.rating}</span>
+                            <Star className="h-4 w-4 fill-accent text-accent inline ml-1" />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="py-8 text-center text-muted-foreground text-sm">No staff data for this period</div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -498,49 +617,56 @@ export default function ReportsPage() {
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="rounded-lg border p-4">
                   <p className="text-sm text-muted-foreground">Total Taxable Amount</p>
-                  <p className="mt-2 text-2xl font-bold">NPR 0</p>
+                  <p className="mt-2 text-2xl font-bold">{formatCurrency(td.totalTaxable)}</p>
                 </div>
                 <div className="rounded-lg border p-4">
                   <p className="text-sm text-muted-foreground">VAT Collected (13%)</p>
-                  <p className="mt-2 text-2xl font-bold text-primary">NPR 0</p>
+                  <p className="mt-2 text-2xl font-bold text-primary">{formatCurrency(td.totalVAT)}</p>
                 </div>
                 <div className="rounded-lg border p-4">
                   <p className="text-sm text-muted-foreground">Net Revenue</p>
-                  <p className="mt-2 text-2xl font-bold">NPR 0</p>
+                  <p className="mt-2 text-2xl font-bold">{formatCurrency(td.netRevenue)}</p>
                 </div>
               </div>
 
-              <Button className="w-full md:w-auto">Download IRD Format Report</Button>
+              <Button className="w-full md:w-auto" onClick={handleDownloadIRD} disabled={td.monthlyVATData.length === 0}>
+                <Download className="h-4 w-4 mr-2" />
+                Download IRD Format Report
+              </Button>
 
               <Separator />
 
               {/* Monthly VAT Summary */}
               <div>
                 <h3 className="font-semibold mb-4">Monthly VAT Summary</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="border-b">
-                      <tr className="text-muted-foreground">
-                        <th className="text-left py-3 px-4 font-medium">Month</th>
-                        <th className="text-right py-3 px-4 font-medium">Taxable Amount</th>
-                        <th className="text-right py-3 px-4 font-medium">VAT (13%)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {monthlyVATData.map((row) => (
-                        <tr key={row.month} className="border-b hover:bg-muted/50">
-                          <td className="py-3 px-4 font-medium">{row.month}</td>
-                          <td className="py-3 px-4 text-right">
-                            {formatCurrency(row.taxable)}
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            {formatCurrency(row.vat)}
-                          </td>
+                {td.monthlyVATData.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="border-b">
+                        <tr className="text-muted-foreground">
+                          <th className="text-left py-3 px-4 font-medium">Month</th>
+                          <th className="text-right py-3 px-4 font-medium">Taxable Amount</th>
+                          <th className="text-right py-3 px-4 font-medium">VAT (13%)</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {td.monthlyVATData.map((row: any) => (
+                          <tr key={row.month} className="border-b hover:bg-muted/50">
+                            <td className="py-3 px-4 font-medium">{row.month}</td>
+                            <td className="py-3 px-4 text-right">
+                              {formatCurrency(row.taxable)}
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              {formatCurrency(row.vat)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="py-4 text-center text-muted-foreground text-sm">No tax data for this period</div>
+                )}
               </div>
             </CardContent>
           </Card>

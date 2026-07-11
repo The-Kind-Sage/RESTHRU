@@ -3,15 +3,25 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, ArrowRight } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Mail, MapPin, Send, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 import Navbar from '@/components/shared/navbar';
 import Footer from '@/components/shared/footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { contactFormSchema, submitContactMessage, type ContactFormData } from '@/lib/actions/contact';
 
 const contactInfo = [
   {
@@ -19,12 +29,6 @@ const contactInfo = [
     title: 'Email',
     value: 'hello@resthru.com',
     description: 'We reply within 24 hours',
-  },
-  {
-    icon: Phone,
-    title: 'Phone',
-    value: '+977-1-4XXXXXX',
-    description: 'Sun-Fri, 9AM - 6PM NPT',
   },
   {
     icon: MapPin,
@@ -51,20 +55,27 @@ const faqItems = [
 
 export default function ContactPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: '',
+
+  const form = useForm<ContactFormData>({
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: { name: '', email: '', subject: '', message: '' },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: ContactFormData) => {
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    toast.success('Message sent! We\'ll get back to you soon.');
-    setFormData({ name: '', email: '', subject: '', message: '' });
-    setIsLoading(false);
+    try {
+      const result = await submitContactMessage(data);
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success('Message sent! We\'ll get back to you soon.');
+      form.reset();
+    } catch {
+      toast.error('Something went wrong. Please try again or email us directly.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -99,7 +110,7 @@ export default function ContactPage() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.15 }}
-            className="grid gap-2.5 sm:grid-cols-3 sm:gap-4"
+            className="grid gap-2.5 sm:grid-cols-2 sm:gap-4"
           >
             {contactInfo.map((item) => (
               <div
@@ -139,69 +150,86 @@ export default function ContactPage() {
                   <p className="mt-1 text-sm text-muted-foreground">Fill out the form and we&apos;ll get back to you.</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="name" className="text-sm">Name</Label>
-                      <Input
-                        id="name"
-                        placeholder="Your name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm">Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Your name" disabled={isLoading} {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm">Email</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="you@example.com" disabled={isLoading} {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
                     </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="email" className="text-sm">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="subject" className="text-sm">Subject</Label>
-                    <Input
-                      id="subject"
-                      placeholder="How can we help?"
-                      value={formData.subject}
-                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      required
+                    <FormField
+                      control={form.control}
+                      name="subject"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm">Subject</FormLabel>
+                          <FormControl>
+                            <Input placeholder="How can we help?" disabled={isLoading} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="message" className="text-sm">Message</Label>
-                    <Textarea
-                      id="message"
-                      placeholder="Tell us more about your question or feedback..."
-                      className="min-h-[120px]"
-                      value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      required
+                    <FormField
+                      control={form.control}
+                      name="message"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm">Message</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Tell us more about your question or feedback..."
+                              className="min-h-[120px]"
+                              disabled={isLoading}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full bg-primary hover:bg-primary-hover text-white"
-                  >
-                    {isLoading ? (
-                      'Sending...'
-                    ) : (
-                      <>
-                        Send Message
-                        <Send className="ml-2 h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                </form>
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full bg-primary hover:bg-primary-hover text-white"
+                    >
+                      {isLoading ? (
+                        'Sending...'
+                      ) : (
+                        <>
+                          Send Message
+                          <Send className="ml-2 h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </Form>
               </div>
             </motion.div>
 

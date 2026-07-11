@@ -584,3 +584,32 @@ model CorporateAccount {
 
   @@map("corporate_accounts")
 }
+
+// Generic platform-level key/value settings store, used by the superadmin
+// panel (System Health alert channels, Settings security/API config) so
+// toggles persist across reloads instead of living only in client state.
+model PlatformSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_settings")
+}
+
+// Platform-level subscription discount codes, managed from the superadmin
+// Subscriptions > Promo Code Management panel.
+model PromoCode {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  description   String?
+  discountType  String    @default("percentage") @map("discount_type")
+  discountValue Float     @map("discount_value")
+  usageLimit    Int?      @map("usage_limit")
+  usageCount    Int       @default(0) @map("usage_count")
+  isActive      Boolean   @default(true) @map("is_active")
+  expiresAt     DateTime? @map("expires_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@map("promo_codes")
+}

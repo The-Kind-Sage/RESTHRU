@@ -5,7 +5,7 @@ import { getSession } from "@/lib/auth";
 import { verifyManagerApproval } from "@/lib/manager-approval";
 
 /** Looks up the restaurant's default effective tax rate (TaxRate model > restaurant.taxPercentage > 13%). */
-async function getEffectiveTaxRate(restaurantId: string): Promise<number> {
+export async function getEffectiveTaxRate(restaurantId: string): Promise<number> {
   try {
     const defaultRate = await prisma.taxRate.findFirst({
       where: { restaurantId, isDefault: true, isActive: true },
@@ -56,7 +56,7 @@ async function releaseTableForOrder(tx: any, order: { id: string; tableId: strin
 }
 
 /** Notifies the assigned waiter, or every active waiter/staff member if unassigned. */
-async function notifyServers(
+export async function notifyServers(
   restaurantId: string,
   order: { id: string; orderId: string; assignedWaiterId: string | null },
   title: string,

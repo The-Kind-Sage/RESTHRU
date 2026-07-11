@@ -10,6 +10,7 @@ import { useState } from 'react';
 const categories = [
   {
     title: 'Getting Started',
+    id: 'getting-started',
     icon: BookOpen,
     articles: [
       { title: 'How to create your restaurant account', description: 'Step-by-step guide to signing up and setting up your restaurant profile.' },
@@ -19,6 +20,7 @@ const categories = [
   },
   {
     title: 'Orders & Billing',
+    id: 'orders-billing',
     icon: MessageCircle,
     articles: [
       { title: 'How to accept and manage orders', description: 'Learn the order workflow from receiving to completion.' },
@@ -28,6 +30,7 @@ const categories = [
   },
   {
     title: 'Staff & Settings',
+    id: 'staff-settings',
     icon: Search,
     articles: [
       { title: 'Adding and managing staff members', description: 'Invite staff, assign roles, and manage permissions.' },
@@ -81,6 +84,12 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 }
 
 export default function HelpPage() {
+  const [search, setSearch] = useState('');
+  const query = search.trim().toLowerCase();
+  const filteredFaqs = query
+    ? faqs.filter((faq) => faq.q.toLowerCase().includes(query) || faq.a.toLowerCase().includes(query))
+    : faqs;
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -100,7 +109,9 @@ export default function HelpPage() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search for help..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search FAQs..."
                 className="w-full h-12 pl-12 pr-4 rounded-full border-0 bg-white/95 text-sm shadow-lg focus:outline-none focus:ring-2 focus:ring-white/30 placeholder:text-muted-foreground"
               />
             </div>
@@ -116,11 +127,12 @@ export default function HelpPage() {
               return (
                 <motion.div
                   key={cat.title}
+                  id={cat.id}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.1 }}
-                  className="rounded-2xl border border-border/70 bg-white p-6 shadow-soft"
+                  className="rounded-2xl border border-border/70 bg-white p-6 shadow-soft scroll-mt-28"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 mb-4">
                     <Icon className="h-6 w-6 text-primary" />
@@ -141,15 +153,28 @@ export default function HelpPage() {
         </div>
       </section>
 
-      <section className="py-20 bg-muted/30">
+      <section id="faq" className="py-20 bg-muted/30 scroll-mt-20">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-3xl font-bold text-center mb-10">
             Frequently Asked Questions
           </motion.h2>
+          {search.trim() && (
+            <p className="mb-4 text-sm text-muted-foreground">
+              {filteredFaqs.length > 0
+                ? `${filteredFaqs.length} result${filteredFaqs.length === 1 ? '' : 's'} for "${search.trim()}"`
+                : `No results for "${search.trim()}"`}
+            </p>
+          )}
           <div className="space-y-3">
-            {faqs.map((faq) => (
+            {filteredFaqs.map((faq) => (
               <FaqItem key={faq.q} {...faq} />
             ))}
+            {filteredFaqs.length === 0 && (
+              <div className="rounded-xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
+                No FAQs match your search. Try a different term or{' '}
+                <Link href="/contact" className="font-semibold text-primary hover:underline">contact support</Link>.
+              </div>
+            )}
           </div>
         </div>
       </section>

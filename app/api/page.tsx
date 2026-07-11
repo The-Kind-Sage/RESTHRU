@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Code, Key, Webhook, Lock, ArrowRight, Copy } from 'lucide-react';
+import { Code, Key, Webhook, Lock, ArrowRight, Copy, AlertCircle } from 'lucide-react';
 import Navbar from '@/components/shared/navbar';
 import Footer from '@/components/shared/footer';
 
@@ -110,6 +110,14 @@ export default function ApiPage() {
       {/* Features */}
       <section className="py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-warning">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span>
+              <strong className="font-semibold">Planned, not yet available</strong> — the public REST
+              API is on our roadmap. The endpoints below describe the intended surface and cannot be
+              called against a live server yet.
+            </span>
+          </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {features.map((feature, idx) => {
               const Icon = feature.icon;
@@ -179,10 +187,10 @@ export default function ApiPage() {
           </motion.h2>
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="mt-6 flex items-center justify-center gap-4">
             <Link
-              href="/register"
+              href="/contact"
               className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-hover transition-colors"
             >
-              Get API Key <ArrowRight className="h-4 w-4" />
+              Request Early Access <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/contact"
