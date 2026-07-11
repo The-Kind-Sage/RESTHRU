@@ -60,6 +60,8 @@ import {
   verifyPayment,
   getPendingWalletPayments,
 } from "@/lib/actions/payments";
+import { formatReceiptHTML, printReceipt } from "@/lib/printing";
+import ScannerInput from "@/components/dashboard/scanner-input";
 
 const PAYMENT_METHODS = [
   { id: "CASH", label: "Cash", Icon: Banknote, color: "bg-emerald-600" },
@@ -330,6 +332,38 @@ export default function CheckoutPage() {
     toast.success(`Found: ${result.data.name} (${result.data.loyaltyPoints} pts)`);
   };
 
+  const handlePrintReceipt = () => {
+    if (!activeBill) return;
+    const items = (activeBill.order?.items || []).map((i: any) => ({
+      name: i.menuItemName,
+      qty: i.quantity,
+      price: i.pricePerUnit,
+      total: i.pricePerUnit * i.quantity,
+    }));
+    const html = formatReceiptHTML({
+      restaurantName: restaurant?.name || "Restaurant",
+      address: "",
+      phone: "",
+      billNumber: activeBill.billNumber,
+      items,
+      subtotal: activeBill.subtotal,
+      taxAmount: activeBill.taxAmount,
+      serviceCharge: activeBill.serviceCharge,
+      discountAmount: activeBill.discountAmount,
+      totalAmount: activeBill.totalAmount,
+      amountPaid: activeBill.amountPaid,
+      change: activeBill.change,
+      paymentMethod: activeBill.paymentMethod,
+      date: new Date().toLocaleString(),
+    });
+    printReceipt(html);
+  };
+
+  const handleScannerBarcode = (barcode: string) => {
+    setSearchQuery(barcode);
+    toast.info(`Scanned: ${barcode}`);
+  };
+
   const handleGenerateQR = async () => {
     if (!activeBill) return;
     const due = remainingDue;
@@ -382,6 +416,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <ScannerInput onScan={handleScannerBarcode} />
       <div className="border-b bg-card sticky top-0 z-40">
         <div className="max-w-full px-4 py-4">
           <div className="flex justify-between items-center">
@@ -796,7 +831,7 @@ export default function CheckoutPage() {
                     >
                       <Pause className="w-4 h-4 mr-1" /> Park Bill
                     </Button>
-                    <Button variant="outline" className="flex-1">
+                    <Button variant="outline" className="flex-1" onClick={handlePrintReceipt}>
                       <Printer className="w-4 h-4 mr-1" /> Print
                     </Button>
                     <Button variant="outline" className="flex-1">
