@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { verifyManagerApproval } from "@/lib/manager-approval";
 
 // Order lifecycle: PENDING → PREPARING → READY → SERVED (+ Bill = closed)
 // CANCELLED is allowed from PENDING/PREPARING only.
@@ -406,6 +407,15 @@ export async function settleOrder(data: {
             },
           });
 
+          await tx.payment.create({
+            data: {
+              billId: created.id,
+              method: data.paymentMethod,
+              amount: amountPaid,
+              reference: data.paymentRef || null,
+            },
+          });
+
           await tx.order.update({
             where: { id: order.id },
             data: {
@@ -485,5 +495,154 @@ export async function markNotificationsRead(ids: string[]) {
     return { data: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to mark notifications read" };
+  }
+}
+
+/** Recomputes subtotal/tax/total from an order's non-cancelled items. */
+function recomputeOrderTotals(items: { pricePerUnit: number; quantity: number; status: string }[], serviceCharge: number, discountAmount: number) {
+  const subtotal = items
+    .filter((i) => i.status !== "CANCELLED")
+    .reduce((s, i) => s + i.pricePerUnit * i.quantity, 0);
+  const taxAmount = subtotal * 0.13;
+  const discount = Math.min(Math.max(discountAmount, 0), subtotal);
+  const totalAmount = subtotal + taxAmount + serviceCharge - discount;
+  return { subtotal, taxAmount, totalAmount, discount };
+}
+
+/**
+ * Voids a single order item (e.g. kitchen mistake, guest changed their mind) and
+ * recomputes the order's totals. Requires a manager/owner/admin to authorize with
+ * their own credentials. Only allowed before the order has been paid.
+ */
+export async function voidOrderItem(data: {
+  orderItemId: string;
+  reason: string;
+  approverUsername: string;
+  approverPassword: string;
+}) {
+  const session = await getSession();
+  if (!session || !session.restaurantId) return { error: "Not authenticated" };
+  if (!data.reason?.trim()) return { error: "A void reason is required" };
+
+  const approval = await verifyManagerApproval(session.restaurantId, data.approverUsername, data.approverPassword);
+  if (!approval.ok) return { error: approval.error };
+
+  try {
+    const item = await prisma.orderItem.findUnique({
+      where: { id: data.orderItemId },
+      include: { order: { include: { items: true, bills: { select: { status: true } } } } },
+    });
+    if (!item || item.order.restaurantId !== session.restaurantId) return { error: "Order item not found" };
+    if (item.status === "CANCELLED") return { error: "Item is already voided" };
+    if (item.order.bills.some((b) => b.status === "PAID")) {
+      return { error: "Cannot void an item on a paid bill" };
+    }
+
+    const order = await prisma.$transaction(async (tx) => {
+      await tx.orderItem.update({
+        where: { id: item.id },
+        data: {
+          status: "CANCELLED",
+          voidedBy: approval.approverId,
+          voidReason: data.reason.trim(),
+          voidedAt: new Date(),
+        },
+      });
+
+      const remainingItems = item.order.items.map((i) =>
+        i.id === item.id ? { ...i, status: "CANCELLED" } : i
+      );
+      const { subtotal, taxAmount, totalAmount, discount } = recomputeOrderTotals(
+        remainingItems,
+        item.order.serviceCharge,
+        item.order.discountAmount
+      );
+
+      return tx.order.update({
+        where: { id: item.order.id },
+        data: { subtotal, taxAmount, totalAmount, discountAmount: discount },
+        include: { items: true },
+      });
+    });
+
+    await prisma.activityLog.create({
+      data: {
+        restaurantId: session.restaurantId,
+        userId: session.id,
+        actionType: "ORDER_ITEM_VOID",
+        entityType: "OrderItem",
+        entityId: item.id,
+        description: `${item.menuItemName} x${item.quantity} voided from order ${item.order.orderId} by ${session.username} (approved by ${approval.approverName}): ${data.reason.trim()}`,
+      },
+    });
+
+    return { data: order };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to void order item" };
+  }
+}
+
+/**
+ * Voids an entire order after it has left the kitchen queue (READY/SERVED), which
+ * the normal kitchen-side cancel flow doesn't allow. Requires manager approval and
+ * is blocked once the order has been paid.
+ */
+export async function voidOrder(data: {
+  orderId: string;
+  reason: string;
+  approverUsername: string;
+  approverPassword: string;
+}) {
+  const session = await getSession();
+  if (!session || !session.restaurantId) return { error: "Not authenticated" };
+  if (!data.reason?.trim()) return { error: "A void reason is required" };
+
+  const approval = await verifyManagerApproval(session.restaurantId, data.approverUsername, data.approverPassword);
+  if (!approval.ok) return { error: approval.error };
+
+  try {
+    const order = await prisma.order.findFirst({
+      where: { id: data.orderId, restaurantId: session.restaurantId },
+      include: { bills: { select: { status: true } } },
+    });
+    if (!order) return { error: "Order not found" };
+    if (order.status === "CANCELLED") return { error: "Order is already cancelled" };
+    if (order.bills.some((b) => b.status === "PAID")) {
+      return { error: "Cannot void an order with a paid bill" };
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.order.update({
+        where: { id: order.id },
+        data: {
+          status: "CANCELLED",
+          voidedBy: approval.approverId,
+          voidReason: data.reason.trim(),
+          voidedAt: new Date(),
+        },
+        include: { table: true },
+      });
+      await tx.orderItem.updateMany({
+        where: { orderId: order.id },
+        data: { status: "CANCELLED" },
+      });
+      await releaseTableForOrder(tx, result);
+      return result;
+    });
+
+    await prisma.activityLog.create({
+      data: {
+        restaurantId: session.restaurantId,
+        userId: session.id,
+        actionType: "ORDER_VOID",
+        entityType: "Order",
+        entityId: order.id,
+        description: `Order ${order.orderId} voided by ${session.username} (approved by ${approval.approverName}): ${data.reason.trim()}`,
+      },
+    });
+
+    return { data: updated };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to void order" };
   }
 }

@@ -17,6 +17,11 @@ import {
   Printer,
   Settings,
   LogOut,
+  DollarSign,
+  ConciergeBell,
+  Clock,
+  Receipt,
+  Star,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -45,9 +50,14 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard',          href: '/dashboard',           Icon: LayoutDashboard },
   { label: 'Live Orders',        href: '/dashboard/orders',    Icon: ShoppingBag     },
+  { label: 'Checkout',           href: '/dashboard/checkout',  Icon: DollarSign      },
+  { label: 'Reception',          href: '/dashboard/reception', Icon: ConciergeBell   },
+  { label: 'CRM',                href: '/dashboard/crm',       Icon: Star            },
   { label: 'Table Map',          href: '/dashboard/tables',    Icon: LayoutGrid      },
   { label: 'Menu Management',    href: '/dashboard/menu',      Icon: ClipboardList   },
   { label: 'Staff Management',   href: '/dashboard/staff',     Icon: Users           },
+  { label: 'Shifts',             href: '/dashboard/shifts',    Icon: Clock           },
+  { label: 'Invoices',           href: '/dashboard/invoices',  Icon: Receipt         },
   { label: 'Inventory',          href: '/dashboard/inventory', Icon: Package         },
   { label: 'Reports & Analytics',href: '/dashboard/reports',   Icon: BarChart3       },
   { label: 'Print Center',       href: '/dashboard/prints',    Icon: Printer         },

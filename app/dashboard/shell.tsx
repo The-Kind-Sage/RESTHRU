@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/dashboard/sidebar';
 import TopHeader from '@/components/dashboard/top-header';
+import IdleTimeoutGuard from '@/components/dashboard/idle-timeout-guard';
 import { useUIStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
@@ -32,6 +33,7 @@ export default function DashboardShell({
 
   return (
     <div className="flex min-h-screen bg-background">
+      <IdleTimeoutGuard />
       <Sidebar />
       <div
         className={cn(

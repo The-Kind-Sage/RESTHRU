@@ -62,19 +62,25 @@ model Restaurant {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  users         User[]
-  staff         Staff[]
-  tables        RestaurantTable[]
-  categories    Category[]
-  menuItems     MenuItem[]
-  orders        Order[]
-  inventory     InventoryItem[]
-  bills         Bill[]
-  notifications Notification[]
-  activityLogs  ActivityLog[]
-  subscriptions Subscription[]
-  operatingHours OperatingHours[]
-  kpiCards      KpiCard[]
+  users            User[]
+  staff            Staff[]
+  tables           RestaurantTable[]
+  categories       Category[]
+  menuItems        MenuItem[]
+  orders           Order[]
+  inventory        InventoryItem[]
+  bills            Bill[]
+  notifications    Notification[]
+  activityLogs     ActivityLog[]
+  subscriptions    Subscription[]
+  operatingHours   OperatingHours[]
+  kpiCards         KpiCard[]
+  shifts           Shift[]
+  reservations     Reservation[]
+  waitlistEntries  WaitlistEntry[]
+  customers        Customer[]
+  coupons          Coupon[]
+  corporateAccounts CorporateAccount[]
 
   @@map("restaurants")
 }
@@ -154,6 +160,7 @@ model Staff {
   updatedAt     DateTime @updatedAt @map("updated_at")
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  shifts     Shift[]
 
   @@map("staff")
 }
@@ -179,8 +186,9 @@ model RestaurantTable {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
-  orders     Order[]
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  orders       Order[]
+  reservations Reservation[]
 
   @@unique([restaurantId, tableNumber])
   @@map("tables")
@@ -267,6 +275,9 @@ model Order {
   customerName    String?  @map("customer_name")
   customerPhone   String?  @map("customer_phone")
   specialRequests String?  @map("special_requests")
+  voidedBy        String?  @map("voided_by")
+  voidReason      String?  @map("void_reason")
+  voidedAt        DateTime? @map("voided_at")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
   completedAt     DateTime? @map("completed_at")
@@ -292,6 +303,9 @@ model OrderItem {
   status              String   @default("PENDING")
   preparedAt          DateTime? @map("prepared_at")
   servedAt            DateTime? @map("served_at")
+  voidedBy            String?  @map("voided_by")
+  voidReason          String?  @map("void_reason")
+  voidedAt            DateTime? @map("voided_at")
 
   order    Order    @relation(fields: [orderId], references: [id])
   menuItem MenuItem @relation(fields: [menuItemId], references: [id])
@@ -350,15 +364,20 @@ model Bill {
   change          Float    @default(0)
   paymentMethod   String   @default("CASH") @map("payment_method")
   paymentRef      String?  @map("payment_ref")
+  status          String   @default("PENDING")
   billDate        DateTime @default(now()) @map("bill_date")
   settledAt       DateTime? @map("settled_at")
   createdBy       String   @map("created_by")
   notes           String?
+  voidedBy        String?  @map("voided_by")
+  voidReason      String?  @map("void_reason")
+  voidedAt        DateTime? @map("voided_at")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   order      Order      @relation(fields: [orderId], references: [id])
+  payments   Payment[]
 
   @@unique([restaurantId, billNumber])
   @@map("bills")
@@ -419,4 +438,129 @@ model KpiCard {
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
 
   @@map("kpi_cards")
+}
+
+model Shift {
+  id                 String    @id @default(cuid())
+  restaurantId       String    @map("restaurant_id")
+  staffId            String    @map("staff_id")
+  openingFloat       Float     @map("opening_float")
+  closingCashDeclared Float?   @map("closing_cash_declared")
+  expectedCash       Float?    @map("expected_cash")
+  discrepancy        Float?
+  status             String    @default("OPEN")
+  openedAt           DateTime  @default(now()) @map("opened_at")
+  closedAt           DateTime? @map("closed_at")
+  notes              String?
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  staff      Staff      @relation(fields: [staffId], references: [id])
+
+  @@map("shifts")
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  billId    String   @map("bill_id")
+  method    String
+  amount    Float
+  reference String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  bill Bill @relation(fields: [billId], references: [id])
+
+  @@map("payments")
+}
+
+model Reservation {
+  id            String    @id @default(cuid())
+  restaurantId  String    @map("restaurant_id")
+  customerName  String    @map("customer_name")
+  customerPhone String    @map("customer_phone")
+  partySize     Int       @map("party_size")
+  reservedFor   DateTime  @map("reserved_for")
+  tableId       String?   @map("table_id")
+  status        String    @default("BOOKED")
+  notes         String?
+  checkedInAt   DateTime? @map("checked_in_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  restaurant Restaurant      @relation(fields: [restaurantId], references: [id])
+  table      RestaurantTable? @relation(fields: [tableId], references: [id])
+
+  @@map("reservations")
+}
+
+model WaitlistEntry {
+  id                String    @id @default(cuid())
+  restaurantId      String    @map("restaurant_id")
+  customerName      String    @map("customer_name")
+  customerPhone     String    @map("customer_phone")
+  partySize         Int       @map("party_size")
+  quotedWaitMinutes Int?      @map("quoted_wait_minutes")
+  status            String    @default("WAITING")
+  notifiedAt        DateTime? @map("notified_at")
+  seatedAt          DateTime? @map("seated_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@map("waitlist_entries")
+}
+
+model Customer {
+  id            String   @id @default(cuid())
+  restaurantId  String   @map("restaurant_id")
+  name          String
+  phone         String
+  email         String?
+  dietaryNotes  String?  @map("dietary_notes")
+  loyaltyPoints Int      @default(0) @map("loyalty_points")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@unique([restaurantId, phone])
+  @@map("customers")
+}
+
+model Coupon {
+  id            String   @id @default(cuid())
+  restaurantId  String   @map("restaurant_id")
+  code          String
+  discountType  String   @map("discount_type")
+  discountValue Float    @map("discount_value")
+  validFrom     DateTime @map("valid_from")
+  validUntil    DateTime @map("valid_until")
+  usageLimit    Int?     @map("usage_limit")
+  usageCount    Int      @default(0) @map("usage_count")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@unique([restaurantId, code])
+  @@map("coupons")
+}
+
+model CorporateAccount {
+  id             String   @id @default(cuid())
+  restaurantId   String   @map("restaurant_id")
+  companyName    String   @map("company_name")
+  contactName    String?  @map("contact_name")
+  contactPhone   String?  @map("contact_phone")
+  billingAddress String?  @map("billing_address")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@map("corporate_accounts")
 }

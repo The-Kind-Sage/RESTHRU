@@ -50,6 +50,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard/tables': 'Table Map',
   '/dashboard/menu': 'Menu Management',
   '/dashboard/staff': 'Staff Management',
+  '/dashboard/shifts': 'Shift Management',
+  '/dashboard/invoices': 'Invoice History',
   '/dashboard/inventory': 'Inventory',
   '/dashboard/reports': 'Reports & Analytics',
   '/dashboard/prints': 'Print Center',

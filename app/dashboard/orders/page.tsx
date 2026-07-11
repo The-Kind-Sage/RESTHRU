@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatRelativeTime } from "@/lib/format";
 import { getOrdersWithItems } from "@/lib/actions/dashboard";
-import { updateOrderStatus, settleOrder } from "@/lib/actions/orders";
+import { updateOrderStatus, settleOrder, voidOrderItem, voidOrder } from "@/lib/actions/orders";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 import {
@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Ban } from "lucide-react";
+import ManagerApprovalDialog from "@/components/dashboard/manager-approval-dialog";
 
 type OrderStatus = "PENDING" | "PREPARING" | "READY" | "SERVED" | "CANCELLED";
 
@@ -45,6 +47,8 @@ export default function LiveOrdersPage() {
   const [busyOrderId, setBusyOrderId] = useState<string | null>(null);
   const [payMethod, setPayMethod] = useState<(typeof PAYMENT_METHODS)[number]>("CASH");
   const [isSettling, setIsSettling] = useState(false);
+  const [voidItemTarget, setVoidItemTarget] = useState<any>(null);
+  const [voidOrderTarget, setVoidOrderTarget] = useState<any>(null);
 
   const refresh = useCallback(() => {
     if (!restaurantId) return;
@@ -120,6 +124,24 @@ export default function LiveOrdersPage() {
   };
 
   const hasBill = (order: any) => (order?.bills?.length ?? 0) > 0;
+
+  const handleVoidItem = async (data: { reason: string; approverUsername: string; approverPassword: string }) => {
+    const result = await voidOrderItem({ orderItemId: voidItemTarget.id, ...data });
+    if (result.error) return { error: result.error };
+    toast.success(`${voidItemTarget.menuItemName} voided`);
+    setSelectedOrder(result.data);
+    setVoidItemTarget(null);
+    refresh();
+  };
+
+  const handleVoidOrder = async (data: { reason: string; approverUsername: string; approverPassword: string }) => {
+    const result = await voidOrder({ orderId: voidOrderTarget.id, ...data });
+    if (result.error) return { error: result.error };
+    toast.success(`Order ${voidOrderTarget.orderId} voided`);
+    setVoidOrderTarget(null);
+    setIsDialogOpen(false);
+    refresh();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -270,8 +292,21 @@ export default function LiveOrdersPage() {
                 <div className="space-y-2 bg-muted/50 p-3 rounded">
                   {selectedOrder.items?.map((item: any) => (
                     <div key={item.id} className="flex justify-between items-center text-sm">
-                      <span>{item.quantity}x {item.menuItemName}</span>
-                      <span className="font-medium">{formatCurrency(item.pricePerUnit * item.quantity)}</span>
+                      <span className={item.status === "CANCELLED" ? "line-through text-muted-foreground" : ""}>
+                        {item.quantity}x {item.menuItemName}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{formatCurrency(item.pricePerUnit * item.quantity)}</span>
+                        {item.status !== "CANCELLED" && !hasBill(selectedOrder) && (
+                          <button
+                            onClick={() => setVoidItemTarget(item)}
+                            className="text-muted-foreground hover:text-destructive"
+                            title="Void item"
+                          >
+                            <Ban className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                   <Separator className="my-2" />
@@ -347,10 +382,34 @@ export default function LiveOrdersPage() {
                 <XCircle className="w-4 h-4" /> Cancel Order
               </Button>
             )}
+            {selectedOrder && ["READY", "SERVED"].includes(selectedOrder.status) && !hasBill(selectedOrder) && (
+              <Button
+                variant="outline"
+                onClick={() => setVoidOrderTarget(selectedOrder)}
+                className="text-destructive border-destructive/30 hover:bg-destructive/10 gap-1"
+              >
+                <Ban className="w-4 h-4" /> Void Order
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ManagerApprovalDialog
+        open={!!voidItemTarget}
+        onOpenChange={(o) => !o && setVoidItemTarget(null)}
+        title={`Void ${voidItemTarget?.menuItemName ?? "item"}`}
+        description="Voiding an item requires a manager, owner, or admin to authorize with their own login."
+        onConfirm={handleVoidItem}
+      />
+      <ManagerApprovalDialog
+        open={!!voidOrderTarget}
+        onOpenChange={(o) => !o && setVoidOrderTarget(null)}
+        title={`Void order ${voidOrderTarget?.orderId ?? ""}`}
+        description="Voiding an order requires a manager, owner, or admin to authorize with their own login."
+        onConfirm={handleVoidOrder}
+      />
     </div>
   );
 }
