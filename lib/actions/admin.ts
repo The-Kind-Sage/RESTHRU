@@ -1,8 +1,23 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
+
+// Every export in this module returns cross-tenant platform data, so each one
+// must independently verify the caller is an admin: Server Actions are invocable
+// directly (a POST to the generated action endpoint) regardless of which UI
+// gated navigation to them. Throws rather than returning null so a caller that
+// forgets to handle the failure fails closed instead of rendering blank.
+async function requireAdmin() {
+  const session = await getSession();
+  if (!session || (session.role !== "ADMIN" && session.role !== "SUPER_ADMIN")) {
+    throw new Error("Unauthorized");
+  }
+  return session;
+}
 
 export async function getAdminStats() {
+  await requireAdmin();
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
@@ -39,6 +54,7 @@ export async function getAdminStats() {
 }
 
 export async function getRecentOrders(limit = 10) {
+  await requireAdmin();
   return prisma.order.findMany({
     orderBy: { createdAt: "desc" },
     take: limit,
@@ -47,6 +63,7 @@ export async function getRecentOrders(limit = 10) {
 }
 
 export async function getAllRestaurants() {
+  await requireAdmin();
   return prisma.restaurant.findMany({
     orderBy: { createdAt: "desc" },
     include: {
@@ -61,6 +78,7 @@ export async function getAllRestaurants() {
 }
 
 export async function getSubscriptionDistribution() {
+  await requireAdmin();
   const plans = await prisma.plan.findMany({
     include: { _count: { select: { subscriptions: true } } },
   });
@@ -73,6 +91,7 @@ export async function getSubscriptionDistribution() {
 // === Financials ===
 
 export async function getFinancialData() {
+  await requireAdmin();
   const [totalRevenueAgg, revenueByPayment, settledBills, unsettledBills, orderStats] = await Promise.all([
     prisma.order.aggregate({
       where: { status: { not: "CANCELLED" } },
@@ -124,6 +143,7 @@ export async function getFinancialData() {
 // === Subscriptions ===
 
 export async function getSubscriptionsOverview() {
+  await requireAdmin();
   const [totalSubscriptions, activeSubscriptions, plans, allSubscriptions] = await Promise.all([
     prisma.subscription.count(),
     prisma.subscription.count({ where: { status: "ACTIVE" } }),
@@ -187,6 +207,7 @@ export async function getSubscriptionsOverview() {
 }
 
 export async function getFailedPayments() {
+  await requireAdmin();
   const failedBills = await prisma.bill.findMany({
     where: { settledAt: null },
     include: {
@@ -224,6 +245,7 @@ function getPeriodDate(period: string): Date {
 }
 
 export async function getAnalyticsOverview(period: string) {
+  await requireAdmin();
   const periodStart = getPeriodDate(period);
   const periodEnd = new Date();
 
@@ -361,6 +383,7 @@ export async function getAnalyticsOverview(period: string) {
 // === Settings ===
 
 export async function getAdminUsers() {
+  await requireAdmin();
   const users = await prisma.user.findMany({
     where: { role: "ADMIN" },
     orderBy: { createdAt: "desc" },
@@ -390,6 +413,7 @@ export async function getAdminUsers() {
 }
 
 export async function getPlatformStats() {
+  await requireAdmin();
   const [totalRestaurants, totalUsers, totalOrders, totalMenuItems, totalStaff] = await Promise.all([
     prisma.restaurant.count(),
     prisma.user.count(),
@@ -403,6 +427,7 @@ export async function getPlatformStats() {
 // === Support ===
 
 export async function getSupportQuickStats() {
+  await requireAdmin();
   const [totalRestaurants, activeRestaurants, totalOrders, monthlyOrders, totalNotifications] = await Promise.all([
     prisma.restaurant.count(),
     prisma.restaurant.count({ where: { isActive: true } }),
@@ -417,6 +442,7 @@ export async function getSupportQuickStats() {
 }
 
 export async function getRecentNotifications() {
+  await requireAdmin();
   return prisma.notification.findMany({
     orderBy: { createdAt: "desc" },
     take: 20,
@@ -430,6 +456,7 @@ export async function getRecentNotifications() {
 // Platform-wide unread count, used for the superadmin header's notification
 // bell badge (C1 — previously the bell had no badge/count at all).
 export async function getUnreadNotificationCount() {
+  await requireAdmin();
   return prisma.notification.count({ where: { isRead: false } });
 }
 
@@ -446,6 +473,7 @@ export async function sendMassCommunication(input: {
   subject: string;
   message: string;
 }) {
+  await requireAdmin();
   if (!input.subject?.trim() || !input.message?.trim()) {
     return { error: "Subject and message are required" };
   }
@@ -487,6 +515,7 @@ export async function sendMassCommunication(input: {
 // === Compliance ===
 
 export async function getComplianceData() {
+  await requireAdmin();
   const restaurants = await prisma.restaurant.findMany({
     select: {
       id: true,
@@ -524,6 +553,7 @@ export async function getComplianceData() {
 // === Innovation ===
 
 export async function getInnovationData() {
+  await requireAdmin();
   const [activeRestaurants, totalOrders, totalRevenue, totalMenuItems, restaurantsByType] = await Promise.all([
     prisma.restaurant.count({ where: { isActive: true } }),
     prisma.order.count({ where: { status: { not: "CANCELLED" } } }),
@@ -556,6 +586,7 @@ export async function getInnovationData() {
 // === Pipeline ===
 
 export async function getPipelineData() {
+  await requireAdmin();
   const [recentRestaurants, recentActivity, subscriptions, totalRestaurants] = await Promise.all([
     prisma.restaurant.findMany({
       orderBy: { createdAt: "desc" },
@@ -593,6 +624,7 @@ export async function getPipelineData() {
 // === Health ===
 
 export async function getHealthData() {
+  await requireAdmin();
   const [totalRestaurants, totalOrders, activeRestaurants, errorLogs, recentLogs] = await Promise.all([
     prisma.restaurant.count(),
     prisma.order.count(),
@@ -643,6 +675,7 @@ export async function getHealthData() {
 // === Restaurant Detail ===
 
 export async function getRestaurantFullDetail(id: string) {
+  await requireAdmin();
   const restaurant = await prisma.restaurant.findUnique({
     where: { id },
     include: {

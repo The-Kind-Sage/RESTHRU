@@ -263,6 +263,28 @@ export const DASHBOARD_AUTH_ROUTES = [
   '/dashboard/password-reset',
 ] as const;
 
+// Superadmin routes that render without the authenticated admin shell — kept
+// here (next to DASHBOARD_AUTH_ROUTES) so middleware.ts and the superadmin
+// layout share one source of truth instead of an inline list.
+export const SUPERADMIN_AUTH_ROUTES = ['/superadmin/login'] as const;
+
+// Canonical landing route for each role. Legacy STAFF maps to the owner
+// dashboard. Kept edge-safe (no server-only imports) so middleware.ts can
+// import it too. Used to bounce an authenticated-but-wrong-role user back to
+// their own area instead of leaking a cross-role screen.
+export const ROLE_HOME: Record<string, string> = {
+  SUPER_ADMIN: '/superadmin',
+  ADMIN: '/superadmin',
+  RESTAURANT_OWNER: '/dashboard',
+  STAFF: '/dashboard',
+  RECEPTIONIST: '/reception',
+  WAITER: '/order',
+};
+
+export function homeForRole(role: string | null | undefined): string {
+  return (role && ROLE_HOME[role]) || '/dashboard';
+}
+
 // Operating Hours Default
 export const OPERATING_HOURS_DEFAULT = {
   monday: { open: '10:00', close: '22:00' },

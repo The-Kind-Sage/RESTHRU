@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  // This endpoint discloses which secrets are configured and a live user count,
+  // and it sits outside the middleware matcher — so it must gate itself. Only
+  // admins may see it; everyone else gets a 404 so its existence isn't revealed.
+  const session = await getSession();
+  if (!session || (session.role !== "ADMIN" && session.role !== "SUPER_ADMIN")) {
+    return new NextResponse("Not found", { status: 404 });
+  }
+
   const dbUrl = process.env.DATABASE_URL || "";
   const hostMatch = dbUrl.match(/@([^\/\?]+)/);
   const host = hostMatch ? hostMatch[1] : "unknown";

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
-import { DASHBOARD_AUTH_ROUTES } from "@/lib/constants";
+import { DASHBOARD_AUTH_ROUTES, SUPERADMIN_AUTH_ROUTES, homeForRole } from "@/lib/constants";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET || "fallback-secret");
 
-const publicSuperadminPaths = ["/superadmin/login"];
+const publicSuperadminPaths: readonly string[] = SUPERADMIN_AUTH_ROUTES;
 const publicDashboardPaths: readonly string[] = DASHBOARD_AUTH_ROUTES;
 
 export async function middleware(request: NextRequest) {
@@ -38,10 +38,14 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Superadmin routes — gate for non-admin
+  // Superadmin routes — must be SUPER_ADMIN or ADMIN. The block above only
+  // redirects admins AWAY from non-superadmin paths; it does NOT keep
+  // non-admins OUT of /superadmin, so the role check must happen here too.
   if (pathname.startsWith("/superadmin") && !publicSuperadminPaths.includes(pathname)) {
     if (!session) return toLogin("/superadmin/login");
-    // role check already handled above
+    if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
+      return NextResponse.redirect(new URL(homeForRole(role), request.url));
+    }
   }
 
   // Dashboard routes
