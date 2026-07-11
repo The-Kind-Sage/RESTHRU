@@ -4,6 +4,24 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { verifyManagerApproval } from "@/lib/manager-approval";
 
+/** Looks up the restaurant's default effective tax rate (TaxRate model > restaurant.taxPercentage > 13%). */
+async function getEffectiveTaxRate(restaurantId: string): Promise<number> {
+  try {
+    const defaultRate = await prisma.taxRate.findFirst({
+      where: { restaurantId, isDefault: true, isActive: true },
+      select: { rate: true },
+    });
+    if (defaultRate) return defaultRate.rate;
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id: restaurantId },
+      select: { taxPercentage: true },
+    });
+    return restaurant?.taxPercentage ?? 13;
+  } catch {
+    return 13;
+  }
+}
+
 // Order lifecycle: PENDING → PREPARING → READY → SERVED (+ Bill = closed)
 // CANCELLED is allowed from PENDING/PREPARING only.
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -156,7 +174,8 @@ export async function createOrder(data: {
     const lastNumber = parseInt(lastOrder?.orderId ?? "", 10);
     let nextNumber = isNaN(lastNumber) ? 1001 : lastNumber + 1;
 
-    const taxAmount = subtotal * 0.13; // 13% VAT (Nepal)
+    const effectiveTaxRate = await getEffectiveTaxRate(restaurantId);
+    const taxAmount = subtotal * (effectiveTaxRate / 100);
     const totalAmount = subtotal + taxAmount;
 
     // Retry on orderId collision from concurrent order creation
@@ -499,11 +518,11 @@ export async function markNotificationsRead(ids: string[]) {
 }
 
 /** Recomputes subtotal/tax/total from an order's non-cancelled items. */
-function recomputeOrderTotals(items: { pricePerUnit: number; quantity: number; status: string }[], serviceCharge: number, discountAmount: number) {
+function recomputeOrderTotals(items: { pricePerUnit: number; quantity: number; status: string }[], serviceCharge: number, discountAmount: number, taxRatePercent = 13) {
   const subtotal = items
     .filter((i) => i.status !== "CANCELLED")
     .reduce((s, i) => s + i.pricePerUnit * i.quantity, 0);
-  const taxAmount = subtotal * 0.13;
+  const taxAmount = subtotal * (taxRatePercent / 100);
   const discount = Math.min(Math.max(discountAmount, 0), subtotal);
   const totalAmount = subtotal + taxAmount + serviceCharge - discount;
   return { subtotal, taxAmount, totalAmount, discount };
@@ -538,6 +557,7 @@ export async function voidOrderItem(data: {
       return { error: "Cannot void an item on a paid bill" };
     }
 
+    const taxRatePct = await getEffectiveTaxRate(session.restaurantId);
     const order = await prisma.$transaction(async (tx) => {
       await tx.orderItem.update({
         where: { id: item.id },
@@ -555,7 +575,8 @@ export async function voidOrderItem(data: {
       const { subtotal, taxAmount, totalAmount, discount } = recomputeOrderTotals(
         remainingItems,
         item.order.serviceCharge,
-        item.order.discountAmount
+        item.order.discountAmount,
+        taxRatePct
       );
 
       return tx.order.update({

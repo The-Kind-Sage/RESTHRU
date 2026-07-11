@@ -55,6 +55,11 @@ import {
   searchCustomers,
   getCustomerByPhone,
 } from "@/lib/actions/crm";
+import {
+  generatePaymentQR,
+  verifyPayment,
+  getPendingWalletPayments,
+} from "@/lib/actions/payments";
 
 const PAYMENT_METHODS = [
   { id: "CASH", label: "Cash", Icon: Banknote, color: "bg-emerald-600" },
@@ -95,6 +100,10 @@ export default function CheckoutPage() {
   const [showDiscount, setShowDiscount] = useState(false);
   const [showCoupon, setShowCoupon] = useState(false);
   const [showCorp, setShowCorp] = useState(false);
+  const [paymentQR, setPaymentQR] = useState<{ qrDataUrl: string; ref: string } | null>(null);
+  const [pendingWalletPayments, setPendingWalletPayments] = useState<any[]>([]);
+  const [verifyingPaymentId, setVerifyingPaymentId] = useState<string | null>(null);
+  const [showQR, setShowQR] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!restaurantId) return;
@@ -320,6 +329,40 @@ export default function CheckoutPage() {
     setFoundCustomer(result.data);
     toast.success(`Found: ${result.data.name} (${result.data.loyaltyPoints} pts)`);
   };
+
+  const handleGenerateQR = async () => {
+    if (!activeBill) return;
+    const due = remainingDue;
+    if (due <= 0) { toast.error("No amount due"); return; }
+    const result: any = await generatePaymentQR({ billId: activeBill.id, method: payMethod, amount: due });
+    if (result.error) { toast.error(result.error); return; }
+    setPaymentQR(result.data);
+    setShowQR(true);
+  };
+
+  const handleManualVerify = async (paymentId: string) => {
+    setVerifyingPaymentId(paymentId);
+    const result: any = await verifyPayment(paymentId);
+    setVerifyingPaymentId(null);
+    if (result.error) { toast.error(result.error); return; }
+    toast.success("Payment verified");
+    const billRes: any = await getBill(activeBill!.id);
+    if (!("error" in billRes) && billRes.data) setActiveBill(billRes.data);
+    refresh();
+  };
+
+  const handleRefreshWalletStatus = async () => {
+    if (!activeBill) return;
+    const result: any = await getPendingWalletPayments(activeBill.id);
+    if (!("error" in result) && result.data) setPendingWalletPayments(result.data);
+  };
+
+  useEffect(() => {
+    if (!activeBill) { setPaymentQR(null); setShowQR(false); setPendingWalletPayments([]); return; }
+    handleRefreshWalletStatus();
+    const interval = setInterval(handleRefreshWalletStatus, 8_000);
+    return () => clearInterval(interval);
+  }, [activeBill?.id]);
 
   const remainingDue = activeBill
     ? Math.max(0, activeBill.totalAmount - activeBill.amountPaid)
@@ -563,10 +606,10 @@ export default function CheckoutPage() {
                           <span>Subtotal</span>
                           <span>{formatCurrency(activeBill.subtotal)}</span>
                         </div>
-                        <div className="flex justify-between text-muted-foreground">
-                          <span>VAT (13%)</span>
-                          <span>{formatCurrency(activeBill.taxAmount)}</span>
-                        </div>
+                          <div className="flex justify-between text-muted-foreground">
+                              <span>VAT</span>
+                              <span>{formatCurrency(activeBill.taxAmount)}</span>
+                            </div>
                         {activeBill.serviceCharge > 0 && (
                           <div className="flex justify-between text-muted-foreground">
                             <span>Service Charge</span>
@@ -791,6 +834,38 @@ export default function CheckoutPage() {
                           })}
                         </div>
                       </div>
+
+                      {/* QR code for wallet payments */}
+                      {payMethod !== "CASH" && payMethod !== "CORPORATE" && (
+                        <div>
+                          <div className="flex gap-2 mb-2">
+                            <Button variant="outline" size="sm" className="flex-1" onClick={handleGenerateQR}>
+                              <Smartphone className="w-3 h-3 mr-1" /> Generate QR
+                            </Button>
+                          </div>
+                          {showQR && paymentQR && (
+                            <div className="flex flex-col items-center p-3 bg-muted/30 rounded">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={paymentQR.qrDataUrl} alt="Payment QR" className="w-40 h-40" />
+                              <p className="text-xs text-muted-foreground mt-1">Scan to pay {formatCurrency(remainingDue)} via {payMethod}</p>
+                              <p className="text-[10px] text-muted-foreground font-mono mt-0.5">Ref: {paymentQR.ref}</p>
+                            </div>
+                          )}
+                          {pendingWalletPayments.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              <p className="text-xs text-muted-foreground">Pending wallet payments:</p>
+                              {pendingWalletPayments.map((p: any) => (
+                                <div key={p.id} className="flex items-center justify-between text-xs bg-muted/30 p-1.5 rounded">
+                                  <span>{p.method} — {formatCurrency(p.amount)}</span>
+                                  <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => handleManualVerify(p.id)} disabled={verifyingPaymentId === p.id}>
+                                    {verifyingPaymentId === p.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Verify"}
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Amount received */}
                       {payMethod === "CASH" && (

@@ -81,6 +81,7 @@ model Restaurant {
   customers        Customer[]
   coupons          Coupon[]
   corporateAccounts CorporateAccount[]
+  taxRates         TaxRate[]
 
   @@map("restaurants")
 }
@@ -462,16 +463,35 @@ model Shift {
 }
 
 model Payment {
-  id        String   @id @default(cuid())
-  billId    String   @map("bill_id")
+  id        String    @id @default(cuid())
+  billId    String    @map("bill_id")
   method    String
   amount    Float
   reference String?
-  createdAt DateTime @default(now()) @map("created_at")
+  verified  Boolean   @default(false)
+  verifiedAt DateTime? @map("verified_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   bill Bill @relation(fields: [billId], references: [id])
 
   @@map("payments")
+}
+
+model TaxRate {
+  id              String   @id @default(cuid())
+  restaurantId    String   @map("restaurant_id")
+  name            String
+  rate            Float
+  type            String   @default("VAT")
+  isDefault       Boolean  @default(false) @map("is_default")
+  appliesToItemTypes String[] @default([]) @map("applies_to_item_types")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@map("tax_rates")
 }
 
 model Reservation {

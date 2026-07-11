@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Bell, Loader2, Plus, Trash2, Upload } from 'lucide-react';
+import { Bell, Loader2, Plus, Trash2, Upload, Percent } from 'lucide-react';
 import { uploadImage } from '@/lib/upload';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
@@ -17,6 +17,9 @@ import {
   getRestaurant, getSettingsData, getActiveSubscription,
   updateRestaurant, upsertSettings, updateRestaurantDirect, updateCoverPhoto, setUserPassword,
 } from '@/lib/actions/settings';
+import {
+  getTaxRates, createTaxRate, updateTaxRate, deleteTaxRate,
+} from '@/lib/actions/tax';
 
 interface RestaurantData {
   name: string;
@@ -89,6 +92,10 @@ export default function SettingsPage() {
   const [newPwd, setNewPwd] = useState('');
   const [confirmPwd, setConfirmPwd] = useState('');
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
+  const [taxRates, setTaxRates] = useState<any[]>([]);
+  const [showNewTaxRate, setShowNewTaxRate] = useState(false);
+  const [newTaxRate, setNewTaxRate] = useState({ name: "VAT", rate: "13", type: "VAT", isDefault: true, appliesToItemTypes: "" });
+  const [creatingTaxRate, setCreatingTaxRate] = useState(false);
 
   const [restaurant, setRestaurant] = useState<RestaurantData>({
     name: '',
@@ -177,6 +184,9 @@ export default function SettingsPage() {
           features: s.plan?.features ?? [],
         });
       }
+
+      const taxRes = await getTaxRates();
+      if ("data" in taxRes && taxRes.data) setTaxRates(taxRes.data);
     } catch (error) {
       console.error('Settings load:', error);
     } finally {
@@ -435,6 +445,130 @@ export default function SettingsPage() {
                 <div className="space-y-3"><h3 className="font-semibold">Receipt Preview</h3><div className="mx-auto w-full max-w-sm space-y-1 rounded-lg border bg-muted/30 p-4 font-mono text-xs"><p className="text-center font-bold">{restaurant.name || 'Your Restaurant'}</p>{restaurant.address && <p className="text-center text-[10px]">{restaurant.address}</p>}<div className="my-2 border-b" /><p className="text-center text-[10px] italic text-muted-foreground">Items will appear here</p><div className="my-2 border-b" />{restaurant.vat_registered && settings.vat_on_receipt && <p className="flex justify-between"><span>VAT ({settings.vat_rate}%):</span><span>—</span></p>}<div className="my-2 border-b" />{settings.bill_footer_message && <p className="text-center text-[10px]">{settings.bill_footer_message}</p>}</div></div>
                 <div className="flex items-center justify-between"><Label>Enable VAT on Receipt</Label><Switch checked={settings.vat_on_receipt} onCheckedChange={(value) => setSettings((prev) => ({ ...prev, vat_on_receipt: value }))} /></div>
                 <SaveBtn onClick={saveBilling} />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Percent className="w-4 h-4" /> Tax Rates</CardTitle>
+                <CardDescription>Manage tax rates for different item categories</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {taxRates.length === 0 ? (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-muted-foreground">No tax rates configured. Add one below.</p>
+                    <p className="text-xs text-muted-foreground mt-1">The system will fall back to the restaurant's default tax rate (currently {settings.vat_rate}%).</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {taxRates.map((tr: any) => (
+                      <div key={tr.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{tr.name}</span>
+                            <span className="text-sm font-mono">{tr.rate}%</span>
+                            <span className="text-xs text-muted-foreground">{tr.type}</span>
+                            {tr.isDefault && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">Default</span>}
+                          </div>
+                          {tr.appliesToItemTypes.length > 0 && (
+                            <p className="text-xs text-muted-foreground mt-0.5">Applies to: {tr.appliesToItemTypes.join(", ")}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Switch
+                            checked={tr.isActive}
+                            onCheckedChange={async (v) => {
+                              await updateTaxRate(tr.id, { isActive: v });
+                              const res = await getTaxRates();
+                              if ("data" in res && res.data) setTaxRates(res.data);
+                              toast.success(v ? "Tax rate activated" : "Tax rate deactivated");
+                            }}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 text-destructive"
+                            onClick={async () => {
+                              if (tr.isDefault) { toast.error("Cannot delete default tax rate"); return; }
+                              const res = await deleteTaxRate(tr.id);
+                              if ("error" in res) { toast.error(res.error); return; }
+                              const r2 = await getTaxRates();
+                              if ("data" in r2 && r2.data) setTaxRates(r2.data);
+                              toast.success("Tax rate deleted");
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <Separator />
+
+                {showNewTaxRate ? (
+                  <div className="space-y-3 p-3 bg-muted/20 rounded">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Name</Label>
+                        <Input value={newTaxRate.name} onChange={(e) => setNewTaxRate({ ...newTaxRate, name: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Rate (%)</Label>
+                        <Input type="number" value={newTaxRate.rate} onChange={(e) => setNewTaxRate({ ...newTaxRate, rate: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Type</Label>
+                        <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={newTaxRate.type} onChange={(e) => setNewTaxRate({ ...newTaxRate, type: e.target.value })}>
+                          <option value="VAT">VAT</option>
+                          <option value="GST">GST</option>
+                          <option value="SERVICE">Service Charge</option>
+                          <option value="OTHER">Other</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Applies to (comma-separated item types)</Label>
+                        <Input value={newTaxRate.appliesToItemTypes} onChange={(e) => setNewTaxRate({ ...newTaxRate, appliesToItemTypes: e.target.value })} placeholder="e.g. FOOD, BEVERAGE" />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={newTaxRate.isDefault}
+                        onCheckedChange={(v) => setNewTaxRate({ ...newTaxRate, isDefault: v })}
+                      />
+                      <Label className="text-xs">Set as default</Label>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button variant="outline" size="sm" onClick={() => setShowNewTaxRate(false)}>Cancel</Button>
+                      <Button size="sm" disabled={creatingTaxRate} onClick={async () => {
+                        if (!newTaxRate.name || !newTaxRate.rate) { toast.error("Name and rate required"); return; }
+                        setCreatingTaxRate(true);
+                        const items = newTaxRate.appliesToItemTypes.split(",").map(s => s.trim()).filter(Boolean);
+                        const result = await createTaxRate({
+                          name: newTaxRate.name,
+                          rate: parseFloat(newTaxRate.rate),
+                          type: newTaxRate.type,
+                          isDefault: newTaxRate.isDefault,
+                          appliesToItemTypes: items.length > 0 ? items : undefined,
+                        });
+                        setCreatingTaxRate(false);
+                        if ("error" in result) { toast.error(result.error); return; }
+                        toast.success("Tax rate created");
+                        setShowNewTaxRate(false);
+                        setNewTaxRate({ name: "VAT", rate: "13", type: "VAT", isDefault: false, appliesToItemTypes: "" });
+                        const res = await getTaxRates();
+                        if ("data" in res && res.data) setTaxRates(res.data);
+                      }}>
+                        {creatingTaxRate ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null} Create
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={() => setShowNewTaxRate(true)}>
+                    <Plus className="w-3 h-3 mr-1" /> Add Tax Rate
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
