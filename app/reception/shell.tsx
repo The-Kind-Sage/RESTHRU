@@ -10,6 +10,7 @@ import { useUIStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
 import { startSync, stopSync } from '@/lib/sync';
+import { registerServiceWorker } from '@/lib/service-worker';
 
 export default function ReceptionShell({
   children,
@@ -30,9 +31,7 @@ export default function ReceptionShell({
   }, []);
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    }
+    registerServiceWorker();
   }, []);
 
   return (

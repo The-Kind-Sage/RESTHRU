@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { logout, getCurrentUser } from '@/lib/actions/auth';
+import { unregisterServiceWorker } from '@/lib/service-worker';
 import { getUnreadNotificationCount } from '@/lib/actions/admin';
 import { AdminBreadcrumbs } from '@/components/superadmin/breadcrumbs';
 
@@ -108,7 +109,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   );
 
   const handleLogout = async () => {
-    await logout();
+    await Promise.all([logout(), unregisterServiceWorker()]);
     router.push('/');
   };
 

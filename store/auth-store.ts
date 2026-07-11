@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { User, Restaurant } from '@/types';
 import { logout as clearServerSession, getRestaurantFromSession, getUserFromSession } from '@/lib/actions/auth';
+import { unregisterServiceWorker } from '@/lib/service-worker';
 
 interface AuthStoreState {
   user: User | null;
@@ -40,7 +41,7 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
   logout: async () => {
     set({ isLoading: true });
     try {
-      await clearServerSession();
+      await Promise.all([clearServerSession(), unregisterServiceWorker()]);
       set({
         user: null,
         restaurant: null,

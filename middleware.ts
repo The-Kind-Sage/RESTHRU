@@ -63,7 +63,12 @@ export async function middleware(request: NextRequest) {
     if (role === "RECEPTIONIST") return NextResponse.redirect(new URL("/reception", request.url));
   }
 
-  return NextResponse.next();
+  // Exposes the matched path to Server Components (e.g. app/dashboard/layout.tsx)
+  // via headers(), so they can run their own belt-and-suspenders session check
+  // without relying solely on this middleware having run.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export const config = {

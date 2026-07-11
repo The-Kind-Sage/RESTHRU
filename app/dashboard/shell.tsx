@@ -10,6 +10,7 @@ import { useUIStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
 import { startSync, stopSync } from '@/lib/sync';
 import { DASHBOARD_AUTH_ROUTES } from '@/lib/constants';
+import { registerServiceWorker } from '@/lib/service-worker';
 
 // Sidebar collapse widths — kept as named constants (rather than Tailwind arbitrary values like
 // `ml-[68px]`) so the shell and any future consumer share one definition instead of a magic
@@ -35,13 +36,18 @@ export default function DashboardShell({
     return () => stopSync();
   }, []);
 
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    }
-  }, []);
+  const isPublicAuthRoute = DASHBOARD_AUTH_ROUTES.includes(pathname as typeof DASHBOARD_AUTH_ROUTES[number]);
 
-  if (DASHBOARD_AUTH_ROUTES.includes(pathname as typeof DASHBOARD_AUTH_ROUTES[number])) {
+  useEffect(() => {
+    // Never install the SW on the login/reset pages — doing so would
+    // precache an authenticated snapshot of /dashboard before the user
+    // has even signed in.
+    if (!isPublicAuthRoute) {
+      registerServiceWorker();
+    }
+  }, [isPublicAuthRoute]);
+
+  if (isPublicAuthRoute) {
     return <>{children}</>;
   }
 
