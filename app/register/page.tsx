@@ -6,12 +6,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Check, UtensilsCrossed, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, UtensilsCrossed, ArrowRight, Smartphone, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Form,
@@ -75,6 +77,7 @@ export default function RegisterPage() {
     step3: {},
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [usePersonalPhone, setUsePersonalPhone] = useState(false);
 
   const step1Form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
@@ -90,6 +93,16 @@ export default function RegisterPage() {
     resolver: zodResolver(step3Schema),
     defaultValues: { selectedPlan: '' },
   });
+
+  const handleUsePersonalPhone = (checked: boolean) => {
+    setUsePersonalPhone(checked);
+    if (checked) {
+      const personalPhone = step1Form.getValues('phone');
+      step2Form.setValue('restaurantPhone', personalPhone);
+    } else {
+      step2Form.setValue('restaurantPhone', '');
+    }
+  };
 
   const handleNextStep = async () => {
     let isValid = false;
@@ -161,12 +174,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-[linear-gradient(145deg,_#041a12_0%,_#0a4d36_35%,_#0e7a52_65%,_#12a068_100%)]">
       {/* Left Panel - Stepper */}
-      <div className="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-primary via-primary-hover to-[#064e3b] flex-col justify-between p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-primary/90 via-primary-hover/90 to-[#064e3b] flex-col justify-between p-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-pattern opacity-[0.04]" />
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-white/5" />
-          <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-white/5" />
+          <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-white/[0.04] blur-[120px]" />
+          <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-accent/[0.06] blur-[100px]" />
         </div>
 
         <div className="relative z-10">
@@ -221,7 +235,11 @@ export default function RegisterPage() {
       </div>
 
       {/* Right Panel - Form */}
-      <div className="flex flex-1 flex-col px-4 py-8 sm:px-6 lg:px-12 bg-register-gradient">
+      <div className="flex flex-1 flex-col px-4 py-8 sm:px-6 lg:px-12 bg-[#fafbfc] dark:bg-background relative">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-primary/[0.02] blur-[150px]" />
+          <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-accent/[0.02] blur-[120px]" />
+        </div>
         <div className="flex-1 flex flex-col justify-center max-w-xl mx-auto w-full">
           {/* Mobile Header */}
           <div className="lg:hidden mb-8 text-center">
@@ -272,44 +290,50 @@ export default function RegisterPage() {
           {/* Form Steps */}
           <AnimatePresence mode="wait">
             {currentStep === 1 && (
-              <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-                <Card className="border border-border/70 bg-white/90 shadow-lg backdrop-blur">
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <Card className="border border-white/20 bg-white/95 shadow-xl shadow-primary/5 backdrop-blur-xl">
                   <CardContent className="p-6 sm:p-8">
                     <Form {...step1Form}>
                       <form className="space-y-4">
                         <FormField control={step1Form.control} name="fullName" render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl><Input placeholder="John Doe" className="h-11" {...field} /></FormControl>
+                            <FormLabel className="text-sm font-semibold">Full Name</FormLabel>
+                            <FormControl><Input placeholder="John Doe" className="h-11 border-border/60 focus:border-primary transition-colors" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <FormField control={step1Form.control} name="email" render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email Address</FormLabel>
-                            <FormControl><Input placeholder="you@example.com" type="email" className="h-11" {...field} /></FormControl>
+                            <FormLabel className="text-sm font-semibold">Email Address</FormLabel>
+                            <FormControl><Input placeholder="you@example.com" type="email" className="h-11 border-border/60 focus:border-primary transition-colors" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <FormField control={step1Form.control} name="phone" render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
-                            <FormControl><Input placeholder="98XXXXXXXXX" className="h-11" {...field} /></FormControl>
+                            <FormLabel className="text-sm font-semibold">Phone Number</FormLabel>
+                            <FormControl><Input placeholder="98XXXXXXXXX" className="h-11 border-border/60 focus:border-primary transition-colors" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <FormField control={step1Form.control} name="password" render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Password</FormLabel>
-                              <FormControl><Input placeholder="At least 8 characters" type="password" className="h-11" {...field} /></FormControl>
+                              <FormLabel className="text-sm font-semibold">Password</FormLabel>
+                              <FormControl><Input placeholder="At least 8 characters" type="password" className="h-11 border-border/60 focus:border-primary transition-colors" {...field} /></FormControl>
                               <FormMessage />
                             </FormItem>
                           )} />
                           <FormField control={step1Form.control} name="confirmPassword" render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Confirm Password</FormLabel>
-                              <FormControl><Input placeholder="Repeat password" type="password" className="h-11" {...field} /></FormControl>
+                              <FormLabel className="text-sm font-semibold">Confirm Password</FormLabel>
+                              <FormControl><Input placeholder="Repeat password" type="password" className="h-11 border-border/60 focus:border-primary transition-colors" {...field} /></FormControl>
                               <FormMessage />
                             </FormItem>
                           )} />
@@ -322,52 +346,72 @@ export default function RegisterPage() {
             )}
 
             {currentStep === 2 && (
-              <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-                <Card className="border border-border/70 bg-white/90 shadow-lg backdrop-blur">
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <Card className="border border-white/20 bg-white/95 shadow-xl shadow-primary/5 backdrop-blur-xl">
                   <CardContent className="p-6 sm:p-8">
                     <Form {...step2Form}>
                       <form className="space-y-4">
                         <FormField control={step2Form.control} name="restaurantName" render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Restaurant Name</FormLabel>
-                            <FormControl><Input placeholder="Your Restaurant Name" className="h-11" {...field} /></FormControl>
+                            <FormLabel className="text-sm font-semibold">Restaurant Name</FormLabel>
+                            <FormControl><Input placeholder="Your Restaurant Name" className="h-11 border-border/60 focus:border-primary transition-colors" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
-                        <FormField control={step2Form.control} name="restaurantType" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Restaurant Type</FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
-                              <FormControl><SelectTrigger className="h-11"><SelectValue placeholder="Select type" /></SelectTrigger></FormControl>
-                              <SelectContent>{RESTAURANT_TYPES.map((type) => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}</SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <FormField control={step2Form.control} name="restaurantType" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-semibold">Restaurant Type</FormLabel>
+                              <Select value={field.value} onValueChange={field.onChange}>
+                                <FormControl><SelectTrigger className="h-11 border-border/60"><SelectValue placeholder="Select type" /></SelectTrigger></FormControl>
+                                <SelectContent>{RESTAURANT_TYPES.map((type) => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}</SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )} />
+                          <FormField control={step2Form.control} name="city" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-semibold">City</FormLabel>
+                              <Select value={field.value} onValueChange={field.onChange}>
+                                <FormControl><SelectTrigger className="h-11 border-border/60"><SelectValue placeholder="Select city" /></SelectTrigger></FormControl>
+                                <SelectContent>{NEPAL_CITIES.map((city) => <SelectItem key={city} value={city}>{city}</SelectItem>)}</SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )} />
+                        </div>
                         <FormField control={step2Form.control} name="address" render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Address</FormLabel>
-                            <FormControl><Input placeholder="Street address" className="h-11" {...field} /></FormControl>
+                            <FormLabel className="text-sm font-semibold">Address</FormLabel>
+                            <FormControl><Input placeholder="Street address" className="h-11 border-border/60 focus:border-primary transition-colors" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
-                        <FormField control={step2Form.control} name="city" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>City</FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
-                              <FormControl><SelectTrigger className="h-11"><SelectValue placeholder="Select city" /></SelectTrigger></FormControl>
-                              <SelectContent>{NEPAL_CITIES.map((city) => <SelectItem key={city} value={city}>{city}</SelectItem>)}</SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                        <FormField control={step2Form.control} name="restaurantPhone" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Restaurant Phone</FormLabel>
-                            <FormControl><Input placeholder="98XXXXXXXXX" className="h-11" {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/[0.04] px-3 py-2.5 cursor-pointer hover:bg-primary/[0.08] transition-colors" onClick={() => handleUsePersonalPhone(!usePersonalPhone)}>
+                            <Checkbox id="usePersonalPhone" checked={usePersonalPhone} onCheckedChange={(val) => handleUsePersonalPhone(val === true)} />
+                            <Label htmlFor="usePersonalPhone" className="text-sm font-medium cursor-pointer flex items-center gap-2">
+                              <Smartphone className="w-3.5 h-3.5 text-primary" />
+                              Use my personal number as restaurant phone
+                            </Label>
+                          </div>
+                          <FormField control={step2Form.control} name="restaurantPhone" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center gap-1.5 text-sm font-semibold">
+                                <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                                Restaurant Phone
+                              </FormLabel>
+                              <FormControl><Input placeholder="98XXXXXXXXX" className="h-11 border-border/60 focus:border-primary transition-colors" disabled={usePersonalPhone} {...field} /></FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )} />
+                        </div>
                       </form>
                     </Form>
                   </CardContent>
@@ -376,24 +420,32 @@ export default function RegisterPage() {
             )}
 
             {currentStep === 3 && (
-              <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-                <Card className="border border-border/70 bg-white/90 shadow-lg backdrop-blur">
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <Card className="border border-white/20 bg-white/95 shadow-xl shadow-primary/5 backdrop-blur-xl">
                   <CardContent className="p-6 sm:p-8">
                     <Form {...step3Form}>
                       <form className="space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {PLANS.map((plan) => (
                             <FormField key={plan.id} control={step3Form.control} name="selectedPlan" render={({ field }) => (
-                              <div
+                              <motion.div
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
                                 className={`relative rounded-xl border-2 p-5 cursor-pointer transition-all ${
                                   field.value === plan.id
-                                    ? 'border-primary bg-primary-light/50 shadow-md'
-                                    : 'border-border hover:border-primary/50'
+                                    ? 'border-primary bg-primary-light/50 shadow-md shadow-primary/10'
+                                    : 'border-border/60 hover:border-primary/40 bg-white/50'
                                 }`}
                                 onClick={() => field.onChange(plan.id)}
                               >
                                 {plan.isPopular && (
-                                  <div className="absolute -top-2.5 left-4 bg-primary text-white text-xs font-semibold px-3 py-0.5 rounded-full">
+                                  <div className="absolute -top-2.5 left-4 bg-gradient-to-r from-primary to-primary-hover text-white text-[11px] font-bold px-3 py-0.5 rounded-full shadow-sm">
                                     Popular
                                   </div>
                                 )}
@@ -411,11 +463,15 @@ export default function RegisterPage() {
                                   ))}
                                 </ul>
                                 {field.value === plan.id && (
-                                  <div className="absolute top-4 right-4 bg-primary text-white rounded-full p-1">
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="absolute top-4 right-4 bg-primary text-white rounded-full p-1 shadow-sm"
+                                  >
                                     <Check className="w-3 h-3" />
-                                  </div>
+                                  </motion.div>
                                 )}
-                              </div>
+                              </motion.div>
                             )} />
                           ))}
                         </div>
@@ -427,12 +483,17 @@ export default function RegisterPage() {
             )}
 
             {currentStep === 4 && (
-              <motion.div key="step4" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
-                <Card className="border-0 shadow-lg bg-gradient-to-br from-success/10 to-primary-light">
+              <motion.div
+                key="step4"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <Card className="border-0 shadow-2xl bg-gradient-to-br from-success/[0.08] to-primary-light/30 backdrop-blur-xl">
                   <CardContent className="p-8 sm:p-12 text-center">
-                    <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 0.6, repeat: 2 }}>
-                      <div className="w-16 h-16 bg-success rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Check className="w-8 h-8 text-white" />
+                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.6, repeat: 2 }}>
+                      <div className="w-16 h-16 bg-gradient-to-br from-success to-success/80 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-success/20">
+                        <Check className="w-8 h-8 text-white" strokeWidth={3} />
                       </div>
                     </motion.div>
                     <h2 className="text-2xl sm:text-3xl font-bold mb-2">
@@ -441,12 +502,12 @@ export default function RegisterPage() {
                     <p className="text-muted-foreground mb-8">
                       {formData.step2.restaurantName} is all set up and ready to go.
                     </p>
-                    <div className="space-y-2 text-sm text-muted-foreground mb-8">
-                      <p>Account created successfully</p>
-                      <p>Restaurant profile set up</p>
-                      <p>Plan selected</p>
+                    <div className="inline-flex flex-col gap-1.5 text-sm text-muted-foreground mb-8 bg-white/60 rounded-lg px-5 py-3 border border-border/30">
+                      <span className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> Account created</span>
+                      <span className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> Restaurant profile set up</span>
+                      <span className="flex items-center gap-2"><Check className="w-4 h-4 text-success" /> Plan selected</span>
                     </div>
-                    <Button onClick={goToDashboard} className="w-full sm:w-auto bg-success hover:bg-success/90 text-white font-medium h-11 px-8">
+                    <Button onClick={goToDashboard} className="w-full sm:w-auto bg-gradient-to-r from-success to-success/90 hover:from-success/90 hover:to-success/80 text-white font-semibold h-11 px-8 shadow-md shadow-success/20">
                       Go to Dashboard
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
@@ -458,16 +519,31 @@ export default function RegisterPage() {
 
           {/* Navigation Buttons */}
           {currentStep < 4 && (
-            <div className="flex gap-3 mt-6">
-              <Button variant="outline" onClick={handlePreviousStep} disabled={isLoading} className="flex-1 h-11">
+            <motion.div
+              key={`nav-${currentStep}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="flex gap-3 mt-6"
+            >
+              <Button variant="outline" onClick={handlePreviousStep} disabled={isLoading} className="flex-1 h-11 border-border/60 font-medium">
                 <ChevronLeft className="w-4 h-4 mr-2" />
-                Back
+                {currentStep === 1 ? 'Cancel' : 'Back'}
               </Button>
-              <Button onClick={handleNextStep} disabled={isLoading} className="flex-1 h-11 bg-primary hover:bg-primary-hover text-white">
-                {currentStep === 3 ? 'Create Account' : 'Continue'}
-                <ChevronRight className="w-4 h-4 ml-2" />
+              <Button onClick={handleNextStep} disabled={isLoading} className="flex-1 h-11 bg-primary hover:bg-primary-hover text-white font-semibold shadow-md shadow-primary/20">
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    Processing...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    {currentStep === 3 ? 'Create Account' : 'Continue'}
+                    <ChevronRight className="w-4 h-4" />
+                  </span>
+                )}
               </Button>
-            </div>
+            </motion.div>
           )}
 
           {currentStep < 4 && (

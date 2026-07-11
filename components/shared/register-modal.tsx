@@ -6,11 +6,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Check, ArrowRight, UtensilsCrossed } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, ArrowRight, UtensilsCrossed, Smartphone, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -90,6 +92,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
     step3: {},
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [usePersonalPhone, setUsePersonalPhone] = useState(false);
 
   const step1Form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
@@ -112,8 +115,19 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
     return () => document.removeEventListener('open-register', handler as EventListener);
   }, [onOpenChange]);
 
+  const handleUsePersonalPhone = (checked: boolean) => {
+    setUsePersonalPhone(checked);
+    if (checked) {
+      const personalPhone = step1Form.getValues('phone');
+      step2Form.setValue('restaurantPhone', personalPhone);
+    } else {
+      step2Form.setValue('restaurantPhone', '');
+    }
+  };
+
   const resetAndClose = () => {
     setCurrentStep(1);
+    setUsePersonalPhone(false);
     setFormData({ step1: {}, step2: {}, step3: {} });
     onOpenChange(false);
   };
@@ -341,13 +355,25 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
                         <FormMessage />
                       </FormItem>
                     )} />
-                    <FormField control={step2Form.control} name="restaurantPhone" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Restaurant Phone</FormLabel>
-                        <FormControl><Input placeholder="98XXXXXXXXX" className="h-11 border-border/70 bg-muted/30 focus:bg-white transition-colors mt-1.5" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/[0.04] px-3 py-2.5 cursor-pointer hover:bg-primary/[0.08] transition-colors mt-1.5" onClick={() => handleUsePersonalPhone(!usePersonalPhone)}>
+                        <Checkbox id="usePersonalPhone" checked={usePersonalPhone} onCheckedChange={(val) => handleUsePersonalPhone(val === true)} />
+                        <Label htmlFor="usePersonalPhone" className="text-sm font-medium cursor-pointer flex items-center gap-2">
+                          <Smartphone className="w-3.5 h-3.5 text-primary" />
+                          Use my personal number as restaurant phone
+                        </Label>
+                      </div>
+                      <FormField control={step2Form.control} name="restaurantPhone" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            <Building2 className="w-3.5 h-3.5" />
+                            Restaurant Phone
+                          </FormLabel>
+                          <FormControl><Input placeholder="98XXXXXXXXX" className="h-11 border-border/70 bg-muted/30 focus:bg-white transition-colors mt-1.5" disabled={usePersonalPhone} {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
                   </form>
                 </Form>
               </motion.div>

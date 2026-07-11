@@ -27,6 +27,7 @@ model User {
   restaurant    Restaurant?     @relation(fields: [restaurantId], references: [id])
   notifications Notification[]
 
+  @@index([restaurantId])
   @@map("users")
 }
 
@@ -139,6 +140,8 @@ model Subscription {
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   plan       Plan       @relation(fields: [planId], references: [id])
 
+  @@index([restaurantId])
+  @@index([planId])
   @@map("subscriptions")
 }
 
@@ -163,6 +166,7 @@ model Staff {
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   shifts     Shift[]
 
+  @@index([restaurantId])
   @@map("staff")
 }
 
@@ -209,6 +213,7 @@ model Category {
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   menuItems MenuItem[]
 
+  @@index([restaurantId])
   @@map("categories")
 }
 
@@ -243,6 +248,8 @@ model MenuItem {
   addOns      AddOn[]
   orderItems  OrderItem[]
 
+  @@index([restaurantId, isAvailable])
+  @@index([categoryId])
   @@map("menu_items")
 }
 
@@ -256,6 +263,7 @@ model AddOn {
 
   menuItem MenuItem @relation(fields: [menuItemId], references: [id])
 
+  @@index([menuItemId])
   @@map("add_ons")
 }
 
@@ -289,6 +297,9 @@ model Order {
   bills       Bill[]
 
   @@unique([restaurantId, orderId])
+  @@index([restaurantId, createdAt])
+  @@index([restaurantId, status])
+  @@index([tableId, status])
   @@map("orders")
 }
 
@@ -311,6 +322,8 @@ model OrderItem {
   order    Order    @relation(fields: [orderId], references: [id])
   menuItem MenuItem @relation(fields: [menuItemId], references: [id])
 
+  @@index([orderId])
+  @@index([menuItemId])
   @@map("order_items")
 }
 
@@ -334,6 +347,7 @@ model InventoryItem {
   restaurant     Restaurant          @relation(fields: [restaurantId], references: [id])
   historyEntries InventoryHistory[]
 
+  @@index([restaurantId])
   @@map("inventory_items")
 }
 
@@ -348,6 +362,7 @@ model InventoryHistory {
 
   item InventoryItem @relation(fields: [inventoryItemId], references: [id])
 
+  @@index([inventoryItemId])
   @@map("inventory_history")
 }
 
@@ -381,6 +396,10 @@ model Bill {
   payments   Payment[]
 
   @@unique([restaurantId, billNumber])
+  @@index([restaurantId, status])
+  @@index([restaurantId, billDate])
+  @@index([restaurantId, createdAt])
+  @@index([orderId])
   @@map("bills")
 }
 
@@ -402,6 +421,8 @@ model Notification {
   user       User       @relation(fields: [recipientUserId], references: [id])
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
 
+  @@index([recipientUserId, isRead])
+  @@index([restaurantId, createdAt])
   @@map("notifications")
 }
 
@@ -421,6 +442,7 @@ model ActivityLog {
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
 
+  @@index([restaurantId, createdAt])
   @@map("activity_logs")
 }
 
@@ -438,6 +460,7 @@ model KpiCard {
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
 
+  @@index([restaurantId])
   @@map("kpi_cards")
 }
 
@@ -459,6 +482,8 @@ model Shift {
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   staff      Staff      @relation(fields: [staffId], references: [id])
 
+  @@index([restaurantId, status])
+  @@index([staffId, status])
   @@map("shifts")
 }
 
@@ -474,6 +499,8 @@ model Payment {
 
   bill Bill @relation(fields: [billId], references: [id])
 
+  @@index([billId])
+  @@index([createdAt])
   @@map("payments")
 }
 
@@ -491,6 +518,7 @@ model TaxRate {
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
 
+  @@index([restaurantId])
   @@map("tax_rates")
 }
 
@@ -511,6 +539,8 @@ model Reservation {
   restaurant Restaurant      @relation(fields: [restaurantId], references: [id])
   table      RestaurantTable? @relation(fields: [tableId], references: [id])
 
+  @@index([restaurantId, reservedFor])
+  @@index([tableId])
   @@map("reservations")
 }
 
@@ -529,6 +559,7 @@ model WaitlistEntry {
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
 
+  @@index([restaurantId, status])
   @@map("waitlist_entries")
 }
 
@@ -582,6 +613,7 @@ model CorporateAccount {
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
 
+  @@index([restaurantId])
   @@map("corporate_accounts")
 }
 
