@@ -128,7 +128,7 @@ const Sidebar = memo(function Sidebar() {
                     : 'Account'}
                 </p>
                 <p className="text-[11px] text-white/40 truncate">
-                  {user?.role || 'Owner'}
+                  {user?.role === 'RESTAURANT_OWNER' ? 'Owner' : user?.role || 'Owner'}
                 </p>
               </div>
               <Tooltip>
