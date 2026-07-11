@@ -10,20 +10,23 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/format';
 import { getRestaurantFullDetail } from '@/lib/actions/admin';
+import { ComingSoon } from '@/components/superadmin/coming-soon';
+import { ADMIN_TONE_CLASSES } from '@/lib/constants';
+import { AdminPageSkeleton } from '@/components/superadmin/skeletons';
 
 const StatusBadge = ({ status }: { status: string }) => {
   const colors: Record<string, string> = {
-    ACTIVE: 'bg-primary/10 text-primary border-primary/30',
-    COMPLETED: 'bg-primary/10 text-primary border-primary/30',
-    PENDING: 'bg-accent/10 text-accent border-accent/30',
-    CANCELLED: 'bg-destructive/10 text-destructive border-destructive/30',
-    PAID: 'bg-primary/10 text-primary border-primary/30',
-    FAILED: 'bg-destructive/10 text-destructive border-destructive/30',
-    AVAILABLE: 'bg-primary/10 text-primary border-primary/30',
-    OCCUPIED: 'bg-accent/10 text-accent border-accent/30',
-    RESERVED: 'bg-info/10 text-info border-info/30',
-    true: 'bg-primary/10 text-primary border-primary/30',
-    false: 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30',
+    ACTIVE: ADMIN_TONE_CLASSES.positive,
+    COMPLETED: ADMIN_TONE_CLASSES.positive,
+    PENDING: ADMIN_TONE_CLASSES.warning,
+    CANCELLED: ADMIN_TONE_CLASSES.negative,
+    PAID: ADMIN_TONE_CLASSES.positive,
+    FAILED: ADMIN_TONE_CLASSES.negative,
+    AVAILABLE: ADMIN_TONE_CLASSES.positive,
+    OCCUPIED: ADMIN_TONE_CLASSES.warning,
+    RESERVED: ADMIN_TONE_CLASSES.info,
+    true: ADMIN_TONE_CLASSES.positive,
+    false: ADMIN_TONE_CLASSES.neutral,
   };
   return <Badge className={`border text-[10px] capitalize ${colors[status] || colors.pending}`}>{status.toLowerCase()}</Badge>;
 };
@@ -307,7 +310,7 @@ export default function RestaurantDetail() {
         <TabsContent value="documents" className="mt-4">
           <Card className="bg-card border-border shadow-sm">
             <CardContent className="p-6">
-              <div className="text-center py-12 text-muted-foreground text-sm">No documents available</div>
+              <ComingSoon message="Document upload, PAN/VAT certificates, licences, and compliance paperwork for this restaurant." />
             </CardContent>
           </Card>
         </TabsContent>

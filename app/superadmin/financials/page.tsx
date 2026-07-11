@@ -13,11 +13,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/format';
 import { getFinancialData } from '@/lib/actions/admin';
+import { ADMIN_TONE_CLASSES } from '@/lib/constants';
+import { AdminPageSkeleton } from '@/components/superadmin/skeletons';
+import { downloadCsv } from '@/lib/superadmin-export';
 
 const ArStatusBadge = ({ status }: { status: string }) => {
   const colors: Record<string, string> = {
-    SETTLED: 'bg-primary/10 text-primary border-primary/30',
-    PENDING: 'bg-accent/10 text-accent border-accent/30',
+    SETTLED: ADMIN_TONE_CLASSES.positive,
+    PENDING: ADMIN_TONE_CLASSES.warning,
   };
   return <Badge className={`border capitalize ${colors[status] || ''}`}>{status.toLowerCase()}</Badge>;
 };
@@ -29,6 +32,19 @@ export default function AdminFinancials() {
     getFinancialData().then(setData);
   }, []);
 
+  const handleDownload = () => {
+    if (!data) return;
+    downloadCsv('financial-report', [
+      ['Metric', 'Value'],
+      ['Total Revenue', data.totalRevenue],
+      ['Total Orders', data.totalOrders],
+      ['Average Order Value', Math.round(data.avgOrderValue)],
+      ['Average Items Per Order', data.avgItemsPerOrder],
+      ...data.revenueByPayment.map((r: any) => [`Revenue — ${r.method}`, r.amount]),
+      ...data.billsByStatus.map((b: any) => [`Bills — ${b.status}`, b.amount]),
+    ]);
+  };
+
   if (!data) {
     return (
       <div className="space-y-6 animate-fade-in">
@@ -37,11 +53,11 @@ export default function AdminFinancials() {
             <h1 className="text-2xl font-bold text-foreground tracking-tight">Financial Management</h1>
             <p className="text-sm text-muted-foreground mt-1">Revenue, payment gateways, AR aging & unit economics</p>
           </div>
-          <Button variant="outline" size="sm" className="border-border text-primary hover:bg-primary/10">
+          <Button variant="outline" size="sm" disabled className="border-border text-primary hover:bg-primary/10">
             <Wallet className="h-4 w-4 mr-1.5" /> Download Report
           </Button>
         </div>
-        <div className="text-center py-12 text-muted-foreground text-sm">Loading...</div>
+        <AdminPageSkeleton />
       </div>
     );
   }
@@ -57,7 +73,7 @@ export default function AdminFinancials() {
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Financial Management</h1>
           <p className="text-sm text-muted-foreground mt-1">Revenue, payment gateways, AR aging & unit economics</p>
         </div>
-        <Button variant="outline" size="sm" className="border-border text-primary hover:bg-primary/10">
+        <Button variant="outline" size="sm" onClick={handleDownload} className="border-border text-primary hover:bg-primary/10">
           <Wallet className="h-4 w-4 mr-1.5" /> Download Report
         </Button>
       </div>

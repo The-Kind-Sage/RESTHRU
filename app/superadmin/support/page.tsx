@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useTransition } from 'react';
 import {
   Search, Send, ChevronDown, Megaphone, BookOpen, Building2, ShoppingCart, Bell,
 } from 'lucide-react';
@@ -12,17 +12,47 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { formatNumber, formatRelativeTime, formatDate } from '@/lib/format';
-import { getSupportQuickStats, getRecentNotifications } from '@/lib/actions/admin';
+import { getSupportQuickStats, getRecentNotifications, sendMassCommunication } from '@/lib/actions/admin';
+import { ComingSoon } from '@/components/superadmin/coming-soon';
+import { toast } from 'sonner';
 
 export default function SupportCenter() {
   const [search, setSearch] = useState('');
   const [stats, setStats] = useState<any>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [audience, setAudience] = useState('all');
+  const [audienceValue, setAudienceValue] = useState('');
+  const [channel, setChannel] = useState('email');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [sending, startSend] = useTransition();
 
   useEffect(() => {
     getSupportQuickStats().then(setStats);
     getRecentNotifications().then(setNotifications);
   }, []);
+
+  const handleSend = () => {
+    if (!subject.trim() || !message.trim()) {
+      toast.error('Subject and message are required');
+      return;
+    }
+    startSend(async () => {
+      const res = await sendMassCommunication({
+        audience: audience as 'all' | 'plan' | 'city',
+        audienceValue: audienceValue || undefined,
+        subject: subject.trim(),
+        message: message.trim(),
+      });
+      if (res.error) {
+        toast.error(res.error);
+      } else {
+        toast.success(`Message sent to ${res.data?.restaurantCount || 0} restaurant(s) (${res.data?.recipientCount || 0} recipients)`);
+        setSubject('');
+        setMessage('');
+      }
+    });
+  };
 
   const filteredTickets = notifications.filter((n) =>
     !search || n.title.toLowerCase().includes(search.toLowerCase()) || n.message.toLowerCase().includes(search.toLowerCase())
@@ -151,7 +181,7 @@ export default function SupportCenter() {
               <BookOpen className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground text-sm">No articles available</div>
+              <ComingSoon message="Help articles, FAQs, and onboarding guides for restaurant owners and their staff." />
             </CardContent>
           </Card>
 
@@ -163,7 +193,7 @@ export default function SupportCenter() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <label className="text-xs text-muted-foreground">Audience</label>
-                <Select defaultValue="all">
+                <Select value={audience} onValueChange={(v) => { setAudience(v); setAudienceValue(''); }}>
                   <SelectTrigger className="w-full bg-muted border-border text-foreground h-9 text-sm">
                     <SelectValue placeholder="Select audience" />
                   </SelectTrigger>
@@ -173,10 +203,18 @@ export default function SupportCenter() {
                     <SelectItem value="city" className="text-foreground">By City</SelectItem>
                   </SelectContent>
                 </Select>
+                {audience !== 'all' && (
+                  <Input
+                    value={audienceValue}
+                    onChange={(e) => setAudienceValue(e.target.value)}
+                    placeholder={audience === 'plan' ? 'e.g. Pro, Basic...' : 'e.g. Kathmandu...'}
+                    className="mt-2 bg-muted border-border text-foreground placeholder:text-muted-foreground text-sm h-9"
+                  />
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-xs text-muted-foreground">Channel</label>
-                <Select defaultValue="email">
+                <Select value={channel} onValueChange={setChannel}>
                   <SelectTrigger className="w-full bg-muted border-border text-foreground h-9 text-sm">
                     <SelectValue placeholder="Select channel" />
                   </SelectTrigger>
@@ -192,6 +230,8 @@ export default function SupportCenter() {
                 <label className="text-xs text-muted-foreground">Subject</label>
                 <Input
                   placeholder="Message subject..."
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
                   className="bg-muted border-border text-foreground placeholder:text-muted-foreground text-sm h-9"
                 />
               </div>
@@ -199,12 +239,14 @@ export default function SupportCenter() {
                 <label className="text-xs text-muted-foreground">Message</label>
                 <textarea
                   placeholder="Type your message..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                   rows={4}
                   className="w-full rounded-md bg-muted border border-border text-foreground placeholder:text-muted-foreground text-sm px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
                 />
               </div>
-              <Button className="w-full bg-primary hover:bg-[hsl(var(--primary-hover))] text-white text-sm h-9">
-                <Send className="h-4 w-4 mr-1.5" /> Send Message
+              <Button className="w-full bg-primary hover:bg-[hsl(var(--primary-hover))] text-white text-sm h-9" disabled={sending} onClick={handleSend}>
+                <Send className="h-4 w-4 mr-1.5" /> {sending ? 'Sending…' : 'Send Message'}
               </Button>
             </CardContent>
           </Card>

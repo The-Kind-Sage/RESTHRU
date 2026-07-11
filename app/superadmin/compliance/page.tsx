@@ -14,12 +14,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatNumber } from '@/lib/format';
 import { getComplianceData } from '@/lib/actions/admin';
+import { ADMIN_TONE_CLASSES } from '@/lib/constants';
+import { SectionSkeleton, KpiSkeleton } from '@/components/superadmin/skeletons';
+import { ComingSoon } from '@/components/superadmin/coming-soon';
 
 const StatusBadge = ({ status }: { status: string }) => {
   const colors: Record<string, string> = {
-    Compliant: 'bg-primary/10 text-primary border-primary/30',
-    'Action Required': 'bg-accent/10 text-accent border-accent/30',
-    'Non-Compliant': 'bg-destructive/10 text-destructive border-destructive/30',
+    Compliant: ADMIN_TONE_CLASSES.positive,
+    'Action Required': ADMIN_TONE_CLASSES.warning,
+    'Non-Compliant': ADMIN_TONE_CLASSES.negative,
   };
   return <Badge className={`border text-[10px] ${colors[status] || ''}`}>{status}</Badge>;
 };
@@ -52,11 +55,7 @@ export default function AdminCompliance() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {!data ? (
-          <Card className="bg-card border-border shadow-sm col-span-full">
-            <CardContent>
-              <div className="text-center py-12 text-muted-foreground text-sm">No compliance data available</div>
-            </CardContent>
-          </Card>
+          <div className="col-span-full"><KpiSkeleton count={3} /></div>
         ) : (
           <>
             <Card className="bg-card border-border shadow-sm">
@@ -89,7 +88,9 @@ export default function AdminCompliance() {
           </div>
         </CardHeader>
         <CardContent>
-          {!data || data.restaurants.length === 0 ? (
+          {!data ? (
+            <SectionSkeleton rows={4} />
+          ) : data.restaurants.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground text-sm">No PAN/VAT data</div>
           ) : (
             <div className="space-y-2">
@@ -115,7 +116,7 @@ export default function AdminCompliance() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No documents</div>
+          <ComingSoon message="Centralised document upload, expiry tracking, and PAN/VAT certificate management for every restaurant." />
         </CardContent>
       </Card>
 
@@ -127,7 +128,7 @@ export default function AdminCompliance() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No fraud data</div>
+          <ComingSoon message="Anomaly detection on order patterns, duplicate billing, and suspicious activity across the platform." />
         </CardContent>
       </Card>
 
@@ -139,7 +140,7 @@ export default function AdminCompliance() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No export requests</div>
+          <ComingSoon message="GDPR/IRD data export request queue with automated fulfilment, audit log, and download portal." />
         </CardContent>
       </Card>
     </div>

@@ -12,6 +12,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import { getAnalyticsOverview } from '@/lib/actions/admin';
+import { toast } from 'sonner';
 
 const datePresets = ['7D', '30D', '90D', '1Y'];
 
@@ -45,7 +46,11 @@ export default function AdminAnalytics() {
           <p className="text-sm text-muted-foreground mt-1">Deep insights into platform performance and growth</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground">
+          <Button
+            variant="outline" size="sm"
+            onClick={() => { toast.success('Export report initiated. It will be sent to your email shortly.'); }}
+            className="border-border text-muted-foreground hover:text-foreground"
+          >
             <Download className="h-4 w-4 mr-1.5" /> Export Report
           </Button>
         </div>

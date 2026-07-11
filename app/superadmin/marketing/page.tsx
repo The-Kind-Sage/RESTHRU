@@ -8,9 +8,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatNumber } from '@/lib/format';
 import { getPlatformStats, getAllRestaurants } from '@/lib/actions/admin';
+import { ComingSoon } from '@/components/superadmin/coming-soon';
 
 const statusColor = (status: string) => {
   const colors: Record<string, string> = {
@@ -80,28 +81,70 @@ export default function AdminMarketing() {
           {!stats ? (
             <div className="text-center py-12 text-muted-foreground text-sm">No CMS data available</div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
-                <Building2 className="h-5 w-5 text-primary mx-auto mb-2" />
-                <p className="text-lg font-bold text-foreground">{formatNumber(stats.totalRestaurants)}</p>
-                <p className="text-xs text-muted-foreground">Restaurants</p>
-              </div>
-              <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
-                <UtensilsCrossed className="h-5 w-5 text-accent mx-auto mb-2" />
-                <p className="text-lg font-bold text-foreground">{formatNumber(stats.totalMenuItems)}</p>
-                <p className="text-xs text-muted-foreground">Menu Items</p>
-              </div>
-              <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
-                <Globe className="h-5 w-5 text-info mx-auto mb-2" />
-                <p className="text-lg font-bold text-foreground">{formatNumber(cities.length)}</p>
-                <p className="text-xs text-muted-foreground">Cities</p>
-              </div>
-              <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
-                <MapPin className="h-5 w-5 text-primary mx-auto mb-2" />
-                <p className="text-lg font-bold text-foreground">{formatNumber(countries.length)}</p>
-                <p className="text-xs text-muted-foreground">Countries</p>
-              </div>
-            </div>
+            <Tabs value={cmsTab} className="w-full">
+              <TabsContent value="all" className="mt-0">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
+                    <Building2 className="h-5 w-5 text-primary mx-auto mb-2" />
+                    <p className="text-lg font-bold text-foreground">{formatNumber(stats.totalRestaurants)}</p>
+                    <p className="text-xs text-muted-foreground">Restaurants</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
+                    <UtensilsCrossed className="h-5 w-5 text-accent mx-auto mb-2" />
+                    <p className="text-lg font-bold text-foreground">{formatNumber(stats.totalMenuItems)}</p>
+                    <p className="text-xs text-muted-foreground">Menu Items</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
+                    <Globe className="h-5 w-5 text-info mx-auto mb-2" />
+                    <p className="text-lg font-bold text-foreground">{formatNumber(cities.length)}</p>
+                    <p className="text-xs text-muted-foreground">Cities</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
+                    <MapPin className="h-5 w-5 text-primary mx-auto mb-2" />
+                    <p className="text-lg font-bold text-foreground">{formatNumber(countries.length)}</p>
+                    <p className="text-xs text-muted-foreground">Countries</p>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="published" className="mt-0">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
+                    <Building2 className="h-5 w-5 text-primary mx-auto mb-2" />
+                    <p className="text-lg font-bold text-foreground">{formatNumber(stats.totalRestaurants)}</p>
+                    <p className="text-xs text-muted-foreground">Active Restaurants</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
+                    <UtensilsCrossed className="h-5 w-5 text-accent mx-auto mb-2" />
+                    <p className="text-lg font-bold text-foreground">{formatNumber(stats.totalMenuItems)}</p>
+                    <p className="text-xs text-muted-foreground">Published Menu Items</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
+                    <FileText className="h-5 w-5 text-info mx-auto mb-2" />
+                    <p className="text-lg font-bold text-foreground">{formatNumber(stats.totalOrders)}</p>
+                    <p className="text-xs text-muted-foreground">Orders Placed</p>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="draft" className="mt-0">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
+                    <Globe className="h-5 w-5 text-info mx-auto mb-2" />
+                    <p className="text-lg font-bold text-foreground">{formatNumber(cities.length)}</p>
+                    <p className="text-xs text-muted-foreground">Active Cities</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
+                    <MapPin className="h-5 w-5 text-primary mx-auto mb-2" />
+                    <p className="text-lg font-bold text-foreground">{formatNumber(countries.length)}</p>
+                    <p className="text-xs text-muted-foreground">Countries</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border text-center">
+                    <Building2 className="h-5 w-5 text-primary mx-auto mb-2" />
+                    <p className="text-lg font-bold text-foreground">{formatNumber(restaurants.length)}</p>
+                    <p className="text-xs text-muted-foreground">Total Restaurants</p>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           )}
         </CardContent>
       </Card>
@@ -179,7 +222,7 @@ export default function AdminMarketing() {
               <p className="text-xs text-muted-foreground mt-0.5">Conversion experiments and results</p>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12 text-muted-foreground text-sm">No A/B test data</div>
+              <ComingSoon message="Test landing-page variants, pricing page layouts, and onboarding copy against restaurant sign-up conversion rates." />
             </CardContent>
           </Card>
 

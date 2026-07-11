@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   AlertTriangle, X, Plus, Edit2, Clock, Search,
-  TrendingUp, TrendingDown, AlertCircle,
+  TrendingUp, TrendingDown, AlertCircle, Check,
 } from 'lucide-react';
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
@@ -26,13 +26,15 @@ import {
 import { toast } from 'sonner';
 import { formatRelativeTime } from '@/lib/format';
 import { useAuthStore } from '@/store/auth-store';
-import { getInventoryItems, addInventoryItem } from '@/lib/actions/inventory';
+import {
+  getInventoryItems, addInventoryItem,
+  updateInventoryStock, addStock, recordUsage, getInventoryHistory,
+} from '@/lib/actions/inventory';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from 'recharts';
-
-const stockHistoryData: { day: string; stock: number }[] = [];
+import { Skeleton } from '@/components/ui/skeleton';
 
 const statusColors: { [key: string]: string } = {
   Healthy:        'bg-primary-light text-primary',
@@ -57,12 +59,80 @@ function getItemStatus(currentStock: number, minThreshold: number): string {
   return 'Healthy';
 }
 
-function StockHistoryDialog({ item }: { item: InventoryItem }) {
+type HistoryEntry = {
+  id: string;
+  movementType: string;
+  quantity: number;
+  reason: string | null;
+  createdAt: string | Date;
+};
+
+function StockHistoryDialog({ item, onStockChanged }: {
+  item: InventoryItem;
+  onStockChanged: (id: string, newStock: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
   const [showAddStock, setShowAddStock] = useState(false);
   const [showRecordUsage, setShowRecordUsage] = useState(false);
+  const [addQty, setAddQty] = useState('');
+  const [addNotes, setAddNotes] = useState('');
+  const [usageQty, setUsageQty] = useState('');
+  const [usageNotes, setUsageNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+  const [trend, setTrend] = useState<{ day: string; stock: number }[]>([]);
+
+  const loadHistory = async () => {
+    setIsLoadingHistory(true);
+    setHistoryError(null);
+    const result = await getInventoryHistory(item.id);
+    setIsLoadingHistory(false);
+    if (result.error) { setHistoryError(result.error); return; }
+    if (result.data) {
+      setEntries(result.data.entries);
+      setTrend(result.data.trend);
+    }
+  };
+
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (next) loadHistory();
+  };
+
+  const handleAddStock = async () => {
+    const qty = parseFloat(addQty);
+    if (!qty || qty <= 0) { toast.error('Enter a quantity greater than 0'); return; }
+    setIsSubmitting(true);
+    const result = await addStock(item.id, qty, addNotes || undefined);
+    setIsSubmitting(false);
+    if (result.error) { toast.error(result.error); return; }
+    if (result.data) {
+      onStockChanged(item.id, result.data.currentQuantity);
+      toast.success(`Added ${qty} ${item.unit}`);
+      setAddQty(''); setAddNotes(''); setShowAddStock(false);
+      loadHistory();
+    }
+  };
+
+  const handleRecordUsage = async () => {
+    const qty = parseFloat(usageQty);
+    if (!qty || qty <= 0) { toast.error('Enter a quantity greater than 0'); return; }
+    setIsSubmitting(true);
+    const result = await recordUsage(item.id, qty, usageNotes || undefined);
+    setIsSubmitting(false);
+    if (result.error) { toast.error(result.error); return; }
+    if (result.data) {
+      onStockChanged(item.id, result.data.currentQuantity);
+      toast.success(`Recorded usage of ${qty} ${item.unit}`);
+      setUsageQty(''); setUsageNotes(''); setShowRecordUsage(false);
+      loadHistory();
+    }
+  };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
           size="icon"
@@ -76,7 +146,7 @@ function StockHistoryDialog({ item }: { item: InventoryItem }) {
         <DialogHeader>
           <DialogTitle>Stock History - {item.name}</DialogTitle>
           <DialogDescription>
-            View stock movements and trends over the last 7 days
+            View stock movements and trends for this item
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -84,7 +154,7 @@ function StockHistoryDialog({ item }: { item: InventoryItem }) {
             <Button
               size="sm"
               className="bg-primary hover:bg-primary-hover"
-              onClick={() => setShowAddStock(!showAddStock)}
+              onClick={() => { setShowAddStock(!showAddStock); setShowRecordUsage(false); }}
             >
               <TrendingUp className="h-4 w-4 mr-2" />
               Add Stock
@@ -92,7 +162,7 @@ function StockHistoryDialog({ item }: { item: InventoryItem }) {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => setShowRecordUsage(!showRecordUsage)}
+              onClick={() => { setShowRecordUsage(!showRecordUsage); setShowAddStock(false); }}
             >
               <TrendingDown className="h-4 w-4 mr-2" />
               Record Usage
@@ -105,17 +175,17 @@ function StockHistoryDialog({ item }: { item: InventoryItem }) {
                 <label className="block text-sm font-medium mb-1">
                   Quantity to Add ({item.unit})
                 </label>
-                <Input type="number" placeholder="0" min="0" />
+                <Input type="number" placeholder="0" min="0" value={addQty} onChange={e => setAddQty(e.target.value)} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Notes
                 </label>
-                <Input placeholder="Add notes..." />
+                <Input placeholder="Add notes..." value={addNotes} onChange={e => setAddNotes(e.target.value)} />
               </div>
               <div className="flex gap-2">
-                <Button size="sm" className="bg-primary">
-                  Add Stock
+                <Button size="sm" className="bg-primary" onClick={handleAddStock} disabled={isSubmitting}>
+                  {isSubmitting ? 'Adding...' : 'Add Stock'}
                 </Button>
                 <Button
                   size="sm"
@@ -134,17 +204,17 @@ function StockHistoryDialog({ item }: { item: InventoryItem }) {
                 <label className="block text-sm font-medium mb-1">
                   Quantity Used ({item.unit})
                 </label>
-                <Input type="number" placeholder="0" min="0" />
+                <Input type="number" placeholder="0" min="0" value={usageQty} onChange={e => setUsageQty(e.target.value)} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Notes
                 </label>
-                <Input placeholder="Add notes..." />
+                <Input placeholder="Add notes..." value={usageNotes} onChange={e => setUsageNotes(e.target.value)} />
               </div>
               <div className="flex gap-2">
-                <Button size="sm" className="bg-accent hover:bg-accent">
-                  Record Usage
+                <Button size="sm" className="bg-accent hover:bg-accent" onClick={handleRecordUsage} disabled={isSubmitting}>
+                  {isSubmitting ? 'Recording...' : 'Record Usage'}
                 </Button>
                 <Button
                   size="sm"
@@ -159,54 +229,59 @@ function StockHistoryDialog({ item }: { item: InventoryItem }) {
 
           <div className="space-y-3">
             <p className="font-medium text-sm">Recent Movements</p>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              <div className="flex items-center justify-between text-sm p-3 border rounded-lg">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-success" />
-                  <div>
-                    <p className="font-medium">Added 5 kg</p>
-                    <p className="text-xs text-muted-foreground">2 hours ago</p>
-                  </div>
-                </div>
+            {isLoadingHistory ? (
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
               </div>
-              <div className="flex items-center justify-between text-sm p-3 border rounded-lg">
-                <div className="flex items-center gap-2">
-                  <TrendingDown className="h-4 w-4 text-destructive" />
-                  <div>
-                    <p className="font-medium">Used 2 kg</p>
-                    <p className="text-xs text-muted-foreground">5 hours ago</p>
+            ) : historyError ? (
+              <p className="text-sm text-destructive py-4">{historyError}</p>
+            ) : entries.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">No movements recorded yet for this item.</p>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {entries.map(e => (
+                  <div key={e.id} className="flex items-center justify-between text-sm p-3 border rounded-lg">
+                    <div className="flex items-center gap-2">
+                      {e.movementType === 'USAGE'
+                        ? <TrendingDown className="h-4 w-4 text-destructive" />
+                        : <TrendingUp className="h-4 w-4 text-success" />}
+                      <div>
+                        <p className="font-medium">
+                          {e.movementType === 'USAGE' ? 'Used' : e.movementType === 'ADJUSTMENT' ? 'Adjusted' : 'Added'} {Math.abs(e.quantity)} {item.unit}
+                          {e.reason ? ` — ${e.reason}` : ''}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{formatRelativeTime(new Date(e.createdAt))}</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-              <div className="flex items-center justify-between text-sm p-3 border rounded-lg">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-success" />
-                  <div>
-                    <p className="font-medium">Added 10 kg</p>
-                    <p className="text-xs text-muted-foreground">Yesterday</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
           <div className="space-y-3">
             <p className="font-medium text-sm">Stock Level Trend</p>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={stockHistoryData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="stock"
-                  stroke="#3b82f6"
-                  dot={{ fill: '#3b82f6' }}
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {isLoadingHistory ? (
+              <Skeleton className="h-[250px] w-full rounded-lg" />
+            ) : trend.length <= 1 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">Not enough movement history yet to chart a trend.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={trend}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="day" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="stock"
+                    stroke="hsl(var(--primary))"
+                    dot={{ fill: 'hsl(var(--primary))' }}
+                    strokeWidth={2}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
       </DialogContent>
@@ -327,16 +402,48 @@ function AddInventoryDialog({ restaurantId, onAdded }: {
 }
 
 function EditableStockCell({
+  itemId,
   value,
   unit,
+  onSaved,
 }: {
+  itemId: string;
   value: number;
   unit: string;
+  onSaved: (newValue: number) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value.toString());
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
+  // Re-sync the edit buffer if the underlying value changes elsewhere
+  // (e.g. Add Stock / Record Usage in StockHistoryDialog) while not editing.
+  useEffect(() => {
+    if (!isEditing) setEditValue(value.toString());
+  }, [value, isEditing]);
+
+  const handleSave = async () => {
+    const parsed = parseFloat(editValue);
+    if (Number.isNaN(parsed) || parsed < 0) {
+      toast.error('Enter a valid, non-negative quantity');
+      return;
+    }
+    if (parsed === value) { setIsEditing(false); return; }
+    setIsSaving(true);
+    const result = await updateInventoryStock(itemId, parsed);
+    setIsSaving(false);
+    if (result.error) {
+      toast.error(result.error);
+      setEditValue(value.toString()); // revert — do not silently keep a stale/unsent value
+      return;
+    }
+    onSaved(parsed);
+    toast.success('Stock updated');
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditValue(value.toString());
     setIsEditing(false);
   };
 
@@ -347,18 +454,32 @@ function EditableStockCell({
           type="number"
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleCancel(); }}
           className="w-20"
           min="0"
           autoFocus
+          disabled={isSaving}
         />
         <span className="text-sm">{unit}</span>
         <Button
           size="icon"
           variant="ghost"
-          className="h-6 w-6"
+          className="h-6 w-6 text-success"
           onClick={handleSave}
+          disabled={isSaving}
+          title="Save"
         >
-          ✓
+          <Check className="h-4 w-4" />
+        </Button>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-6 w-6 text-destructive"
+          onClick={handleCancel}
+          disabled={isSaving}
+          title="Cancel"
+        >
+          <X className="h-4 w-4" />
         </Button>
       </div>
     );
@@ -368,6 +489,7 @@ function EditableStockCell({
     <div
       className="cursor-pointer hover:bg-muted/50 px-2 py-1 rounded transition"
       onClick={() => setIsEditing(true)}
+      title="Click to edit stock quantity"
     >
       {value} {unit}
     </div>
@@ -380,16 +502,17 @@ export default function InventoryPage() {
 
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [alertDismissed, setAlertDismissed] = useState(false);
 
-  // Load items from server action on mount
-  useEffect(() => {
+  const loadItems = useCallback(() => {
     if (!restaurantId) return;
     setIsLoading(true);
+    setLoadError(null);
     getInventoryItems(restaurantId).then(result => {
       setIsLoading(false);
-      if (result.error) { toast.error(result.error); return; }
+      if (result.error) { setLoadError(result.error); toast.error(result.error); return; }
       if (result.data) {
         setInventoryItems(result.data.map((i: any) => ({
           id:           i.id,
@@ -404,6 +527,9 @@ export default function InventoryPage() {
       }
     });
   }, [restaurantId]);
+
+  // Load items from server action on mount
+  useEffect(() => { loadItems(); }, [loadItems]);
 
   const totalItems     = inventoryItems.length;
   const lowStockItems  = inventoryItems.filter(i => i.status === 'Low').length;
@@ -500,7 +626,7 @@ export default function InventoryPage() {
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card className="border-l-4 border-l-amber-500">
+          <Card className="border-l-4 border-l-warning">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Low Stock
@@ -519,7 +645,7 @@ export default function InventoryPage() {
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card className="border-l-4 border-l-rose-500">
+          <Card className="border-l-4 border-l-destructive">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Out of Stock
@@ -538,7 +664,7 @@ export default function InventoryPage() {
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card className="border-l-4 border-l-emerald-500">
+          <Card className="border-l-4 border-l-success">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Healthy Stock
@@ -597,7 +723,23 @@ export default function InventoryPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredItems.length > 0 ? (
+                  {isLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        {Array.from({ length: 8 }).map((__, j) => (
+                          <TableCell key={j}><Skeleton className="h-5 w-full max-w-[120px]" /></TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : loadError ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8">
+                        <AlertCircle className="h-6 w-6 text-destructive mx-auto mb-2" />
+                        <p className="text-sm text-destructive mb-3">{loadError}</p>
+                        <Button size="sm" variant="outline" onClick={loadItems}>Retry</Button>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredItems.length > 0 ? (
                     filteredItems.map((item) => (
                       <TableRow key={item.id}>
                         <TableCell className="font-bold">
@@ -608,8 +750,14 @@ export default function InventoryPage() {
                         </TableCell>
                         <TableCell>
                           <EditableStockCell
+                            itemId={item.id}
                             value={item.currentStock}
                             unit={item.unit}
+                            onSaved={(newValue) => setInventoryItems(prev => prev.map(i =>
+                              i.id === item.id
+                                ? { ...i, currentStock: newValue, status: getItemStatus(newValue, i.minThreshold), lastUpdated: new Date() }
+                                : i
+                            ))}
                           />
                         </TableCell>
                         <TableCell className="text-sm">{item.unit}</TableCell>
@@ -633,16 +781,24 @@ export default function InventoryPage() {
                             >
                               <Edit2 className="h-4 w-4" />
                             </Button>
-                            <StockHistoryDialog item={item} />
+                            <StockHistoryDialog
+                              item={item}
+                              onStockChanged={(id, newStock) => setInventoryItems(prev => prev.map(i =>
+                                i.id === id
+                                  ? { ...i, currentStock: newStock, status: getItemStatus(newStock, i.minThreshold), lastUpdated: new Date() }
+                                  : i
+                              ))}
+                            />
                           </div>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-6">
+                      <TableCell colSpan={8} className="text-center py-10">
+                        <Search className="h-6 w-6 text-muted-foreground mx-auto mb-2 opacity-50" />
                         <p className="text-muted-foreground">
-                          No inventory items found
+                          {searchQuery ? 'No items match your search' : 'No inventory items yet — click "Add Item" to get started'}
                         </p>
                       </TableCell>
                     </TableRow>

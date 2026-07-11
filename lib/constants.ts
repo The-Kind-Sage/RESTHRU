@@ -235,6 +235,26 @@ export const ADMIN_TONE_CLASSES = {
 
 export type AdminTone = keyof typeof ADMIN_TONE_CLASSES;
 
+/**
+ * Shared badge-variant map for recurring status labels across superadmin pages.
+ * Every page used to re-declare its own `Record<string, string>` mapping
+ * "Compliant"/"Active"/"Published" etc. to the same three tone classes —
+ * now they all reference this one map.  Pages that need additional labels
+ * (e.g. "Running" → "positive") extend it locally.
+ */
+export const STATUS_BADGE_VARIANTS: Record<string, keyof typeof ADMIN_TONE_CLASSES> = {
+  Compliant: 'positive',
+  Active: 'positive',
+  Published: 'positive',
+  Running: 'positive',
+  Complete: 'info',
+  Analyzing: 'warning',
+  'Action Required': 'warning',
+  Pending: 'warning',
+  Draft: 'warning',
+  'Non-Compliant': 'negative',
+};
+
 // Dashboard routes that render without the authenticated shell (sidebar/header) — the single
 // source of truth so middleware.ts and app/dashboard/shell.tsx can't drift out of sync.
 export const DASHBOARD_AUTH_ROUTES = [

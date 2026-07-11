@@ -47,6 +47,7 @@ const activationBadgeColor = (status: string) => {
 
 export default function AdminPipeline() {
   const [data, setData] = useState<any>(null);
+  const [trialFilter, setTrialFilter] = useState('all');
 
   useEffect(() => {
     getPipelineData().then(setData);
@@ -74,6 +75,15 @@ export default function AdminPipeline() {
   const totalLeads = data.totalRestaurants;
   const activeTrials = data.subscriptions.filter((s: any) => s.status === "ACTIVE").length;
   const converted = data.subscriptions.filter((s: any) => s.status === "ACTIVE" && new Date(s.startDate) <= new Date()).length;
+
+  const filteredSubscriptions = data.subscriptions.filter((s: any) => {
+    if (trialFilter === 'all') return true;
+    const daysUntilEnd = (new Date(s.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    if (trialFilter === 'at-risk') return s.status === 'ACTIVE' && daysUntilEnd < 7 && daysUntilEnd >= 0;
+    if (trialFilter === 'expiring') return daysUntilEnd >= 0 && daysUntilEnd <= 30;
+    if (trialFilter === 'engaged') return s.status === 'ACTIVE';
+    return true;
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -156,7 +166,7 @@ export default function AdminPipeline() {
               <p className="text-xs text-muted-foreground mt-0.5">Active trials requiring attention</p>
             </div>
             <div className="flex items-center gap-2">
-              <Select defaultValue="all">
+              <Select value={trialFilter} onValueChange={setTrialFilter}>
                 <SelectTrigger className="w-[120px] bg-muted border-border text-foreground h-8 text-xs">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -170,8 +180,8 @@ export default function AdminPipeline() {
             </div>
           </CardHeader>
           <CardContent>
-            {data.subscriptions.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground text-sm">No trial data</div>
+            {filteredSubscriptions.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground text-sm">No trial data matching the current filter</div>
             ) : (
               <Table>
                 <TableHeader>
@@ -184,7 +194,7 @@ export default function AdminPipeline() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.subscriptions.map((s: any) => (
+                  {filteredSubscriptions.map((s: any) => (
                     <TableRow key={s.id}>
                       <TableCell className="text-foreground">{s.restaurant.name}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{s.plan.name}</TableCell>
@@ -224,7 +234,7 @@ export default function AdminPipeline() {
               {data.recentRestaurants.slice(0, 8).map((r: any) => {
                 const steps = [
                   { label: "Profile Setup", done: !!r.name },
-                  { label: "Menu Added", done: r._count.orders > 0 },
+                  { label: "Menu Added", done: r._count.menuItems > 0 },
                   { label: "Staff Added", done: r._count.users > 0 },
                   { label: "Active", done: r.isActive },
                 ];

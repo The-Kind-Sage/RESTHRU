@@ -22,6 +22,7 @@ import {
 } from 'recharts';
 import { formatCurrency, formatNumber, formatDate, formatRelativeTime, formatPercentage } from '@/lib/format';
 import { getSubscriptionsOverview, getFailedPayments } from '@/lib/actions/admin';
+import { getPromoCodes } from '@/lib/actions/promo-codes';
 
 function KpiCard({ card }: { card: { title: string; value: string; subtitle?: string; icon: React.ComponentType<{ className?: string; strokeWidth?: number }>; trend?: string; trendUp?: boolean } }) {
   const Icon = card.icon;
@@ -81,13 +82,17 @@ export default function AdminSubscriptions() {
   const [promoSearch, setPromoSearch] = useState('');
   const [data, setData] = useState<any>(null);
   const [failedPayments, setFailedPayments] = useState<any[]>([]);
+  const [promos, setPromos] = useState<any[]>([]);
 
   useEffect(() => {
     getSubscriptionsOverview().then(setData);
     getFailedPayments().then(setFailedPayments);
+    getPromoCodes().then(setPromos);
   }, []);
 
-  const filteredPromos = [];
+  const filteredPromos = promos.filter((p) =>
+    !promoSearch || p.code.toLowerCase().includes(promoSearch.toLowerCase()) || (p.description || '').toLowerCase().includes(promoSearch.toLowerCase())
+  );
 
   if (!data) {
     return (
@@ -334,7 +339,40 @@ export default function AdminSubscriptions() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No promo codes</div>
+          {filteredPromos.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">{promoSearch ? 'No promo codes match your search' : 'No promo codes yet. Create one to get started.'}</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Discount</TableHead>
+                  <TableHead>Usage</TableHead>
+                  <TableHead>Expires</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPromos.map((p: any) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-mono text-sm text-foreground font-medium">{p.code}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{p.description || '-'}</TableCell>
+                    <TableCell>
+                      <Badge className="border text-[10px] bg-primary/10 text-primary border-primary/30">
+                        {p.discountType === 'percentage' ? `${p.discountValue}%` : formatCurrency(p.discountValue)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {p.usageCount || 0}{p.usageLimit ? ` / ${p.usageLimit}` : ''}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {p.expiresAt ? formatDate(p.expiresAt) : 'Never'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

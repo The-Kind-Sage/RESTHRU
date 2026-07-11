@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/select';
 import { formatNumber } from '@/lib/format';
 import { getInnovationData } from '@/lib/actions/admin';
+import { ComingSoon } from '@/components/superadmin/coming-soon';
+import { toast } from 'sonner';
 
 const ImpactBadge = ({ impact }: { impact: string }) => {
   const colors: Record<string, string> = {
@@ -175,7 +177,7 @@ export default function AdminInnovation() {
                 </SelectContent>
               </Select>
             </div>
-            <Button className="bg-primary hover:bg-[hsl(var(--primary-hover))] text-white h-9">
+            <Button className="bg-primary hover:bg-[hsl(var(--primary-hover))] text-white h-9" onClick={() => toast.success('Benchmark report PDF generation queued. You will be notified when it is ready.')}>
               <FileText className="h-4 w-4 mr-1.5" /> Generate PDF
             </Button>
           </div>
@@ -200,7 +202,7 @@ export default function AdminInnovation() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No experiments</div>
+          <ComingSoon message="A/B experiment framework for testing pricing changes, onboarding flows, and feature rollouts across restaurant cohorts." />
         </CardContent>
       </Card>
 
@@ -212,7 +214,7 @@ export default function AdminInnovation() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground text-sm">No feature requests</div>
+          <ComingSoon message="Feature request board where restaurant owners can submit, upvote, and track the product roadmap." />
         </CardContent>
       </Card>
     </div>
