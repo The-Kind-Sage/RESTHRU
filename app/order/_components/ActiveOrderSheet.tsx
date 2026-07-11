@@ -13,6 +13,17 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { createOrder } from '@/lib/actions/orders';
@@ -65,12 +76,13 @@ export default function ActiveOrderSheet() {
     clearDraft(); // clear after confirmed
   };
 
+  const [showCancelAlert, setShowCancelAlert] = useState(false);
+
   const handleCancelOrder = () => {
-    if (confirm('Are you sure you want to cancel this order?')) {
-      clearDraft();
-      setIsOpen(false);
-      toast('Order Cancelled');
-    }
+    clearDraft();
+    setIsOpen(false);
+    setShowCancelAlert(false);
+    toast('Order Cancelled');
   };
 
   if (totalItems === 0 && orderState === 'DRAFT') {
@@ -79,21 +91,21 @@ export default function ActiveOrderSheet() {
 
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
-      <div className="fixed bottom-0 left-0 right-0 z-40 max-w-md mx-auto bg-white border-t border-gray-200 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] pb-safe rounded-t-2xl">
+      <div className="fixed bottom-0 left-0 right-0 z-40 mx-auto bg-card border-t border-border shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] pb-safe rounded-t-2xl lg:max-w-3xl xl:max-w-5xl">
         <DrawerTrigger asChild>
-          <button className="w-full px-6 py-4 flex items-center justify-between active:bg-gray-50 transition-colors rounded-t-2xl">
+          <button className="w-full px-6 py-4 flex items-center justify-between active:bg-muted transition-colors rounded-t-2xl">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <ShoppingBag className="text-gray-900" size={24} />
+                <ShoppingBag className="text-foreground" size={24} />
                 <span className="absolute -top-1 -right-2 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                   {totalItems}
                 </span>
               </div>
               <div className="text-left">
-                <p className="font-bold text-gray-900 leading-none mb-1">
+                <p className="font-bold text-foreground leading-none mb-1">
                   {orderState === 'DRAFT' ? 'Current Order' : 'Order Sent'}
                 </p>
-                <p className="text-xs text-gray-500 font-medium">
+                <p className="text-xs text-muted-foreground font-medium">
                   {totalItems} items
                 </p>
               </div>
@@ -103,14 +115,14 @@ export default function ActiveOrderSheet() {
               <span className="font-bold text-lg text-primary">
                 {formatCurrency(totalPrice)}
               </span>
-              <ChevronUp className="text-gray-400" size={20} />
+              <ChevronUp className="text-muted-foreground" size={20} />
             </div>
           </button>
         </DrawerTrigger>
       </div>
 
-      <DrawerContent className="max-w-md mx-auto max-h-[85vh]">
-        <DrawerHeader className="border-b border-gray-100 pb-4">
+      <DrawerContent className="mx-auto max-h-[85vh] lg:max-w-3xl xl:max-w-5xl">
+        <DrawerHeader className="border-b border-border pb-4">
           <DrawerTitle className="text-center">Order Details</DrawerTitle>
         </DrawerHeader>
 
@@ -119,26 +131,26 @@ export default function ActiveOrderSheet() {
             {draftItems.map((item) => (
               <div key={item.id} className="flex justify-between items-start">
                 <div className="flex gap-3">
-                  <div className="font-bold text-gray-900 min-w-[24px]">
+                  <div className="font-bold text-foreground min-w-[24px]">
                     {item.quantity}x
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-900">{item.menuItem.name}</h4>
+                    <h4 className="font-medium text-foreground">{item.menuItem.name}</h4>
                     {item.notes && (
-                      <p className="text-sm text-amber-600 font-medium mt-0.5">
+                      <p className="text-sm text-warning font-medium mt-0.5">
                         Note: {item.notes}
                       </p>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-medium text-gray-900">
+                  <span className="font-medium text-foreground">
                     {formatCurrency((item.menuItem.discountPrice ?? item.menuItem.price) * item.quantity)}
                   </span>
                   {orderState === 'DRAFT' && (
                     <button 
                       onClick={() => removeItem(item.id)}
-                      className="text-gray-400 hover:text-red-500 p-1 transition-colors"
+                      className="text-muted-foreground hover:text-destructive p-1 transition-colors"
                     >
                       <X size={18} />
                     </button>
@@ -148,17 +160,17 @@ export default function ActiveOrderSheet() {
             ))}
 
             {draftItems.length === 0 && (
-              <div className="text-center text-gray-500 py-10">
+              <div className="text-center text-muted-foreground py-10">
                 No items in the order.
               </div>
             )}
           </div>
         </ScrollArea>
 
-        <DrawerFooter className="border-t border-gray-100 pt-4 pb-safe gap-3">
+        <DrawerFooter className="border-t border-border pt-4 pb-safe gap-3">
           <div className="flex justify-between items-center px-2 mb-2">
-            <span className="text-gray-500 font-medium">Subtotal (before 13% VAT)</span>
-            <span className="text-2xl font-bold text-gray-900">{formatCurrency(totalPrice)}</span>
+            <span className="text-muted-foreground font-medium">Subtotal (before 13% VAT)</span>
+            <span className="text-2xl font-bold text-foreground">{formatCurrency(totalPrice)}</span>
           </div>
           
           {orderState === 'DRAFT' ? (
@@ -171,14 +183,31 @@ export default function ActiveOrderSheet() {
                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
                 {isSubmitting ? 'Sending...' : 'Confirm & Send to Kitchen'}
               </Button>
-              <Button 
-                variant="outline" 
-                onClick={handleCancelOrder}
-                disabled={isSubmitting}
-                className="w-full h-12 rounded-xl border-gray-200 text-gray-600"
-              >
-                Cancel Order
-              </Button>
+              <AlertDialog open={showCancelAlert} onOpenChange={setShowCancelAlert}>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    disabled={isSubmitting}
+                    className="w-full h-12 rounded-xl border-border text-muted-foreground"
+                  >
+                    Cancel Order
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancel this order?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      All items in the current order will be removed. This cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleCancelOrder} className="bg-destructive hover:bg-destructive/90">
+                      Yes, Cancel Order
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </>
           ) : (
             <>

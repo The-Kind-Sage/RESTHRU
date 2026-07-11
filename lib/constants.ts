@@ -210,6 +210,14 @@ export const TABLE_SHAPES = [
   { value: 'long', label: 'Long', capacity: 8 },
 ];
 
+// Bill Status Colors
+export const BILL_STATUS_COLORS: Record<string, string> = {
+  PENDING: 'bg-warning/10 text-warning',
+  HELD: 'bg-info/10 text-info',
+  PAID: 'bg-success/10 text-success',
+  VOID: 'bg-destructive/10 text-destructive',
+};
+
 // Operating Hours Default
 export const OPERATING_HOURS_DEFAULT = {
   monday: { open: '10:00', close: '22:00' },

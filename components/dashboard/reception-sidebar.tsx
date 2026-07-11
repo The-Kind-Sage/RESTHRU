@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useMemo, memo, useCallback } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   UtensilsCrossed,
@@ -28,15 +27,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { SharedNavLink } from '@/components/shared/nav-link';
+import type { NavItem } from '@/components/shared/nav-link';
 import { useUIStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
-
-interface NavItem {
-  label: string;
-  href: string;
-  Icon: React.ElementType;
-}
 
 const NAV_ITEMS: NavItem[] = [
   { label: 'Live Orders',   href: '/reception/orders',    Icon: ShoppingBag     },
@@ -49,52 +44,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Print Center',  href: '/reception/prints',    Icon: Printer         },
   { label: 'Kitchen Display',href: '/reception/kitchen',  Icon: ChefHat         },
 ];
-
-const NavLink = memo(function NavLink({
-  item,
-  active,
-  collapsed,
-}: {
-  item: NavItem;
-  active: boolean;
-  collapsed: boolean;
-}) {
-  const { Icon } = item;
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Link href={item.href} prefetch={true}>
-          <div
-            className={cn(
-              'group flex items-center gap-3 rounded-lg transition-all duration-150 cursor-pointer',
-              collapsed ? 'justify-center w-10 h-10 mx-auto' : 'px-3 py-2.5',
-              active
-                ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                : 'text-white/50 hover:text-white hover:bg-white/[0.08]'
-            )}
-          >
-            <Icon
-              className={cn(
-                'flex-shrink-0 h-[18px] w-[18px]',
-                active ? 'text-white' : 'text-white/50 group-hover:text-white'
-              )}
-            />
-            {!collapsed && (
-              <span className="text-[13px] font-medium whitespace-nowrap leading-none">
-                {item.label}
-              </span>
-            )}
-          </div>
-        </Link>
-      </TooltipTrigger>
-      {collapsed && (
-        <TooltipContent side="right" className="font-medium">
-          {item.label}
-        </TooltipContent>
-      )}
-    </Tooltip>
-  );
-});
 
 const ReceptionSidebar = memo(function ReceptionSidebar() {
   const pathname = usePathname();
@@ -152,7 +101,7 @@ const ReceptionSidebar = memo(function ReceptionSidebar() {
 
         <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
           {NAV_ITEMS.map((item) => (
-            <NavLink
+            <SharedNavLink
               key={item.href}
               item={item}
               active={isActive(item.href)}

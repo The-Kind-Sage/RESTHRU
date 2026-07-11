@@ -13,8 +13,6 @@ import {
   Play,
   Printer,
   Send,
-  ShoppingBag,
-  X,
   Loader2,
   Search,
   ChevronRight,
@@ -32,6 +30,23 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatCurrency } from "@/lib/format";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
@@ -44,7 +59,6 @@ import {
   resumeHeldBill,
   popCashDrawer,
   splitBill,
-  getTopMenuItems,
   applyDiscountToBill,
   applyCouponToBill,
   applyCorporateAccountToBill,
@@ -80,7 +94,6 @@ export default function CheckoutPage() {
 
   const [pendingBills, setPendingBills] = useState<BillWithRelations[]>([]);
   const [unbilledOrders, setUnbilledOrders] = useState<any[]>([]);
-  const [topItems, setTopItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeBill, setActiveBill] = useState<BillWithRelations | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -99,9 +112,6 @@ export default function CheckoutPage() {
   const [selectedCorpAccount, setSelectedCorpAccount] = useState<any>(null);
   const [customerPhone, setCustomerPhone] = useState("");
   const [foundCustomer, setFoundCustomer] = useState<any>(null);
-  const [showDiscount, setShowDiscount] = useState(false);
-  const [showCoupon, setShowCoupon] = useState(false);
-  const [showCorp, setShowCorp] = useState(false);
   const [paymentQR, setPaymentQR] = useState<{ qrDataUrl: string; ref: string } | null>(null);
   const [pendingWalletPayments, setPendingWalletPayments] = useState<any[]>([]);
   const [verifyingPaymentId, setVerifyingPaymentId] = useState<string | null>(null);
@@ -110,15 +120,13 @@ export default function CheckoutPage() {
   const refresh = useCallback(async () => {
     if (!restaurantId) return;
     setLoading(true);
-    const [billsRes, orders, itemsRes, corpRes] = await Promise.all([
+    const [billsRes, orders, corpRes] = await Promise.all([
       getPendingBills(),
       getOrdersWithItems(restaurantId, 50),
-      getTopMenuItems(10),
       getCorporateAccounts(),
     ]);
     if ("data" in billsRes && billsRes.data) setPendingBills(billsRes.data);
     if (orders) setUnbilledOrders(orders);
-    if ("data" in itemsRes && itemsRes.data) setTopItems(itemsRes.data);
     if ("data" in corpRes && corpRes.data) setCorpAccounts(corpRes.data);
     setLoading(false);
   }, [restaurantId]);
@@ -289,10 +297,6 @@ export default function CheckoutPage() {
     if (result.data) setSplitResult(result.data.splits);
   };
 
-  const handleAddItemToTakeaway = async (menuItem: any) => {
-    toast.info(`${menuItem.name} added — express order coming soon`);
-  };
-
   const handleApplyDiscount = async () => {
     if (!activeBill) return;
     const amt = parseFloat(discountInput);
@@ -301,7 +305,6 @@ export default function CheckoutPage() {
     if (result.error) { toast.error(result.error); return; }
     setActiveBill((prev: any) => prev ? { ...prev, discountAmount: result.data.discountAmount, totalAmount: result.data.totalAmount } : prev);
     toast.success(`Discount of ${formatCurrency(amt)} applied`);
-    setShowDiscount(false);
   };
 
   const handleApplyCoupon = async () => {
@@ -311,7 +314,6 @@ export default function CheckoutPage() {
     setAppliedCoupon(result.data);
     setActiveBill((prev: any) => prev ? { ...prev, discountAmount: result.data.discount, totalAmount: result.data.bill.totalAmount } : prev);
     toast.success(`Coupon ${couponCode.toUpperCase()} applied — ${formatCurrency(result.data.discount)} off`);
-    setShowCoupon(false);
   };
 
   const handleApplyCorporate = async (accountId: string) => {
@@ -320,7 +322,6 @@ export default function CheckoutPage() {
     if (result.error) { toast.error(result.error); return; }
     setSelectedCorpAccount(corpAccounts.find((a: any) => a.id === accountId));
     toast.success("Corporate account assigned");
-    setShowCorp(false);
   };
 
   const handleLookupCustomer = async () => {
@@ -405,6 +406,33 @@ export default function CheckoutPage() {
   const changeValue = amountReceived
     ? Math.max(0, parseFloat(amountReceived) - remainingDue)
     : 0;
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!activeBill) return;
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (ctrl && e.key === "Enter") {
+        e.preventDefault();
+        if (remainingDue > 0) {
+          if (payMethod === "CASH") handleRecordPayment();
+          else handleQuickSettle();
+        } else if (activeBill.status !== "PAID") {
+          handleQuickSettle();
+        }
+      }
+      if (ctrl && e.key === "p" && !e.shiftKey) {
+        e.preventDefault();
+        handleHold();
+      }
+      if (ctrl && e.key === "p" && e.shiftKey) {
+        e.preventDefault();
+        handlePrintReceipt();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [activeBill, remainingDue, payMethod]);
 
   if (loading && pendingBills.length === 0) {
     return (
@@ -553,33 +581,7 @@ export default function CheckoutPage() {
               </CardContent>
             </Card>
 
-            {orderTypeFilter !== "DINE_IN" && (
-              <Card>
-                <CardHeader className="pb-2 pt-3">
-                  <CardTitle className="text-sm flex items-center gap-1">
-                    <ShoppingBag className="w-4 h-4" /> Express Takeaway
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {topItems.map((item: any) => (
-                      <Button
-                        key={item.id}
-                        variant="outline"
-                        size="sm"
-                        className="justify-between h-auto py-1.5 text-xs"
-                        onClick={() => handleAddItemToTakeaway(item)}
-                      >
-                        <span className="truncate">{item.name}</span>
-                        <span className="text-muted-foreground ml-1">
-                          {formatCurrency(item.price)}
-                        </span>
-                      </Button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+
           </div>
 
           {/* Right: Active checkout */}
@@ -736,44 +738,31 @@ export default function CheckoutPage() {
                     )}
                   </Card>
 
-                  {/* Discount, Coupon, Corporate */}
+                  {/* Unified Adjustments panel */}
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Discounts & Billing</CardTitle>
+                      <CardTitle className="text-sm">Adjustments</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="flex gap-2">
-                        <Button variant={showDiscount ? "default" : "outline"} size="sm" onClick={() => setShowDiscount(!showDiscount)} className="flex-1">
-                          <Percent className="w-3 h-3 mr-1" /> Discount
-                        </Button>
-                        <Button variant={showCoupon ? "default" : "outline"} size="sm" onClick={() => setShowCoupon(!showCoupon)} className="flex-1">
-                          <Tag className="w-3 h-3 mr-1" /> Coupon
-                        </Button>
-                        <Button variant={showCorp ? "default" : "outline"} size="sm" onClick={() => setShowCorp(!showCorp)} className="flex-1">
-                          <Building2 className="w-3 h-3 mr-1" /> Corporate
-                        </Button>
-                      </div>
-
-                      {showDiscount && (
-                        <div className="space-y-2 p-2 bg-muted/30 rounded">
+                    <CardContent className="pt-0">
+                      <Tabs defaultValue="discount">
+                        <TabsList className="w-full mb-2">
+                          <TabsTrigger value="discount" className="flex-1 text-xs"><Percent className="w-3 h-3 mr-1" />Discount</TabsTrigger>
+                          <TabsTrigger value="coupon" className="flex-1 text-xs"><Tag className="w-3 h-3 mr-1" />Coupon</TabsTrigger>
+                          <TabsTrigger value="corporate" className="flex-1 text-xs"><Building2 className="w-3 h-3 mr-1" />Corporate</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="discount" className="space-y-2 m-0">
                           <Input type="number" placeholder="Discount amount" value={discountInput} onChange={(e) => setDiscountInput(e.target.value)} />
                           <Input placeholder="Reason (optional)" value={discountReason} onChange={(e) => setDiscountReason(e.target.value)} />
                           <Button size="sm" className="w-full" onClick={handleApplyDiscount}>Apply Discount</Button>
-                        </div>
-                      )}
-
-                      {showCoupon && (
-                        <div className="space-y-2 p-2 bg-muted/30 rounded">
+                        </TabsContent>
+                        <TabsContent value="coupon" className="space-y-2 m-0">
                           <Input placeholder="Coupon code" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} />
                           <Button size="sm" className="w-full" onClick={handleApplyCoupon}>Apply Coupon</Button>
                           {appliedCoupon && (
                             <p className="text-xs text-success">Coupon {appliedCoupon.coupon}: {formatCurrency(appliedCoupon.discount)} off</p>
                           )}
-                        </div>
-                      )}
-
-                      {showCorp && (
-                        <div className="space-y-2 p-2 bg-muted/30 rounded">
+                        </TabsContent>
+                        <TabsContent value="corporate" className="space-y-2 m-0">
                           <p className="text-xs text-muted-foreground">Select corporate account:</p>
                           <div className="flex flex-wrap gap-1">
                             {corpAccounts.filter((a: any) => a.isActive).map((a: any) => (
@@ -788,8 +777,8 @@ export default function CheckoutPage() {
                           {selectedCorpAccount && (
                             <p className="text-xs text-success">Assigned: {selectedCorpAccount.companyName}</p>
                           )}
-                        </div>
-                      )}
+                        </TabsContent>
+                      </Tabs>
                     </CardContent>
                   </Card>
 
@@ -823,20 +812,44 @@ export default function CheckoutPage() {
 
                   {/* Quick actions */}
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={handleHold}
-                      disabled={activeBill.status === "PAID"}
-                      className="flex-1"
-                    >
-                      <Pause className="w-4 h-4 mr-1" /> Park Bill
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          disabled={activeBill.status === "PAID"}
+                          className="flex-1"
+                        >
+                          <Pause className="w-4 h-4 mr-1" /> Park Bill
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Park Bill?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This bill will be held. You can resume it later from the Parked Bills list.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleHold}>Park Bill</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                     <Button variant="outline" className="flex-1" onClick={handlePrintReceipt}>
                       <Printer className="w-4 h-4 mr-1" /> Print
                     </Button>
-                    <Button variant="outline" className="flex-1">
-                      <Send className="w-4 h-4 mr-1" /> Send Digital
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="outline" className="flex-1" disabled>
+                            <Send className="w-4 h-4 mr-1" /> Send Digital
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Digital receipts — coming soon</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
 
@@ -849,20 +862,20 @@ export default function CheckoutPage() {
                     <CardContent className="space-y-4">
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Method</p>
-                        <div className="grid grid-cols-2 gap-1.5">
+                        <div className="grid grid-cols-2 gap-2">
                           {PAYMENT_METHODS.map((pm) => {
                             const Icon = pm.Icon;
                             return (
                               <Button
                                 key={pm.id}
                                 variant={payMethod === pm.id ? "default" : "outline"}
-                                size="sm"
+                                size="lg"
                                 onClick={() => setPayMethod(pm.id)}
-                                className={`justify-start gap-1.5 h-9 ${
+                                className={`justify-start gap-2 py-3 text-sm ${
                                   payMethod === pm.id ? pm.color : ""
                                 }`}
                               >
-                                <Icon className="w-4 h-4" />
+                                <Icon className="w-5 h-5" />
                                 {pm.label}
                               </Button>
                             );
@@ -884,6 +897,16 @@ export default function CheckoutPage() {
                               <img src={paymentQR.qrDataUrl} alt="Payment QR" className="w-40 h-40" />
                               <p className="text-xs text-muted-foreground mt-1">Scan to pay {formatCurrency(remainingDue)} via {payMethod}</p>
                               <p className="text-[10px] text-muted-foreground font-mono mt-0.5">Ref: {paymentQR.ref}</p>
+                              {/* Live polling indicator */}
+                              {pendingWalletPayments.length === 0 && (
+                                <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
+                                  <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                                  </span>
+                                  Waiting for payment...
+                                </div>
+                              )}
                             </div>
                           )}
                           {pendingWalletPayments.length > 0 && (
@@ -991,34 +1014,64 @@ export default function CheckoutPage() {
                       {/* Action buttons */}
                       <div className="space-y-2">
                         {remainingDue > 0 && (
-                          <Button
-                            className="w-full gap-1"
-                            disabled={isProcessing}
-                            onClick={
-                              payMethod === "CASH"
-                                ? handleRecordPayment
-                                : handleQuickSettle
-                            }
-                          >
-                            {isProcessing ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : null}
-                            {payMethod === "CASH" && amountReceived
-                              ? `Pay ${formatCurrency(Math.min(parseFloat(amountReceived) || remainingDue, remainingDue))}`
-                              : `Pay ${formatCurrency(remainingDue)}`}
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                className="w-full gap-1"
+                                disabled={isProcessing}
+                              >
+                                {isProcessing ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : null}
+                                {payMethod === "CASH" && amountReceived
+                                  ? `Pay ${formatCurrency(Math.min(parseFloat(amountReceived) || remainingDue, remainingDue))}`
+                                  : `Pay ${formatCurrency(remainingDue)}`}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Settle Payment?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {`Receive ${formatCurrency(remainingDue)} via ${payMethod}? This action cannot be undone.`}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={payMethod === "CASH" ? handleRecordPayment : handleQuickSettle}>
+                                  Settle
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
                         {remainingDue <= 0 && activeBill.status !== "PAID" && (
-                          <Button
-                            className="w-full gap-1"
-                            disabled={isProcessing}
-                            onClick={handleQuickSettle}
-                          >
-                            {isProcessing ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : null}
-                            Confirm Payment
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                className="w-full gap-1"
+                                disabled={isProcessing}
+                              >
+                                {isProcessing ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : null}
+                                Confirm Payment
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Settle Payment?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Confirm final payment of {formatCurrency(remainingDue)} via {payMethod}? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleQuickSettle}>
+                                  Settle
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
                         {activeBill.status === "PAID" && (
                           <div className="text-center p-2 bg-success/10 rounded">

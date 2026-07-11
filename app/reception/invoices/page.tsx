@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Printer, Ban, Receipt, Loader2 } from 'lucide-react';
+import { Search, Printer, Ban, Receipt, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,20 +34,15 @@ import { formatCurrency, formatDateTime } from '@/lib/format';
 import { useAuthStore } from '@/store/auth-store';
 import { toast } from 'sonner';
 import { searchBills, voidBill } from '@/lib/actions/bills';
+import { BILL_STATUS_COLORS } from '@/lib/constants';
 import ManagerApprovalDialog from '@/components/dashboard/manager-approval-dialog';
 
 const STATUS_OPTIONS = ['ALL', 'PENDING', 'HELD', 'PAID', 'VOID'];
-
-const statusColor: Record<string, string> = {
-  PENDING: 'bg-warning/10 text-warning',
-  HELD: 'bg-info/10 text-info',
-  PAID: 'bg-success/10 text-success',
-  VOID: 'bg-destructive/10 text-destructive',
-};
+const PAGE_SIZE = 15;
 
 function printReceipt(bill: any) {
   const win = window.open('', '_blank', 'width=380,height=600');
-  if (!win) return;
+  if (!win) { toast.error('Pop-up blocked. Please allow pop-ups for this site.'); return; }
   const itemsHtml = (bill.order?.items || [])
     .filter((i: any) => i.status !== 'CANCELLED')
     .map(
@@ -107,6 +102,8 @@ export default function InvoicesPage() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<any>(null);
   const [voidOpen, setVoidOpen] = useState(false);
+  const [page, setPage] = useState(0);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const search = useCallback(async () => {
     setLoading(true);
@@ -114,12 +111,41 @@ export default function InvoicesPage() {
     if (result.data) setBills(result.data as any[]);
     else if (Array.isArray(result)) setBills(result);
     setLoading(false);
+    setPage(0);
   }, [query, status, dateFrom, dateTo]);
+
+  const triggerSearch = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => search(), 350);
+  }, [search]);
 
   useEffect(() => {
     search();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restaurant?.id]);
+
+  const handleQueryChange = (val: string) => {
+    setQuery(val);
+    triggerSearch();
+  };
+
+  const handleStatusChange = (val: string) => {
+    setStatus(val);
+    triggerSearch();
+  };
+
+  const handleDateFromChange = (val: string) => {
+    setDateFrom(val);
+    triggerSearch();
+  };
+
+  const handleDateToChange = (val: string) => {
+    setDateTo(val);
+    triggerSearch();
+  };
+
+  const paginatedBills = bills.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(bills.length / PAGE_SIZE));
 
   const handleVoid = async (data: { reason: string; approverUsername: string; approverPassword: string }) => {
     const result = await voidBill({ billId: selected.id, ...data });
@@ -146,14 +172,13 @@ export default function InvoicesPage() {
                 className="pl-9"
                 placeholder="Bill #, order #, customer name/phone"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && search()}
+                onChange={(e) => handleQueryChange(e.target.value)}
               />
             </div>
           </div>
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground">Status</label>
-            <Select value={status} onValueChange={setStatus}>
+            <Select value={status} onValueChange={handleStatusChange}>
               <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {STATUS_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -162,13 +187,12 @@ export default function InvoicesPage() {
           </div>
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground">From</label>
-            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" />
+            <Input type="date" value={dateFrom} onChange={(e) => handleDateFromChange(e.target.value)} className="w-40" />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground">To</label>
-            <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-40" />
+            <Input type="date" value={dateTo} onChange={(e) => handleDateToChange(e.target.value)} className="w-40" />
           </div>
-          <Button onClick={search}>Search</Button>
         </CardContent>
       </Card>
 
@@ -181,7 +205,8 @@ export default function InvoicesPage() {
               <Receipt className="h-10 w-10 mx-auto mb-3 opacity-30" />
               <p className="font-medium">No bills found</p>
             </div>
-          ) : (
+            ) : (
+            <div>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -195,7 +220,7 @@ export default function InvoicesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bills.map((bill) => (
+                {paginatedBills.map((bill) => (
                   <TableRow key={bill.id} className="cursor-pointer" onClick={() => setSelected(bill)}>
                     <TableCell className="font-medium">{bill.billNumber}</TableCell>
                     <TableCell className="text-xs">{formatDateTime(bill.billDate)}</TableCell>
@@ -205,7 +230,7 @@ export default function InvoicesPage() {
                     <TableCell className="text-right">{formatCurrency(bill.totalAmount)}</TableCell>
                     <TableCell className="text-xs">{bill.paymentMethod}</TableCell>
                     <TableCell>
-                      <Badge className={`border-0 ${statusColor[bill.status] || ''}`}>{bill.status}</Badge>
+                      <Badge className={`border-0 ${BILL_STATUS_COLORS[bill.status] || ''}`}>{bill.status}</Badge>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <Button size="icon" variant="ghost" onClick={() => printReceipt(bill)}>
@@ -216,7 +241,20 @@ export default function InvoicesPage() {
                 ))}
               </TableBody>
             </Table>
-          )}
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+              <p className="text-sm text-muted-foreground">{bills.length} result{bills.length !== 1 ? 's' : ''}</p>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
+                <Button size="sm" variant="outline" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            </div>
+            )}
         </CardContent>
       </Card>
 
@@ -231,7 +269,7 @@ export default function InvoicesPage() {
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-3">
-                <Badge className={`border-0 ${statusColor[selected.status] || ''}`}>{selected.status}</Badge>
+                <Badge className={`border-0 ${BILL_STATUS_COLORS[selected.status] || ''}`}>{selected.status}</Badge>
                 <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
                   {selected.order?.items?.filter((i: any) => i.status !== 'CANCELLED').map((item: any) => (
                     <div key={item.id} className="flex justify-between">

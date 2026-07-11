@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Plus, Users, QrCode, Lock, Unlock, Download, Trash2,
+  Plus, Users, QrCode, Lock, Unlock, Download, Trash2, Loader2,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -191,12 +191,12 @@ function TableGridItem({ table, restaurantId, onClick, isEditMode, onPositionCha
         {/* Delete button — only visible in edit mode */}
         {isEditMode && (
           <button
-            className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-white flex items-center justify-center shadow hover:bg-red-700 transition-colors z-10"
+            className="absolute -top-3 -right-3 h-7 w-7 rounded-full bg-destructive text-white flex items-center justify-center shadow hover:bg-red-700 transition-colors z-10"
             onPointerDown={e => e.stopPropagation()}
             onClick={e => { e.stopPropagation(); onDelete(table); }}
             aria-label={`Delete table ${table.number}`}
           >
-            <Trash2 className="w-2.5 h-2.5" />
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
         )}
 
@@ -221,21 +221,28 @@ function TableDetailDialog({ table, restaurantId, isOpen, onClose, onStatusChang
   isOpen: boolean; onClose: () => void;
   onStatusChange: (id: string, status: Table['status']) => void;
 }) {
-  const [newStatus, setNewStatus] = useState<Table['status']>('available');
-
-  useEffect(() => { if (table) setNewStatus(table.status); }, [table]);
+  const [changingStatus, setChangingStatus] = useState<Table['status'] | null>(null);
 
   if (!table) return null;
   const colors = getStatusColors(table.status);
   const statusLabel = table.status.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
-  const handleStatusChange = async () => {
-    const result = await updateTableStatus(table.id, newStatus);
+  const handleOneTapStatus = async (status: Table['status']) => {
+    setChangingStatus(status);
+    const result = await updateTableStatus(table.id, status);
+    setChangingStatus(null);
     if (result.error) { toast.error(result.error); return; }
-    onStatusChange(table.id, newStatus);
-    toast.success('Table status updated');
+    onStatusChange(table.id, status);
+    toast.success(`Table ${table.number} → ${status.replace('_', ' ')}`);
     onClose();
   };
+
+  const statusOptions: { value: Table['status']; label: string }[] = [
+    { value: 'available', label: 'Available' },
+    { value: 'occupied', label: 'Occupied' },
+    { value: 'bill_requested', label: 'Bill Requested' },
+    { value: 'reserved', label: 'Reserved' },
+  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -251,23 +258,27 @@ function TableDetailDialog({ table, restaurantId, isOpen, onClose, onStatusChang
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Change Status</label>
-            <Select value={newStatus} onValueChange={v => setNewStatus(v as Table['status'])}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="available">Available</SelectItem>
-                <SelectItem value="occupied">Occupied</SelectItem>
-                <SelectItem value="bill_requested">Bill Requested</SelectItem>
-                <SelectItem value="reserved">Reserved</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-2">
+              {statusOptions.filter(s => s.value !== table.status).map(opt => (
+                <Button
+                  key={opt.value}
+                  size="sm"
+                  variant="outline"
+                  disabled={changingStatus === opt.value}
+                  onClick={() => handleOneTapStatus(opt.value)}
+                >
+                  {changingStatus === opt.value ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                  {opt.label}
+                </Button>
+              ))}
+            </div>
           </div>
           <div className="pt-1">
             <TableQrDialog table={table} restaurantId={restaurantId} />
           </div>
         </div>
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleStatusChange}>Update Status</Button>
+          <Button variant="outline" onClick={onClose}>Close</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -405,6 +416,7 @@ export default function TableMapPage() {
 
   // Debounce timer ref — save position to DB 600ms after last drag end
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleDeleteTable = async () => {
     if (!deleteTarget) return;
@@ -423,11 +435,14 @@ export default function TableMapPage() {
 
     // Debounce the DB write
     if (saveTimer.current) clearTimeout(saveTimer.current);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
     saveTimer.current = setTimeout(async () => {
       const result = await updateTablePosition(id, Math.round(x), Math.round(y));
       if (result.error) {
         console.error('Table position save error:', result.error);
         toast.error(`Position save failed: ${result.error}`);
+      } else {
+        toast.success('Position saved');
       }
     }, 600);
   };

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useMemo, memo, useCallback } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   UtensilsCrossed,
@@ -26,19 +25,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { SharedNavLink } from '@/components/shared/nav-link';
+import type { NavItem } from '@/components/shared/nav-link';
 import { useUIStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
-
-// ── Nav items defined OUTSIDE the component so the array reference is
-//    stable across renders. Previously the JSX icons were created inline,
-//    forcing React to allocate new objects on every render.
-interface NavItem {
-  label: string;
-  href: string;
-  // Store the component reference, not JSX — rendered once per item below.
-  Icon: React.ElementType;
-}
 
 const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard',          href: '/dashboard',           Icon: LayoutDashboard },
@@ -49,54 +40,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Reports & Analytics',href: '/dashboard/reports',   Icon: BarChart3       },
   { label: 'Settings',           href: '/dashboard/settings',  Icon: Settings        },
 ];
-
-// ── Memoised nav item — only re-renders when active state or
-//    collapsed state changes, not on every pathname update.
-const NavLink = memo(function NavLink({
-  item,
-  active,
-  collapsed,
-}: {
-  item: NavItem;
-  active: boolean;
-  collapsed: boolean;
-}) {
-  const { Icon } = item;
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Link href={item.href} prefetch={true}>
-          <div
-            className={cn(
-              'group flex items-center gap-3 rounded-lg transition-all duration-150 cursor-pointer',
-              collapsed ? 'justify-center w-10 h-10 mx-auto' : 'px-3 py-2.5',
-              active
-                ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                : 'text-white/50 hover:text-white hover:bg-white/[0.08]'
-            )}
-          >
-            <Icon
-              className={cn(
-                'flex-shrink-0 h-[18px] w-[18px]',
-                active ? 'text-white' : 'text-white/50 group-hover:text-white'
-              )}
-            />
-            {!collapsed && (
-              <span className="text-[13px] font-medium whitespace-nowrap leading-none">
-                {item.label}
-              </span>
-            )}
-          </div>
-        </Link>
-      </TooltipTrigger>
-      {collapsed && (
-        <TooltipContent side="right" className="font-medium">
-          {item.label}
-        </TooltipContent>
-      )}
-    </Tooltip>
-  );
-});
 
 // ── Main sidebar — memo prevents re-render when parent re-renders
 //    for reasons unrelated to sidebar state.
@@ -160,7 +103,7 @@ const Sidebar = memo(function Sidebar() {
         {/* ── Navigation ── */}
         <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
           {NAV_ITEMS.map((item) => (
-            <NavLink
+            <SharedNavLink
               key={item.href}
               item={item}
               active={isActive(item.href)}

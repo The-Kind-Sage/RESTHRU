@@ -1,16 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Printer, Plus, Settings, Trash2, Power, RefreshCw,
-  AlertTriangle, CheckCircle2, Clock, FileText, Download, Wifi, WifiOff,
+  Printer, Plus, Settings, RefreshCw,
+  Clock, FileText, Download, WifiOff,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { getSettingsData } from '@/lib/actions/settings';
 import { useAuthStore } from '@/store/auth-store';
@@ -31,6 +30,25 @@ export default function PrintsPage() {
   const [activeTab, setActiveTab] = useState('printers');
   const [printers, setPrinters] = useState<Array<{ name: string; type: string; ip: string; status: string }>>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshingIdx, setRefreshingIdx] = useState<number | null>(null);
+
+  const fetchPrinters = useCallback(async () => {
+    if (!restaurantId) return;
+    setLoading(true);
+    const res = await getSettingsData(restaurantId);
+    if ("data" in res && res.data) {
+      const config = (res.data as any).printer_config || [];
+      setPrinters(config.map((p: any) => ({ ...p, status: 'unverified' })));
+    }
+    setLoading(false);
+  }, [restaurantId]);
+
+  const handleRefreshPrinter = async (idx: number) => {
+    setRefreshingIdx(idx);
+    await fetchPrinters();
+    setRefreshingIdx(null);
+    toast.success('Printer list refreshed');
+  };
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -41,7 +59,7 @@ export default function PrintsPage() {
         const config = (res.data as any).printer_config || [];
         setPrinters(config.map((p: any) => ({
           ...p,
-          status: Math.random() > 0.3 ? 'online' : 'offline',
+          status: 'unverified',
         })));
       }
       setLoading(false);
@@ -94,27 +112,23 @@ export default function PrintsPage() {
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <div className={`p-3 rounded-lg ${printer.status === 'online' ? 'bg-primary/10' : 'bg-destructive/10'}`}>
-                            <Printer className={`h-6 w-6 ${printer.status === 'online' ? 'text-primary' : 'text-destructive'}`} />
+                          <div className="p-3 rounded-lg bg-muted/30">
+                            <Printer className="h-6 w-6 text-muted-foreground" />
                           </div>
                           <div>
                             <h3 className="font-semibold text-foreground">{printer.name}</h3>
                             <p className="text-sm text-muted-foreground">{printer.type}</p>
                           </div>
                         </div>
-                        <Badge variant={printer.status === 'online' ? 'secondary' : 'destructive'}>
-                          {printer.status === 'online' ? 'Online' : 'Offline'}
+                        <Badge variant="outline" className="text-muted-foreground">
+                          Unverified
                         </Badge>
                       </div>
                       <Separator className="mb-4" />
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div><span className="text-muted-foreground">IP:</span><span className="ml-2 text-foreground font-medium">{printer.ip}</span></div>
                         <div>
-                          {printer.status === 'online' ? (
-                            <span className="flex items-center gap-1 text-success"><Wifi className="w-3 h-3" /> Connected</span>
-                          ) : (
-                            <span className="flex items-center gap-1 text-destructive"><WifiOff className="w-3 h-3" /> Disconnected</span>
-                          )}
+                          <span className="flex items-center gap-1 text-muted-foreground"><WifiOff className="w-3 h-3" /> Not verified</span>
                         </div>
                       </div>
                       <Separator className="my-4" />
@@ -122,8 +136,12 @@ export default function PrintsPage() {
                         <Button variant="outline" size="sm" className="flex-1" onClick={() => handlePrintTest(printer)}>
                           <FileText className="h-4 w-4 mr-2" /> Test Print
                         </Button>
-                        <Button variant="outline" size="icon"><RefreshCw className="h-4 w-4" /></Button>
-                        <Button variant="outline" size="icon"><Settings className="h-4 w-4" /></Button>
+                        <Button variant="outline" size="icon" onClick={() => handleRefreshPrinter(idx)} disabled={refreshingIdx === idx}>
+                          <RefreshCw className={`h-4 w-4 ${refreshingIdx === idx ? 'animate-spin' : ''}`} />
+                        </Button>
+                        <Button variant="outline" size="icon" onClick={() => toast.info('Configure printers in Settings')}>
+                          <Settings className="h-4 w-4" />
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -139,8 +157,8 @@ export default function PrintsPage() {
             <CardContent>
               <div className="text-center py-12 text-muted-foreground">
                 <Clock className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">Print queue is empty</p>
-                <p className="text-sm mt-1">Receipts and kitchen orders will appear here.</p>
+                <p className="font-medium">Not available yet</p>
+                <p className="text-sm mt-1">Print queue tracking will be available in a future update.</p>
               </div>
             </CardContent>
           </Card>
@@ -151,13 +169,14 @@ export default function PrintsPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Print History</CardTitle>
-                <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-2" /> Export</Button>
+                <Button variant="outline" size="sm" disabled><Download className="h-4 w-4 mr-2" /> Export</Button>
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-center py-12 text-muted-foreground">
                 <FileText className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">No print history yet</p>
+                <p className="font-medium">Not available yet</p>
+                <p className="text-sm mt-1">Print history will be available in a future update.</p>
               </div>
             </CardContent>
           </Card>

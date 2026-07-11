@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Info } from 'lucide-react';
 import { useWaiterOrderStore } from '@/store/waiter-order-store';
 import { MenuItem, SpiceLevel } from '@/types';
 import { formatCurrency } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
 export default function MenuGrid({ menuItems }: { menuItems: MenuItem[] }) {
   const { searchQuery, selectedCategory, draftItems, addItem, updateQuantity, orderState } = useWaiterOrderStore();
@@ -51,10 +52,15 @@ export default function MenuGrid({ menuItems }: { menuItems: MenuItem[] }) {
         // or just add a new one if none exists.
         const firstDraftItemId = draftItemsForThisMenu.length > 0 ? draftItemsForThisMenu[0].id : null;
 
+        const hasMultipleEntries = draftItemsForThisMenu.length > 1;
+
         return (
           <div 
             key={item.id} 
-            className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex justify-between items-center active:scale-[0.98] transition-transform select-none"
+            className={cn(
+              "bg-card rounded-2xl p-4 shadow-sm border border-border flex justify-between items-center active:scale-[0.98] transition-transform select-none",
+              orderState === 'DRAFT' && "cursor-pointer"
+            )}
             onTouchStart={() => handleTouchStart(item)}
             onTouchEnd={handleTouchEnd}
             onMouseDown={() => handleTouchStart(item)}
@@ -63,16 +69,21 @@ export default function MenuGrid({ menuItems }: { menuItems: MenuItem[] }) {
           >
             <div className="flex-1 pr-4">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-bold text-gray-900 leading-tight">{item.name}</h3>
-                {item.spiceLevel === SpiceLevel.HOT && <span className="text-red-500 text-xs">🌶️</span>}
+                <h3 className="font-bold text-foreground leading-tight">{item.name}</h3>
+                {item.spiceLevel === SpiceLevel.HOT && <span className="text-destructive text-xs">🌶️</span>}
+                {orderState === 'DRAFT' && (
+                  <span title="Long-press for modifiers &amp; notes">
+                    <Info className="w-3.5 h-3.5 text-muted-foreground/40" />
+                  </span>
+                )}
               </div>
               {item.description && (
-                <p className="text-sm text-gray-500 line-clamp-1 mb-2">{item.description}</p>
+                <p className="text-sm text-muted-foreground line-clamp-1 mb-2">{item.description}</p>
               )}
               <div className="font-semibold text-primary flex items-center gap-2">
                 {formatCurrency(item.discountPrice ?? item.price)}
                 {item.discountPrice != null && item.discountPrice < item.price && (
-                  <span className="text-xs text-gray-400 line-through font-normal">
+                  <span className="text-xs text-muted-foreground line-through font-normal">
                     {formatCurrency(item.price)}
                   </span>
                 )}
@@ -80,21 +91,34 @@ export default function MenuGrid({ menuItems }: { menuItems: MenuItem[] }) {
             </div>
 
             <div className="flex-shrink-0">
-              {totalQuantity > 0 ? (
-                <div className="flex items-center bg-gray-100 rounded-full border border-gray-200">
+              {totalQuantity > 0 && !hasMultipleEntries ? (
+                <div className="flex items-center bg-muted rounded-full border border-border">
                   <button 
                     onClick={(e) => { e.stopPropagation(); if (firstDraftItemId) updateQuantity(firstDraftItemId, draftItemsForThisMenu[0].quantity - 1); }}
-                    className="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary active:bg-gray-200 rounded-l-full transition-colors"
+                    className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-primary active:bg-muted/80 rounded-l-full transition-colors"
                     disabled={orderState !== 'DRAFT'}
                   >
                     <Minus size={18} />
                   </button>
-                  <span className="w-8 text-center font-bold text-gray-900">
+                  <span className="w-8 text-center font-bold text-foreground">
                     {totalQuantity}
                   </span>
                   <button 
                     onClick={(e) => { e.stopPropagation(); addItem(item); }}
-                    className="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary active:bg-gray-200 rounded-r-full transition-colors"
+                    className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-primary active:bg-muted/80 rounded-r-full transition-colors"
+                    disabled={orderState !== 'DRAFT'}
+                  >
+                    <Plus size={18} />
+                  </button>
+                </div>
+              ) : totalQuantity > 0 && hasMultipleEntries ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
+                    x{totalQuantity}
+                  </span>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addItem(item); }}
+                    className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-primary rounded-full transition-colors bg-muted"
                     disabled={orderState !== 'DRAFT'}
                   >
                     <Plus size={18} />
@@ -115,7 +139,7 @@ export default function MenuGrid({ menuItems }: { menuItems: MenuItem[] }) {
       })}
       
       {filteredMenu.length === 0 && (
-        <div className="text-center text-gray-500 py-10">
+        <div className="text-center text-muted-foreground py-10">
           No items found.
         </div>
       )}

@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { Order, OrderStatus } from '@/types';
 import { updateOrderStatus as updateOrderStatusAction } from '@/lib/actions/orders';
+import { playAlertSound, triggerHaptic } from '@/lib/alert-utils';
 
 export type KitchenTab = 'PENDING' | 'PREPARING' | 'READY';
 
@@ -36,26 +37,8 @@ export const useKitchenStore = create<KitchenState>((set, get) => ({
 
   addOrder: (order) =>
     set((state) => {
-      // Play alert sound if audio is allowed by browser
-      try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        gain.gain.setValueAtTime(0.1, ctx.currentTime);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.2);
-      } catch (e) {
-        console.warn('Audio play failed', e);
-      }
-
-      // Trigger Haptic Feedback
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate([200, 100, 200]);
-      }
+      playAlertSound();
+      triggerHaptic();
 
       return { orders: [order, ...state.orders] };
     }),

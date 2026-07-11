@@ -28,15 +28,15 @@ export function KitchenHeader() {
   ];
 
   return (
-    <div className="sticky top-0 z-50 w-full bg-slate-900 text-white shadow-md">
+    <div className="sticky top-0 z-50 w-full bg-card text-foreground shadow-md">
       {/* Prep Aggregator Drawer */}
       <Collapsible open={isPrepOpen} onOpenChange={setIsPrepOpen}>
-        <div className="bg-slate-800 px-4 py-2 flex items-center justify-between border-b border-slate-700">
-          <div className="text-sm font-semibold text-slate-300">
+        <div className="bg-muted/80 px-4 py-2 flex items-center justify-between border-b border-border">
+          <div className="text-sm font-semibold text-muted-foreground">
             Prep Aggregator ({prepKeys.length} items)
           </div>
           <CollapsibleTrigger asChild>
-            <button className="p-1 rounded-full hover:bg-slate-700 transition-colors">
+            <button className="p-1 rounded-full hover:bg-muted transition-colors">
               <ChevronDown
                 className={`w-5 h-5 transition-transform duration-200 ${
                   isPrepOpen ? 'rotate-180' : ''
@@ -45,20 +45,20 @@ export function KitchenHeader() {
             </button>
           </CollapsibleTrigger>
         </div>
-        <CollapsibleContent className="bg-slate-800/95 border-b border-slate-700 px-4 py-3 max-h-[40vh] overflow-y-auto">
+        <CollapsibleContent className="bg-muted/50 border-b border-border px-4 py-3 max-h-[40vh] overflow-y-auto">
           {prepKeys.length === 0 ? (
-            <p className="text-sm text-slate-400">No active items to prep.</p>
+            <p className="text-sm text-muted-foreground">No active items to prep.</p>
           ) : (
             <div className="grid grid-cols-2 gap-2">
               {prepKeys.map((key) => (
                 <div
                   key={key}
-                  className="bg-slate-700 rounded-md p-2 flex justify-between items-center"
+                  className="bg-card rounded-md p-2 flex justify-between items-center border border-border"
                 >
                   <span className="text-sm font-medium truncate pr-2">
                     {key}
                   </span>
-                  <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                  <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-full">
                     x{prepTotals[key]}
                   </span>
                 </div>
@@ -79,14 +79,14 @@ export function KitchenHeader() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 min-w-[100px] flex flex-col items-center justify-center py-3 px-2 border-b-2 transition-colors ${
                 isActive
-                  ? 'border-blue-500 text-blue-400 bg-slate-800/50'
-                  : 'border-transparent text-slate-400 hover:text-slate-300'
+                  ? 'border-primary text-primary bg-muted/50'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               <div className="relative">
                 <Icon className="w-5 h-5 mb-1" />
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                  <span className="absolute -top-1 -right-2 bg-destructive text-destructive-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
                     {tab.count}
                   </span>
                 )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Users,
   Tag,
@@ -14,11 +14,30 @@ import {
   Mail,
   Star,
   RotateCcw,
+  Minus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -66,7 +85,11 @@ export default function CrmPage() {
 
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [loyaltyPointsToAdd, setLoyaltyPointsToAdd] = useState("");
+  const [loyaltyPointsToRedeem, setLoyaltyPointsToRedeem] = useState("");
   const [addingPoints, setAddingPoints] = useState(false);
+  const [redeemingPoints, setRedeemingPoints] = useState(false);
+  const [toggleConfirmTarget, setToggleConfirmTarget] = useState<{ id: string; type: 'coupon' | 'corp'; isActive: boolean } | null>(null);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refresh = useCallback(async () => {
     if (!restaurantId) return;
@@ -87,11 +110,17 @@ export default function CrmPage() {
     refresh();
   }, [restaurantId, refresh]);
 
-  const handleSearchCustomers = async () => {
-    if (!customerQuery) { refresh(); return; }
-    const result: any = await searchCustomers(customerQuery);
+  const handleSearchCustomers = useCallback(async (q?: string) => {
+    const query = q ?? customerQuery;
+    if (!query) { refresh(); return; }
+    const result: any = await searchCustomers(query);
     if ("data" in result && result.data) setCustomers(result.data);
-  };
+  }, [customerQuery, refresh]);
+
+  const triggerCustomerSearch = useCallback((q: string) => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => handleSearchCustomers(q), 350);
+  }, [handleSearchCustomers]);
 
   const handleCreateCustomer = async () => {
     if (!newCustomer.name || !newCustomer.phone) { toast.error("Name and phone required"); return; }
@@ -116,6 +145,20 @@ export default function CrmPage() {
     toast.success(`${pts} points added`);
     setSelectedCustomer((prev: any) => prev ? { ...prev, loyaltyPoints: prev.loyaltyPoints + pts } : prev);
     setLoyaltyPointsToAdd("");
+  };
+
+  const handleRedeemPoints = async () => {
+    if (!selectedCustomer) return;
+    const pts = parseInt(loyaltyPointsToRedeem);
+    if (isNaN(pts) || pts <= 0) { toast.error("Enter valid points"); return; }
+    if (pts > (selectedCustomer.loyaltyPoints || 0)) { toast.error("Not enough points"); return; }
+    setRedeemingPoints(true);
+    const result: any = await addLoyaltyPoints(selectedCustomer.id, -pts);
+    setRedeemingPoints(false);
+    if (result.error) { toast.error(result.error); return; }
+    toast.success(`${pts} points redeemed`);
+    setSelectedCustomer((prev: any) => prev ? { ...prev, loyaltyPoints: prev.loyaltyPoints - pts } : prev);
+    setLoyaltyPointsToRedeem("");
   };
 
   const handleCreateCoupon = async () => {
@@ -145,6 +188,12 @@ export default function CrmPage() {
     refresh();
   };
 
+  const confirmToggleCoupon = async () => {
+    if (!toggleConfirmTarget || toggleConfirmTarget.type !== 'coupon') return;
+    await handleToggleCoupon(toggleConfirmTarget.id);
+    setToggleConfirmTarget(null);
+  };
+
   const handleCreateCorp = async () => {
     if (!newCorp.companyName) { toast.error("Company name required"); return; }
     setCreatingCorp(true);
@@ -161,6 +210,12 @@ export default function CrmPage() {
     const result: any = await toggleCorporateAccount(id);
     if (result.error) { toast.error(result.error); return; }
     refresh();
+  };
+
+  const confirmToggleCorp = async () => {
+    if (!toggleConfirmTarget || toggleConfirmTarget.type !== 'corp') return;
+    await handleToggleCorp(toggleConfirmTarget.id);
+    setToggleConfirmTarget(null);
   };
 
   if (loading && customers.length === 0) {
@@ -197,15 +252,15 @@ export default function CrmPage() {
           <TabsContent value="customers" className="space-y-4">
             <div className="flex items-center gap-2">
               <div className="flex gap-2 flex-1">
-                <Input
-                  placeholder="Search by name or phone..."
-                  value={customerQuery}
-                  onChange={(e) => setCustomerQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearchCustomers()}
-                />
-                <Button variant="outline" onClick={handleSearchCustomers}>
-                  <Search className="w-4 h-4" />
-                </Button>
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    className="pl-9"
+                    placeholder="Search by name or phone..."
+                    value={customerQuery}
+                    onChange={(e) => { setCustomerQuery(e.target.value); triggerCustomerSearch(e.target.value); }}
+                  />
+                </div>
               </div>
               <Button onClick={() => setShowNewCustomer(true)}>
                 <Plus className="w-4 h-4 mr-1" /> New Customer
@@ -242,7 +297,7 @@ export default function CrmPage() {
                         <div
                           key={c.id}
                           className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer"
-                          onClick={() => setSelectedCustomer(selectedCustomer?.id === c.id ? null : c)}
+                          onClick={() => setSelectedCustomer(c)}
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
@@ -282,17 +337,30 @@ export default function CrmPage() {
                     <p className="text-sm font-medium mb-1 flex items-center gap-1">
                       <Star className="w-4 h-4 text-warning" /> Loyalty Points: {selectedCustomer.loyaltyPoints}
                     </p>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 mb-2">
                       <Input
                         type="number"
                         placeholder="Points to add"
                         value={loyaltyPointsToAdd}
                         onChange={(e) => setLoyaltyPointsToAdd(e.target.value)}
-                        className="w-40"
+                        className="w-36"
                       />
                       <Button size="sm" onClick={handleAddLoyaltyPoints} disabled={addingPoints}>
                         {addingPoints ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
-                        Add Points
+                        Add
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        placeholder="Points to redeem"
+                        value={loyaltyPointsToRedeem}
+                        onChange={(e) => setLoyaltyPointsToRedeem(e.target.value)}
+                        className="w-36"
+                      />
+                      <Button size="sm" variant="outline" onClick={handleRedeemPoints} disabled={redeemingPoints}>
+                        {redeemingPoints ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Minus className="w-4 h-4 mr-1" />}
+                        Redeem
                       </Button>
                     </div>
                   </div>
@@ -314,14 +382,13 @@ export default function CrmPage() {
                 <CardContent className="pt-4 space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <Input placeholder="Code *" value={newCoupon.code} onChange={(e) => setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase() })} />
-                    <select
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={newCoupon.discountType}
-                      onChange={(e) => setNewCoupon({ ...newCoupon, discountType: e.target.value })}
-                    >
-                      <option value="PERCENTAGE">Percentage (%)</option>
-                      <option value="FIXED">Fixed Amount</option>
-                    </select>
+                    <Select value={newCoupon.discountType} onValueChange={(v) => setNewCoupon({ ...newCoupon, discountType: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PERCENTAGE">Percentage (%)</SelectItem>
+                        <SelectItem value="FIXED">Fixed Amount</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Input type="number" placeholder="Value *" value={newCoupon.discountValue} onChange={(e) => setNewCoupon({ ...newCoupon, discountValue: e.target.value })} />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -358,7 +425,7 @@ export default function CrmPage() {
                             {c.usageLimit && ` · Used: ${c.usageCount}/${c.usageLimit}`}
                           </p>
                         </div>
-                        <Button size="sm" variant="ghost" onClick={() => handleToggleCoupon(c.id)}>
+                        <Button size="sm" variant="ghost" onClick={() => { if (!c.isActive) { handleToggleCoupon(c.id); } else { setToggleConfirmTarget({ id: c.id, type: 'coupon', isActive: c.isActive }); } }}>
                           {c.isActive ? <X className="w-3 h-3 text-destructive" /> : <Check className="w-3 h-3 text-success" />}
                         </Button>
                       </div>
@@ -413,7 +480,7 @@ export default function CrmPage() {
                             {a.contactName && `${a.contactName} · `}{a.contactPhone}
                           </p>
                         </div>
-                        <Button size="sm" variant="ghost" onClick={() => handleToggleCorp(a.id)}>
+                        <Button size="sm" variant="ghost" onClick={() => { if (!a.isActive) { handleToggleCorp(a.id); } else { setToggleConfirmTarget({ id: a.id, type: 'corp', isActive: a.isActive }); } }}>
                           {a.isActive ? <X className="w-3 h-3 text-destructive" /> : <Check className="w-3 h-3 text-success" />}
                         </Button>
                       </div>
@@ -425,6 +492,20 @@ export default function CrmPage() {
           </TabsContent>
         </Tabs>
       </div>
+      <AlertDialog open={!!toggleConfirmTarget} onOpenChange={(o) => !o && setToggleConfirmTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deactivate {toggleConfirmTarget?.type === 'coupon' ? 'coupon' : 'corporate account'}?</AlertDialogTitle>
+            <AlertDialogDescription>This will mark it as inactive. You can re-activate it later.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={toggleConfirmTarget?.type === 'coupon' ? confirmToggleCoupon : confirmToggleCorp}>
+              Deactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -36,10 +36,10 @@ export default function OrderHeader({
   } = useWaiterOrderStore();
 
   return (
-    <header className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm pt-safe-top">
+    <header className="sticky top-0 z-20 bg-card border-b border-border shadow-sm pt-safe-top">
       {/* Offline Banner */}
       {isOffline && (
-        <div className="bg-red-500 text-white text-xs font-semibold px-4 py-1.5 flex items-center justify-center gap-2">
+        <div className="bg-destructive text-destructive-foreground text-xs font-semibold px-4 py-1.5 flex items-center justify-center gap-2">
           <WifiOff size={14} />
           <span>Offline - Saving locally</span>
         </div>
@@ -48,15 +48,15 @@ export default function OrderHeader({
       {/* Top Bar: Table Info, View Toggle & Live Status */}
       <div className="flex items-center justify-between px-4 py-3">
         <button
-          className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 transition-colors px-3 py-1.5 rounded-full"
+          className="flex items-center gap-2 bg-muted hover:bg-muted/80 transition-colors px-3 py-1.5 rounded-full"
           onClick={() => {
             window.dispatchEvent(new CustomEvent('open-table-selector'));
           }}
         >
-          <span className="font-bold text-gray-900">
+          <span className="font-bold text-foreground">
             Table {tableNumber || '??'}
           </span>
-          <div className="flex items-center gap-1 text-gray-500 text-sm border-l border-gray-300 pl-2">
+          <div className="flex items-center gap-1 text-muted-foreground text-sm border-l border-border pl-2">
             <Users size={14} />
             <span>{guestCount}</span>
           </div>
@@ -92,18 +92,18 @@ export default function OrderHeader({
           {/* Search Bar */}
           <div className="px-4 pb-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
               <Input
                 type="text"
                 placeholder="Search items or codes (e.g. 05)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-10 h-11 text-base bg-gray-50 border-gray-200 rounded-xl focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary shadow-inner"
+                className="pl-10 pr-10 h-11 text-base bg-muted border-border rounded-xl focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary shadow-inner"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
                 >
                   <X size={16} />
                 </button>
@@ -118,7 +118,7 @@ export default function OrderHeader({
               className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 !selectedCategory
                   ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
               }`}
             >
               All
@@ -130,7 +130,7 @@ export default function OrderHeader({
                 className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   selectedCategory === cat.id
                     ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 }`}
               >
                 {cat.name}

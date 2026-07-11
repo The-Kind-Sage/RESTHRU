@@ -38,9 +38,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import SyncIndicator from '@/components/dashboard/sync-indicator';
 import { useUIStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useNotificationsStore, AppNotification } from '@/store/notifications-store';
+import { useWaiterOrderStore } from '@/store/waiter-order-store';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -59,6 +61,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/reception/invoices': 'Invoice History',
   '/reception/crm': 'CRM & Discounts',
   '/reception/prints': 'Print Center',
+  '/reception/kitchen': 'Kitchen Display',
 };
 
 const NOTIF_ICONS: Record<AppNotification['type'], React.ReactNode> = {
@@ -128,6 +131,9 @@ export default function TopHeader() {
   const { sidebarCollapsed, setMobileMenuOpen } = useUIStore();
   const { user, restaurant, logout } = useAuthStore();
   const { notifications, unreadCount, isLoading, fetch, markRead, markAllRead, dismiss } = useNotificationsStore();
+  const isOrderPage = pathname === '/order';
+  const orderSearch = useWaiterOrderStore((s) => s.setSearchQuery);
+  const orderSearchValue = useWaiterOrderStore((s) => s.searchQuery);
 
   const pageTitle = useMemo(() => PAGE_TITLES[pathname] || 'Dashboard', [pathname]);
   const todayDate = useMemo(() => format(new Date(), 'MMMM d, yyyy'), []);
@@ -172,12 +178,14 @@ export default function TopHeader() {
         </div>
       </div>
 
-      {/* Center: search */}
+      {/* Center: search (wired to waiter-order-store when on /order) */}
       <div className="hidden md:flex flex-1 max-w-sm">
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search orders, menu, staff..."
+            placeholder={isOrderPage ? 'Search menu items or codes...' : 'Search orders, menu, staff...'}
+            value={isOrderPage ? orderSearchValue : undefined}
+            onChange={(e) => isOrderPage ? orderSearch(e.target.value) : null}
             className="pl-9 h-9 bg-background text-sm"
           />
         </div>
@@ -185,6 +193,8 @@ export default function TopHeader() {
 
       {/* Right: actions */}
       <div className="flex items-center gap-2">
+        {/* Sync status */}
+        <SyncIndicator />
         {/* ── Notification Bell ── */}
         <Popover>
           <PopoverTrigger asChild>

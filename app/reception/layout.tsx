@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import ReceptionShell from './shell';
+import { PageSkeleton } from '@/components/shared/page-skeleton';
 
 export default function ReceptionLayout({
   children,
@@ -8,7 +9,7 @@ export default function ReceptionLayout({
 }) {
   return (
     <ReceptionShell>
-      <Suspense fallback={null}>
+      <Suspense fallback={<PageSkeleton />}>
         {children}
       </Suspense>
     </ReceptionShell>

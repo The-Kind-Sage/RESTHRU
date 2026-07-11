@@ -30,10 +30,10 @@ const PAYMENT_METHODS = [
 type PaymentMethodId = (typeof PAYMENT_METHODS)[number]['id'];
 
 const STATUS_STYLES: Record<string, { label: string; className: string; icon: React.ElementType }> = {
-  PENDING: { label: 'Pending', className: 'bg-amber-100 text-amber-700 border-amber-200', icon: ChefHat },
-  PREPARING: { label: 'Cooking', className: 'bg-blue-100 text-blue-700 border-blue-200', icon: ChefHat },
-  READY: { label: 'Ready to Serve', className: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: BellRing },
-  SERVED: { label: 'Served — Unpaid', className: 'bg-slate-100 text-slate-600 border-slate-200', icon: CheckCircle2 },
+  PENDING: { label: 'Pending', className: 'bg-warning/10 text-warning border-warning/20', icon: ChefHat },
+  PREPARING: { label: 'Cooking', className: 'bg-primary/10 text-primary border-primary/20', icon: ChefHat },
+  READY: { label: 'Ready to Serve', className: 'bg-success/10 text-success border-success/20', icon: BellRing },
+  SERVED: { label: 'Served — Unpaid', className: 'bg-muted text-muted-foreground border-border', icon: CheckCircle2 },
 };
 
 export default function ActiveOrdersView() {
@@ -114,7 +114,7 @@ export default function ActiveOrdersView() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-500">
+      <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
         <p className="font-medium">Loading orders…</p>
       </div>
@@ -124,8 +124,8 @@ export default function ActiveOrdersView() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3 px-6 text-center">
-        <p className="text-red-500 font-semibold">Failed to load orders</p>
-        <p className="text-sm text-gray-400">{error}</p>
+        <p className="text-destructive font-semibold">Failed to load orders</p>
+        <p className="text-sm text-muted-foreground">{error}</p>
         <Button onClick={() => fetchOrders(true)} variant="outline" className="gap-2">
           <RefreshCw className="w-4 h-4" /> Retry
         </Button>
@@ -136,10 +136,10 @@ export default function ActiveOrdersView() {
   return (
     <div className="p-4 space-y-4">
       {orders.length === 0 && (
-        <div className="text-center text-gray-500 py-16">
+        <div className="text-center text-muted-foreground py-16">
           <p className="text-4xl mb-3">🧾</p>
           <p className="font-medium">No active orders</p>
-          <p className="text-sm text-gray-400 mt-1">New orders appear here automatically.</p>
+          <p className="text-sm text-muted-foreground mt-1">New orders appear here automatically.</p>
         </div>
       )}
 
@@ -155,20 +155,20 @@ export default function ActiveOrdersView() {
           <div
             key={order.id}
             className={cn(
-              'bg-white rounded-2xl border shadow-sm overflow-hidden',
-              order.status === 'READY' ? 'border-emerald-300 ring-1 ring-emerald-200' : 'border-gray-100'
+              'bg-card rounded-2xl border shadow-sm overflow-hidden',
+              order.status === 'READY' ? 'border-success/50 ring-1 ring-success/20' : 'border-border'
             )}
           >
             {/* Card header */}
-            <div className="px-4 py-3 flex items-center justify-between border-b border-gray-50">
+            <div className="px-4 py-3 flex items-center justify-between border-b border-border/50">
               <div>
-                <p className="font-bold text-gray-900">
+                <p className="font-bold text-foreground">
                   #{order.orderId}
-                  <span className="text-gray-400 font-medium text-sm ml-2">
+                  <span className="text-muted-foreground font-medium text-sm ml-2">
                     {order.table?.tableNumber ? `Table ${order.table.tableNumber}` : order.orderType}
                   </span>
                 </p>
-                <p className="text-xs text-gray-400">{formatRelativeTime(order.createdAt)}</p>
+                <p className="text-xs text-muted-foreground">{formatRelativeTime(order.createdAt)}</p>
               </div>
               <Badge variant="outline" className={cn('gap-1 font-semibold', style.className)}>
                 <StatusIcon size={12} />
@@ -180,17 +180,17 @@ export default function ActiveOrdersView() {
             <div className="px-4 py-3 space-y-1">
               {order.items.map((item) => (
                 <div key={item.id} className="flex justify-between text-sm">
-                  <span className="text-gray-700">
+                  <span className="text-foreground">
                     <span className="font-semibold">{item.quantity}x</span> {item.menuItemName}
                   </span>
-                  <span className="text-gray-500">
+                  <span className="text-muted-foreground">
                     {formatCurrency(item.pricePerUnit * item.quantity)}
                   </span>
                 </div>
               ))}
-              <div className="flex justify-between pt-2 mt-1 border-t border-gray-100 text-sm">
-                <span className="font-semibold text-gray-500">Total (incl. tax)</span>
-                <span className="font-bold text-gray-900">{formatCurrency(order.totalAmount)}</span>
+              <div className="flex justify-between pt-2 mt-1 border-t border-border text-sm">
+                <span className="font-semibold text-muted-foreground">Total (incl. tax)</span>
+                <span className="font-bold text-foreground">{formatCurrency(order.totalAmount)}</span>
               </div>
             </div>
 
@@ -201,7 +201,7 @@ export default function ActiveOrdersView() {
                   <Button
                     disabled={isBusy}
                     onClick={() => handleStatusChange(order, 'SERVED', `Order #${order.orderId} served`)}
-                    className="flex-1 h-11 font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="flex-1 h-11 font-bold rounded-xl bg-success hover:bg-success/90 text-white"
                   >
                     {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Mark Served'}
                   </Button>
@@ -225,7 +225,7 @@ export default function ActiveOrdersView() {
                         handleStatusChange(order, 'CANCELLED', `Order #${order.orderId} cancelled`);
                       }
                     }}
-                    className="h-11 rounded-xl border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 gap-1"
+                    className="h-11 rounded-xl border-destructive/30 text-destructive hover:bg-destructive/10 gap-1"
                   >
                     <XCircle size={16} />
                     Cancel
@@ -239,7 +239,7 @@ export default function ActiveOrdersView() {
 
       {/* Payment dialog */}
       <Dialog open={!!payingOrder} onOpenChange={(open) => !open && setPayingOrder(null)}>
-        <DialogContent className="max-w-[380px] rounded-2xl">
+        <DialogContent className="rounded-2xl sm:max-w-[420px]">
           <DialogHeader>
             <DialogTitle className="text-center">
               Collect Payment — #{payingOrder?.orderId}
@@ -249,14 +249,14 @@ export default function ActiveOrdersView() {
           {payingOrder && (
             <div className="space-y-5">
               <div className="text-center">
-                <p className="text-sm text-gray-500">Total Due</p>
-                <p className="text-3xl font-bold text-gray-900">
+                <p className="text-sm text-muted-foreground">Total Due</p>
+                <p className="text-3xl font-bold text-foreground">
                   {formatCurrency(payingOrder.totalAmount)}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-gray-600 font-semibold">Payment Method</Label>
+                <Label className="text-foreground font-semibold">Payment Method</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {PAYMENT_METHODS.map((m) => (
                     <button
@@ -266,7 +266,7 @@ export default function ActiveOrdersView() {
                         'flex items-center justify-center gap-2 rounded-xl border-2 py-3 font-semibold text-sm transition-colors',
                         method === m.id
                           ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                          : 'border-border text-muted-foreground hover:border-muted-foreground/30'
                       )}
                     >
                       <m.icon size={16} />
@@ -278,7 +278,7 @@ export default function ActiveOrdersView() {
 
               {method === 'CASH' && (
                 <div className="space-y-2">
-                  <Label htmlFor="received" className="text-gray-600 font-semibold">
+                  <Label htmlFor="received" className="text-foreground font-semibold">
                     Amount Received
                   </Label>
                   <Input
@@ -290,7 +290,7 @@ export default function ActiveOrdersView() {
                     className="h-12 text-xl text-center font-bold rounded-xl"
                   />
                   {change > 0 && (
-                    <p className="text-center text-sm font-semibold text-emerald-600">
+                    <p className="text-center text-sm font-semibold text-success">
                       Change to return: {formatCurrency(change)}
                     </p>
                   )}

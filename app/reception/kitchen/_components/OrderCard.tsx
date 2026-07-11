@@ -4,7 +4,7 @@ import { Order, OrderStatus } from '@/types';
 import { useKitchenStore } from '@/store/kitchen-store';
 import { motion, useAnimation, PanInfo } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { CheckCircle2, Circle, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, ChevronDown, ChevronUp, CheckCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface OrderCardProps {
@@ -43,13 +43,13 @@ export function OrderCard({ order }: OrderCardProps) {
   };
 
   // Badge colors based on time (e.g., > 10 mins = warning, > 20 mins = danger)
-  let badgeColor = 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+  let badgeColor = 'bg-success/10 text-success border-success/20';
   let isFlashing = false;
   if (elapsedSeconds > 1200) { // 20 mins
-    badgeColor = 'bg-red-500 text-white border-red-600';
+    badgeColor = 'bg-destructive text-destructive-foreground border-destructive';
     isFlashing = true;
   } else if (elapsedSeconds > 600) { // 10 mins
-    badgeColor = 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+    badgeColor = 'bg-warning/10 text-warning border-warning/20';
   }
 
   const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
@@ -94,18 +94,18 @@ export function OrderCard({ order }: OrderCardProps) {
         dragConstraints={{ left: 0, right: 0 }}
         onDragEnd={handleDragEnd}
         animate={controls}
-        className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden"
+        className="bg-card rounded-xl shadow-sm border border-border overflow-hidden"
       >
         {/* Header */}
         <div
-          className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center"
+          className="px-4 py-3 border-b border-border flex justify-between items-center"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
+            <span className="text-sm font-bold text-foreground">
               {order.table?.tableNumber ? `Table ${order.table.tableNumber}` : order.orderType}
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="text-xs text-muted-foreground">
               #{order.orderId}
             </span>
           </div>
@@ -116,16 +116,33 @@ export function OrderCard({ order }: OrderCardProps) {
               {formatTime(elapsedSeconds)}
             </div>
             {isExpanded ? (
-              <ChevronUp className="w-5 h-5 text-slate-400" />
+              <ChevronUp className="w-5 h-5 text-muted-foreground" />
             ) : (
-              <ChevronDown className="w-5 h-5 text-slate-400" />
+              <ChevronDown className="w-5 h-5 text-muted-foreground" />
             )}
           </div>
         </div>
 
         {/* Body */}
         {isExpanded && (
-          <div className="p-4 space-y-4 bg-slate-50 dark:bg-slate-900/50">
+          <div className="p-4 space-y-4 bg-muted/30">
+            {/* Mark all checked button */}
+            {order.items.length > 2 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  order.items.forEach((item) => {
+                    if (!checkedItems[`${order.id}-${item.id}`]) {
+                      toggleItemCheck(order.id, item.id);
+                    }
+                  });
+                }}
+                className="flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <CheckCheck className="w-4 h-4" />
+                Mark all checked
+              </button>
+            )}
             {order.items.map((item, idx) => {
               const isChecked = checkedItems[`${order.id}-${item.id}`];
               
@@ -140,9 +157,9 @@ export function OrderCard({ order }: OrderCardProps) {
                 >
                   <div className="mt-1">
                     {isChecked ? (
-                      <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                      <CheckCircle2 className="w-6 h-6 text-success" />
                     ) : (
-                      <Circle className="w-6 h-6 text-slate-300 dark:text-slate-600" />
+                      <Circle className="w-6 h-6 text-muted-foreground/40" />
                     )}
                   </div>
                   
@@ -150,13 +167,13 @@ export function OrderCard({ order }: OrderCardProps) {
                     <div className="flex items-start gap-2">
                       <span className={cn(
                         "text-lg font-bold min-w-[24px]",
-                        isChecked ? "text-slate-400" : "text-blue-600 dark:text-blue-400"
+                        isChecked ? "text-muted-foreground" : "text-primary"
                       )}>
                         {item.quantity}x
                       </span>
                       <span className={cn(
-                        "text-lg font-semibold text-slate-800 dark:text-slate-200",
-                        isChecked && "line-through text-slate-500 dark:text-slate-500"
+                        "text-lg font-semibold text-foreground",
+                        isChecked && "line-through text-muted-foreground"
                       )}>
                         {item.menuItemName}
                       </span>
@@ -166,12 +183,12 @@ export function OrderCard({ order }: OrderCardProps) {
                     {(item.specialInstructions || (item.selectedAddOns && item.selectedAddOns.length > 0)) && (
                       <div className="mt-2 pl-8 flex flex-col gap-1">
                         {item.specialInstructions && (
-                          <div className="bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-500 text-sm font-bold px-2 py-1 rounded inline-block w-fit uppercase">
+                          <div className="bg-warning/20 text-warning text-sm font-bold px-2 py-1 rounded inline-block w-fit uppercase">
                             "{item.specialInstructions}"
                           </div>
                         )}
                         {item.selectedAddOns?.map(addon => (
-                          <span key={addon.addOnId} className="text-sm text-slate-600 dark:text-slate-400">
+                          <span key={addon.addOnId} className="text-sm text-muted-foreground">
                             + {addon.name}
                           </span>
                         ))}
@@ -189,10 +206,10 @@ export function OrderCard({ order }: OrderCardProps) {
           <button
             onClick={handleActionTap}
             className={cn(
-              "w-full py-4 text-center font-bold text-white transition-colors uppercase tracking-widest active:scale-95",
-              order.status === OrderStatus.PENDING ? 'bg-blue-600 hover:bg-blue-700'
-              : order.status === OrderStatus.PREPARING ? 'bg-emerald-600 hover:bg-emerald-700'
-              : 'bg-slate-600 hover:bg-slate-700'
+              "w-full py-4 text-center font-bold text-primary-foreground transition-colors uppercase tracking-widest active:scale-95",
+              order.status === OrderStatus.PENDING ? 'bg-primary hover:bg-primary/90'
+              : order.status === OrderStatus.PREPARING ? 'bg-success hover:bg-success/90'
+              : 'bg-muted-foreground hover:bg-muted-foreground/90'
             )}
           >
             {nextActionText}
@@ -202,8 +219,8 @@ export function OrderCard({ order }: OrderCardProps) {
 
       {/* Swipe Indicator Background (hidden under the card, revealed during drag) */}
       {NEXT_STATUS[order.status] && (
-        <div className="absolute inset-0 bg-emerald-500 rounded-xl -z-10 flex items-center px-6">
-          <span className="text-white font-bold text-lg">
+        <div className="absolute inset-0 bg-success rounded-xl -z-10 flex items-center px-6">
+          <span className="text-primary-foreground font-bold text-lg">
             {order.status === OrderStatus.PENDING ? 'Cook' : order.status === OrderStatus.PREPARING ? 'Complete' : 'Serve'}
           </span>
         </div>

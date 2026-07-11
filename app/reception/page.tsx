@@ -29,6 +29,26 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { formatCurrency, formatTime, formatDate } from "@/lib/format";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
@@ -49,12 +69,12 @@ import {
   splitOrderItems,
 } from "@/lib/actions/reception";
 
-const STATUS_COLORS: Record<string, string> = {
-  AVAILABLE: "bg-emerald-500",
-  OCCUPIED: "bg-amber-500",
-  RESERVED: "bg-blue-500",
-  BILL_REQUESTED: "bg-purple-500",
-  MAINTENANCE: "bg-red-500",
+const FLOOR_BG: Record<string, string> = {
+  AVAILABLE: "bg-success/20",
+  OCCUPIED: "bg-warning/20",
+  RESERVED: "bg-primary/20",
+  BILL_REQUESTED: "bg-accent/20",
+  MAINTENANCE: "bg-destructive/20",
 };
 
 export default function ReceptionPage() {
@@ -188,17 +208,23 @@ export default function ReceptionPage() {
     refreshAll();
   };
 
-  const handleSeatWaitlist = async (entry: any) => {
-    const available = tables.filter((t: any) => t.status === "AVAILABLE" && t.capacity >= entry.partySize);
-    if (available.length === 0) {
-      toast.error("No suitable table available");
-      return;
-    }
-    const tableId = available[0].id;
+  const [seatDialogEntry, setSeatDialogEntry] = useState<any>(null);
+  const [seatDialogTable, setSeatDialogTable] = useState<string>("");
+
+  const handleSeatWaitlist = async (entry: any, tableId: string) => {
+    const table = tables.find((t: any) => t.id === tableId);
+    if (!table) { toast.error("Selected table not found"); return; }
     const result = await seatWaitlistEntry(entry.id, tableId) as any;
     if (result.error) { toast.error(result.error); return; }
-    toast.success(`${entry.customerName} seated at Table ${available[0].tableNumber}`);
+    toast.success(`${entry.customerName} seated at Table ${table.tableNumber}`);
     refreshAll();
+  };
+
+  const handleConfirmSeat = async () => {
+    if (!seatDialogEntry || !seatDialogTable) return;
+    await handleSeatWaitlist(seatDialogEntry, seatDialogTable);
+    setSeatDialogEntry(null);
+    setSeatDialogTable("");
   };
 
   const handleRemoveWaitlist = async (entry: any) => {
@@ -426,9 +452,27 @@ export default function ReceptionPage() {
                                 <Button size="sm" variant="default" onClick={() => handleCheckIn(res)}>
                                   <Check className="w-3 h-3 mr-1" /> Check In
                                 </Button>
-                                <Button size="sm" variant="outline" className="text-destructive" onClick={() => handleCancelReservation(res)}>
-                                  <X className="w-3 h-3" />
-                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button size="sm" variant="outline" className="text-destructive">
+                                      <X className="w-3 h-3" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Cancel Reservation</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to cancel {res.customerName}'s reservation?
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Keep</AlertDialogCancel>
+                                      <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => handleCancelReservation(res)}>
+                                        Cancel Reservation
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
                               </>
                             )}
                           </div>
@@ -521,9 +565,8 @@ export default function ReceptionPage() {
                         <div
                           key={table.id}
                           className={`p-2 rounded-lg border text-center cursor-pointer hover:shadow-md transition-shadow ${
-                            STATUS_COLORS[table.status] || "bg-gray-500"
-                          } bg-opacity-20 border-opacity-30`}
-                          style={{ backgroundColor: `${STATUS_COLORS[table.status]}20` || "#f0f0f0" }}
+                            FLOOR_BG[table.status] || "bg-muted/20"
+                          }`}
                           onClick={() => {
                             if (table.status === "AVAILABLE") {
                               setWalkInTable(table);
@@ -646,19 +689,37 @@ export default function ReceptionPage() {
                                   <Button size="sm" variant="outline" onClick={() => handleNotifyWaitlist(entry)}>
                                     <Bell className="w-3 h-3 mr-1" /> Notify
                                   </Button>
-                                  <Button size="sm" variant="default" onClick={() => handleSeatWaitlist(entry)}>
-                                    <Check className="w-3 h-3 mr-1" /> Seat
-                                  </Button>
-                                </>
-                              )}
-                              {entry.status === "NOTIFIED" && (
-                                <Button size="sm" variant="default" onClick={() => handleSeatWaitlist(entry)}>
+                                <Button size="sm" variant="default" onClick={() => { setSeatDialogEntry(entry); setSeatDialogTable(""); }}>
+                                  <Check className="w-3 h-3 mr-1" /> Seat
+                                </Button>
+                              </>
+                            )}
+                            {entry.status === "NOTIFIED" && (
+                              <Button size="sm" variant="default" onClick={() => { setSeatDialogEntry(entry); setSeatDialogTable(""); }}>
                                   <Check className="w-3 h-3 mr-1" /> Seat
                                 </Button>
                               )}
-                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleRemoveWaitlist(entry)}>
-                                <X className="w-3 h-3" />
-                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="ghost" className="text-destructive">
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Remove Waitlist Entry</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to remove {entry.customerName} from the waitlist?
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Keep</AlertDialogCancel>
+                                    <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => handleRemoveWaitlist(entry)}>
+                                      Remove
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             </div>
                           </motion.div>
                         ))}
@@ -668,6 +729,38 @@ export default function ReceptionPage() {
                 )}
               </CardContent>
             </Card>
+
+            <Dialog open={!!seatDialogEntry} onOpenChange={(open) => { if (!open) { setSeatDialogEntry(null); setSeatDialogTable(""); } }}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Seat {seatDialogEntry?.customerName}</DialogTitle>
+                  <DialogDescription>
+                    Choose a table to seat this party of {seatDialogEntry?.partySize}.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-wrap gap-1.5 py-2">
+                  {tables.filter((t: any) => t.status === "AVAILABLE" && t.capacity >= (seatDialogEntry?.partySize || 0)).map((t: any) => (
+                    <Button
+                      key={t.id}
+                      variant={seatDialogTable === t.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSeatDialogTable(t.id)}
+                    >
+                      T{t.tableNumber} (Cap: {t.capacity})
+                    </Button>
+                  ))}
+                  {tables.filter((t: any) => t.status === "AVAILABLE" && t.capacity >= (seatDialogEntry?.partySize || 0)).length === 0 && (
+                    <p className="text-sm text-muted-foreground">No suitable tables available</p>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => { setSeatDialogEntry(null); setSeatDialogTable(""); }}>Cancel</Button>
+                  <Button onClick={handleConfirmSeat} disabled={!seatDialogTable}>
+                    <Check className="w-4 h-4 mr-1" /> Confirm Seat
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* ── Tab 4: Merge / Split ── */}
@@ -688,10 +781,9 @@ export default function ReceptionPage() {
                         key={o.id}
                         className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer text-sm"
                       >
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={selectedMergeOrders.includes(o.id)}
-                          onChange={() => {
+                          onCheckedChange={() => {
                             setSelectedMergeOrders((prev) =>
                               prev.includes(o.id)
                                 ? prev.filter((id) => id !== o.id)
@@ -716,7 +808,7 @@ export default function ReceptionPage() {
                       <Button
                         key={t.id}
                         variant={mergeTargetTable === t.id ? "default" : "outline"}
-                        size="sm"
+                        size="default"
                         onClick={() => setMergeTargetTable(t.id)}
                       >
                         T{t.tableNumber}
@@ -749,7 +841,7 @@ export default function ReceptionPage() {
                       <Button
                         key={o.id}
                         variant={splitSourceOrder === o.id ? "default" : "outline"}
-                        size="sm"
+                        size="default"
                         onClick={() => { setSplitSourceOrder(o.id); setSplitItemIds([]); }}
                       >
                         #{o.orderId} — {o.table?.name || `T${o.table?.tableNumber}`}
@@ -768,10 +860,9 @@ export default function ReceptionPage() {
                             key={item.id}
                             className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer text-sm"
                           >
-                            <input
-                              type="checkbox"
+                            <Checkbox
                               checked={splitItemIds.includes(item.id)}
-                              onChange={() => {
+                              onCheckedChange={() => {
                                 setSplitItemIds((prev) =>
                                   prev.includes(item.id)
                                     ? prev.filter((id) => id !== item.id)
@@ -797,7 +888,7 @@ export default function ReceptionPage() {
                       <Button
                         key={t.id}
                         variant={splitTargetTable === t.id ? "default" : "outline"}
-                        size="sm"
+                        size="default"
                         onClick={() => setSplitTargetTable(t.id)}
                       >
                         T{t.tableNumber}

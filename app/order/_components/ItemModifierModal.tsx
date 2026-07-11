@@ -12,13 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useWaiterOrderStore } from '@/store/waiter-order-store';
 import { MenuItem } from '@/types';
-
-// Mock modifiers based on food type or category
-const getCommonModifiers = (category: string) => {
-  if (category === 'Mains') return ['No onions', 'Extra spicy', 'Sauce on side'];
-  if (category === 'Drinks') return ['Less ice', 'No ice', 'Extra sugar'];
-  return ['Extra sauce', 'To go'];
-};
+import { formatCurrency } from '@/lib/format';
 
 export default function ItemModifierModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,65 +52,67 @@ export default function ItemModifierModal() {
 
   if (!activeItem) return null;
 
-  const commonModifiers = getCommonModifiers(activeItem.categoryId);
+  const commonModifiers = activeItem.addOns?.filter(a => a.isAvailable) || [];
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-[340px] rounded-2xl p-0 overflow-hidden mt-safe">
-        <DialogHeader className="p-5 pb-3 border-b border-gray-100">
+      <DialogContent className="rounded-2xl p-0 overflow-hidden mt-safe sm:max-w-[400px]">
+        <DialogHeader className="p-5 pb-3 border-b border-border">
           <DialogTitle className="text-xl font-bold leading-tight">
             {activeItem.name}
           </DialogTitle>
-          <p className="text-primary font-bold">${activeItem.price.toFixed(2)}</p>
+          <p className="text-primary font-bold">{formatCurrency(activeItem.discountPrice ?? activeItem.price)}</p>
         </DialogHeader>
 
         <div className="p-5 space-y-6">
           {/* Quantity selector */}
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-gray-700">Quantity</span>
-            <div className="flex items-center gap-3 bg-gray-100 rounded-full border border-gray-200 p-1">
+            <span className="font-semibold text-foreground">Quantity</span>
+            <div className="flex items-center gap-3 bg-muted rounded-full border border-border p-1">
               <button 
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center font-bold text-gray-700"
+                className="w-10 h-10 rounded-full bg-card shadow-sm flex items-center justify-center font-bold text-foreground"
               >
                 -
               </button>
               <span className="w-6 text-center font-bold">{quantity}</span>
               <button 
                 onClick={() => setQuantity(quantity + 1)}
-                className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center font-bold text-gray-700"
+                className="w-10 h-10 rounded-full bg-card shadow-sm flex items-center justify-center font-bold text-foreground"
               >
                 +
               </button>
             </div>
           </div>
 
-          {/* Quick Modifiers */}
-          <div className="space-y-3">
-            <span className="font-semibold text-gray-700 block">Quick Modifiers</span>
-            <div className="flex flex-wrap gap-2">
-              {commonModifiers.map(mod => {
-                const isActive = notes.includes(mod);
-                return (
-                  <button
-                    key={mod}
-                    onClick={() => toggleModifier(mod)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
-                      isActive 
-                        ? 'bg-primary/10 border-primary/20 text-primary' 
-                        : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    {mod}
-                  </button>
-                );
-              })}
+          {/* Quick Modifiers — data-driven from actual add-ons */}
+          {commonModifiers.length > 0 && (
+            <div className="space-y-3">
+              <span className="font-semibold text-foreground block">Quick Modifiers</span>
+              <div className="flex flex-wrap gap-2">
+                {commonModifiers.map(mod => {
+                  const isActive = notes.includes(mod.name);
+                  return (
+                    <button
+                      key={mod.id}
+                      onClick={() => toggleModifier(mod.name)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                        isActive 
+                          ? 'bg-primary/10 border-primary/20 text-primary' 
+                          : 'bg-card border-border text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      {mod.name}{mod.price > 0 ? ` (+${formatCurrency(mod.price)})` : ''}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Custom Notes */}
           <div className="space-y-3">
-            <span className="font-semibold text-gray-700 block">Custom Notes</span>
+            <span className="font-semibold text-foreground block">Custom Notes</span>
             <Textarea 
               placeholder="e.g. Allergy to peanuts..."
               value={notes}
@@ -126,7 +122,7 @@ export default function ItemModifierModal() {
           </div>
         </div>
 
-        <DialogFooter className="p-4 border-t border-gray-100 bg-gray-50">
+        <DialogFooter className="p-4 border-t border-border bg-muted/50">
           <Button 
             className="w-full h-14 text-lg font-bold rounded-xl bg-primary hover:bg-primary/90 text-white" 
             onClick={handleAdd}

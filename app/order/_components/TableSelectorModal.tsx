@@ -59,7 +59,7 @@ export default function TableSelectorModal({ tables }: { tables: PosTable[] }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-[380px] rounded-2xl p-0 overflow-hidden">
+      <DialogContent className="rounded-2xl p-0 overflow-hidden sm:max-w-[420px]">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="text-xl font-bold text-center">
             Table Details
@@ -68,9 +68,9 @@ export default function TableSelectorModal({ tables }: { tables: PosTable[] }) {
 
         <div className="p-6 pt-2 space-y-6">
           <div className="space-y-3">
-            <Label className="text-gray-600 font-semibold">Select Table</Label>
+            <Label className="text-foreground font-semibold">Select Table</Label>
             {tables.length === 0 ? (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 No tables configured yet. Ask the owner to add tables in the dashboard.
               </p>
             ) : (
@@ -86,14 +86,14 @@ export default function TableSelectorModal({ tables }: { tables: PosTable[] }) {
                         'rounded-xl border-2 p-3 flex flex-col items-center gap-0.5 transition-colors',
                         isSelected
                           ? 'border-primary bg-primary/10'
-                          : 'border-gray-200 bg-white hover:border-gray-300'
+                          : 'border-border bg-card hover:border-muted-foreground/30'
                       )}
                     >
-                      <span className="font-bold text-lg text-gray-900">{t.tableNumber}</span>
+                      <span className="font-bold text-lg text-foreground">{t.tableNumber}</span>
                       <span
                         className={cn(
                           'text-[10px] font-semibold uppercase tracking-wide',
-                          isOccupied ? 'text-amber-600' : t.status === 'AVAILABLE' ? 'text-emerald-600' : 'text-gray-500'
+                          isOccupied ? 'text-warning' : t.status === 'AVAILABLE' ? 'text-success' : 'text-muted-foreground'
                         )}
                       >
                         {isOccupied ? 'Occupied' : t.status === 'AVAILABLE' ? 'Free' : t.status.toLowerCase()}
@@ -103,13 +103,13 @@ export default function TableSelectorModal({ tables }: { tables: PosTable[] }) {
                 })}
               </div>
             )}
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Occupied tables can take additional orders for the same party.
             </p>
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="guests" className="text-gray-600 font-semibold flex items-center gap-2">
+            <Label htmlFor="guests" className="text-foreground font-semibold flex items-center gap-2">
               <Users size={16} />
               Number of Guests
             </Label>
@@ -143,7 +143,7 @@ export default function TableSelectorModal({ tables }: { tables: PosTable[] }) {
           </div>
         </div>
 
-        <DialogFooter className="p-4 border-t border-gray-100 bg-gray-50">
+        <DialogFooter className="p-4 border-t border-border bg-muted/50">
           <Button
             className="w-full h-12 text-lg font-bold rounded-xl"
             onClick={handleSave}

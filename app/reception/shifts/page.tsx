@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Wallet, Plus, Loader2, AlertTriangle, CheckCircle2, History } from 'lucide-react';
+import { Clock, Wallet, Plus, Loader2, AlertTriangle, CheckCircle2, History, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -59,6 +60,7 @@ export default function ShiftsPage() {
 
   const [openDialogOpen, setOpenDialogOpen] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState('');
+  const [staffSearch, setStaffSearch] = useState('');
   const [openingFloat, setOpeningFloat] = useState('');
   const [openNotes, setOpenNotes] = useState('');
   const [opening, setOpening] = useState(false);
@@ -91,8 +93,8 @@ export default function ShiftsPage() {
       return;
     }
     const floatAmount = parseFloat(openingFloat);
-    if (isNaN(floatAmount) || floatAmount < 0) {
-      toast.error('Enter a valid opening float');
+    if (isNaN(floatAmount) || floatAmount < 0 || floatAmount > 999999) {
+      toast.error('Enter a valid opening float (0 – 999,999)');
       return;
     }
     setOpening(true);
@@ -107,16 +109,22 @@ export default function ShiftsPage() {
     setSelectedStaffId('');
     setOpeningFloat('');
     setOpenNotes('');
+    setStaffSearch('');
     refresh();
   };
+
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
   const openCloseDialog = async (shift: any) => {
     setCloseTarget(shift);
     setSummary(null);
+    setSummaryError(null);
     setClosingCash('');
     setCloseNotes('');
     const result = await getShiftSummary(shift.id);
     if ('data' in result) setSummary(result.data);
+    else if ('error' in result) setSummaryError(result.error as string);
+    else setSummaryError('Failed to load shift summary');
   };
 
   const handleCloseShift = async () => {
@@ -165,8 +173,22 @@ export default function ShiftsPage() {
         <h2 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
           <Clock className="h-4 w-4" /> Active Shifts
         </h2>
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i}>
+                <CardContent className="p-5 space-y-3">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-3 w-20" />
+                  <Separator />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-9 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         ) : activeShifts.length === 0 ? (
           <Card>
             <CardContent className="py-10 text-center text-muted-foreground">
@@ -220,7 +242,13 @@ export default function ShiftsPage() {
         </h2>
         <Card>
           <CardContent className="p-0">
-            {history.length === 0 ? (
+            {loading ? (
+              <div className="p-4 space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
+              </div>
+            ) : history.length === 0 ? (
               <div className="py-10 text-center text-muted-foreground text-sm">No closed shifts yet</div>
             ) : (
               <Table>
@@ -263,7 +291,7 @@ export default function ShiftsPage() {
       </div>
 
       {/* Open shift dialog */}
-      <Dialog open={openDialogOpen} onOpenChange={setOpenDialogOpen}>
+      <Dialog open={openDialogOpen} onOpenChange={(o) => { setOpenDialogOpen(o); if (!o) setStaffSearch(''); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Open Shift</DialogTitle>
@@ -275,7 +303,16 @@ export default function ShiftsPage() {
               <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
                 <SelectTrigger><SelectValue placeholder="Who's on the register?" /></SelectTrigger>
                 <SelectContent>
-                  {staff.map((s) => (
+                  <div className="flex items-center gap-2 px-3 py-2 sticky top-0 bg-popover z-10 border-b">
+                    <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <Input
+                      placeholder="Search staff..."
+                      className="h-8 border-0 shadow-none focus-visible:ring-0 p-0"
+                      value={staffSearch}
+                      onChange={(e) => setStaffSearch(e.target.value)}
+                    />
+                  </div>
+                  {staff.filter(s => !staffSearch || `${s.firstName} ${s.lastName} ${s.role}`.toLowerCase().includes(staffSearch.toLowerCase())).map((s) => (
                     <SelectItem key={s.id} value={s.id}>
                       {s.firstName} {s.lastName} — {s.role}
                     </SelectItem>
@@ -285,7 +322,7 @@ export default function ShiftsPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Opening float</Label>
-              <Input type="number" min={0} value={openingFloat} onChange={(e) => setOpeningFloat(e.target.value)} placeholder="0.00" />
+              <Input type="number" min={0} max={999999} value={openingFloat} onChange={(e) => setOpeningFloat(e.target.value)} placeholder="0.00" />
             </div>
             <div className="space-y-1.5">
               <Label>Notes (optional)</Label>
@@ -309,7 +346,13 @@ export default function ShiftsPage() {
             <DialogTitle>Close Shift — {closeTarget?.staff?.firstName} {closeTarget?.staff?.lastName}</DialogTitle>
             <DialogDescription>Count the drawer and enter the actual cash on hand.</DialogDescription>
           </DialogHeader>
-          {!summary ? (
+          {!summary ? summaryError ? (
+            <div className="py-8 text-center text-sm text-destructive">
+              <AlertTriangle className="h-6 w-6 mx-auto mb-2" />
+              <p>{summaryError}</p>
+              <Button size="sm" variant="outline" className="mt-3" onClick={() => openCloseDialog(closeTarget)}>Retry</Button>
+            </div>
+          ) : (
             <div className="py-8 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
           ) : (
             <div className="space-y-4">

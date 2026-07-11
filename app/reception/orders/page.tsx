@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, BellOff, Loader2, ArrowRight, XCircle, Banknote } from "lucide-react";
+import { Bell, BellOff, Loader2, ArrowRight, XCircle, Banknote, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency, formatRelativeTime } from "@/lib/format";
 import { getOrdersWithItems } from "@/lib/actions/dashboard";
 import { updateOrderStatus, settleOrder, voidOrderItem, voidOrder } from "@/lib/actions/orders";
@@ -19,9 +20,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Ban } from "lucide-react";
 import ManagerApprovalDialog from "@/components/dashboard/manager-approval-dialog";
 
 type OrderStatus = "PENDING" | "PREPARING" | "READY" | "SERVED" | "CANCELLED";
@@ -49,6 +59,25 @@ export default function LiveOrdersPage() {
   const [isSettling, setIsSettling] = useState(false);
   const [voidItemTarget, setVoidItemTarget] = useState<any>(null);
   const [voidOrderTarget, setVoidOrderTarget] = useState<any>(null);
+  const [cancelTarget, setCancelTarget] = useState<any>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const playSound = useCallback(() => {
+    try {
+      if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+      const ctx = audioCtxRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.15);
+    } catch { /* audio not available */ }
+  }, []);
 
   const refresh = useCallback(() => {
     if (!restaurantId) return;
@@ -57,7 +86,8 @@ export default function LiveOrdersPage() {
 
   useEffect(() => {
     if (!restaurantId) return;
-    getOrdersWithItems(restaurantId, 50).then(setOrders).catch(() => setOrders([]));
+    setInitialLoading(true);
+    getOrdersWithItems(restaurantId, 50).then((data) => { setOrders(data); setInitialLoading(false); }).catch(() => { setOrders([]); setInitialLoading(false); });
     const interval = setInterval(refresh, 15_000);
     return () => clearInterval(interval);
   }, [restaurantId, refresh]);
@@ -104,9 +134,14 @@ export default function LiveOrdersPage() {
   };
 
   const handleCancel = async (order: any) => {
-    if (!confirm(`Cancel order ${order.orderId}? The kitchen will stop preparing it.`)) return;
-    await handleAdvance(order, "CANCELLED");
+    setCancelTarget(order);
+  };
+
+  const confirmCancel = async () => {
+    if (!cancelTarget) return;
+    await handleAdvance(cancelTarget, "CANCELLED");
     setIsDialogOpen(false);
+    setCancelTarget(null);
   };
 
   const handleSettle = async (order: any) => {
@@ -163,7 +198,7 @@ export default function LiveOrdersPage() {
                   </div>
                   <span className="text-xs font-semibold text-primary">Live</span>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => setSoundEnabled(!soundEnabled)}>
+                <Button variant="ghost" size="icon" onClick={() => { setSoundEnabled(!soundEnabled); if (soundEnabled) playSound(); }}>
                   {soundEnabled ? <Bell className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
                 </Button>
               </div>
@@ -184,10 +219,22 @@ export default function LiveOrdersPage() {
         </div>
       </div>
 
+      {initialLoading ? (
+        <div className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="bg-muted/30 rounded-lg border p-3 space-y-3">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+          ))}
+        </div>
+      ) : (
       <div className="p-4 overflow-x-auto">
         <div className="flex gap-4 min-w-max pb-4">
           {(Object.entries(ordersByStatus) as [OrderStatus, any[]][]).map(([status, statusOrders]) => (
-            <div key={status} className="flex-shrink-0 w-96 bg-muted/30 rounded-lg border">
+            <div key={status} className="flex-[1_1_0] min-w-[280px] max-w-[360px] bg-muted/30 rounded-lg border">
               <div className={`${statusConfig[status].bgColor} text-white p-3 rounded-t-lg flex justify-between items-center`}>
                 <h2 className="font-semibold text-sm">{statusConfig[status].label}</h2>
                 <Badge variant="secondary" className="bg-background text-black">{statusOrders.length}</Badge>
@@ -254,12 +301,22 @@ export default function LiveOrdersPage() {
                                     size="sm"
                                     variant="outline"
                                     disabled={busyOrderId === order.id}
-                                    onClick={() => handleCancel(order)}
+                                    onClick={() => setCancelTarget(order)}
                                     className="text-destructive border-destructive/30 hover:bg-destructive/10"
                                   >
                                     <XCircle className="w-3 h-3" />
                                   </Button>
                                 )}
+                              </div>
+                            )}
+                            {!statusConfig[status].nextStatus && ["READY", "SERVED"].includes(status) && !hasBill(order) && (
+                              <div className="flex gap-2 pt-1">
+                                <Button size="sm" variant="outline" className="flex-1 gap-1 text-xs" onClick={() => { setPayMethod("CASH"); setSelectedOrder(order); setIsDialogOpen(true); }}>
+                                  <Banknote className="w-3 h-3" /> Quick Pay
+                                </Button>
+                                <Button size="sm" variant="outline" className="flex-1 gap-1 text-xs text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => { setVoidOrderTarget(order); }}>
+                                  <Ban className="w-3 h-3" /> Void
+                                </Button>
                               </div>
                             )}
                           </CardContent>
@@ -276,6 +333,7 @@ export default function LiveOrdersPage() {
           ))}
         </div>
       </div>
+      )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -410,6 +468,19 @@ export default function LiveOrdersPage() {
         description="Voiding an order requires a manager, owner, or admin to authorize with their own login."
         onConfirm={handleVoidOrder}
       />
+
+      <AlertDialog open={!!cancelTarget} onOpenChange={(o) => !o && setCancelTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel order {cancelTarget?.orderId}?</AlertDialogTitle>
+            <AlertDialogDescription>The kitchen will stop preparing it. This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Order</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCancel} className="bg-destructive hover:bg-destructive/90">Cancel Order</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
