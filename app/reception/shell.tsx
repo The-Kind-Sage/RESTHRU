@@ -6,6 +6,7 @@ import ReceptionSidebar from '@/components/dashboard/reception-sidebar';
 import TopHeader from '@/components/dashboard/top-header';
 import IdleTimeoutGuard from '@/components/dashboard/idle-timeout-guard';
 import OfflineBanner from '@/components/dashboard/offline-banner';
+import { UpgradePlanModal } from '@/components/shared/upgrade-plan-modal';
 import { useUIStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
@@ -38,6 +39,7 @@ export default function ReceptionShell({
     <div className="flex min-h-screen bg-background">
       <IdleTimeoutGuard />
       <OfflineBanner />
+      <UpgradePlanModal />
       <ReceptionSidebar />
       <div
         className={cn(

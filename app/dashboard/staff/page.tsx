@@ -61,6 +61,7 @@ import {
   createWaiterLogin, getWaiterLogins, deactivateWaiterLogin,
 } from '@/lib/actions/auth';
 import { getStaff, addStaff } from '@/lib/actions/staff';
+import { useUpgradeStore } from '@/store/upgrade-store';
 
 interface StaffMember {
   id: number | string;
@@ -217,6 +218,7 @@ function StaffDetailDialog({ staff, open, onOpenChange }: { staff: StaffMember; 
 }
 
 function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdded: (member: StaffMember) => void }) {
+  const showUpgrade = useUpgradeStore((s) => s.show);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -261,6 +263,7 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
         avatarUrl: avatar_url,
       });
 
+      if ('limitReached' in result && result.limitReached) { showUpgrade(result.limitReached); return; }
       if (result.error) { toast.error(result.error || 'Failed to add staff'); return; }
 
       const initials = formData.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);

@@ -27,6 +27,7 @@ import {
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
 import { getTables, addTable, updateTableStatus, updateTablePosition, deleteTable } from '@/lib/actions/tables';
+import { useUpgradeStore } from '@/store/upgrade-store';
 import { FLOORS } from '@/lib/constants';
 
 interface Table {
@@ -290,6 +291,7 @@ function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultF
   restaurantId: string; existingCount: number; defaultFloor: string;
   onAdded: (table: Table) => void;
 }) {
+  const showUpgrade = useUpgradeStore((s) => s.show);
   const [tableNumber, setTableNumber] = useState('');
   const [tableName, setTableName] = useState('');
   const [capacity, setCapacity] = useState('4');
@@ -327,6 +329,7 @@ function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultF
     });
 
     setIsSaving(false);
+    if ('limitReached' in result && result.limitReached) { showUpgrade(result.limitReached); return; }
     if (result.error) { toast.error(result.error); return; }
 
     onAdded({

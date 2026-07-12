@@ -35,6 +35,7 @@ import { toast } from 'sonner';
 import { FOOD_TYPES, FOOD_SUB_TYPES, SPICE_LEVELS, ALLERGENS } from '@/lib/constants';
 import { uploadImage } from '@/lib/upload';
 import { useAuthStore } from '@/store/auth-store';
+import { useUpgradeStore } from '@/store/upgrade-store';
 import {
   addCategory, updateCategory, deleteCategory as deleteCategoryAction,
   toggleCategoryActive as toggleCategoryActiveAction,
@@ -147,6 +148,7 @@ const EMPTY_FORM: Partial<MenuItem> = {
 export default function MenuPage() {
   const { restaurant } = useAuthStore();
   const restaurantId = restaurant?.id;
+  const showUpgrade = useUpgradeStore((s) => s.show);
   const qrRef = useRef<HTMLDivElement>(null);
 
   // ── State ─────────────────────────────────────────────────────────────────
@@ -318,6 +320,7 @@ export default function MenuPage() {
           volume: formData.volume || null,
           sizeOptions: formData.sizeOptions || null,
         });
+        if ('limitReached' in result && result.limitReached) { showUpgrade(result.limitReached); return; }
         if (result.error) { toast.error(result.error); return; }
         if (!result.data) return;
         const newItem: MenuItem = {

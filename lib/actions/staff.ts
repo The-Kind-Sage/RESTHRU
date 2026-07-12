@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { checkResourceLimit, limitMessage } from "@/lib/plan-guard";
 
 export async function getStaff(restaurantId: string) {
   const session = await getSession();
@@ -28,6 +29,10 @@ export async function addStaff(data: {
 }) {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
+
+  // Enforce the plan's staff cap before inserting.
+  const limitReached = await checkResourceLimit(data.restaurantId, "staff");
+  if (limitReached) return { error: limitMessage(limitReached), limitReached };
 
   try {
     const member = await prisma.staff.create({

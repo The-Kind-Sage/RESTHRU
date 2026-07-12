@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { checkResourceLimit, limitMessage } from "@/lib/plan-guard";
 
 export async function addCategory(data: {
   name: string;
@@ -118,6 +119,11 @@ export async function addMenuItem(data: {
 }) {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
+
+  // Enforce the plan's menu-item cap before inserting. On the boundary this
+  // returns a payload the client uses to open the upgrade popup.
+  const limitReached = await checkResourceLimit(data.restaurantId, "menuItems");
+  if (limitReached) return { error: limitMessage(limitReached), limitReached };
 
   try {
     const item = await prisma.menuItem.create({

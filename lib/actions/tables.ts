@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { checkResourceLimit, limitMessage } from "@/lib/plan-guard";
 
 export async function getTables(restaurantId: string) {
   const session = await getSession();
@@ -30,6 +31,10 @@ export async function addTable(data: {
 }) {
   const session = await getSession();
   if (!session || !session.restaurantId) return { error: "Not authenticated" };
+
+  // Enforce the plan's table cap before inserting.
+  const limitReached = await checkResourceLimit(session.restaurantId, "tables");
+  if (limitReached) return { error: limitMessage(limitReached), limitReached };
 
   try {
     const table = await prisma.restaurantTable.create({
