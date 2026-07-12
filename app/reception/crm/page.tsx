@@ -226,8 +226,8 @@ export default function CrmPage() {
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card sticky top-0 z-40">
         <div className="max-w-full px-4 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold">CRM & Discounts</h1>
+          <div className="flex flex-wrap gap-3 justify-between items-center">
+            <h1 className="text-2xl sm:text-3xl font-bold">CRM & Discounts</h1>
             <Button variant="outline" size="sm" onClick={refresh}>
               <RotateCcw className="w-4 h-4 mr-1" /> Refresh
             </Button>

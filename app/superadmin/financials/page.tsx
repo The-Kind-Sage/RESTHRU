@@ -1,5 +1,7 @@
 'use client';
 
+import { PageHeader } from '@/components/shared/page-header';
+
 import React, { useEffect, useState } from 'react';
 import {
   Wallet,
@@ -48,15 +50,11 @@ export default function AdminFinancials() {
   if (!data) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">Financial Management</h1>
-            <p className="text-sm text-muted-foreground mt-1">Revenue, payment gateways, AR aging & unit economics</p>
-          </div>
+        <PageHeader title="Financial Management" description="Revenue, payment gateways, AR aging & unit economics">
           <Button variant="outline" size="sm" disabled className="border-border text-primary hover:bg-primary/10">
             <Wallet className="h-4 w-4 mr-1.5" /> Download Report
           </Button>
-        </div>
+        </PageHeader>
         <AdminPageSkeleton />
       </div>
     );
@@ -68,15 +66,11 @@ export default function AdminFinancials() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Financial Management</h1>
-          <p className="text-sm text-muted-foreground mt-1">Revenue, payment gateways, AR aging & unit economics</p>
-        </div>
+      <PageHeader title="Financial Management" description="Revenue, payment gateways, AR aging & unit economics">
         <Button variant="outline" size="sm" onClick={handleDownload} className="border-border text-primary hover:bg-primary/10">
           <Wallet className="h-4 w-4 mr-1.5" /> Download Report
         </Button>
-      </div>
+      </PageHeader>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="bg-card border-border shadow-sm">

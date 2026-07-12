@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, memo, useCallback } from 'react';
+import React, { useMemo, memo, useCallback, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import {
   UtensilsCrossed,
@@ -45,8 +45,17 @@ const NAV_ITEMS: NavItem[] = [
 //    for reasons unrelated to sidebar state.
 const Sidebar = memo(function Sidebar() {
   const pathname = usePathname();
-  const { sidebarCollapsed, toggleSidebar } = useUIStore();
+  const { sidebarCollapsed, toggleSidebar, mobileMenuOpen, setMobileMenuOpen } = useUIStore();
   const { user, restaurant, logout } = useAuthStore();
+
+  // Close the mobile drawer on navigation.
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname, setMobileMenuOpen]);
+
+  // The desktop "collapsed" (icons-only) appearance must never apply while the
+  // mobile drawer is open — a drawer always shows full labels.
+  const collapsed = sidebarCollapsed && !mobileMenuOpen;
 
   const userInitials = useMemo(() => {
     if (user?.firstName && user?.lastName) {
@@ -66,26 +75,37 @@ const Sidebar = memo(function Sidebar() {
 
   return (
     <TooltipProvider delayDuration={0}>
+      {/* Mobile drawer backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
       <aside
         className={cn(
           'fixed left-0 top-0 h-screen flex flex-col z-50',
           'bg-gradient-to-b from-gray-950 to-gray-900 border-r border-white/5',
-          // Use will-change only during the transition, not permanently.
-          'transition-[width] duration-300 ease-in-out',
-          sidebarCollapsed ? 'w-[68px]' : 'w-[248px]'
+          // Mobile: off-canvas drawer that slides in; always full-width labels.
+          'w-[248px] transition-transform duration-300 ease-in-out',
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
+          // Desktop: always on-screen, width collapses to icons.
+          'md:translate-x-0 md:transition-[width]',
+          sidebarCollapsed ? 'md:w-[68px]' : 'md:w-[248px]'
         )}
       >
         {/* ── Logo ── */}
         <div
           className={cn(
             'flex items-center gap-3 px-4 h-16 border-b border-white/5 flex-shrink-0',
-            sidebarCollapsed && 'justify-center px-0'
+            collapsed && 'justify-center px-0'
           )}
         >
           <div className="flex-shrink-0 bg-primary/15 p-1.5 rounded-lg">
             <UtensilsCrossed className="h-5 w-5 text-primary" />
           </div>
-          {!sidebarCollapsed && (
+          {!collapsed && (
             <>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-white truncate">Resthru</p>
@@ -101,20 +121,23 @@ const Sidebar = memo(function Sidebar() {
         </div>
 
         {/* ── Navigation ── */}
-        <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
+        <nav
+          className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5"
+          onClick={() => setMobileMenuOpen(false)}
+        >
           {NAV_ITEMS.map((item) => (
             <SharedNavLink
               key={item.href}
               item={item}
               active={isActive(item.href)}
-              collapsed={sidebarCollapsed}
+              collapsed={collapsed}
             />
           ))}
         </nav>
 
         {/* ── Bottom: user + collapse ── */}
         <div className="flex-shrink-0 border-t border-white/5 p-2 space-y-1">
-          {!sidebarCollapsed ? (
+          {!collapsed ? (
             <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5">
               <Avatar className="h-7 w-7 flex-shrink-0">
                 <AvatarFallback className="bg-primary/30 text-primary text-[11px] font-bold">
@@ -166,7 +189,7 @@ const Sidebar = memo(function Sidebar() {
             size="sm"
             onClick={toggleSidebar}
             className={cn(
-              'w-full h-8 text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors',
+              'hidden md:flex w-full h-8 text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors',
               sidebarCollapsed && 'px-0 justify-center'
             )}
           >

@@ -508,14 +508,14 @@ export default function StaffPage() {
   return (
     <div className="space-y-6 p-6">
       <div>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Staff Management</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Staff Management</h1>
             <p className="text-muted-foreground mt-1">
               Manage your restaurant staff and their roles
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className="text-base px-3 py-1">
               {staffMembers.length} Staff Members
             </Badge>

@@ -1,5 +1,7 @@
 'use client';
 
+import { PageHeader } from '@/components/shared/page-header';
+
 import React, { useEffect, useState } from 'react';
 import {
   Settings,
@@ -138,15 +140,11 @@ export default function AdminSettings() {
   return (
     <TooltipProvider>
       <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">Settings</h1>
-            <p className="text-sm text-muted-foreground mt-1">Admin roles, team management, security & platform configuration</p>
-          </div>
+        <PageHeader title="Settings" description="Admin roles, team management, security & platform configuration">
           <Button variant="outline" size="sm" className="border-border text-primary hover:bg-primary/10" onClick={() => window.location.reload()}>
             <RefreshCw className="h-4 w-4 mr-1.5" /> Refresh
           </Button>
-        </div>
+        </PageHeader>
 
         <Card className="bg-card border-border shadow-sm">
           <CardHeader>

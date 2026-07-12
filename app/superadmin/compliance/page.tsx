@@ -17,6 +17,7 @@ import { getComplianceData } from '@/lib/actions/admin';
 import { ADMIN_TONE_CLASSES } from '@/lib/constants';
 import { SectionSkeleton, KpiSkeleton } from '@/components/superadmin/skeletons';
 import { ComingSoon } from '@/components/superadmin/coming-soon';
+import { PageHeader } from '@/components/shared/page-header';
 
 const StatusBadge = ({ status }: { status: string }) => {
   const colors: Record<string, string> = {
@@ -42,16 +43,15 @@ export default function AdminCompliance() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Compliance Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">IRD compliance, document vault, fraud detection & data export</p>
-        </div>
+      <PageHeader
+        title="Compliance Dashboard"
+        description="IRD compliance, document vault, fraud detection & data export"
+      >
         <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
           <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
           Auto-Sync Active
         </Badge>
-      </div>
+      </PageHeader>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {!data ? (

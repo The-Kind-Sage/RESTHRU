@@ -1,5 +1,7 @@
 'use client';
 
+import { PageHeader } from '@/components/shared/page-header';
+
 import React, { useEffect, useState, useTransition } from 'react';
 import {
   Search, Send, ChevronDown, Megaphone, BookOpen, Building2, ShoppingCart, Bell,
@@ -60,18 +62,12 @@ export default function SupportCenter() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Support Center</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage tickets, knowledge base, and communications</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge className="border-primary/30 text-primary bg-primary/5">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
-            Live
-          </Badge>
-        </div>
-      </div>
+      <PageHeader title="Support Center" description="Manage tickets, knowledge base, and communications">
+        <Badge className="border-primary/30 text-primary bg-primary/5">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
+          Live
+        </Badge>
+      </PageHeader>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         <div className="xl:col-span-3 space-y-6">

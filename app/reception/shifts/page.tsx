@@ -159,12 +159,12 @@ export default function ShiftsPage() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Shift Management</h1>
           <p className="text-muted-foreground">Open/close registers, declare float, and reconcile cash</p>
         </div>
-        <Button onClick={() => setOpenDialogOpen(true)} className="gap-2">
+        <Button onClick={() => setOpenDialogOpen(true)} className="gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" /> Open Shift
         </Button>
       </div>

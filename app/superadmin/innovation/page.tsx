@@ -1,5 +1,7 @@
 'use client';
 
+import { PageHeader } from '@/components/shared/page-header';
+
 import React, { useEffect, useState } from 'react';
 import {
   FlaskConical,
@@ -61,15 +63,11 @@ export default function AdminInnovation() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Innovation Lab</h1>
-          <p className="text-sm text-muted-foreground mt-1">AI insights, predictive analytics, experiments & roadmap voting</p>
-        </div>
+      <PageHeader title="Innovation Lab" description="AI insights, predictive analytics, experiments & roadmap voting">
         <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
           <FlaskConical className="h-3.5 w-3.5 mr-1" /> Beta
         </Badge>
-      </div>
+      </PageHeader>
 
       <Card className="bg-card border-border shadow-sm">
         <CardHeader>

@@ -2,60 +2,110 @@ import { getAllRestaurants } from "@/lib/actions/admin";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import { PageHeader } from "@/components/shared/page-header";
+import { EmptyState } from "@/components/shared/empty-state";
 import { Building2, Users, UtensilsCrossed, Table2, ShoppingCart } from "lucide-react";
+
+// Which plan (pack) each restaurant is on. Restaurants without an active
+// subscription are on the Free pack — resolved here so they still show up.
+function planOf(r: { subscriptions: { plan: { name: string } }[] }): string {
+  return r.subscriptions[0]?.plan.name ?? "Free";
+}
+
+function PlanBadge({ plan }: { plan: string }) {
+  const colors: Record<string, string> = {
+    Enterprise: "bg-accent/10 text-accent border-accent/30",
+    Pro: "bg-primary/10 text-primary border-primary/30",
+    Basic: "bg-info/10 text-info border-info/30",
+    Free: "bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30",
+  };
+  return <Badge className={`border ${colors[plan] ?? colors.Free}`}>{plan}</Badge>;
+}
 
 export default async function AdminRestaurants() {
   const restaurants = await getAllRestaurants();
 
+  // Plan distribution summary (Free included).
+  const dist = restaurants.reduce<Record<string, number>>((acc, r) => {
+    const plan = planOf(r);
+    acc[plan] = (acc[plan] ?? 0) + 1;
+    return acc;
+  }, {});
+  const PLAN_ORDER = ["Free", "Basic", "Pro", "Enterprise"];
+  const distEntries = Object.entries(dist).sort(
+    (a, b) => PLAN_ORDER.indexOf(a[0]) - PLAN_ORDER.indexOf(b[0])
+  );
+
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Restaurant Management</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage all restaurants on the platform</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Restaurant Management"
+        description="All restaurants on the platform and the pack each is subscribed to"
+      >
+        {restaurants.length > 0 &&
+          distEntries.map(([plan, count]) => (
+            <div key={plan} className="flex items-center gap-1.5">
+              <PlanBadge plan={plan} />
+              <span className="text-xs text-muted-foreground">{count}</span>
+            </div>
+          ))}
+      </PageHeader>
 
       {restaurants.length === 0 ? (
         <Card className="bg-card border-border shadow-sm">
-          <CardContent className="py-12">
-            <div className="flex flex-col items-center gap-3 text-center">
-              <Building2 className="h-10 w-10 text-muted-foreground/40" strokeWidth={1.5} />
-              <p className="text-muted-foreground text-sm">No restaurants found</p>
-            </div>
+          <CardContent className="p-0">
+            <EmptyState icon={Building2} title="No restaurants found" description="Restaurants will appear here once owners register on the platform." />
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {restaurants.map((r) => (
-            <Link key={r.id} href={`/superadmin/restaurants/${r.id}`}>
-              <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="font-semibold text-foreground">{r.name}</h3>
-                      <p className="text-xs text-muted-foreground">{r.city}{r.state ? `, ${r.state}` : ""}</p>
-                    </div>
-                    <Badge variant={r.isActive ? "default" : "secondary"}>
-                      {r.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{r._count.users}</span>
-                    <span className="flex items-center gap-1"><UtensilsCrossed className="h-3.5 w-3.5" />{r._count.menuItems}</span>
-                    <span className="flex items-center gap-1"><Table2 className="h-3.5 w-3.5" />{r._count.tables}</span>
-                    <span className="flex items-center gap-1"><ShoppingCart className="h-3.5 w-3.5" />{r._count.orders}</span>
-                  </div>
-                  {r.subscriptions[0] && (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Plan: {r.subscriptions[0].plan.name}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+        <Card className="bg-card border-border shadow-sm">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Restaurant</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Pack</TableHead>
+                  <TableHead className="text-center"><Users className="inline h-3.5 w-3.5" /></TableHead>
+                  <TableHead className="text-center"><UtensilsCrossed className="inline h-3.5 w-3.5" /></TableHead>
+                  <TableHead className="text-center"><Table2 className="inline h-3.5 w-3.5" /></TableHead>
+                  <TableHead className="text-center"><ShoppingCart className="inline h-3.5 w-3.5" /></TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {restaurants.map((r) => (
+                  <TableRow key={r.id} className="hover:bg-muted/40">
+                    <TableCell>
+                      <Link
+                        href={`/superadmin/restaurants/${r.id}`}
+                        className="font-medium text-foreground hover:text-primary hover:underline"
+                      >
+                        {r.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {r.city}{r.state ? `, ${r.state}` : ""}
+                    </TableCell>
+                    <TableCell><PlanBadge plan={planOf(r)} /></TableCell>
+                    <TableCell className="text-center text-xs text-muted-foreground">{r._count.users}</TableCell>
+                    <TableCell className="text-center text-xs text-muted-foreground">{r._count.menuItems}</TableCell>
+                    <TableCell className="text-center text-xs text-muted-foreground">{r._count.tables}</TableCell>
+                    <TableCell className="text-center text-xs text-muted-foreground">{r._count.orders}</TableCell>
+                    <TableCell>
+                      <Badge variant={r.isActive ? "default" : "secondary"}>
+                        {r.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

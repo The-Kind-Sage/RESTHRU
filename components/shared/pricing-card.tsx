@@ -70,7 +70,7 @@ export function PricingCard({
       )}
       <Card
         className={cn(
-          'relative flex h-full flex-col border-t-4 transition-all duration-300',
+          'relative flex h-full flex-col border-t-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl',
           accentColorMap[accentColor],
           isPopular && 'shadow-lg ring-2 ring-primary/20'
         )}

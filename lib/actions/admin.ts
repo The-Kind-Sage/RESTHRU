@@ -69,8 +69,12 @@ export async function getAllRestaurants() {
     include: {
       _count: { select: { users: true, tables: true, menuItems: true, orders: true } },
       subscriptions: {
-        where: { status: "active" },
+        // Subscriptions are stored with uppercase status ("ACTIVE"). Filtering
+        // on "active" here previously matched nothing, so even paid restaurants
+        // showed no plan. Grab the most recent active one.
+        where: { status: "ACTIVE" },
         take: 1,
+        orderBy: { createdAt: "desc" },
         include: { plan: { select: { name: true } } },
       },
     },

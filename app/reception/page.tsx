@@ -310,9 +310,9 @@ export default function ReceptionPage() {
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card sticky top-0 z-40">
         <div className="max-w-full px-4 py-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap gap-3 justify-between items-center">
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold">Reception</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold">Reception</h1>
               <Badge className="bg-primary text-primary-foreground text-base px-3 py-1">
                 {reservations.filter((r: any) => r.status === "BOOKED").length} Reservations
               </Badge>

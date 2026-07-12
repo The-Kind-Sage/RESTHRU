@@ -41,8 +41,8 @@ export default function ReceptionShell({
       <ReceptionSidebar />
       <div
         className={cn(
-          'flex-1 flex flex-col transition-all duration-300',
-          sidebarCollapsed ? 'ml-[68px]' : 'ml-[248px]'
+          'flex-1 flex flex-col min-w-0 transition-[margin] duration-300 ml-0',
+          sidebarCollapsed ? 'md:ml-[68px]' : 'md:ml-[248px]'
         )}
       >
         <TopHeader />

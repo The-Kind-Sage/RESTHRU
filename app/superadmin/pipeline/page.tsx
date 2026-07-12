@@ -1,5 +1,7 @@
 'use client';
 
+import { PageHeader } from '@/components/shared/page-header';
+
 import React, { useEffect, useState } from 'react';
 import {
   Phone, Mail, Calendar, Clock, ChevronRight, ChevronLeft,
@@ -56,17 +58,11 @@ export default function AdminPipeline() {
   if (!data) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">Sales Pipeline</h1>
-            <p className="text-sm text-muted-foreground mt-1">Track leads, trials, and conversions across the funnel</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground">
-              <Download className="h-4 w-4 mr-1.5" /> Export
-            </Button>
-          </div>
-        </div>
+        <PageHeader title="Sales Pipeline" description="Track leads, trials, and conversions across the funnel">
+          <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground">
+            <Download className="h-4 w-4 mr-1.5" /> Export
+          </Button>
+        </PageHeader>
         <div className="text-center py-12 text-muted-foreground text-sm">Loading...</div>
       </div>
     );
@@ -87,17 +83,11 @@ export default function AdminPipeline() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Sales Pipeline</h1>
-          <p className="text-sm text-muted-foreground mt-1">Track leads, trials, and conversions across the funnel</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground">
-            <Download className="h-4 w-4 mr-1.5" /> Export
-          </Button>
-        </div>
-      </div>
+      <PageHeader title="Sales Pipeline" description="Track leads, trials, and conversions across the funnel">
+        <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground">
+          <Download className="h-4 w-4 mr-1.5" /> Export
+        </Button>
+      </PageHeader>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Card className="bg-card border-border shadow-sm">

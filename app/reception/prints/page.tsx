@@ -78,12 +78,12 @@ export default function PrintsPage() {
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-      <motion.div variants={itemVariants} className="flex items-center justify-between">
+      <motion.div variants={itemVariants} className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Print Center</h1>
           <p className="text-muted-foreground">Manage printers and print queue</p>
         </div>
-        <Button className="bg-primary hover:bg-primary-dark text-white" onClick={() => toast.info('Configure printers in Settings')}>
+        <Button className="bg-primary hover:bg-primary-dark text-white w-full sm:w-auto" onClick={() => toast.info('Configure printers in Settings')}>
           <Plus className="h-4 w-4 mr-2" /> Add Printer
         </Button>
       </motion.div>

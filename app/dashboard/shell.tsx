@@ -11,12 +11,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { startSync, stopSync } from '@/lib/sync';
 import { DASHBOARD_AUTH_ROUTES } from '@/lib/constants';
 import { registerServiceWorker } from '@/lib/service-worker';
-
-// Sidebar collapse widths — kept as named constants (rather than Tailwind arbitrary values like
-// `ml-[68px]`) so the shell and any future consumer share one definition instead of a magic
-// number sprinkled through class strings.
-const SIDEBAR_COLLAPSED_WIDTH = 68;
-const SIDEBAR_EXPANDED_WIDTH = 248;
+import { cn } from '@/lib/utils';
 
 export default function DashboardShell({
   children,
@@ -56,9 +51,13 @@ export default function DashboardShell({
       <IdleTimeoutGuard />
       <OfflineBanner />
       <Sidebar />
+      {/* Content: no left margin on mobile (sidebar is an overlay drawer);
+          on md+ it clears the inline sidebar's collapsed/expanded width. */}
       <div
-        className="flex-1 flex flex-col transition-all duration-300"
-        style={{ marginLeft: sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH }}
+        className={cn(
+          'flex-1 flex flex-col min-w-0 transition-[margin] duration-300 ml-0',
+          sidebarCollapsed ? 'md:ml-[68px]' : 'md:ml-[248px]'
+        )}
       >
         <TopHeader />
         <main className="flex-1 overflow-auto pt-20">

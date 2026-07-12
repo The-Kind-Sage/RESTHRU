@@ -76,6 +76,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname  = usePathname();
   const router    = useRouter();
   const [sidebarOpen, setSidebarOpen]   = useState(true);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [commandOpen, setCommandOpen]   = useState(false);
   const [adminUser, setAdminUser] = useState<{ firstName: string; lastName: string; email: string } | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -108,6 +109,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     [pathname]
   );
 
+  // Close the mobile drawer whenever the route changes (i.e. after a nav tap).
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
+
   const handleLogout = async () => {
     await Promise.all([logout(), unregisterServiceWorker()]);
     router.push('/');
@@ -120,11 +126,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* ── Sidebar ── */}
+      {/* Mobile drawer backdrop */}
+      {mobileNavOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          onClick={() => setMobileNavOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* ── Sidebar ──
+         Desktop (lg+): inline column that collapses to 0 width via sidebarOpen.
+         Mobile: fixed off-canvas drawer that slides in over a backdrop. */}
       <aside
         className={cn(
-          'flex-shrink-0 border-r border-border bg-sidebar flex flex-col transition-[width] duration-300 ease-in-out overflow-hidden',
-          sidebarOpen ? 'w-64' : 'w-0'
+          'bg-sidebar flex flex-col border-r border-border overflow-hidden',
+          // Mobile: fixed overlay drawer
+          'fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out',
+          mobileNavOpen ? 'translate-x-0' : '-translate-x-full',
+          // Desktop: static, width-collapsing, always on-screen
+          'lg:static lg:z-auto lg:translate-x-0 lg:flex-shrink-0 lg:transition-[width]',
+          sidebarOpen ? 'lg:w-64' : 'lg:w-0'
         )}
       >
         <div className="flex items-center gap-3 px-5 h-16 border-b border-sidebar-muted/30 flex-shrink-0">
@@ -141,7 +163,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden">
+        <nav
+          className="flex-1 px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden"
+          onClick={() => setMobileNavOpen(false)}
+        >
           {adminNavItems.map((item) => (
             <AdminNavLink key={item.href} item={item} active={isActive(item.href)} />
           ))}
@@ -174,11 +199,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 border-b border-border bg-card/80 backdrop-blur-xl flex items-center justify-between px-4 lg:px-6 flex-shrink-0">
           <div className="flex items-center gap-3">
+            {/* Mobile: open the off-canvas drawer */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileNavOpen(true)}
+              aria-label="Open menu"
+              className="text-muted-foreground hover:text-foreground hover:bg-muted h-9 w-9 lg:hidden"
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+            {/* Desktop: collapse / expand the inline sidebar */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="text-muted-foreground hover:text-foreground hover:bg-muted h-9 w-9"
+              aria-label="Toggle sidebar"
+              className="text-muted-foreground hover:text-foreground hover:bg-muted h-9 w-9 hidden lg:flex"
             >
               {sidebarOpen ? (
                 <ChevronLeft className="h-4 w-4" />

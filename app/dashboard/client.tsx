@@ -133,20 +133,20 @@ export default function DashboardClient({
     <div className="space-y-6 pb-8">
       {/* ── Greeting banner ── */}
       <Card className="bg-gradient-to-r from-primary-light to-primary-light border-primary/20">
-        <CardContent className="p-8 flex items-center justify-between">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
+        <CardContent className="p-6 sm:p-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
               {getGreeting()}, {user?.firstName || "Owner"}!
             </h1>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-muted-foreground text-base sm:text-lg">
               {liveStats?.todayOrders
                 ? `Served ${liveStats.todayOrders} customers today.`
                 : "Ready to serve!"}
             </p>
           </div>
-          <div className="text-right">
+          <div className="sm:text-right">
             <p className="text-sm text-muted-foreground mb-1">Revenue Today</p>
-            <p className="text-3xl font-bold text-primary">
+            <p className="text-2xl sm:text-3xl font-bold text-primary">
               {formatCurrency(liveStats?.todayRevenue ?? 0)}
             </p>
           </div>
@@ -213,7 +213,7 @@ export default function DashboardClient({
             },
           ] as const
         ).map((kpi, i) => (
-          <Card key={i}>
+          <Card key={i} className="transition-shadow duration-300 hover:shadow-md">
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>

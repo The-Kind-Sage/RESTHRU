@@ -5,6 +5,7 @@ import { Building2, TrendingUp, UserPlus, ShoppingCart, Activity, CreditCard } f
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatRelativeTime } from "@/lib/format";
+import { PageHeader } from "@/components/shared/page-header";
 
 const PLAN_COLORS: Record<string, string> = {
   free: "#6b7280",
@@ -42,19 +43,15 @@ export default function AdminClient({
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Platform overview{time ? ` · ${time}` : ""}</p>
-        </div>
+      <PageHeader title="Dashboard" description={<>Platform overview{time ? ` · ${time}` : ""}</>}>
         <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
           <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />Live
         </Badge>
-      </div>
+      </PageHeader>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((card) => (
-          <Card key={card.title}>
+          <Card key={card.title} className="transition-shadow duration-300 hover:shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{card.title}</CardTitle>
               <card.icon className="h-4.5 w-4.5 text-primary/60" strokeWidth={1.5} />

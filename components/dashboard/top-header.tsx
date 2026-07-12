@@ -158,8 +158,8 @@ export default function TopHeader() {
   return (
     <header
       className={cn(
-        'fixed top-0 right-0 h-16 bg-card border-b border-border flex items-center px-4 gap-3 z-40 transition-all duration-300',
-        sidebarCollapsed ? 'left-[68px]' : 'left-[248px]'
+        'fixed top-0 right-0 h-16 bg-card border-b border-border flex items-center px-4 gap-3 z-40 transition-[left] duration-300 left-0',
+        sidebarCollapsed ? 'md:left-[68px]' : 'md:left-[248px]'
       )}
     >
       {/* Left: mobile toggle + page title */}

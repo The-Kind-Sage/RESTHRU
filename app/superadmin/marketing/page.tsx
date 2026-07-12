@@ -1,5 +1,7 @@
 'use client';
 
+import { PageHeader } from '@/components/shared/page-header';
+
 import React, { useEffect, useState } from 'react';
 import {
   FileText, Image, BarChart3,
@@ -49,16 +51,12 @@ export default function AdminMarketing() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Marketing Tools</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage CMS, SEO, press kit, and growth experiments</p>
-        </div>
+      <PageHeader title="Marketing Tools" description="Manage CMS, SEO, press kit, and growth experiments">
         <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
           <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
           Live Site
         </Badge>
-      </div>
+      </PageHeader>
 
       <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">

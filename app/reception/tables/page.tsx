@@ -475,12 +475,12 @@ export default function TableMapPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Table Map</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Table Map</h1>
           <p className="text-muted-foreground mt-1">Manage your restaurant floor layout and table status</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant={isEditMode ? 'default' : 'outline'} onClick={() => setIsEditMode(!isEditMode)} className="gap-2">
             {isEditMode ? <><Lock className="w-4 h-4" />Done Editing</> : <><Unlock className="w-4 h-4" />Edit Layout</>}
           </Button>

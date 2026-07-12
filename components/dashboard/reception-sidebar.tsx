@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, memo, useCallback } from 'react';
+import React, { useMemo, memo, useCallback, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import {
   UtensilsCrossed,
@@ -47,8 +47,14 @@ const NAV_ITEMS: NavItem[] = [
 
 const ReceptionSidebar = memo(function ReceptionSidebar() {
   const pathname = usePathname();
-  const { sidebarCollapsed, toggleSidebar } = useUIStore();
+  const { sidebarCollapsed, toggleSidebar, mobileMenuOpen, setMobileMenuOpen } = useUIStore();
   const { user, restaurant, logout } = useAuthStore();
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname, setMobileMenuOpen]);
+
+  const collapsed = sidebarCollapsed && !mobileMenuOpen;
 
   const userInitials = useMemo(() => {
     if (user?.firstName && user?.lastName) {
@@ -67,24 +73,34 @@ const ReceptionSidebar = memo(function ReceptionSidebar() {
 
   return (
     <TooltipProvider delayDuration={0}>
+      {/* Mobile drawer backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
       <aside
         className={cn(
           'fixed left-0 top-0 h-screen flex flex-col z-50',
           'bg-gradient-to-b from-gray-950 to-gray-900 border-r border-white/5',
-          'transition-[width] duration-300 ease-in-out',
-          sidebarCollapsed ? 'w-[68px]' : 'w-[248px]'
+          'w-[248px] transition-transform duration-300 ease-in-out',
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
+          'md:translate-x-0 md:transition-[width]',
+          sidebarCollapsed ? 'md:w-[68px]' : 'md:w-[248px]'
         )}
       >
         <div
           className={cn(
             'flex items-center gap-3 px-4 h-16 border-b border-white/5 flex-shrink-0',
-            sidebarCollapsed && 'justify-center px-0'
+            collapsed && 'justify-center px-0'
           )}
         >
           <div className="flex-shrink-0 bg-primary/15 p-1.5 rounded-lg">
             <UtensilsCrossed className="h-5 w-5 text-primary" />
           </div>
-          {!sidebarCollapsed && (
+          {!collapsed && (
             <>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-white truncate">Resthru</p>
@@ -99,19 +115,22 @@ const ReceptionSidebar = memo(function ReceptionSidebar() {
           )}
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
+        <nav
+          className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5"
+          onClick={() => setMobileMenuOpen(false)}
+        >
           {NAV_ITEMS.map((item) => (
             <SharedNavLink
               key={item.href}
               item={item}
               active={isActive(item.href)}
-              collapsed={sidebarCollapsed}
+              collapsed={collapsed}
             />
           ))}
         </nav>
 
         <div className="flex-shrink-0 border-t border-white/5 p-2 space-y-1">
-          {!sidebarCollapsed ? (
+          {!collapsed ? (
             <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5">
               <Avatar className="h-7 w-7 flex-shrink-0">
                 <AvatarFallback className="bg-primary/30 text-primary text-[11px] font-bold">
@@ -163,7 +182,7 @@ const ReceptionSidebar = memo(function ReceptionSidebar() {
             size="sm"
             onClick={toggleSidebar}
             className={cn(
-              'w-full h-8 text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors',
+              'hidden md:flex w-full h-8 text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors',
               sidebarCollapsed && 'px-0 justify-center'
             )}
           >

@@ -17,6 +17,8 @@ import { Input } from '@/components/ui/input';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { PageHeader } from '@/components/shared/page-header';
+import { EmptyState } from '@/components/shared/empty-state';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
@@ -116,18 +118,15 @@ export default function AdminSubscriptions() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Subscription & Billing</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage subscriptions, invoices, and promotional codes</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
-            Auto-billing active
-          </Badge>
-        </div>
-      </div>
+      <PageHeader
+        title="Subscription & Billing"
+        description="Manage subscriptions, invoices, and promotional codes"
+      >
+        <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
+          Auto-billing active
+        </Badge>
+      </PageHeader>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">

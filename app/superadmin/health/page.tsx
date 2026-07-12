@@ -17,6 +17,7 @@ import { getHealthData } from '@/lib/actions/admin';
 import { getHealthAlertChannels, updateHealthAlertChannel, type AlertChannels } from '@/lib/actions/admin-settings';
 import { ADMIN_TONE_CLASSES } from '@/lib/constants';
 import { SectionSkeleton } from '@/components/superadmin/skeletons';
+import { PageHeader } from '@/components/shared/page-header';
 import { toast } from 'sonner';
 
 const statusColors: Record<string, string> = {
@@ -62,21 +63,15 @@ export default function SystemHealth() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">System Health</h1>
-          <p className="text-sm text-muted-foreground mt-1">Real-time monitoring and alert management</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge className="border-primary/30 text-primary bg-primary/5">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
-            Live
-          </Badge>
-          <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground">
-            <RefreshCw className="h-4 w-4 mr-1.5" /> Refresh
-          </Button>
-        </div>
-      </div>
+      <PageHeader title="System Health" description="Real-time monitoring and alert management">
+        <Badge className="border-primary/30 text-primary bg-primary/5">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
+          Live
+        </Badge>
+        <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground">
+          <RefreshCw className="h-4 w-4 mr-1.5" /> Refresh
+        </Button>
+      </PageHeader>
 
       <Card className="bg-card border-border shadow-sm">
         <CardHeader>
