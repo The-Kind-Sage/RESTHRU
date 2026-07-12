@@ -51,30 +51,32 @@ export async function getSalesReport(
   try {
     const { start, end } = getDateRange(period, startDate, endDate);
 
-    const orders = await prisma.order.findMany({
-      where: {
-        restaurantId,
-        createdAt: { gte: start, lte: end },
-        status: { notIn: ["CANCELLED", "VOIDED"] },
-      },
-      include: { items: true },
-      orderBy: { createdAt: "asc" },
-    });
+    // Orders and bills for the period are independent — one round-trip, not two.
+    const [orders, bills] = await Promise.all([
+      prisma.order.findMany({
+        where: {
+          restaurantId,
+          createdAt: { gte: start, lte: end },
+          status: { notIn: ["CANCELLED", "VOIDED"] },
+        },
+        include: { items: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.bill.findMany({
+        where: {
+          restaurantId,
+          billDate: { gte: start, lte: end },
+          status: { notIn: ["VOIDED"] },
+        },
+        select: { paymentMethod: true, totalAmount: true },
+      }),
+    ]);
 
     const totalOrders = orders.length;
     const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
     const totalDiscount = orders.reduce((sum, o) => sum + o.discountAmount, 0);
     const totalTax = orders.reduce((sum, o) => sum + o.taxAmount, 0);
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-
-    const bills = await prisma.bill.findMany({
-      where: {
-        restaurantId,
-        billDate: { gte: start, lte: end },
-        status: { notIn: ["VOIDED"] },
-      },
-      select: { paymentMethod: true, totalAmount: true },
-    });
 
     const paymentMethodMap = new Map<string, number>();
     for (const bill of bills) {
@@ -232,19 +234,21 @@ export async function getStaffReport(restaurantId: string, period: string) {
   try {
     const { start, end } = getDateRange(period);
 
-    const staff = await prisma.staff.findMany({
-      where: { restaurantId, isActive: true },
-    });
-
-    const orders = await prisma.order.findMany({
-      where: {
-        restaurantId,
-        assignedWaiterId: { not: null },
-        createdAt: { gte: start, lte: end },
-        status: { notIn: ["CANCELLED", "VOIDED"] },
-      },
-      select: { assignedWaiterId: true, totalAmount: true },
-    });
+    // Staff roster and order rollup are independent — fetch together.
+    const [staff, orders] = await Promise.all([
+      prisma.staff.findMany({
+        where: { restaurantId, isActive: true },
+      }),
+      prisma.order.findMany({
+        where: {
+          restaurantId,
+          assignedWaiterId: { not: null },
+          createdAt: { gte: start, lte: end },
+          status: { notIn: ["CANCELLED", "VOIDED"] },
+        },
+        select: { assignedWaiterId: true, totalAmount: true },
+      }),
+    ]);
 
     const staffMap = new Map<string, { name: string; ordersHandled: number; revenue: number }>();
     for (const s of staff) {

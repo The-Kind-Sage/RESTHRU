@@ -178,17 +178,22 @@ export async function walkInAssignTable(data: {
   if (!session?.restaurantId) return { error: "Not authenticated" };
 
   try {
-    const table = await prisma.restaurantTable.findFirst({
-      where: { id: data.tableId, restaurantId: session.restaurantId },
-    });
+    // Table validation and next-order-number lookup are independent — run them
+    // together so the common (valid-table) path saves a round-trip. On the rare
+    // invalid-table path this costs one wasted number lookup, which is cheap.
+    const [table, lastOrder] = await Promise.all([
+      prisma.restaurantTable.findFirst({
+        where: { id: data.tableId, restaurantId: session.restaurantId },
+      }),
+      prisma.order.findFirst({
+        where: { restaurantId: session.restaurantId },
+        orderBy: { createdAt: "desc" },
+        select: { orderId: true },
+      }),
+    ]);
     if (!table) return { error: "Table not found" };
     if (table.status !== "AVAILABLE") return { error: "Table is not available" };
 
-    const lastOrder = await prisma.order.findFirst({
-      where: { restaurantId: session.restaurantId },
-      orderBy: { createdAt: "desc" },
-      select: { orderId: true },
-    });
     const lastNumber = parseInt(lastOrder?.orderId ?? "", 10);
     const nextNumber = isNaN(lastNumber) ? 1001 : lastNumber + 1;
 
@@ -234,27 +239,29 @@ export async function mergeTables(sourceTableIds: string[], targetTableId: strin
   if (!session?.restaurantId) return { error: "Not authenticated" };
 
   try {
-    const tables = await prisma.restaurantTable.findMany({
-      where: { id: { in: [...sourceTableIds, targetTableId] }, restaurantId: session.restaurantId },
-    });
+    // Table existence, source orders, and the target's existing order are all
+    // independent — one round-trip instead of three on the happy path.
+    const [tables, sourceOrders, targetOrder] = await Promise.all([
+      prisma.restaurantTable.findMany({
+        where: { id: { in: [...sourceTableIds, targetTableId] }, restaurantId: session.restaurantId },
+      }),
+      prisma.order.findMany({
+        where: {
+          tableId: { in: sourceTableIds },
+          status: { in: ["PENDING", "PREPARING", "READY", "SERVED"] },
+        },
+        include: { items: true },
+      }),
+      prisma.order.findFirst({
+        where: { tableId: targetTableId, status: { in: ["PENDING", "PREPARING", "READY", "SERVED"] } },
+      }),
+    ]);
     if (tables.length !== sourceTableIds.length + 1) return { error: "One or more tables not found" };
 
     const targetTable = tables.find((t) => t.id === targetTableId);
     if (!targetTable) return { error: "Target table not found" };
 
-    const sourceOrders = await prisma.order.findMany({
-      where: {
-        tableId: { in: sourceTableIds },
-        status: { in: ["PENDING", "PREPARING", "READY", "SERVED"] },
-      },
-      include: { items: true },
-    });
-
     if (sourceOrders.length === 0) return { error: "No active orders on source tables" };
-
-    const targetOrder = await prisma.order.findFirst({
-      where: { tableId: targetTableId, status: { in: ["PENDING", "PREPARING", "READY", "SERVED"] } },
-    });
 
     return await prisma.$transaction(async (tx) => {
       let primaryOrder = targetOrder;
@@ -321,25 +328,26 @@ export async function splitOrderItems(orderId: string, itemIds: string[], target
   if (!session?.restaurantId) return { error: "Not authenticated" };
 
   try {
-    const sourceOrder = await prisma.order.findFirst({
-      where: { id: orderId, restaurantId: session.restaurantId },
-      include: { items: true },
-    });
+    // Source order, target table, and next-order-number are independent lookups.
+    const [sourceOrder, targetTable, lastOrder] = await Promise.all([
+      prisma.order.findFirst({
+        where: { id: orderId, restaurantId: session.restaurantId },
+        include: { items: true },
+      }),
+      prisma.restaurantTable.findFirst({
+        where: { id: targetTableId, restaurantId: session.restaurantId },
+      }),
+      prisma.order.findFirst({
+        where: { restaurantId: session.restaurantId },
+        orderBy: { createdAt: "desc" },
+        select: { orderId: true },
+      }),
+    ]);
     if (!sourceOrder) return { error: "Source order not found" };
-
-    const targetTable = await prisma.restaurantTable.findFirst({
-      where: { id: targetTableId, restaurantId: session.restaurantId },
-    });
     if (!targetTable) return { error: "Target table not found" };
 
     const itemsToSplit = sourceOrder.items.filter((i) => itemIds.includes(i.id));
     if (itemsToSplit.length === 0) return { error: "No matching items found" };
-
-    const lastOrder = await prisma.order.findFirst({
-      where: { restaurantId: session.restaurantId },
-      orderBy: { createdAt: "desc" },
-      select: { orderId: true },
-    });
     const lastNumber = parseInt(lastOrder?.orderId ?? "", 10);
     const nextNumber = isNaN(lastNumber) ? 1001 : lastNumber + 1;
 
@@ -474,22 +482,23 @@ export async function seatWaitlistEntry(entryId: string, tableId: string) {
   if (!session?.restaurantId) return { error: "Not authenticated" };
 
   try {
-    const entry = await prisma.waitlistEntry.findFirst({
-      where: { id: entryId, restaurantId: session.restaurantId },
-    });
+    // Waitlist entry, table, and next-order-number are independent lookups.
+    const [entry, table, lastOrder] = await Promise.all([
+      prisma.waitlistEntry.findFirst({
+        where: { id: entryId, restaurantId: session.restaurantId },
+      }),
+      prisma.restaurantTable.findFirst({
+        where: { id: tableId, restaurantId: session.restaurantId },
+      }),
+      prisma.order.findFirst({
+        where: { restaurantId: session.restaurantId },
+        orderBy: { createdAt: "desc" },
+        select: { orderId: true },
+      }),
+    ]);
     if (!entry) return { error: "Waitlist entry not found" };
-
-    const table = await prisma.restaurantTable.findFirst({
-      where: { id: tableId, restaurantId: session.restaurantId },
-    });
     if (!table) return { error: "Table not found" };
     if (table.status !== "AVAILABLE") return { error: "Table is not available" };
-
-    const lastOrder = await prisma.order.findFirst({
-      where: { restaurantId: session.restaurantId },
-      orderBy: { createdAt: "desc" },
-      select: { orderId: true },
-    });
     const lastNumber = parseInt(lastOrder?.orderId ?? "", 10);
     const nextNumber = isNaN(lastNumber) ? 1001 : lastNumber + 1;
 

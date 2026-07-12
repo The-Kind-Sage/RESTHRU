@@ -27,7 +27,7 @@ export function PricingPreview() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} viewport={{ once: true }} className="mb-6 sm:mb-12 text-center">
           <p className="mb-2 text-xs sm:text-xs font-semibold uppercase tracking-[0.3em] text-primary">Pricing</p>
-          <h2 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-foreground">Priced in rupees, no surprises</h2>
+          <h2 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-foreground">Best pricing, no hidden charges.</h2>
           <p className="mx-auto max-w-md text-sm sm:text-base text-muted-foreground">Start free. Move up only when your restaurant outgrows it, never before.</p>
         </motion.div>
 
