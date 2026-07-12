@@ -8,7 +8,7 @@ const features = [
   { id: '1', icon: Wallet, title: 'eSewa & Khalti', description: 'Accept payments through Nepal\'s popular digital wallets.' },
   { id: '2', icon: FileCheck, title: 'IRD Compliant', description: 'Legally compliant bills with automatic IRD integration.' },
   { id: '3', icon: Calendar, title: 'Bikram Sambat', description: 'Automatic dates in Nepal\'s BS calendar.' },
-  { id: '4', icon: Wifi, title: 'Low Bandwidth', description: 'Optimized for unreliable internet connections.' },
+  { id: '4', icon: Wifi, title: 'Low Bandwidth', description: 'Runs fine on a slow 3G phone in a basement kitchen.' },
 ];
 
 const containerVariants = {
@@ -32,7 +32,7 @@ export function NepalSection() {
             <h2 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-[2.5rem] font-bold tracking-tight text-foreground leading-tight">
               Built for Nepal. <span className="text-primary">By Nepal.</span>
             </h2>
-            <p className="mb-5 sm:mb-8 max-w-md text-sm sm:text-base text-muted-foreground">Every feature designed for Nepal&apos;s unique needs.</p>
+            <p className="mb-5 sm:mb-8 max-w-md text-sm sm:text-base text-muted-foreground">The details foreign POS systems never bother to get right.</p>
 
             <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="space-y-1">
               {features.map((f) => {

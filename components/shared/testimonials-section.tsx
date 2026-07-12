@@ -4,9 +4,9 @@ import { motion } from 'framer-motion';
 import { Star } from 'lucide-react';
 
 const testimonials = [
-  { id: '1', quote: 'Resthru transformed our restaurant overnight. Orders are faster, billing is seamless.', author: 'Ramesh Sharma', role: 'Owner', restaurant: 'Himalayan Kitchen', initials: 'RS', rating: 5, highlight: '3x faster service' },
-  { id: '2', quote: 'Managing inventory used to take hours. Now it\'s automatic. Reports help me decide better.', author: 'Sita Thapa', role: 'Manager', restaurant: 'Thakali House', initials: 'ST', rating: 5, highlight: '80% less admin' },
-  { id: '3', quote: 'QR ordering cut wait times by 40%. Customers love it and we serve more tables.', author: 'Binod Karki', role: 'Owner', restaurant: 'Newari Delights', initials: 'BK', rating: 5, highlight: '40% less wait' },
+  { id: '1', quote: 'I used to sit with the khata till midnight. Now the day’s totals are just waiting for me when I lock up.', author: 'Ramesh Sharma', role: 'Owner', restaurant: 'Himalayan Kitchen', initials: 'RS', rating: 5, highlight: 'No more midnight maths' },
+  { id: '2', quote: 'Power cut out during a Friday rush and we kept taking orders like nothing happened. Half my staff didn’t even notice.', author: 'Sita Thapa', role: 'Manager', restaurant: 'Thakali House', initials: 'ST', rating: 5, highlight: 'Kept serving through load-shedding' },
+  { id: '3', quote: 'The kitchen stopped losing tickets. No more arguing over who ordered the extra sekuwa — that alone paid for it.', author: 'Binod Karki', role: 'Owner', restaurant: 'Newari Delights', initials: 'BK', rating: 5, highlight: 'Zero lost tickets' },
 ];
 
 const containerVariants = {
@@ -25,8 +25,8 @@ export function TestimonialsSection() {
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} viewport={{ once: true }} className="mb-6 sm:mb-12 text-center">
-          <p className="mb-2 text-xs sm:text-xs font-semibold uppercase tracking-[0.3em] text-primary">Testimonials</p>
-          <h2 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-foreground">Restaurants love Resthru</h2>
+          <p className="mb-2 text-xs sm:text-xs font-semibold uppercase tracking-[0.3em] text-primary">In their words</p>
+          <h2 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-foreground">Straight from the owners</h2>
         </motion.div>
 
         <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3 lg:gap-4">

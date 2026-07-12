@@ -4,9 +4,9 @@ import { motion } from 'framer-motion';
 import { UserPlus, Settings, QrCode } from 'lucide-react';
 
 const steps = [
-  { id: 1, icon: UserPlus, title: 'Create your account', description: 'Sign up with your email. Takes 30 seconds.', time: '30 sec' },
-  { id: 2, icon: Settings, title: 'Set up your menu', description: 'Add dishes, prices, and table layouts.', time: '5 min' },
-  { id: 3, icon: QrCode, title: 'Start taking orders', description: 'Print QR codes and go live instantly.', time: 'Ready!' },
+  { id: 1, icon: UserPlus, title: 'Make an account', description: 'Your email and your restaurant’s name. That’s the whole form.', time: '30 sec' },
+  { id: 2, icon: Settings, title: 'Add your menu', description: 'Punch in your dishes, prices, and tables — momo to thali set.', time: '5 min' },
+  { id: 3, icon: QrCode, title: 'Stick on the QR codes', description: 'Print them, tape them to the tables, and you’re taking orders.', time: 'Go live' },
 ];
 
 const containerVariants = {
@@ -24,9 +24,9 @@ export function HowItWorks() {
     <section className="relative overflow-hidden bg-gradient-to-b from-background via-primary/[0.02] to-background py-10 sm:py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} viewport={{ once: true }} className="mb-6 sm:mb-12 text-center">
-          <p className="mb-2 text-xs sm:text-xs font-semibold uppercase tracking-[0.3em] text-primary">How it works</p>
-          <h2 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-foreground">Up and running in 3 steps</h2>
-          <p className="mx-auto max-w-md text-sm sm:text-base text-muted-foreground">From sign-up to live orders in under 5 minutes.</p>
+          <p className="mb-2 text-xs sm:text-xs font-semibold uppercase tracking-[0.3em] text-primary">Getting started</p>
+          <h2 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-foreground">Three steps, one afternoon</h2>
+          <p className="mx-auto max-w-md text-sm sm:text-base text-muted-foreground">No installer, no training day, no consultant in a tie. Just you and a printer.</p>
         </motion.div>
 
         <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>

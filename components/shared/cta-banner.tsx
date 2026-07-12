@@ -22,17 +22,15 @@ export function CtaBanner() {
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-4 py-1.5 text-xs font-medium text-white/80 backdrop-blur-md mb-6">
             <Sparkles className="w-3.5 h-3.5 text-accent" />
-            Get started in under 5 minutes
+            Free to start — no card, no catch
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-4">
-            Ready to transform{' '}
-            <span className="bg-gradient-to-r from-accent to-amber-300 bg-clip-text text-transparent">
-              your restaurant?
-            </span>
+            Come run your restaurant{' '}
+            <span className="text-accent">with us.</span>
           </h2>
           <p className="text-base sm:text-lg text-white/55 max-w-xl mx-auto mb-8">
-            Join 500+ restaurants in Nepal already using Resthru. No credit card required.
+            500+ Nepali restaurants already do — from Thamel tea shops to Pokhara rooftops. The first plan is free, and nobody asks for a card.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
@@ -57,7 +55,7 @@ export function CtaBanner() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-            {['Free forever', 'No credit card', '5 min setup', 'Nepal support'].map((item) => (
+            {['Free to start', 'No credit card', 'Live in an afternoon', 'Support in Nepali'].map((item) => (
               <div key={item} className="flex items-center gap-1.5 text-sm text-white/45">
                 <Check className="h-4 w-4 flex-shrink-0 text-accent/70" />
                 <span>{item}</span>

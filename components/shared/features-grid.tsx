@@ -19,12 +19,12 @@ interface Feature {
 }
 
 const features: Feature[] = [
-  { id: '1', icon: QrCode, title: 'Smart QR Ordering', description: 'Customers scan, browse, and order from their phone. No app needed.', stat: '3x faster' },
-  { id: '2', icon: WifiOff, title: 'Works Offline', description: 'Never stop serving. Resthru keeps working when internet drops.', stat: '99.9% uptime' },
-  { id: '3', icon: ChefHat, title: 'Live Kitchen Display', description: 'Orders fly from table to kitchen instantly. Zero shouting.', stat: '40% less wait' },
-  { id: '4', icon: Receipt, title: 'One-tap Billing', description: 'IRD-compliant bills, split payments, receipts in seconds.', stat: 'IRD compliant' },
-  { id: '5', icon: Package, title: 'Inventory Alerts', description: 'Never run out of stock. Auto alerts when ingredients run low.', stat: 'Auto tracking' },
-  { id: '6', icon: BarChart3, title: 'Live Reports', description: 'Best dishes, peak hours, daily revenue — all at a glance.', stat: 'Real-time' },
+  { id: '1', icon: QrCode, title: 'Smart QR Ordering', description: 'Customers scan, browse, and order from their own phone. Nothing to download.', stat: 'No app needed' },
+  { id: '2', icon: WifiOff, title: 'Works Offline', description: 'Load-shedding or dead wifi — it keeps taking orders and syncs the moment you are back online.', stat: 'Survives load-shedding' },
+  { id: '3', icon: ChefHat, title: 'Live Kitchen Display', description: 'Orders go straight from the table to the kitchen screen. No more shouting tickets across the room.', stat: 'No more shouting' },
+  { id: '4', icon: Receipt, title: 'One-tap Billing', description: 'IRD-compliant bills, split payments, and printed receipts in seconds.', stat: 'IRD-ready' },
+  { id: '5', icon: Package, title: 'Inventory Alerts', description: 'Know you are low on paneer before the dinner rush — not in the middle of it.', stat: 'Before you run out' },
+  { id: '6', icon: BarChart3, title: 'Live Reports', description: 'Best-selling dishes, your busiest hours, and the day’s takings, all at a glance.', stat: 'Your whole day' },
 ];
 
 const containerVariants = {
@@ -43,9 +43,9 @@ export function FeaturesGrid() {
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} viewport={{ once: true }} className="mb-6 sm:mb-12 text-center">
-          <p className="mb-2 text-xs sm:text-xs font-semibold uppercase tracking-[0.3em] text-primary">Features</p>
-          <h2 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-foreground">Everything your restaurant needs</h2>
-          <p className="mx-auto max-w-md text-sm sm:text-base text-muted-foreground">One system for orders, billing, inventory, and growth.</p>
+          <p className="mb-2 text-xs sm:text-xs font-semibold uppercase tracking-[0.3em] text-primary">What you get</p>
+          <h2 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-foreground">One app instead of five</h2>
+          <p className="mx-auto max-w-md text-sm sm:text-base text-muted-foreground">Orders, kitchen, billing, and stock — finally talking to each other, so you are not juggling half-a-dozen apps mid-rush.</p>
         </motion.div>
 
         <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3 lg:gap-4">

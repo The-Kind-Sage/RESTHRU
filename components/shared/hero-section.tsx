@@ -45,7 +45,7 @@ export function HeroSection() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
                 </span>
-                Now serving 500+ restaurants
+                Built in Nepal · trusted by 500+ kitchens
               </span>
             </motion.div>
 
@@ -53,9 +53,23 @@ export function HeroSection() {
               variants={itemVariants}
               className="text-3xl sm:text-4xl md:text-5xl lg:text-[4.25rem] font-bold leading-[1.1] tracking-tight text-white max-w-[600px]"
             >
-              The smarter way to run{' '}
-              <span className="bg-gradient-to-r from-accent to-amber-300 bg-clip-text text-transparent">
-                your restaurant
+              The whole restaurant.{' '}
+              <span className="relative inline-block whitespace-nowrap">
+                One screen.
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 320 12"
+                  preserveAspectRatio="none"
+                  className="absolute left-0 -bottom-1 h-2.5 w-full sm:-bottom-2 sm:h-3"
+                  fill="none"
+                >
+                  <path
+                    d="M3 8C60 3 120 3 180 7C240 11 285 9 317 4"
+                    stroke="#F4B740"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                </svg>
               </span>
             </motion.h1>
 
@@ -63,7 +77,8 @@ export function HeroSection() {
               variants={itemVariants}
               className="text-base sm:text-base lg:text-lg text-white/55 max-w-[480px] leading-relaxed"
             >
-              Manage orders, staff, billing, and inventory from one powerful dashboard. Built for Nepal.
+              Orders, kitchen tickets, billing, inventory — your whole team on the
+              same page, even when the wifi drops. Made in Nepal, for Nepal.
             </motion.p>
 
             <motion.div variants={itemVariants} className="flex flex-col gap-2 pt-0.5 sm:gap-2.5 sm:pt-1">
@@ -94,7 +109,7 @@ export function HeroSection() {
                 ))}
               </div>
               <p className="text-sm sm:text-sm text-white/45">
-                <span className="font-semibold text-white/75">4.9/5</span> from 200+ owners
+                <span className="font-semibold text-white/75">4.9/5</span> from owners who ditched the paper khata
               </p>
             </motion.div>
 
@@ -102,7 +117,7 @@ export function HeroSection() {
               variants={itemVariants}
               className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-x-5"
             >
-              {['Free forever', 'No credit card', '5 min setup'].map((item) => (
+              {['Free forever', 'No credit card', 'Ready before the evening rush'].map((item) => (
                 <div key={item} className="flex items-center gap-1.5 text-xs sm:text-xs text-white/45">
                   <Check className="h-3.5 w-3.5 flex-shrink-0 text-accent/70" />
                   <span>{item}</span>
@@ -117,7 +132,7 @@ export function HeroSection() {
             animate="visible"
             className="hidden lg:block"
           >
-            <div className="relative mx-auto w-full max-w-[400px]">
+            <div className="relative mx-auto w-full max-w-[400px] lg:rotate-[2.5deg] lg:transition-transform lg:duration-500 lg:hover:rotate-0">
               <div className="absolute -inset-8 rounded-[3rem] bg-gradient-to-br from-white/[0.06] via-accent/[0.04] to-transparent blur-3xl" />
               <div className="relative overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06] p-2.5 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.4)] backdrop-blur-2xl">
                 <div className="rounded-[1.25rem] border border-white/[0.1] bg-gradient-to-br from-[#0c6b47] via-[#119260] to-[#18b874] p-5 text-white">
@@ -135,13 +150,13 @@ export function HeroSection() {
                   <div className="mb-3 grid grid-cols-2 gap-2.5">
                     <div className="rounded-xl border border-white/10 bg-white/[0.08] p-3">
                       <p className="text-xs font-medium uppercase tracking-widest text-white/50">Revenue</p>
-                      <p className="mt-1 text-xl font-bold">Rs. 45.2K</p>
-                      <p className="mt-0.5 text-xs font-medium text-green-300">↑ 12%</p>
+                      <p className="mt-1 text-xl font-bold">Rs. 47,320</p>
+                      <p className="mt-0.5 text-xs font-medium text-green-300">↑ 9%</p>
                     </div>
                     <div className="rounded-xl border border-white/10 bg-white/[0.08] p-3">
                       <p className="text-xs font-medium uppercase tracking-widest text-white/50">Orders</p>
-                      <p className="mt-1 text-xl font-bold">1,234</p>
-                      <p className="mt-0.5 text-xs font-medium text-green-300">↑ 8%</p>
+                      <p className="mt-1 text-xl font-bold">218</p>
+                      <p className="mt-0.5 text-xs font-medium text-green-300">↑ 14%</p>
                     </div>
                   </div>
 

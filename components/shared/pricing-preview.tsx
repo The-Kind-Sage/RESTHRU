@@ -5,9 +5,9 @@ import { motion } from 'framer-motion';
 import { Check, ArrowRight } from 'lucide-react';
 
 const plans = [
-  { id: 'free', name: 'Starter', price: 'Free', description: 'For small restaurants just getting started.', features: ['Up to 2 tables', 'Basic QR ordering', 'Manual billing', 'Email support'] },
-  { id: 'basic', name: 'Growth', price: 'Rs. 999', period: '/month', description: 'For restaurants ready to scale.', features: ['Up to 10 tables', 'Full QR ordering', 'Automated billing', 'Inventory tracking', 'Priority support'], isPopular: true },
-  { id: 'pro', name: 'Enterprise', price: 'Rs. 2,999', period: '/month', description: 'For chains and multi-location restaurants.', features: ['Unlimited tables', 'All Growth features', 'Advanced analytics', 'Multi-location', 'API access', 'Dedicated support'] },
+  { id: 'free', name: 'Starter', price: 'Free', description: 'For the single-room place still finding its feet.', features: ['Up to 2 tables', 'Basic QR ordering', 'Manual billing', 'Email support'] },
+  { id: 'basic', name: 'Growth', price: 'Rs. 999', period: '/month', description: 'For when one QR code is no longer enough.', features: ['Up to 10 tables', 'Full QR ordering', 'Automated billing', 'Inventory tracking', 'Priority support'], isPopular: true },
+  { id: 'pro', name: 'Enterprise', price: 'Rs. 2,999', period: '/month', description: 'For chains juggling more than one kitchen.', features: ['Unlimited tables', 'All Growth features', 'Advanced analytics', 'Multi-location', 'API access', 'Dedicated support'] },
 ];
 
 const containerVariants = {
@@ -27,8 +27,8 @@ export function PricingPreview() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} viewport={{ once: true }} className="mb-6 sm:mb-12 text-center">
           <p className="mb-2 text-xs sm:text-xs font-semibold uppercase tracking-[0.3em] text-primary">Pricing</p>
-          <h2 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-foreground">Simple, honest pricing</h2>
-          <p className="mx-auto max-w-md text-sm sm:text-base text-muted-foreground">Start free. Upgrade when you need more.</p>
+          <h2 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-foreground">Priced in rupees, no surprises</h2>
+          <p className="mx-auto max-w-md text-sm sm:text-base text-muted-foreground">Start free. Move up only when your restaurant outgrows it — never before.</p>
         </motion.div>
 
         <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3 lg:gap-4">

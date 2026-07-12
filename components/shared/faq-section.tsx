@@ -50,10 +50,10 @@ export function FaqSection() {
             FAQ
           </p>
           <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-foreground">
-            Questions? We&apos;ve got answers
+            The stuff owners usually ask
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm sm:text-base text-muted-foreground">
-            Everything you need to know before getting started.
+            The questions we get most, answered plainly.
           </p>
         </motion.div>
 
