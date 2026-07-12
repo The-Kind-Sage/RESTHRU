@@ -22,7 +22,7 @@ export default function DashboardLoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const result = await login(username, password);
+    const result = await login(username, password, undefined, { blockAdmin: true });
     if (result?.error) {
       setError(result.error);
       setLoading(false);

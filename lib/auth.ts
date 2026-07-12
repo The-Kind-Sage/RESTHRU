@@ -1,7 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-
-const secret = new TextEncoder().encode(process.env.JWT_SECRET || "fallback-secret");
+import { jwtSecret as secret } from "@/lib/jwt-secret";
 
 export type SessionUser = {
   id: string;

@@ -15,9 +15,6 @@ function generateUsername(email: string): string {
 
 export async function createSessionFromSupabaseLogin(userId: string, email: string, fullName?: string) {
   try {
-    const dbUrl = process.env.DATABASE_URL || "NOT SET";
-    const portMatch = dbUrl.match(/:(\d+)\//);
-    console.log("[debug] DATABASE_URL port:", portMatch ? portMatch[1] : "unknown", "| has sslmode:", dbUrl.includes("sslmode"), "| has pgbouncer:", dbUrl.includes("pgbouncer"));
     const nameParts = (fullName || email || "").trim().split(" ");
 
     // Find or create a Prisma user
@@ -68,7 +65,12 @@ export async function createSessionFromSupabaseLogin(userId: string, email: stri
   }
 }
 
-export async function login(username: string, password: string, redirectTo?: string) {
+export async function login(
+  username: string,
+  password: string,
+  redirectTo?: string,
+  options?: { adminConsole?: boolean; blockAdmin?: boolean }
+) {
   try {
     // Allow login by email OR username
     const user = await prisma.user.findFirst({
@@ -81,6 +83,32 @@ export async function login(username: string, password: string, redirectTo?: str
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
+      return { error: "Invalid username or password" };
+    }
+
+    // Admin console gate: only SUPER_ADMIN / ADMIN may sign in here. Reject
+    // everyone else (e.g. a restaurant owner using their real credentials)
+    // BEFORE any session is created — otherwise a valid non-admin login would
+    // mint a session cookie and only get bounced by the proxy afterward. The
+    // error is intentionally the same generic string so this endpoint can't be
+    // used to tell "wrong password" apart from "right password, wrong console".
+    if (
+      options?.adminConsole &&
+      user.role !== "ADMIN" &&
+      user.role !== "SUPER_ADMIN"
+    ) {
+      return { error: "Invalid username or password" };
+    }
+
+    // Reverse gate for the public / staff login doors (home-page dialog,
+    // /login, /dashboard/login): admins may ONLY sign in through the admin
+    // console, never through these. Reject before creating a session, with the
+    // same generic message so these forms can't be used to discover that an
+    // account is an admin.
+    if (
+      options?.blockAdmin &&
+      (user.role === "ADMIN" || user.role === "SUPER_ADMIN")
+    ) {
       return { error: "Invalid username or password" };
     }
 

@@ -23,7 +23,7 @@ function AdminLoginForm() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const result = await login(username, password, redirectTo);
+    const result = await login(username, password, redirectTo, { adminConsole: true });
     if (result?.error) {
       setError(result.error);
       setLoading(false);

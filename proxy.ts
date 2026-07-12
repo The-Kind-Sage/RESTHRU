@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { DASHBOARD_AUTH_ROUTES, SUPERADMIN_AUTH_ROUTES } from "@/lib/constants";
-
-const secret = new TextEncoder().encode(process.env.JWT_SECRET || "fallback-secret");
+import { jwtSecret as secret } from "@/lib/jwt-secret";
 
 const publicSuperadminPaths: readonly string[] = SUPERADMIN_AUTH_ROUTES;
 const publicDashboardPaths: readonly string[] = DASHBOARD_AUTH_ROUTES;
