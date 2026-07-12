@@ -6,7 +6,7 @@ import { Star } from 'lucide-react';
 const testimonials = [
   { id: '1', quote: 'I used to sit with the khata till midnight. Now the day’s totals are just waiting for me when I lock up.', author: 'Ramesh Sharma', role: 'Owner', restaurant: 'Himalayan Kitchen', initials: 'RS', rating: 5, highlight: 'No more midnight maths' },
   { id: '2', quote: 'Power cut out during a Friday rush and we kept taking orders like nothing happened. Half my staff didn’t even notice.', author: 'Sita Thapa', role: 'Manager', restaurant: 'Thakali House', initials: 'ST', rating: 5, highlight: 'Kept serving through load-shedding' },
-  { id: '3', quote: 'The kitchen stopped losing tickets. No more arguing over who ordered the extra sekuwa — that alone paid for it.', author: 'Binod Karki', role: 'Owner', restaurant: 'Newari Delights', initials: 'BK', rating: 5, highlight: 'Zero lost tickets' },
+  { id: '3', quote: 'The kitchen stopped losing tickets. No more arguing over who ordered the extra sekuwa. That alone paid for it.', author: 'Binod Karki', role: 'Owner', restaurant: 'Newari Delights', initials: 'BK', rating: 5, highlight: 'Zero lost tickets' },
 ];
 
 const containerVariants = {

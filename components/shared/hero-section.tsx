@@ -74,7 +74,7 @@ export function HeroSection() {
               variants={itemVariants}
               className="text-base sm:text-base lg:text-lg text-white/55 max-w-[480px] leading-relaxed"
             >
-              Orders, kitchen tickets, billing, inventory — your whole team on the
+              Orders, kitchen tickets, billing, inventory. Your whole team on the
               same page, even when the wifi drops. Made in Nepal, for Nepal.
             </motion.p>
 

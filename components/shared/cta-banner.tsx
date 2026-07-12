@@ -27,7 +27,7 @@ export function CtaBanner() {
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-4 py-1.5 text-xs font-medium text-white/80 backdrop-blur-md mb-6">
             <Sparkles className="w-3.5 h-3.5 text-accent" />
-            Free to start — no card, no catch
+            Free to start, no card, no catch
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-4">
@@ -35,7 +35,7 @@ export function CtaBanner() {
             <span className="text-accent">with us.</span>
           </h2>
           <p className="text-base sm:text-lg text-white max-w-xl mx-auto mb-8">
-            500+ Nepali restaurants already do — from Thamel tea shops to Pokhara rooftops. The first plan is free, and nobody asks for a card.
+            500+ Nepali restaurants already do, from Thamel tea shops to Pokhara rooftops. The first plan is free, and nobody asks for a card.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">

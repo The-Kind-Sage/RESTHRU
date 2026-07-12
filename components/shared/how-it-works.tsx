@@ -5,7 +5,7 @@ import { UserPlus, Settings, QrCode } from 'lucide-react';
 
 const steps = [
   { id: 1, icon: UserPlus, title: 'Make an account', description: 'Your email and your restaurant’s name. That’s the whole form.', time: '30 sec' },
-  { id: 2, icon: Settings, title: 'Add your menu', description: 'Punch in your dishes, prices, and tables — momo to thali set.', time: '5 min' },
+  { id: 2, icon: Settings, title: 'Add your menu', description: 'Punch in your dishes, prices, and tables, from momo to thali set.', time: '5 min' },
   { id: 3, icon: QrCode, title: 'Stick on the QR codes', description: 'Print them, tape them to the tables, and you’re taking orders.', time: 'Go live' },
 ];
 
