@@ -107,7 +107,10 @@ export const PLAN_TYPES = [
   { value: 'enterprise', label: 'Enterprise', color: '#ef4444' },
 ];
 
-// Plans
+// Plans — MUST stay in sync with lib/plan-limits.ts (the enforced caps) and the
+// `plans` rows in the DB (the billed prices). These are the exact numbers the
+// plan guard enforces, so what a customer is shown here is what they actually
+// get. Shown on /pricing and the register plan picker.
 export const PLANS = [
   {
     id: 'free',
@@ -116,8 +119,10 @@ export const PLANS = [
     yearlyPrice: 0,
     currency: 'NPR',
     features: [
-      'Up to 5 menu items',
-      'Basic table management',
+      'Up to 5 tables',
+      'Up to 3 staff members',
+      'Up to 10 menu items',
+      'QR ordering',
       'Email support',
       '✗ Thermal printer support',
       '✗ IRD-compliant VAT billing',
@@ -134,12 +139,13 @@ export const PLANS = [
     yearlyPrice: 23988,
     currency: 'NPR',
     features: [
+      'Up to 20 tables',
+      'Up to 10 staff members',
       'Up to 50 menu items',
-      'Advanced table management',
       'Order tracking',
       'Staff management',
-      'Priority email support',
       'Thermal printer support',
+      'Priority email support',
       '✗ IRD-compliant VAT billing',
       '✗ Multi-branch support',
       '✗ Real-time analytics',
@@ -150,22 +156,19 @@ export const PLANS = [
   {
     id: 'pro',
     name: 'Pro',
-    price: 4999,
-    yearlyPrice: 59988,
+    price: 3999,
+    yearlyPrice: 47988,
     currency: 'NPR',
     features: [
-      'Unlimited menu items',
-      'Advanced table management',
-      'Real-time order tracking',
-      'Staff management',
-      'Analytics & reports',
-      'Multiple payment methods',
-      'Phone & email support',
-      'API access',
-      'Thermal printer support',
-      'IRD-compliant VAT billing',
+      'Up to 50 tables',
+      'Up to 50 staff members',
+      'Up to 200 menu items',
       'Up to 3 branches',
+      'IRD-compliant VAT billing',
       'Real-time analytics',
+      'Multiple payment methods',
+      'API access',
+      'Phone & email support',
     ],
     isPopular: true,
     color: '#8b5cf6',
@@ -173,19 +176,17 @@ export const PLANS = [
   {
     id: 'enterprise',
     name: 'Enterprise',
-    price: null,
-    yearlyPrice: null,
+    price: 9999,
+    yearlyPrice: 119988,
     currency: 'NPR',
     features: [
       'Everything in Pro',
+      'Unlimited tables, staff & menu items',
+      'Unlimited branches',
       'Custom integrations',
       'Dedicated account manager',
-      'Training & onboarding',
-      'Priority 24/7 support',
-      'Custom development',
-      'Unlimited branches',
-      'Custom thermal printer setup',
-      'Advanced analytics',
+      'White-label options',
+      'Priority 24/7 support & SLA',
     ],
     isPopular: false,
     color: '#ef4444',
