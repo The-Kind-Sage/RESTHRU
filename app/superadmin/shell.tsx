@@ -40,6 +40,7 @@ const adminNavItems = [
   { label: 'Compliance',     icon: ShieldCheck,      href: '/superadmin/compliance'    },
   { label: 'Financials',     icon: Wallet,           href: '/superadmin/financials'    },
   { label: 'Innovation Lab', icon: FlaskConical,     href: '/superadmin/innovation'    },
+  { label: 'Manage Package', icon: CreditCard,       href: '/superadmin/packages'      },
   { label: 'Settings',       icon: Settings,         href: '/superadmin/settings'      },
 ];
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -31,7 +31,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { register } from '@/lib/actions/auth';
-import { NEPAL_CITIES, RESTAURANT_TYPES, PLANS } from '@/lib/constants';
+import { NEPAL_CITIES, RESTAURANT_TYPES } from '@/lib/constants';
+import { getPublicPlans, type PublicPlan } from '@/lib/actions/get-plans-public';
 
 const step1Schema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
@@ -78,6 +79,11 @@ export default function RegisterPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [usePersonalPhone, setUsePersonalPhone] = useState(false);
+  const [plans, setPlans] = useState<PublicPlan[]>([]);
+
+  useEffect(() => {
+    getPublicPlans().then(setPlans);
+  }, []);
 
   const step1Form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
@@ -432,7 +438,7 @@ export default function RegisterPage() {
                     <Form {...step3Form}>
                       <form className="space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {PLANS.map((plan) => (
+                          {plans.map((plan) => (
                             <FormField key={plan.id} control={step3Form.control} name="selectedPlan" render={({ field }) => (
                               <motion.div
                                 whileHover={{ scale: 1.02 }}

@@ -1,21 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Check, X } from 'lucide-react';
+import { Check, X, Loader2 } from 'lucide-react';
 import Navbar from '@/components/shared/navbar';
 import Footer from '@/components/shared/footer';
 import { PricingCard } from '@/components/shared/pricing-card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { PLANS } from '@/lib/constants';
+import { getPublicPlans, type PublicPlan } from '@/lib/actions/get-plans-public';
 
-const accentColors = {
-  free: 'gray' as const,
-  basic: 'indigo' as const,
-  pro: 'emerald' as const,
-  enterprise: 'amber' as const,
+const accentColors: Record<string, 'gray' | 'indigo' | 'emerald' | 'amber'> = {
+  free: 'gray',
+  basic: 'indigo',
+  pro: 'emerald',
+  enterprise: 'amber',
 };
 
 const comparisonFeatures = [
@@ -120,6 +120,12 @@ const planFeatureMap: Record<string, Record<string, boolean>> = {
 
 export default function PricingPage() {
   const [isYearly, setIsYearly] = useState(false);
+  const [plans, setPlans] = useState<PublicPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getPublicPlans().then((data) => { setPlans(data); setLoading(false); });
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -181,91 +187,105 @@ export default function PricingPage() {
       </motion.section>
 
       {/* Pricing Cards Section */}
-      <motion.section
-        className="px-4 py-12 sm:px-6 lg:px-8"
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-100px' }}
-      >
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {PLANS.map((plan, idx) => (
-              <motion.div key={plan.id} variants={itemVariants}>
-                <PricingCard
-                  name={plan.name}
-                  price={plan.price}
-                  yearlyPrice={plan.yearlyPrice}
-                  features={plan.features}
-                  isPopular={plan.isPopular}
-                  accentColor={accentColors[plan.id as keyof typeof accentColors]}
-                  ctaText={plan.name === 'Free' ? 'Get Started' : plan.name === 'Enterprise' ? 'Contact Sales' : 'Start Free Trial'}
-                  isYearly={isYearly}
-                />
-              </motion.div>
-            ))}
-          </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
-      </motion.section>
+      ) : (
+        <motion.section
+          className="px-4 py-12 sm:px-6 lg:px-8"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-100px' }}
+        >
+          <div className="mx-auto max-w-7xl">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+              {plans.map((plan, idx) => {
+                const typeKey = plan.type.toLowerCase() as keyof typeof accentColors;
+                return (
+                  <motion.div key={plan.id || idx} variants={itemVariants}>
+                    <PricingCard
+                      name={plan.name}
+                      price={plan.price}
+                      yearlyPrice={plan.yearlyPrice}
+                      features={plan.features}
+                      isPopular={plan.isPopular}
+                      accentColor={accentColors[typeKey] || 'gray'}
+                      ctaText={plan.price === 0 ? 'Get Started' : typeKey === 'enterprise' ? 'Contact Sales' : 'Start Free Trial'}
+                      isYearly={isYearly}
+                    />
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </motion.section>
+      )}
 
       {/* Feature Comparison Table Section */}
-      <motion.section
-        className="px-4 py-16 sm:px-6 lg:px-8"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: '-100px' }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="mx-auto max-w-7xl">
-          <h2 className="text-3xl font-bold text-center mb-12">Feature Comparison</h2>
+      {!loading && plans.length > 0 && (
+        <motion.section
+          className="px-4 py-16 sm:px-6 lg:px-8"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, margin: '-100px' }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="mx-auto max-w-7xl">
+            <h2 className="text-3xl font-bold text-center mb-12">Feature Comparison</h2>
 
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-muted/50 backdrop-blur">
-                <tr>
-                  <th className="px-6 py-4 text-left font-semibold">Feature</th>
-                  {PLANS.map((plan) => (
-                    <th key={plan.id} className="px-6 py-4 text-center font-semibold">
-                      {plan.name}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {comparisonFeatures.map((section, sectionIdx) => (
-                  <React.Fragment key={sectionIdx}>
-                    <tr className="border-t bg-muted/30">
-                      <td colSpan={PLANS.length + 1} className="px-6 py-3 font-semibold text-sm">
-                        {section.category}
-                      </td>
-                    </tr>
-                    {section.items.map((feature, featureIdx) => (
-                      <tr
-                        key={featureIdx}
-                        className={cn(
-                          'border-t',
-                          featureIdx % 2 === 0 ? 'bg-background' : 'bg-muted/50'
-                        )}
-                      >
-                        <td className="px-6 py-4 text-left text-foreground">{feature}</td>
-                        {PLANS.map((plan) => (
-                          <td key={plan.id} className="px-6 py-4 text-center">
-                            {planFeatureMap[feature]?.[plan.id] ? (
-                              <Check className="mx-auto h-5 w-5 text-success" />
-                            ) : (
-                              <X className="mx-auto h-5 w-5 text-destructive" />
-                            )}
-                          </td>
-                        ))}
-                      </tr>
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-muted/50 backdrop-blur">
+                  <tr>
+                    <th className="px-6 py-4 text-left font-semibold">Feature</th>
+                    {plans.map((plan) => (
+                      <th key={plan.id} className="px-6 py-4 text-center font-semibold">
+                        {plan.name}
+                      </th>
                     ))}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparisonFeatures.map((section, sectionIdx) => (
+                    <React.Fragment key={sectionIdx}>
+                      <tr className="border-t bg-muted/30">
+                        <td colSpan={plans.length + 1} className="px-6 py-3 font-semibold text-sm">
+                          {section.category}
+                        </td>
+                      </tr>
+                      {section.items.map((feature, featureIdx) => (
+                        <tr
+                          key={featureIdx}
+                          className={cn(
+                            'border-t',
+                            featureIdx % 2 === 0 ? 'bg-background' : 'bg-muted/50'
+                          )}
+                        >
+                          <td className="px-6 py-4 text-left text-foreground">{feature}</td>
+                          {plans.map((plan) => {
+                            const typeKey = plan.type.toLowerCase();
+                            return (
+                              <td key={plan.id} className="px-6 py-4 text-center">
+                                {planFeatureMap[feature]?.[typeKey] ? (
+                                  <Check className="mx-auto h-5 w-5 text-success" />
+                                ) : (
+                                  <X className="mx-auto h-5 w-5 text-destructive" />
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      </motion.section>
+        </motion.section>
+      )}
 
       {/* FAQ Section */}
       <motion.section
