@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Check, ArrowRight } from 'lucide-react';
 
 const plans = [
-  { id: 'free', name: 'Starter', price: 'Free', description: 'For the single-room place still finding its feet.', features: ['Up to 2 tables', 'Basic QR ordering', 'Manual billing', 'Email support'] },
+  { id: 'free', name: 'Starter', price: 'Free', description: 'For the single-room place still finding its feet.', features: ['Up to 5 tables', 'Basic QR ordering', 'Manual billing', 'Email support'] },
   { id: 'basic', name: 'Growth', price: 'Rs. 999', period: '/month', description: 'For when one QR code is no longer enough.', features: ['Up to 10 tables', 'Full QR ordering', 'Automated billing', 'Inventory tracking', 'Priority support'], isPopular: true },
   { id: 'pro', name: 'Enterprise', price: 'Rs. 2,999', period: '/month', description: 'For chains juggling more than one kitchen.', features: ['Unlimited tables', 'All Growth features', 'Advanced analytics', 'Multi-location', 'API access', 'Dedicated support'] },
 ];

@@ -27,7 +27,7 @@ const faqs = [
   },
   {
     q: 'Is there a free plan?',
-    a: 'Yes. Our Starter plan is free forever with no credit card required. It includes up to 2 tables, basic QR ordering, and manual billing. Upgrade when you outgrow it.',
+    a: 'Yes. Our Starter plan is free forever with no credit card required. It includes up to 5 tables, basic QR ordering, and manual billing. Upgrade when you outgrow it.',
   },
   {
     q: 'Can I manage multiple locations?',
