@@ -1,17 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useState, type TouchEvent } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Filter, Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react";
-import type { MenuData } from "./types";
+import type { MenuData, SectionData } from "./types";
 import { CoverPage } from "./CoverPage";
 import { CategoryPage } from "./CategoryPage";
 import { DrinksPage } from "./DrinksPage";
 import { BackCoverPage } from "./BackCoverPage";
 import { PageNav } from "./PageNav";
 import { FilterPanel } from "./FilterPanel";
+import { MobileMenu } from "./MobileMenu";
 
-const TOTAL_PAGES = 7;
+// English kickers keyed by the normalized section name. Custom categories that
+// don't match simply render without a kicker.
+const KICKERS: Record<string, string> = {
+  Appetizers: "To Begin",
+  "Main Courses": "The Mains",
+  Desserts: "To Finish",
+  Extra: "Sides & More",
+};
+
+function slugify(name: string): string {
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || "section";
+}
 
 export function MenuBook({ data }: { data: MenuData }) {
   const [page, setPage] = useState(0);
@@ -19,276 +35,212 @@ export function MenuBook({ data }: { data: MenuData }) {
   const [filter, setFilter] = useState("all");
   const [filterOpen, setFilterOpen] = useState(false);
   const [dark, setDark] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
     document.documentElement.classList.toggle("dark", dark);
+    return () => document.documentElement.classList.remove("dark");
   }, [dark]);
 
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 1024);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
+  // Build sections from real data: drop empty categories, keep every non-empty
+  // one (including custom categories), alternate tint for rhythm.
+  const sections: SectionData[] = useMemo(
+    () =>
+      data.categories
+        .filter((c) => c.items.length > 0)
+        .map((c, i) => ({
+          id: c.slug || slugify(c.name),
+          title: c.name,
+          kicker: KICKERS[c.name],
+          items: c.items,
+          tint: i % 2 === 1,
+        })),
+    [data.categories]
+  );
 
-  const go = useCallback((to: number) => {
-    setDir(to > page ? 1 : -1);
-    setPage(Math.max(0, Math.min(TOTAL_PAGES - 1, to)));
-  }, [page]);
+  const hasDrinks = data.drinks.length > 0;
 
-  const handleTouchStart = (e: TouchEvent<HTMLElement>) => {
-    if (!isMobile) return;
-    setTouchStartX(e.touches[0]?.clientX ?? null);
-  };
+  // Page map: [cover, ...sections, (drinks?), backcover]
+  const TOTAL = 1 + sections.length + (hasDrinks ? 1 : 0) + 1;
+  const drinksIndex = hasDrinks ? TOTAL - 2 : -1;
+  const lastIndex = TOTAL - 1;
 
-  const handleTouchEnd = (e: TouchEvent<HTMLElement>) => {
-    if (!isMobile || touchStartX === null) return;
-    const delta = (e.changedTouches[0]?.clientX ?? 0) - touchStartX;
-    if (delta < -50) go(page + 1);
-    else if (delta > 50) go(page - 1);
-    setTouchStartX(null);
-  };
+  const go = useCallback(
+    (to: number) => {
+      setDir(to > page ? 1 : -1);
+      setPage(Math.max(0, Math.min(lastIndex, to)));
+    },
+    [page, lastIndex]
+  );
+
+  const next = useCallback(() => go(page === 0 ? 1 : page + 2), [go, page]);
+  const prev = useCallback(() => go(page <= 1 ? 0 : page - 2), [go, page]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") go(page + 1);
-      else if (e.key === "ArrowLeft") go(page - 1);
-      else if (/^[1-7]$/.test(e.key)) go(parseInt(e.key, 10) - 1);
+      if (e.key === "ArrowRight") next();
+      else if (e.key === "ArrowLeft") prev();
+      else if (/^[1-9]$/.test(e.key)) {
+        const n = parseInt(e.key, 10);
+        if (n <= TOTAL) go(n - 1);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [go, page]);
-
-  const findCategory = (
-    categoryList: typeof data.categories,
-    exactName: string,
-    keywords: string[]
-  ) => {
-    const exact = categoryList.find(
-      (category) => category.name.toLowerCase() === exactName.toLowerCase()
-    );
-    if (exact) return exact;
-
-    const normalized = keywords.map((keyword) => keyword.toLowerCase());
-    return (
-      categoryList.find((category) => {
-        const name = category.name.toLowerCase();
-        return normalized.some((keyword) => name.includes(keyword));
-      }) ?? null
-    );
-  };
-
-  const appetizerCategory = findCategory(
-    data.categories,
-    "Appetizers",
-    ["appetizer", "starter", "snack", "small plate", "hors"]
-  );
-  const mainCategory = findCategory(
-    data.categories.filter((category) => category.id !== appetizerCategory?.id),
-    "Main Courses",
-    ["main", "entree", "special", "signature", "grill", "plat"]
-  );
-  const dessertCategory = findCategory(
-    data.categories.filter((category) => category.id !== appetizerCategory?.id && category.id !== mainCategory?.id),
-    "Desserts",
-    ["dessert", "sweet", "cake", "pastry", "ice cream", "pudding", "bakery"]
-  );
-
-  const extraCategory = findCategory(
-    data.categories.filter(
-      (category) => category.id !== appetizerCategory?.id && category.id !== mainCategory?.id && category.id !== dessertCategory?.id
-    ),
-    "Extra",
-    ["extra", "extras", "side", "sides", "misc", "other", "others"]
-  );
-
-  const appetizerItems = appetizerCategory?.items ?? [];
-  const mainItems = mainCategory?.items ?? [];
-  const dessertItems = dessertCategory?.items ?? [];
-  const extraItems = extraCategory?.items ?? [];
-  const mainSig = mainItems.find((m) => m.tags?.includes("signature"));
+  }, [next, prev, go, TOTAL]);
 
   const renderPage = (i: number) => {
-    switch (i) {
-      case 0:
-        return <CoverPage restaurant={data.restaurant} onBegin={() => go(1)} />;
-      case 1:
-        return (
-          <CategoryPage
-            title="Appetizers"
-            kicker="Pour Commencer"
-            items={appetizerItems}
-            pageNumber={2}
-            activeFilter={filter}
-          />
-        );
-      case 2:
-        return (
-          <CategoryPage
-            title="Main Courses"
-            kicker="Les Plats"
-            items={mainItems.filter((m) => m.id !== mainSig?.id)}
-            pageNumber={3}
-            activeFilter={filter}
-            signature={mainSig}
-          />
-        );
-      case 3:
-        return (
-          <CategoryPage
-            title="Desserts"
-            kicker="Pour Finir"
-            items={dessertItems}
-            pageNumber={4}
-            activeFilter={filter}
-            tint
-          />
-        );
-      case 4:
-        return <DrinksPage drinks={data.drinks} />;
-      case 5:
-        return (
-          <CategoryPage
-            title="Extra"
-            kicker="Extras"
-            items={extraItems}
-            pageNumber={6}
-            activeFilter={filter}
-          />
-        );
-      case 6:
-        return <BackCoverPage restaurant={data.restaurant} />;
-      default:
-        return null;
-    }
+    if (i === 0) return <CoverPage restaurant={data.restaurant} onBegin={() => go(1)} />;
+    if (i === lastIndex)
+      return <BackCoverPage restaurant={data.restaurant} pageNumber={TOTAL} />;
+    if (i === drinksIndex)
+      return <DrinksPage drinks={data.drinks} pageNumber={i + 1} />;
+    const section = sections[i - 1];
+    if (!section) return null;
+    return (
+      <CategoryPage
+        title={section.title}
+        kicker={section.kicker}
+        items={section.items}
+        pageNumber={i + 1}
+        activeFilter={filter}
+        tint={section.tint}
+      />
+    );
   };
 
-  const isCover = page === 0 || page === TOTAL_PAGES - 1;
+  const isCover = page === 0 || page === lastIndex;
+  const prevDisabled = page === 0;
+  const nextDisabled = page > 0 && page >= lastIndex - 1;
+
+  const labels = [
+    "Cover",
+    ...sections.map((s) => s.title),
+    ...(hasDrinks ? ["Beverages"] : []),
+    "Contact",
+  ];
 
   return (
     <div
       className="paper-texture relative min-h-screen w-full overflow-x-hidden"
       style={{ backgroundColor: dark ? "#0f0c0a" : "#efe8db" }}
     >
-      {/* Top bar */}
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center justify-between p-3 sm:p-4 lg:p-5">
-        <div className="pointer-events-auto">
-          <p
-            className="font-sans text-[10px] uppercase tracking-[0.4em]"
-            style={{ color: "var(--ink-mute)" }}
-          >
-            {data.restaurant.name}
-          </p>
-        </div>
-        <div className="pointer-events-auto flex items-center gap-2">
-          <button
-            onClick={() => setDark((d) => !d)}
-            aria-label="Toggle theme"
-            className="flex h-9 w-9 items-center justify-center rounded-full border transition-colors"
-            style={{ borderColor: "var(--rule)", color: "var(--ink-soft)" }}
-            onMouseEnter={(e) => e.currentTarget.style.color = "var(--burgundy)"}
-            onMouseLeave={(e) => e.currentTarget.style.color = "var(--ink-soft)"}
-          >
-            {dark ? <Sun size={15} /> : <Moon size={15} />}
-          </button>
-          <button
-            onClick={() => setFilterOpen(true)}
-            className="flex items-center gap-2 rounded-full border px-3 py-2 font-sans text-[10px] font-medium uppercase tracking-[0.2em] transition-colors"
-            style={{ borderColor: "var(--rule)", color: "var(--ink-soft)" }}
-            onMouseEnter={(e) => e.currentTarget.style.color = "var(--burgundy)"}
-            onMouseLeave={(e) => e.currentTarget.style.color = "var(--ink-soft)"}
-          >
-            <Filter size={12} />
-            <span className="hidden sm:inline">
-              {filter === "all" ? "Filter" : filter.replace("-", " ")}
-            </span>
-          </button>
-        </div>
-      </header>
-
-      <PageNav current={page} total={TOTAL_PAGES} onGo={go} />
-
-      {/* Book stage */}
-      <div className={`flex ${isMobile ? '' : 'h-[100dvh]'} items-center justify-center ${isMobile ? 'overflow-x-hidden' : 'overflow-hidden'} px-0 py-0 sm:px-1 lg:px-2`}>
-        <div
-          className={`book-spine relative h-full w-full ${
-            isCover ? "max-w-[700px]" : "max-w-[700px] lg:max-w-[1280px]"
-          }`}
-          style={{ height: "100dvh" }}
-        >
-          <AnimatePresence mode="wait" custom={dir}>
-            <motion.div
-              key={page}
-              custom={dir}
-              initial={{ opacity: 0, x: dir * 40, rotateY: dir * 4 }}
-              animate={{ opacity: 1, x: 0, rotateY: 0 }}
-              exit={{ opacity: 0, x: dir * -40, rotateY: dir * -4 }}
-              transition={{ duration: 0.5, ease: [0.65, 0, 0.35, 1] }}
-              drag={isMobile ? "x" : false}
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.1}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-              onDragEnd={(_, info) => {
-                const threshold = 40;
-                const velocity = info.velocity.x;
-                if (info.offset.x < -threshold || velocity < -300) go(page + 1);
-                else if (info.offset.x > threshold || velocity > 300) go(page - 1);
-              }}
-              className="grid h-full w-full grid-cols-1 gap-0 lg:grid-cols-2 cursor-grab active:cursor-grabbing"
-              style={{ perspective: "1600px", touchAction: "pan-y" }}
-            >
-              {isCover ? (
-                <div className="col-span-full h-full">{renderPage(page)}</div>
-              ) : (
-                <>
-                  <div className="h-full">{renderPage(page)}</div>
-                  <div className="hidden h-full lg:block">
-                    {renderPage(Math.min(page + 1, TOTAL_PAGES - 1)) ??
-                      renderPage(page)}
-                  </div>
-                </>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+      {/* ---------- Mobile (vertical scroll) ---------- */}
+      <div className="lg:hidden">
+        <MobileMenu
+          data={data}
+          sections={sections}
+          hasDrinks={hasDrinks}
+          filter={filter}
+          dark={dark}
+          onToggleDark={() => setDark((d) => !d)}
+          onOpenFilter={() => setFilterOpen(true)}
+        />
       </div>
 
-      {/* Arrow controls (desktop) */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 right-0 hidden items-center justify-between px-4 lg:flex">
-        <button
-          onClick={() => go(page - 1)}
-          disabled={page === 0}
-          aria-label="Previous page"
-          className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border transition-all disabled:opacity-30"
-          style={{
-            borderColor: "var(--rule)",
-            backgroundColor: "var(--paper)",
-            color: "var(--ink-soft)",
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.color = "var(--burgundy)"}
-          onMouseLeave={(e) => e.currentTarget.style.color = "var(--ink-soft)"}
-        >
-          <ChevronLeft size={18} />
-        </button>
-        <button
-          onClick={() => go(page + (isCover ? 1 : 2))}
-          disabled={page >= TOTAL_PAGES - 1}
-          aria-label="Next page"
-          className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border transition-all disabled:opacity-30"
-          style={{
-            borderColor: "var(--rule)",
-            backgroundColor: "var(--paper)",
-            color: "var(--ink-soft)",
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.color = "var(--burgundy)"}
-          onMouseLeave={(e) => e.currentTarget.style.color = "var(--ink-soft)"}
-        >
-          <ChevronRight size={18} />
-        </button>
+      {/* ---------- Desktop (book spread) ---------- */}
+      <div className="hidden lg:block">
+        {/* Top bar */}
+        <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center justify-between p-5">
+          <div className="pointer-events-auto">
+            <p
+              className="font-sans text-[10px] uppercase tracking-[0.4em]"
+              style={{ color: "var(--ink-mute)" }}
+            >
+              {data.restaurant.name}
+            </p>
+          </div>
+          <div className="pointer-events-auto flex items-center gap-2">
+            <button
+              onClick={() => setDark((d) => !d)}
+              aria-label="Toggle theme"
+              className="flex h-9 w-9 items-center justify-center rounded-full border transition-colors"
+              style={{ borderColor: "var(--rule)", color: "var(--ink-soft)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--burgundy)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink-soft)")}
+            >
+              {dark ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
+            <button
+              onClick={() => setFilterOpen(true)}
+              className="flex items-center gap-2 rounded-full border px-3 py-2 font-sans text-[10px] font-medium uppercase tracking-[0.2em] transition-colors"
+              style={{ borderColor: "var(--rule)", color: "var(--ink-soft)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--burgundy)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink-soft)")}
+            >
+              <Filter size={12} />
+              <span>{filter === "all" ? "Filter" : filter.replace("-", " ")}</span>
+            </button>
+          </div>
+        </header>
+
+        <PageNav current={page} labels={labels} onGo={go} />
+
+        {/* Book stage */}
+        <div className="flex h-[100dvh] items-center justify-center overflow-hidden px-2">
+          <div
+            className={`${isCover ? "" : "book-spine"} relative h-full w-full ${
+              isCover ? "max-w-[700px]" : "max-w-[1280px]"
+            }`}
+            style={{ height: "100dvh" }}
+          >
+            <AnimatePresence mode="wait" custom={dir}>
+              <motion.div
+                key={page}
+                custom={dir}
+                initial={{ opacity: 0, x: dir * 40, rotateY: dir * 4 }}
+                animate={{ opacity: 1, x: 0, rotateY: 0 }}
+                exit={{ opacity: 0, x: dir * -40, rotateY: dir * -4 }}
+                transition={{ duration: 0.5, ease: [0.65, 0, 0.35, 1] }}
+                className="grid h-full w-full grid-cols-2 gap-0"
+                style={{ perspective: "1600px" }}
+              >
+                {isCover ? (
+                  <div className="col-span-full h-full">{renderPage(page)}</div>
+                ) : (
+                  <>
+                    <div className="h-full">{renderPage(page)}</div>
+                    <div className="h-full">{renderPage(Math.min(page + 1, lastIndex))}</div>
+                  </>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Arrow controls */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4">
+          <button
+            onClick={prev}
+            disabled={prevDisabled}
+            aria-label="Previous page"
+            className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border transition-all disabled:opacity-30"
+            style={{
+              borderColor: "var(--rule)",
+              backgroundColor: "var(--paper)",
+              color: "var(--ink-soft)",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--burgundy)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink-soft)")}
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            onClick={next}
+            disabled={nextDisabled}
+            aria-label="Next page"
+            className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border transition-all disabled:opacity-30"
+            style={{
+              borderColor: "var(--rule)",
+              backgroundColor: "var(--paper)",
+              color: "var(--ink-soft)",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--burgundy)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink-soft)")}
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
       </div>
 
       <FilterPanel

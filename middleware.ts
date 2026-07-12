@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
-import { DASHBOARD_AUTH_ROUTES, SUPERADMIN_AUTH_ROUTES, homeForRole } from "@/lib/constants";
+import { DASHBOARD_AUTH_ROUTES, SUPERADMIN_AUTH_ROUTES } from "@/lib/constants";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET || "fallback-secret");
 
@@ -44,7 +44,11 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/superadmin") && !publicSuperadminPaths.includes(pathname)) {
     if (!session) return toLogin("/superadmin/login");
     if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
-      return NextResponse.redirect(new URL(homeForRole(role), request.url));
+      // Authenticated but not an admin (e.g. a restaurant owner). Send them to
+      // the admin login so they can sign in with an admin account — NOT to their
+      // own /dashboard, which silently swallows the request and makes the admin
+      // console look unreachable.
+      return toLogin("/superadmin/login");
     }
   }
 

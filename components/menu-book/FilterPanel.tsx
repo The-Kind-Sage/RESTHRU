@@ -5,9 +5,6 @@ const FILTERS = [
   { id: "all", label: "All" },
   { id: "vegan", label: "Vegan" },
   { id: "spicy", label: "Spicy" },
-  { id: "gluten-free", label: "Gluten-Free" },
-  { id: "chefs-pick", label: "Chef's Pick" },
-  { id: "signature", label: "Signature" },
 ] as const;
 
 export function FilterPanel({

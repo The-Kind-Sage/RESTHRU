@@ -11,5 +11,6 @@ export { PriceLeader } from './PriceLeader';
 export { FilterPanel } from './FilterPanel';
 export { PageNav } from './PageNav';
 export { DrinksPage } from './DrinksPage';
+export { MobileMenu } from './MobileMenu';
 
-export type { MenuItemData, DrinkItemData, MenuData } from './types';
+export type { MenuItemData, DrinkItemData, MenuData, SectionData } from './types';

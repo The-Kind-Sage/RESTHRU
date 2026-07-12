@@ -6,6 +6,8 @@ import { HowItWorks } from "@/components/shared/how-it-works";
 import { PricingPreview } from "@/components/shared/pricing-preview";
 import { TestimonialsSection } from "@/components/shared/testimonials-section";
 import { NepalSection } from "@/components/shared/nepal-section";
+import { FaqSection } from "@/components/shared/faq-section";
+import { CtaBanner } from "@/components/shared/cta-banner";
 import Footer from "@/components/shared/footer";
 
 export const dynamic = 'force-dynamic';
@@ -21,6 +23,8 @@ export default function Home() {
       <PricingPreview />
       <TestimonialsSection />
       <NepalSection />
+      <FaqSection />
+      <CtaBanner />
       <Footer />
     </main>
   );

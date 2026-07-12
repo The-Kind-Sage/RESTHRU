@@ -19,6 +19,8 @@ export default async function SuperadminLayout({
     allowedRoles: ['SUPER_ADMIN', 'ADMIN'],
     loginPath: '/superadmin/login',
     publicPaths: SUPERADMIN_AUTH_ROUTES,
+    // A logged-in non-admin should land on the admin login, not their dashboard.
+    wrongRoleRedirect: '/superadmin/login',
   });
 
   return <AdminShell>{children}</AdminShell>;

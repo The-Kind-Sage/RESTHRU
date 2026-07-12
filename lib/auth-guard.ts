@@ -17,6 +17,10 @@ export async function guardArea(opts: {
   allowedRoles: readonly string[];
   loginPath: string;
   publicPaths?: readonly string[];
+  // Where to send an authenticated-but-wrong-role user. Defaults to their own
+  // home (homeForRole). The superadmin console overrides this to its login page
+  // so a non-admin isn't silently dumped on their dashboard.
+  wrongRoleRedirect?: string;
 }): Promise<SessionUser | null> {
   const pathname = (await headers()).get('x-pathname') || '';
 
@@ -29,9 +33,9 @@ export async function guardArea(opts: {
     redirect(`${opts.loginPath}?redirect=${encodeURIComponent(pathname || opts.loginPath)}`);
   }
   if (!opts.allowedRoles.includes(session.role)) {
-    // Authenticated but wrong role for this area → send them to their own home
-    // rather than the forbidden screen they asked for.
-    redirect(homeForRole(session.role));
+    // Authenticated but wrong role for this area → send them where the caller
+    // asked (default: their own home) rather than the forbidden screen.
+    redirect(opts.wrongRoleRedirect ?? homeForRole(session.role));
   }
   return session;
 }
