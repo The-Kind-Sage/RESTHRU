@@ -1,6 +1,6 @@
 // Server Component — runs the auth gate on the server before the reception
 // shell (Client Component) renders. Previously this was a plain pass-through
-// wrapper with no auth check, relying entirely on middleware.ts.
+// wrapper with no auth check, relying entirely on proxy.ts.
 import { Suspense } from 'react';
 import ReceptionShell from './shell';
 import { PageSkeleton } from '@/components/shared/page-skeleton';
@@ -11,7 +11,7 @@ export default async function ReceptionLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Middleware is the primary gate (unauthenticated /reception → /dashboard/login,
+  // The proxy is the primary gate (unauthenticated /reception → /dashboard/login,
   // WAITER → /order); this repeats the check at the layout level. Reception is
   // usable by the receptionist and by the owner/legacy-staff running the till.
   await guardArea({

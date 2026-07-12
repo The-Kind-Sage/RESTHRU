@@ -8,7 +8,7 @@ const secret = new TextEncoder().encode(process.env.JWT_SECRET || "fallback-secr
 const publicSuperadminPaths: readonly string[] = SUPERADMIN_AUTH_ROUTES;
 const publicDashboardPaths: readonly string[] = DASHBOARD_AUTH_ROUTES;
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("session")?.value;
 
@@ -73,7 +73,7 @@ export async function middleware(request: NextRequest) {
 
   // Exposes the matched path to Server Components (e.g. app/dashboard/layout.tsx)
   // via headers(), so they can run their own belt-and-suspenders session check
-  // without relying solely on this middleware having run.
+  // without relying solely on this proxy having run.
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
   return NextResponse.next({ request: { headers: requestHeaders } });

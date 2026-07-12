@@ -256,7 +256,7 @@ export const STATUS_BADGE_VARIANTS: Record<string, keyof typeof ADMIN_TONE_CLASS
 };
 
 // Dashboard routes that render without the authenticated shell (sidebar/header) — the single
-// source of truth so middleware.ts and app/dashboard/shell.tsx can't drift out of sync.
+// source of truth so proxy.ts and app/dashboard/shell.tsx can't drift out of sync.
 export const DASHBOARD_AUTH_ROUTES = [
   '/dashboard/login',
   '/dashboard/forgot-password',
@@ -264,12 +264,12 @@ export const DASHBOARD_AUTH_ROUTES = [
 ] as const;
 
 // Superadmin routes that render without the authenticated admin shell — kept
-// here (next to DASHBOARD_AUTH_ROUTES) so middleware.ts and the superadmin
+// here (next to DASHBOARD_AUTH_ROUTES) so proxy.ts and the superadmin
 // layout share one source of truth instead of an inline list.
 export const SUPERADMIN_AUTH_ROUTES = ['/superadmin/login'] as const;
 
 // Canonical landing route for each role. Legacy STAFF maps to the owner
-// dashboard. Kept edge-safe (no server-only imports) so middleware.ts can
+// dashboard. Kept edge-safe (no server-only imports) so proxy.ts can
 // import it too. Used to bounce an authenticated-but-wrong-role user back to
 // their own area instead of leaking a cross-role screen.
 export const ROLE_HOME: Record<string, string> = {

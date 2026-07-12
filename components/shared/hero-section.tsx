@@ -37,7 +37,7 @@ export function HeroSection() {
             className="space-y-3 sm:space-y-6"
           >
             <motion.div variants={itemVariants}>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 py-1 text-xs sm:text-xs font-medium text-white/80 backdrop-blur-md">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/[0.09] px-3 py-1 text-xs sm:text-xs font-medium text-white/90 backdrop-blur-md">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
@@ -72,7 +72,7 @@ export function HeroSection() {
 
             <motion.p
               variants={itemVariants}
-              className="text-base sm:text-base lg:text-lg text-white/55 max-w-[480px] leading-relaxed"
+              className="text-base sm:text-base lg:text-lg text-white/85 max-w-[480px] leading-relaxed"
             >
               Orders, kitchen tickets, billing, inventory. Your whole team on the
               same page, even when the wifi drops. Made in Nepal, for Nepal.
@@ -105,8 +105,8 @@ export function HeroSection() {
                   <Star key={i} className="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5 fill-accent text-accent" />
                 ))}
               </div>
-              <p className="text-sm sm:text-sm text-white/45">
-                <span className="font-semibold text-white/75">4.9/5</span> from owners who ditched the paper khata
+              <p className="text-sm sm:text-sm text-white/80">
+                <span className="font-semibold text-white">4.9/5</span> from owners who ditched the paper khata
               </p>
             </motion.div>
 
@@ -115,8 +115,8 @@ export function HeroSection() {
               className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-x-5"
             >
               {['Free forever', 'No credit card', 'Ready before the evening rush'].map((item) => (
-                <div key={item} className="flex items-center gap-1.5 text-xs sm:text-xs text-white/45">
-                  <Check className="h-3.5 w-3.5 flex-shrink-0 text-accent/70" />
+                <div key={item} className="flex items-center gap-1.5 text-xs sm:text-xs text-white/80">
+                  <Check className="h-3.5 w-3.5 flex-shrink-0 text-accent" />
                   <span>{item}</span>
                 </div>
               ))}
@@ -132,7 +132,7 @@ export function HeroSection() {
             <div className="relative mx-auto w-full max-w-[400px] lg:rotate-[2.5deg] lg:transition-transform lg:duration-500 lg:hover:rotate-0">
               <div className="absolute -inset-8 rounded-[3rem] bg-gradient-to-br from-white/[0.06] via-accent/[0.04] to-transparent blur-3xl" />
               <div className="relative overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06] p-2.5 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.4)] backdrop-blur-2xl">
-                <div className="rounded-[1.25rem] border border-white/[0.1] bg-gradient-to-br from-[#0c6b47] via-[#119260] to-[#18b874] p-5 text-white">
+                <div className="rounded-[1.25rem] border border-white/[0.1] bg-gradient-to-br from-[#16211c] via-[#101a15] to-[#0b120e] p-5 text-white">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
                       <p className="text-xs font-medium uppercase tracking-widest text-white/50">Dashboard</p>

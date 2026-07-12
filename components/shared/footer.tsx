@@ -56,7 +56,7 @@ const Footer = () => {
             <UtensilsCrossed className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             <span className="text-lg sm:text-xl font-bold text-white">Resthru</span>
           </div>
-          <p className="text-xs sm:text-sm text-white/70">
+          <p className="text-xs sm:text-sm text-white/80">
             Run Smarter. Serve Better.
           </p>
         </div>
@@ -73,7 +73,7 @@ const Footer = () => {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-xs sm:text-sm text-white/60 transition-colors hover:text-white"
+                      className="text-xs sm:text-sm text-white/80 transition-colors hover:text-white"
                     >
                       {link.label}
                     </Link>
@@ -91,7 +91,7 @@ const Footer = () => {
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <a
               href="mailto:hello@resthru.com"
-              className="text-xs sm:text-sm text-white/60 transition-colors hover:text-white"
+              className="text-xs sm:text-sm text-white/80 transition-colors hover:text-white"
             >
               hello@resthru.com
             </a>
@@ -106,7 +106,7 @@ const Footer = () => {
                     aria-label={social.label}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-white/60 transition-colors hover:text-white"
+                    className="text-white/80 transition-colors hover:text-white"
                   >
                     <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                   </a>
@@ -114,7 +114,7 @@ const Footer = () => {
               })}
             </div>
 
-            <div className="flex flex-col items-center sm:items-end gap-1 text-center sm:text-right text-xs sm:text-xs text-white/60">
+            <div className="flex flex-col items-center sm:items-end gap-1 text-center sm:text-right text-xs sm:text-xs text-white/80">
               <p>{currentYear} Resthru. All rights reserved.</p>
               <p>Made with ❤️ by Drill Thru</p>
             </div>

@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   // This endpoint discloses which secrets are configured and a live user count,
-  // and it sits outside the middleware matcher — so it must gate itself. Only
+  // and it sits outside the proxy matcher — so it must gate itself. Only
   // admins may see it; everyone else gets a 404 so its existence isn't revealed.
   const session = await getSession();
   if (!session || (session.role !== "ADMIN" && session.role !== "SUPER_ADMIN")) {

@@ -11,7 +11,7 @@ export default async function SuperadminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Primary gate is middleware.ts; this is the belt-and-suspenders server check.
+  // Primary gate is proxy.ts; this is the belt-and-suspenders server check.
   // Only SUPER_ADMIN / ADMIN may render the console — any other authenticated
   // role is bounced to their own area, unauthenticated users to the admin login.
   // AdminShell still renders /superadmin/login without chrome (public path).
