@@ -21,9 +21,9 @@ const itemVariants = {
 
 export function HowItWorks() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-background via-primary/[0.02] to-background py-10 sm:py-16 lg:py-24">
+    <section className="relative overflow-hidden bg-gradient-to-b from-background via-primary/[0.02] to-background py-12 sm:py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} viewport={{ once: true }} className="mb-6 sm:mb-12 text-center">
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} viewport={{ once: true }} className="mb-8 sm:mb-12 text-center">
           <p className="mb-2 text-xs sm:text-xs font-semibold uppercase tracking-[0.3em] text-primary">Getting started</p>
           <h2 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-foreground">Three steps, one afternoon</h2>
           <p className="mx-auto max-w-md text-sm sm:text-base text-muted-foreground">No installer, no training day, no consultant in a tie. Just you and a printer.</p>

@@ -26,15 +26,15 @@ export function HeroSection() {
   };
 
   return (
-    <section className="relative min-h-[auto] sm:min-h-[85vh] lg:min-h-[90vh] overflow-hidden bg-gradient-to-b from-primary to-primary-hover">
+    <section className="relative min-h-[auto] overflow-hidden bg-gradient-to-b from-primary to-primary-hover">
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-6 pt-8 pb-6 sm:pt-20 sm:pb-16 lg:grid-cols-[1fr_0.85fr] lg:pt-32 lg:pb-28 lg:gap-16">
+        <div className="grid items-center gap-6 pt-6 pb-10 sm:pt-8 sm:pb-12 lg:grid-cols-[1fr_0.85fr] lg:pt-10 lg:pb-16 lg:gap-16">
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="space-y-3 sm:space-y-6"
+            className="space-y-5 sm:space-y-6"
           >
             <motion.div variants={itemVariants}>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/[0.09] px-3 py-1 text-xs sm:text-xs font-medium text-white/90 backdrop-blur-md">

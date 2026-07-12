@@ -74,11 +74,11 @@ const Navbar = () => {
         )}
       >
         {/* Desktop */}
-        <div className="hidden md:block mx-auto max-w-7xl px-6 lg:px-8 py-3">
-          <div className="flex items-center justify-between rounded-2xl border border-border/50 bg-background/80 px-5 py-2.5 shadow-sm backdrop-blur-xl">
+        <div className="hidden md:block mx-auto max-w-7xl px-6 lg:px-8 py-2">
+          <div className="flex items-center justify-between rounded-2xl border border-border/50 bg-background/80 px-5 py-1.5 shadow-sm backdrop-blur-xl">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
-                <UtensilsCrossed className="h-[18px] w-[18px] text-primary" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10">
+                <UtensilsCrossed className="h-4 w-4 text-primary" />
               </div>
               <span className="text-base font-bold tracking-tight text-primary">Resthru</span>
             </Link>

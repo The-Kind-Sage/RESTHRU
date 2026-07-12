@@ -88,8 +88,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     getUnreadNotificationCount().then(setUnreadCount).catch(() => {});
   }, []);
 
-  const initials    = adminUser ? `${adminUser.firstName.charAt(0)}${adminUser.lastName.charAt(0)}` : 'SA';
-  const displayName = adminUser ? `${adminUser.firstName} ${adminUser.lastName}` : 'Super Admin';
+  const initials    = 'SA';
+  const displayName = 'Super Admin';
 
   // Keyboard shortcut for command palette
   useEffect(() => {
@@ -182,7 +182,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {displayName}
               </p>
               <p className="text-xs text-sidebar-foreground/60 truncate">
-                {adminUser?.email || 'admin@resthru.com'}
+                Super Admin
               </p>
             </div>
             <button
@@ -265,7 +265,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5">
                   <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
-                  <p className="text-xs text-muted-foreground truncate">{adminUser?.email || 'admin@resthru.com'}</p>
+                  <p className="text-xs text-muted-foreground truncate">Super Admin</p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>

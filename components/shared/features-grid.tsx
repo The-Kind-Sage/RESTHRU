@@ -39,16 +39,16 @@ const itemVariants = {
 
 export function FeaturesGrid() {
   return (
-    <section id="features" className="relative py-10 sm:py-16 lg:py-24">
+    <section id="features" className="relative py-12 sm:py-16 lg:py-24">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} viewport={{ once: true }} className="mb-6 sm:mb-12 text-center">
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} viewport={{ once: true }} className="mb-8 sm:mb-12 text-center">
           <p className="mb-2 text-xs sm:text-xs font-semibold uppercase tracking-[0.3em] text-primary">What you get</p>
           <h2 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-foreground">One app instead of five</h2>
           <p className="mx-auto max-w-md text-sm sm:text-base text-muted-foreground">Orders, kitchen, billing, and stock finally talking to each other, so you are not juggling half-a-dozen apps mid-rush.</p>
         </motion.div>
 
-        <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3 lg:gap-4">
+        <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-3 lg:gap-4">
           {features.map((feature) => {
             const Icon = feature.icon;
             return (
