@@ -8,10 +8,15 @@ import { Button } from '@/components/ui/button';
 export function CtaBanner() {
   return (
     <section className="relative overflow-hidden py-16 sm:py-24">
-      <div className="absolute inset-0 bg-[linear-gradient(145deg,_#041a12_0%,_#0a4d36_35%,_#0e7a52_65%,_#12a068_100%)]" />
-      <div className="absolute inset-0 bg-grid-pattern opacity-[0.04]" />
-      <div className="absolute -left-32 top-1/4 h-[500px] w-[500px] rounded-full bg-white/[0.04] blur-[120px]" />
-      <div className="absolute -right-20 bottom-1/4 h-[400px] w-[400px] rounded-full bg-accent/[0.06] blur-[100px]" />
+      {/* Luxury black image background — deliberately different from the
+          bright-green footer directly below so the two sections read as
+          separate bands. */}
+      <div className="absolute inset-0 bg-black" />
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/cta-bg.svg')" }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/40" />
 
       <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
         <motion.div
@@ -29,7 +34,7 @@ export function CtaBanner() {
             Come run your restaurant{' '}
             <span className="text-accent">with us.</span>
           </h2>
-          <p className="text-base sm:text-lg text-white/55 max-w-xl mx-auto mb-8">
+          <p className="text-base sm:text-lg text-white max-w-xl mx-auto mb-8">
             500+ Nepali restaurants already do — from Thamel tea shops to Pokhara rooftops. The first plan is free, and nobody asks for a card.
           </p>
 

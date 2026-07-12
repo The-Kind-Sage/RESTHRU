@@ -26,10 +26,7 @@ export function HeroSection() {
   };
 
   return (
-    <section className="relative min-h-[auto] sm:min-h-[85vh] lg:min-h-[90vh] overflow-hidden bg-[linear-gradient(145deg,_#041a12_0%,_#0a4d36_35%,_#0e7a52_65%,_#12a068_100%)]">
-      <div className="absolute inset-0 bg-grid-pattern opacity-[0.04]" />
-      <div className="absolute -left-32 top-1/4 h-[500px] w-[500px] rounded-full bg-white/[0.04] blur-[120px]" />
-      <div className="absolute -right-20 bottom-1/4 h-[400px] w-[400px] rounded-full bg-accent/[0.06] blur-[100px]" />
+    <section className="relative min-h-[auto] sm:min-h-[85vh] lg:min-h-[90vh] overflow-hidden bg-gradient-to-b from-primary to-primary-hover">
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-6 pt-8 pb-6 sm:pt-20 sm:pb-16 lg:grid-cols-[1fr_0.85fr] lg:pt-32 lg:pb-28 lg:gap-16">

@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 720" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Luxury black kitchen background">
+  <defs>
+    <!-- Deep luxury black base with a barely-there warm charcoal shift -->
+    <linearGradient id="base" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0a0a"/>
+      <stop offset="0.5" stop-color="#121212"/>
+      <stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+    <!-- Restrained gold sheen, top-right, for a premium feel without losing the black -->
+    <radialGradient id="glowGold" cx="0.85" cy="0.1" r="0.6">
+      <stop offset="0" stop-color="#d4af37" stop-opacity="0.16"/>
+      <stop offset="0.5" stop-color="#d4af37" stop-opacity="0.03"/>
+      <stop offset="1" stop-color="#d4af37" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="sheen" cx="0.15" cy="0.9" r="0.55">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0.5" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.6"/>
+    </radialGradient>
+
+    <!-- White food line-art, tiled -->
+    <g id="fork" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M0 0 V16 M7 0 V16 M14 0 V16 M7 16 C7 24 7 24 7 52"/>
+    </g>
+    <g id="knife" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M0 2 C14 2 16 22 4 26 L4 2 Z M4 26 V52"/>
+    </g>
+    <g id="plate" fill="none" stroke="#ffffff" stroke-width="2.2">
+      <circle cx="0" cy="0" r="30"/>
+      <circle cx="0" cy="0" r="20"/>
+    </g>
+    <g id="steam" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round">
+      <path d="M0 40 C-9 30 9 22 0 12 C-9 2 9 -6 0 -16"/>
+      <path d="M16 40 C7 30 25 22 16 12 C7 2 25 -6 16 -16"/>
+    </g>
+    <g id="cup" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M0 0 H34 V18 A17 17 0 0 1 0 18 Z"/>
+      <path d="M34 3 A10 10 0 0 1 34 21"/>
+    </g>
+    <g id="momo" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M-24 12 A24 15 0 0 1 24 12 Z"/>
+      <path d="M-16 6 V13 M-8 2 V13 M0 0 V13 M8 2 V13 M16 6 V13"/>
+    </g>
+
+    <pattern id="food" width="360" height="360" patternUnits="userSpaceOnUse" patternTransform="rotate(-9)">
+      <g opacity="0.10">
+        <use href="#fork" x="40" y="34"/>
+        <use href="#knife" x="66" y="34"/>
+        <use href="#plate" x="285" y="90"/>
+        <use href="#steam" x="150" y="70"/>
+        <use href="#momo" x="90" y="250"/>
+        <use href="#cup" x="250" y="260"/>
+        <use href="#plate" x="30" y="330"/>
+      </g>
+    </pattern>
+  </defs>
+
+  <rect width="1440" height="720" fill="url(#base)"/>
+  <rect width="1440" height="720" fill="url(#food)"/>
+  <rect width="1440" height="720" fill="url(#sheen)"/>
+  <rect width="1440" height="720" fill="url(#glowGold)"/>
+  <rect width="1440" height="720" fill="url(#vignette)"/>
+</svg>
