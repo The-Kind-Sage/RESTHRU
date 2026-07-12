@@ -61,7 +61,7 @@ export function CtaBanner() {
 
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             {['Free to start', 'No credit card', 'Live in an afternoon', 'Support in Nepali'].map((item) => (
-              <div key={item} className="flex items-center gap-1.5 text-sm text-white/45">
+              <div key={item} className="flex items-center gap-1.5 text-sm text-white">
                 <Check className="h-4 w-4 flex-shrink-0 text-accent/70" />
                 <span>{item}</span>
               </div>
