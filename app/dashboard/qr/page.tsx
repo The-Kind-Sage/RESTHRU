@@ -17,8 +17,6 @@ import { useAuthStore } from '@/store/auth-store';
 import { getTables } from '@/lib/actions/tables';
 import { toast } from 'sonner';
 
-const FLOORS = ['Ground Floor', 'First Floor', 'Second Floor'];
-
 const QR_CODE_COLORS = [
   { label: 'White', value: 'bg-background', border: 'border-border' },
   { label: 'Indigo Light', value: 'bg-primary-light', border: 'border-primary/20' },
@@ -57,7 +55,7 @@ export default function QRCodeCenterPage() {
         result.data.map((t: any) => ({
           id: t.id,
           tableNumber: t.tableNumber,
-          floor: t.floor || 'Ground Floor',
+          floor: t.floor || 'Floor 1',
           name: t.name,
         }))
       );
@@ -70,6 +68,10 @@ export default function QRCodeCenterPage() {
   useEffect(() => {
     loadTables();
   }, [loadTables]);
+
+  // Derived from the tables actually loaded, so renamed/added/deleted floors
+  // (managed on the Table Map page) are reflected here with no extra fetch.
+  const floors = Array.from(new Set(tables.map((t) => t.floor))).sort();
 
   const filteredTables = selectedFloor === 'all'
     ? tables
@@ -179,7 +181,7 @@ export default function QRCodeCenterPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Table QR Codes</h2>
           <div className="flex gap-2">
-            {['all', ...FLOORS].map((floor) => (
+            {['all', ...floors].map((floor) => (
               <Button
                 key={floor}
                 variant={selectedFloor === floor ? 'default' : 'outline'}

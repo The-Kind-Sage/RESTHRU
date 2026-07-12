@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Plus, Users, QrCode, Lock, Unlock, Download, Trash2, Loader2,
+  Plus, Users, QrCode, Lock, Unlock, Download, Trash2, Loader2, Pencil, Building2,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -27,8 +27,14 @@ import {
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
 import { getTables, addTable, updateTableStatus, updateTablePosition, deleteTable } from '@/lib/actions/tables';
+import { getFloors, addFloor, renameFloor, deleteFloor } from '@/lib/actions/floors';
 import { useUpgradeStore } from '@/store/upgrade-store';
-import { FLOORS } from '@/lib/constants';
+
+interface FloorInfo {
+  id: string;
+  name: string;
+  displayOrder: number;
+}
 
 interface Table {
   id: string;
@@ -286,9 +292,9 @@ function TableDetailDialog({ table, restaurantId, isOpen, onClose, onStatusChang
   );
 }
 
-function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultFloor, onAdded }: {
+function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultFloor, floors, onAdded }: {
   isOpen: boolean; onClose: () => void;
-  restaurantId: string; existingCount: number; defaultFloor: string;
+  restaurantId: string; existingCount: number; defaultFloor: string; floors: FloorInfo[];
   onAdded: (table: Table) => void;
 }) {
   const showUpgrade = useUpgradeStore((s) => s.show);
@@ -296,7 +302,7 @@ function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultF
   const [tableName, setTableName] = useState('');
   const [capacity, setCapacity] = useState('4');
   const [shape, setShape] = useState<'square' | 'round' | 'large'>('square');
-  const [floor, setFloor] = useState('Ground Floor');
+  const [floor, setFloor] = useState(defaultFloor);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -345,7 +351,7 @@ function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultF
     });
     toast.success(`Table ${tableNumber} added`);
     onClose();
-    setTableNumber(''); setTableName(''); setCapacity('4'); setShape('square'); setFloor('Ground Floor');
+    setTableNumber(''); setTableName(''); setCapacity('4'); setShape('square'); setFloor(defaultFloor);
   };
 
   return (
@@ -386,8 +392,8 @@ function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultF
             <Select value={floor} onValueChange={setFloor}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {(FLOORS ?? ['Ground Floor', 'First Floor', 'Rooftop']).map(f => (
-                  <SelectItem key={f} value={f}>{f}</SelectItem>
+                {floors.map(f => (
+                  <SelectItem key={f.id} value={f.name}>{f.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -404,15 +410,157 @@ function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultF
   );
 }
 
+function ManageFloorsDialog({ isOpen, onClose, floors, tables, onAdd, onRename, onDelete }: {
+  isOpen: boolean; onClose: () => void;
+  floors: FloorInfo[]; tables: Table[];
+  onAdd: (name: string) => Promise<boolean>;
+  onRename: (floorId: string, oldName: string, newName: string) => Promise<boolean>;
+  onDelete: (floorId: string, name: string) => Promise<boolean>;
+}) {
+  const [newFloorName, setNewFloorName] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<FloorInfo | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const startEdit = (f: FloorInfo) => { setEditingId(f.id); setEditValue(f.name); };
+  const cancelEdit = () => { setEditingId(null); setEditValue(''); };
+
+  const saveEdit = async (f: FloorInfo) => {
+    const trimmed = editValue.trim();
+    if (!trimmed || trimmed === f.name) { cancelEdit(); return; }
+    setSavingId(f.id);
+    const ok = await onRename(f.id, f.name, trimmed);
+    setSavingId(null);
+    if (ok) cancelEdit();
+  };
+
+  const handleAdd = async () => {
+    const trimmed = newFloorName.trim();
+    if (!trimmed) return;
+    setIsAdding(true);
+    const ok = await onAdd(trimmed);
+    setIsAdding(false);
+    if (ok) setNewFloorName('');
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    const ok = await onDelete(deleteTarget.id, deleteTarget.name);
+    setIsDeleting(false);
+    if (ok) setDeleteTarget(null);
+  };
+
+  return (
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manage Floors</DialogTitle>
+            <DialogDescription>Add, rename, or remove floors in your restaurant layout.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+            {floors.map((f) => {
+              const count = tables.filter(t => t.floor === f.name).length;
+              const isEditing = editingId === f.id;
+              return (
+                <div key={f.id} className="flex items-center gap-2 rounded-lg border p-2.5">
+                  {isEditing ? (
+                    <Input
+                      autoFocus
+                      value={editValue}
+                      onChange={e => setEditValue(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') saveEdit(f); if (e.key === 'Escape') cancelEdit(); }}
+                      disabled={savingId === f.id}
+                      className="h-8"
+                    />
+                  ) : (
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{f.name}</p>
+                      <p className="text-xs text-muted-foreground">{count} table{count === 1 ? '' : 's'}</p>
+                    </div>
+                  )}
+                  {isEditing ? (
+                    <>
+                      <Button size="sm" variant="ghost" onClick={() => saveEdit(f)} disabled={savingId === f.id}>
+                        {savingId === f.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Save'}
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={savingId === f.id}>Cancel</Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(f)} aria-label={`Rename ${f.name}`}>
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteTarget(f)} aria-label={`Delete ${f.name}`}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-2 pt-2 border-t">
+            <Input
+              placeholder="e.g., Floor 4, Rooftop"
+              value={newFloorName}
+              onChange={e => setNewFloorName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }}
+              disabled={isAdding}
+            />
+            <Button onClick={handleAdd} disabled={isAdding || !newFloorName.trim()} className="gap-1.5 flex-shrink-0">
+              {isAdding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              Add
+            </Button>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={open => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete &quot;{deleteTarget?.name}&quot;?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This cannot be undone. Floors with tables on them can&apos;t be deleted — move or delete those tables first.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90 text-white"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Floor'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
 export default function TableMapPage() {
   const { restaurant } = useAuthStore();
   const restaurantId = restaurant?.id || '';
   const [tables, setTables] = useState<Table[]>([]);
+  const [floors, setFloors] = useState<FloorInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedFloor, setSelectedFloor] = useState('Ground Floor');
+  const [selectedFloor, setSelectedFloor] = useState('');
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [tableDetailOpen, setTableDetailOpen] = useState(false);
   const [addTableOpen, setAddTableOpen] = useState(false);
+  const [manageFloorsOpen, setManageFloorsOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Table | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -453,21 +601,56 @@ export default function TableMapPage() {
   useEffect(() => {
     if (!restaurantId) return;
     setIsLoading(true);
-    getTables(restaurantId).then(result => {
+    Promise.all([getTables(restaurantId), getFloors(restaurantId)]).then(([tablesResult, floorsResult]) => {
       setIsLoading(false);
-      if (result.error) { toast.error(result.error); return; }
-      if (result.data) setTables(result.data.map((t: any) => ({
+      if (tablesResult.error) toast.error(tablesResult.error);
+      if (tablesResult.data) setTables(tablesResult.data.map((t: any) => ({
         id: t.id, number: t.tableNumber, name: t.name,
         capacity: t.capacity, shape: (t.shape || 'SQUARE').toLowerCase(),
-        status: (t.status || 'AVAILABLE').toLowerCase(), floor: t.floor || 'Ground Floor',
+        status: (t.status || 'AVAILABLE').toLowerCase(), floor: t.floor || 'Floor 1',
         position_x: t.positionX || 50, position_y: t.positionY || 50,
         qr_code_url: t.qrCodeUrl,
       })));
+      if (floorsResult.error) { toast.error(floorsResult.error); return; }
+      if (floorsResult.data) {
+        setFloors(floorsResult.data);
+        setSelectedFloor(prev => (prev && floorsResult.data!.some(f => f.name === prev)) ? prev : (floorsResult.data![0]?.name ?? ''));
+      }
     });
   }, [restaurantId]);
 
+  const handleAddFloor = async (name: string) => {
+    const result = await addFloor(restaurantId, name);
+    if (result.error) { toast.error(result.error); return false; }
+    const newFloor = result.data!;
+    setFloors(prev => [...prev, newFloor]);
+    setSelectedFloor(newFloor.name);
+    toast.success(`Floor "${newFloor.name}" added`);
+    return true;
+  };
+
+  const handleRenameFloor = async (floorId: string, oldName: string, newName: string) => {
+    const result = await renameFloor(floorId, restaurantId, newName);
+    if (result.error) { toast.error(result.error); return false; }
+    const renamedTo = result.data!.name;
+    setFloors(prev => prev.map(f => f.id === floorId ? { ...f, name: renamedTo } : f));
+    setTables(prev => prev.map(t => t.floor === oldName ? { ...t, floor: renamedTo } : t));
+    setSelectedFloor(prev => prev === oldName ? renamedTo : prev);
+    toast.success(`Floor renamed to "${renamedTo}"`);
+    return true;
+  };
+
+  const handleDeleteFloor = async (floorId: string, name: string) => {
+    const result = await deleteFloor(floorId, restaurantId);
+    if (result.error) { toast.error(result.error); return false; }
+    const nextFloors = floors.filter(f => f.id !== floorId);
+    setFloors(nextFloors);
+    if (selectedFloor === name) setSelectedFloor(nextFloors[0]?.name ?? '');
+    toast.success(`Floor "${name}" deleted`);
+    return true;
+  };
+
   const floorTables = tables.filter(t => t.floor === selectedFloor);
-  const floors = FLOORS ?? ['Ground Floor', 'First Floor', 'Rooftop'];
 
   const counts = {
     available: floorTables.filter(t => t.status === 'available').length,
@@ -484,10 +667,13 @@ export default function TableMapPage() {
           <p className="text-muted-foreground mt-1">Manage your restaurant floor layout and table status</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={() => setManageFloorsOpen(true)} className="gap-2">
+            <Building2 className="w-4 h-4" /> Manage Floors
+          </Button>
           <Button variant={isEditMode ? 'default' : 'outline'} onClick={() => setIsEditMode(!isEditMode)} className="gap-2">
             {isEditMode ? <><Lock className="w-4 h-4" />Done Editing</> : <><Unlock className="w-4 h-4" />Edit Layout</>}
           </Button>
-          <Button onClick={() => setAddTableOpen(true)} className="gap-2 bg-primary hover:bg-primary-hover">
+          <Button onClick={() => setAddTableOpen(true)} disabled={floors.length === 0} className="gap-2 bg-primary hover:bg-primary-hover">
             <Plus className="w-4 h-4" /> Add Table
           </Button>
         </div>
@@ -498,7 +684,7 @@ export default function TableMapPage() {
           <div className="space-y-4">
             <Tabs value={selectedFloor} onValueChange={setSelectedFloor} className="w-fit">
               <TabsList>
-                {floors.map(f => <TabsTrigger key={f} value={f}>{f}</TabsTrigger>)}
+                {floors.map(f => <TabsTrigger key={f.id} value={f.name}>{f.name}</TabsTrigger>)}
               </TabsList>
             </Tabs>
             <div className="flex items-center gap-6 flex-wrap text-sm">
@@ -582,7 +768,18 @@ export default function TableMapPage() {
         restaurantId={restaurantId}
         existingCount={tables.length}
         defaultFloor={selectedFloor}
+        floors={floors}
         onAdded={t => setTables(prev => [...prev, t])}
+      />
+
+      <ManageFloorsDialog
+        isOpen={manageFloorsOpen}
+        onClose={() => setManageFloorsOpen(false)}
+        floors={floors}
+        tables={tables}
+        onAdd={handleAddFloor}
+        onRename={handleRenameFloor}
+        onDelete={handleDeleteFloor}
       />
 
       {/* Delete confirmation */}
