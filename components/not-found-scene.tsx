@@ -83,18 +83,18 @@ function Cherry() {
 type Item = { Comp: () => React.ReactNode; size: string; extra: string };
 
 const items: Item[] = [
-  { Comp: PizzaSlice, size: "h-24 w-24 md:h-32 md:w-32", extra: "anim-spin-slow" },
-  { Comp: RamenBowl, size: "h-24 w-28 md:h-32 md:w-36", extra: "anim-bob" },
-  { Comp: SoftServe, size: "h-32 w-20 md:h-40 md:w-24", extra: "anim-float-tilt" },
-  { Comp: Cherry, size: "h-14 w-14 md:h-16 md:w-16", extra: "anim-bob-fast" },
-  { Comp: Chopsticks, size: "h-6 w-24 md:h-8 md:w-28", extra: "anim-float-tilt" },
+  { Comp: PizzaSlice, size: "h-16 w-16 sm:h-20 sm:w-20 md:h-32 md:w-32", extra: "anim-spin-slow" },
+  { Comp: RamenBowl, size: "h-16 w-[72px] sm:h-20 sm:w-24 md:h-32 md:w-36", extra: "anim-bob" },
+  { Comp: SoftServe, size: "h-24 w-14 sm:h-28 sm:w-16 md:h-40 md:w-24", extra: "anim-float-tilt" },
+  { Comp: Cherry, size: "h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16", extra: "anim-bob-fast" },
+  { Comp: Chopsticks, size: "h-4 w-16 sm:h-5 sm:w-20 md:h-8 md:w-28", extra: "anim-float-tilt" },
 ];
 
 export function NotFoundScene() {
   const track = [...items, ...items, ...items, ...items];
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-primary via-primary-hover to-[#064e3b] text-white">
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#141210] text-white">
       <style>{`
         @keyframes drift {
           from { transform: translate3d(0,0,0); }
@@ -102,24 +102,24 @@ export function NotFoundScene() {
         }
         @keyframes bob {
           0%,100% { transform: translateY(0); }
-          50%     { transform: translateY(-10px); }
+          50%     { transform: translateY(-6px); }
         }
         @keyframes bobFast {
           0%,100% { transform: translateY(0); }
-          50%     { transform: translateY(-6px); }
+          50%     { transform: translateY(-4px); }
         }
         @keyframes spinSlow {
           from { transform: rotate(0deg); }
           to   { transform: rotate(360deg); }
         }
         @keyframes floatTilt {
-          0%,100% { transform: translateY(0) rotate(-4deg); }
-          50%     { transform: translateY(-12px) rotate(4deg); }
+          0%,100% { transform: translateY(0) rotate(-3deg); }
+          50%     { transform: translateY(-8px) rotate(3deg); }
         }
         @keyframes steam {
-          0%   { transform: translateY(6px); opacity: 0; }
+          0%   { transform: translateY(4px); opacity: 0; }
           40%  { opacity: 1; }
-          100% { transform: translateY(-18px); opacity: 0; }
+          100% { transform: translateY(-12px); opacity: 0; }
         }
         @keyframes dust {
           0%   { transform: translate3d(0,0,0); opacity: 0; }
@@ -127,10 +127,10 @@ export function NotFoundScene() {
           100% { transform: translate3d(var(--dx,20px),-120vh,0); opacity: 0; }
         }
         @keyframes glowPulse {
-          0%,100% { opacity: .4; transform: scale(1); }
-          50%     { opacity: .7; transform: scale(1.06); }
+          0%,100% { opacity: .3; transform: scale(1); }
+          50%     { opacity: .6; transform: scale(1.06); }
         }
-        .drift-track { animation: drift 32s linear infinite; width: max-content; }
+        .drift-track { animation: drift 40s linear infinite; width: max-content; }
         .anim-spin-slow    { animation: spinSlow 14s linear infinite; transform-origin: 50% 50%; }
         .anim-bob          { animation: bob 3.2s ease-in-out infinite; }
         .anim-bob-fast     { animation: bobFast 2.1s ease-in-out infinite; }
@@ -148,22 +148,23 @@ export function NotFoundScene() {
         }
       `}</style>
 
-      {/* Ambient glows */}
-      <div className="pointer-events-none absolute -left-24 top-1/3 h-96 w-96 rounded-full bg-white/[0.06] blur-3xl glow-pulse" />
-      <div className="pointer-events-none absolute -right-24 top-1/4 h-[28rem] w-[28rem] rounded-full bg-accent/[0.12] blur-3xl glow-pulse" style={{ animationDelay: "2s" }} />
-      <div className="pointer-events-none absolute left-1/2 bottom-0 h-80 w-[40rem] -translate-x-1/2 rounded-full bg-primary-light/[0.08] blur-3xl glow-pulse" style={{ animationDelay: "4s" }} />
+      {/* Ambient glows — smaller on mobile */}
+      <div className="pointer-events-none absolute -left-16 top-1/4 h-48 w-48 md:h-80 md:w-80 rounded-full bg-accent/20 blur-2xl md:blur-3xl glow-pulse" />
+      <div className="pointer-events-none absolute -right-16 top-1/2 h-56 w-56 md:h-[24rem] md:w-[24rem] rounded-full bg-rose-500/15 blur-2xl md:blur-3xl glow-pulse" style={{ animationDelay: "2.5s" }} />
+      <div className="pointer-events-none absolute left-[15%] bottom-0 h-48 w-80 md:h-72 md:w-[32rem] rounded-full bg-amber-500/10 blur-2xl md:blur-3xl glow-pulse" style={{ animationDelay: "5s" }} />
+      <div className="pointer-events-none absolute right-[10%] top-[15%] h-40 w-40 md:h-64 md:w-64 rounded-full bg-emerald-500/10 blur-2xl md:blur-3xl glow-pulse" style={{ animationDelay: "3.5s" }} />
 
       {/* Dotted grid */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.08]"
+        className="pointer-events-none absolute inset-0 opacity-[0.06] md:opacity-[0.08]"
         style={{
           backgroundImage: "radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px)",
-          backgroundSize: "28px 28px",
+          backgroundSize: "24px 24px",
         }}
       />
 
-      {/* Flour dust */}
-      <div className="pointer-events-none absolute inset-0">
+      {/* Flour dust — fewer on mobile */}
+      <div className="pointer-events-none absolute inset-0 hidden sm:block">
         {Array.from({ length: 22 }).map((_, i) => {
           const left = (i * 53) % 100;
           const dur = 12 + ((i * 7) % 14);
@@ -188,39 +189,39 @@ export function NotFoundScene() {
         })}
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 py-10">
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Top bar */}
-        <header className="flex items-center justify-between text-sm text-white/60">
-          <div className="flex items-center gap-2">
-            <span className="inline-block h-2 w-2 rounded-full bg-accent" />
-            <span className="tracking-[0.2em] uppercase text-xs">Kitchen Void · Error 404</span>
+        <header className="flex items-center justify-between text-xs sm:text-sm text-white/60">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="inline-block h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-accent" />
+            <span className="tracking-[0.2em] uppercase text-[10px] sm:text-xs">Kitchen Void · Error 404</span>
           </div>
           <Link href="/" className="hover:text-white transition-colors">← Back</Link>
         </header>
 
         {/* Headline */}
-        <div className="mt-14 md:mt-20 text-center">
-          <p className="text-xs md:text-sm uppercase tracking-[0.4em] text-accent">
+        <div className="mt-10 sm:mt-14 md:mt-20 text-center">
+          <p className="text-[10px] sm:text-xs md:text-sm uppercase tracking-[0.4em] text-accent">
             Order status
           </p>
-          <h1 className="mt-4 font-serif text-5xl md:text-7xl lg:text-8xl font-semibold leading-[0.95] text-white">
+          <h1 className="mt-3 sm:mt-4 font-serif text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-semibold leading-[1.05] sm:leading-[0.95] text-white">
             This dish isn't
             <br />
             <span className="italic text-accent">on the menu.</span>
           </h1>
-          <p className="mx-auto mt-5 max-w-xl text-base md:text-lg text-white/70">
+          <p className="mx-auto mt-3 sm:mt-5 max-w-md sm:max-w-xl text-sm sm:text-base md:text-lg text-white/70 px-2">
             Looks like that recipe failed. The page you're craving has drifted
             off into the kitchen void — but the pass is still hot.
           </p>
         </div>
 
         {/* Animation belt */}
-        <div className="relative mt-14 md:mt-20">
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-primary to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-primary to-transparent" />
+        <div className="relative mt-10 sm:mt-14 md:mt-20">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 sm:w-24 bg-gradient-to-r from-[#141210] to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 sm:w-24 bg-gradient-to-l from-[#141210] to-transparent" />
 
-          <div className="relative overflow-hidden py-6">
-            <div className="drift-track flex items-end gap-16 md:gap-24">
+          <div className="relative overflow-hidden py-4 sm:py-6">
+            <div className="drift-track flex items-end gap-10 sm:gap-16 md:gap-24">
               {track.map(({ Comp, size, extra }, i) => (
                 <div key={i} className={`shrink-0 ${size}`}>
                   <div className={`h-full w-full ${extra}`}>
@@ -231,39 +232,37 @@ export function NotFoundScene() {
             </div>
           </div>
 
-          <div className="mx-auto mt-2 h-px w-11/12 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <div className="mx-auto mt-1.5 sm:mt-2 h-px w-11/12 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         </div>
 
         {/* CTA */}
-        <div className="mt-14 md:mt-20 flex flex-col items-center gap-4">
+        <div className="mt-10 sm:mt-14 md:mt-20 flex flex-col items-center gap-3 sm:gap-4">
           <Link
             href="/"
-            className="group relative inline-flex items-center gap-3 rounded-full bg-accent px-8 py-4 text-sm md:text-base font-medium text-[#0a1f18] shadow-[0_10px_40px_-8px_rgba(244,183,64,0.45)] transition-transform hover:scale-[1.03]"
+            className="group relative inline-flex w-full sm:w-auto items-center justify-center gap-2 sm:gap-3 rounded-full bg-accent px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-medium text-[#0a1f18] shadow-[0_10px_40px_-8px_rgba(244,183,64,0.45)] transition-transform hover:scale-[1.03] active:scale-[0.98]"
           >
             Return to Home Page
             <span aria-hidden className="transition-transform group-hover:translate-x-1">→</span>
           </Link>
-          <span className="text-xs text-white/50">
-            Or wander the menu below
-          </span>
+
         </div>
 
-        <div className="flex-1" />
+        <div className="flex-1 min-h-[2rem]" />
 
         {/* Footer */}
-        <footer className="mt-16 border-t border-white/10 pt-6 pb-2">
-          <nav className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-white/60">
+        <footer className="mt-10 sm:mt-16 border-t border-white/10 pt-5 sm:pt-6 pb-2">
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 sm:gap-x-8 gap-y-2 sm:gap-y-3 text-xs sm:text-sm text-white/60">
             <Link href="/" className="hover:text-white transition-colors">Home</Link>
-            <span className="opacity-30">·</span>
+            <span className="opacity-30 hidden sm:inline">·</span>
             <Link href="/#features" className="hover:text-white transition-colors">Features</Link>
-            <span className="opacity-30">·</span>
+            <span className="opacity-30 hidden sm:inline">·</span>
             <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-            <span className="opacity-30">·</span>
+            <span className="opacity-30 hidden sm:inline">·</span>
             <Link href="/about" className="hover:text-white transition-colors">About</Link>
-            <span className="opacity-30">·</span>
+            <span className="opacity-30 hidden sm:inline">·</span>
             <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
           </nav>
-          <p className="mt-4 text-center text-[11px] uppercase tracking-[0.3em] text-white/40">
+          <p className="mt-3 sm:mt-4 text-center text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-white/40">
             Served fresh from the kitchen void
           </p>
         </footer>
