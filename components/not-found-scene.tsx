@@ -256,11 +256,13 @@ export function NotFoundScene() {
           <nav className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-muted-foreground">
             <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
             <span className="opacity-30">·</span>
-            <a href="#menu" className="hover:text-foreground transition-colors">Menu</a>
+            <Link href="/#features" className="hover:text-foreground transition-colors">Features</Link>
             <span className="opacity-30">·</span>
-            <a href="#about" className="hover:text-foreground transition-colors">About</a>
+            <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
             <span className="opacity-30">·</span>
-            <a href="#contact" className="hover:text-foreground transition-colors">Contact</a>
+            <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
+            <span className="opacity-30">·</span>
+            <Link href="/contact" className="hover:text-foreground transition-colors">Contact</Link>
           </nav>
           <p className="mt-4 text-center text-[11px] uppercase tracking-[0.3em] text-muted-foreground/60">
             Served fresh from the kitchen void
