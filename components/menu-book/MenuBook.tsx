@@ -2,14 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Filter, Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react";
+import { Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react";
 import type { MenuData, SectionData } from "./types";
 import { CoverPage } from "./CoverPage";
 import { CategoryPage } from "./CategoryPage";
 import { DrinksPage } from "./DrinksPage";
 import { BackCoverPage } from "./BackCoverPage";
 import { PageNav } from "./PageNav";
-import { FilterPanel } from "./FilterPanel";
 import { MobileMenu } from "./MobileMenu";
 
 // English kickers keyed by the normalized section name. Custom categories that
@@ -32,8 +31,6 @@ function slugify(name: string): string {
 export function MenuBook({ data }: { data: MenuData }) {
   const [page, setPage] = useState(0);
   const [dir, setDir] = useState(1);
-  const [filter, setFilter] = useState("all");
-  const [filterOpen, setFilterOpen] = useState(false);
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
@@ -103,7 +100,7 @@ export function MenuBook({ data }: { data: MenuData }) {
         kicker={section.kicker}
         items={section.items}
         pageNumber={i + 1}
-        activeFilter={filter}
+        activeFilter="all"
         tint={section.tint}
       />
     );
@@ -131,10 +128,8 @@ export function MenuBook({ data }: { data: MenuData }) {
           data={data}
           sections={sections}
           hasDrinks={hasDrinks}
-          filter={filter}
           dark={dark}
           onToggleDark={() => setDark((d) => !d)}
-          onOpenFilter={() => setFilterOpen(true)}
         />
       </div>
 
@@ -161,16 +156,7 @@ export function MenuBook({ data }: { data: MenuData }) {
             >
               {dark ? <Sun size={15} /> : <Moon size={15} />}
             </button>
-            <button
-              onClick={() => setFilterOpen(true)}
-              className="flex items-center gap-2 rounded-full border px-3 py-2 font-sans text-[10px] font-medium uppercase tracking-[0.2em] transition-colors"
-              style={{ borderColor: "var(--rule)", color: "var(--ink-soft)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--burgundy)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink-soft)")}
-            >
-              <Filter size={12} />
-              <span>{filter === "all" ? "Filter" : filter.replace("-", " ")}</span>
-            </button>
+
           </div>
         </header>
 
@@ -243,12 +229,7 @@ export function MenuBook({ data }: { data: MenuData }) {
         </div>
       </div>
 
-      <FilterPanel
-        open={filterOpen}
-        onClose={() => setFilterOpen(false)}
-        active={filter}
-        setActive={setFilter}
-      />
+
     </div>
   );
 }

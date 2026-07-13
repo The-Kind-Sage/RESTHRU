@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Moon, Sun, SlidersHorizontal, ChevronDown, ArrowUp } from "lucide-react";
+import { Moon, Sun, ChevronDown, ArrowUp } from "lucide-react";
 import type { MenuData, SectionData } from "./types";
 import { CategoryPage } from "./CategoryPage";
 import { DrinksPage } from "./DrinksPage";
@@ -15,18 +15,14 @@ export function MobileMenu({
   data,
   sections,
   hasDrinks,
-  filter,
   dark,
   onToggleDark,
-  onOpenFilter,
 }: {
   data: MenuData;
   sections: SectionData[];
   hasDrinks: boolean;
-  filter: string;
   dark: boolean;
   onToggleDark: () => void;
-  onOpenFilter: () => void;
 }) {
   // Ordered list of scroll anchors: sections, then beverages, then info.
   const anchors = useMemo(
@@ -116,20 +112,6 @@ export function MobileMenu({
             >
               {dark ? <Sun size={15} /> : <Moon size={15} />}
             </button>
-            <button
-              onClick={onOpenFilter}
-              aria-label="Filter menu"
-              className="flex h-9 items-center gap-1.5 rounded-full border px-3"
-              style={{
-                borderColor: filter === "all" ? "var(--rule)" : "var(--burgundy)",
-                color: filter === "all" ? "var(--ink-soft)" : "var(--burgundy)",
-              }}
-            >
-              <SlidersHorizontal size={13} />
-              <span className="font-sans text-[10px] font-medium uppercase tracking-[0.15em]">
-                {filter === "all" ? "Filter" : filter.replace("-", " ")}
-              </span>
-            </button>
           </div>
         </div>
 
@@ -208,7 +190,7 @@ export function MobileMenu({
               kicker={s.kicker}
               items={s.items}
               pageNumber={i + 2}
-              activeFilter={filter}
+              activeFilter="all"
               tint={s.tint}
               flow
             />
