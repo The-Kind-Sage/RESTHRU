@@ -11,15 +11,6 @@ import { BackCoverPage } from "./BackCoverPage";
 import { PageNav } from "./PageNav";
 import { MobileMenu } from "./MobileMenu";
 
-// English kickers keyed by the normalized section name. Custom categories that
-// don't match simply render without a kicker.
-const KICKERS: Record<string, string> = {
-  Appetizers: "To Begin",
-  "Main Courses": "The Mains",
-  Desserts: "To Finish",
-  Extra: "Sides & More",
-};
-
 function slugify(name: string): string {
   const slug = name
     .toLowerCase()
@@ -48,7 +39,6 @@ export function MenuBook({ data }: { data: MenuData }) {
         .map((c, i) => ({
           id: c.slug || slugify(c.name),
           title: c.name,
-          kicker: KICKERS[c.name],
           items: c.items,
           tint: i % 2 === 1,
         })),

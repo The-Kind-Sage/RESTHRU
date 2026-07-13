@@ -168,7 +168,7 @@ export async function getBookMenuData(restaurantId: string) {
 
       if (item.calories) details.push(`${item.calories} kcal`);
       if (item.prepTime) details.push(`${item.prepTime} min`);
-      if (item.spiceLevel && item.spiceLevel !== "NONE") details.push(item.spiceLevel.replace(/_/g, " ").toLowerCase());
+      if (item.spiceLevel && item.spiceLevel !== "NONE") details.push(`${item.spiceLevel.replace(/_/g, " ").toLowerCase()} spice`);
       if (item.allergens?.length) details.push(`contains ${item.allergens.join(", ")}`);
 
       // Also treat items explicitly marked as beverages by type as beverages

@@ -18,7 +18,7 @@ export function DrinksPage({
 }) {
   return (
     <MenuPage pageNumber={pageNumber} flow={flow}>
-      <SectionHeader title="Beverages" kicker="To Drink" />
+      <SectionHeader title="Beverages" />
 
       <ul className="space-y-1">
         {drinks.map((drink) => (

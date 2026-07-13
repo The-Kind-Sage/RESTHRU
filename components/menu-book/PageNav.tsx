@@ -12,7 +12,7 @@ export function PageNav({
   return (
     <nav
       aria-label="Menu pages"
-      className="fixed left-0 top-1/2 z-30 hidden -translate-y-1/2 lg:flex"
+      className="fixed left-0 top-1/2 z-30 hidden -translate-y-1/2 lg:flex pointer-events-none"
     >
       <ul className="flex flex-col items-center gap-4 px-4">
         {labels.map((label, i) => {
@@ -23,7 +23,7 @@ export function PageNav({
                 onClick={() => onGo(i)}
                 aria-label={`Go to page ${i + 1} — ${label}`}
                 aria-current={active ? "page" : undefined}
-                className="group flex items-center gap-3"
+                className="group flex items-center gap-3 pointer-events-auto"
                 title={label}
               >
                 <span

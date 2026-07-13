@@ -29,7 +29,7 @@ export function CategoryPage({
     <MenuPage pageNumber={pageNumber} tint={tint} flow={flow}>
       <SectionHeader title={title} kicker={kicker} />
 
-      <div className="space-y-1">
+      <div className="mt-2 space-y-1">
         {items.map((item) => (
           <DishRow key={item.id} item={item} dimmed={isDimmed(item)} />
         ))}
