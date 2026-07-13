@@ -110,29 +110,6 @@ export default function RegisterPage() {
     }
   };
 
-  const handleNextStep = async () => {
-    let isValid = false;
-
-    if (currentStep === 1) {
-      isValid = await step1Form.trigger();
-      if (isValid) setFormData((prev) => ({ ...prev, step1: step1Form.getValues() }));
-    } else if (currentStep === 2) {
-      isValid = await step2Form.trigger();
-      if (isValid) setFormData((prev) => ({ ...prev, step2: step2Form.getValues() }));
-    } else if (currentStep === 3) {
-      isValid = await step3Form.trigger();
-      if (isValid) setFormData((prev) => ({ ...prev, step3: step3Form.getValues() }));
-    }
-
-    if (isValid) {
-      if (currentStep === 3) {
-        await handleSubmit();
-      } else {
-        setCurrentStep(currentStep + 1);
-      }
-    }
-  };
-
   const handlePreviousStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
@@ -306,7 +283,7 @@ export default function RegisterPage() {
                 <Card className="border border-white/20 bg-white/95 shadow-xl shadow-primary/5 backdrop-blur-xl">
                   <CardContent className="p-6 sm:p-8">
                     <Form {...step1Form}>
-                      <form className="space-y-4">
+                      <form id="register-form" onSubmit={step1Form.handleSubmit((data) => { setFormData((prev) => ({ ...prev, step1: data })); setCurrentStep(2); })} className="space-y-4">
                         <FormField control={step1Form.control} name="fullName" render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-sm font-semibold">Full Name</FormLabel>
@@ -362,7 +339,7 @@ export default function RegisterPage() {
                 <Card className="border border-white/20 bg-white/95 shadow-xl shadow-primary/5 backdrop-blur-xl">
                   <CardContent className="p-6 sm:p-8">
                     <Form {...step2Form}>
-                      <form className="space-y-4">
+                      <form id="register-form" onSubmit={step2Form.handleSubmit((data) => { setFormData((prev) => ({ ...prev, step2: data })); setCurrentStep(3); })} className="space-y-4">
                         <FormField control={step2Form.control} name="restaurantName" render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-sm font-semibold">Restaurant Name</FormLabel>
@@ -400,17 +377,15 @@ export default function RegisterPage() {
                           </FormItem>
                         )} />
                         <div className="space-y-2">
-                          <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/[0.04] px-3 py-2.5 cursor-pointer hover:bg-primary/[0.08] transition-colors" onClick={() => handleUsePersonalPhone(!usePersonalPhone)}>
+                          <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/[0.04] px-3 py-2.5">
                             <Checkbox id="usePersonalPhone" checked={usePersonalPhone} onCheckedChange={(val) => handleUsePersonalPhone(val === true)} />
                             <Label htmlFor="usePersonalPhone" className="text-sm font-medium cursor-pointer flex items-center gap-2">
-                              <Smartphone className="w-3.5 h-3.5 text-primary" />
                               Use my personal number as restaurant phone
                             </Label>
                           </div>
                           <FormField control={step2Form.control} name="restaurantPhone" render={({ field }) => (
                             <FormItem>
                               <FormLabel className="flex items-center gap-1.5 text-sm font-semibold">
-                                <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
                                 Restaurant Phone
                               </FormLabel>
                               <FormControl><Input placeholder="98XXXXXXXXX" className="h-11 border-border/60 focus:border-primary transition-colors" disabled={usePersonalPhone} {...field} /></FormControl>
@@ -436,7 +411,7 @@ export default function RegisterPage() {
                 <Card className="border border-white/20 bg-white/95 shadow-xl shadow-primary/5 backdrop-blur-xl">
                   <CardContent className="p-6 sm:p-8">
                     <Form {...step3Form}>
-                      <form className="space-y-6">
+                      <form id="register-form" onSubmit={step3Form.handleSubmit(async (data) => { setFormData((prev) => ({ ...prev, step3: data })); await handleSubmit(); })} className="space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {plans.map((plan) => (
                             <FormField key={plan.id} control={step3Form.control} name="selectedPlan" render={({ field }) => (
@@ -536,7 +511,7 @@ export default function RegisterPage() {
                 <ChevronLeft className="w-4 h-4 mr-2" />
                 {currentStep === 1 ? 'Cancel' : 'Back'}
               </Button>
-              <Button onClick={handleNextStep} disabled={isLoading} className="flex-1 h-11 bg-primary hover:bg-primary-hover text-white font-semibold shadow-md shadow-primary/20">
+              <Button type="submit" form="register-form" disabled={isLoading} className="flex-1 h-11 bg-primary hover:bg-primary-hover text-white font-semibold shadow-md shadow-primary/20">
                 {isLoading ? (
                   <span className="flex items-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
