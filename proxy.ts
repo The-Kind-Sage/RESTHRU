@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
-import { DASHBOARD_AUTH_ROUTES, SUPERADMIN_AUTH_ROUTES } from "@/lib/constants";
+import { DASHBOARD_AUTH_ROUTES, SUPERADMIN_AUTH_ROUTES, ORDER_AUTH_ROUTES } from "@/lib/constants";
 import { jwtSecret as secret } from "@/lib/jwt-secret";
 
 const publicSuperadminPaths: readonly string[] = SUPERADMIN_AUTH_ROUTES;
 const publicDashboardPaths: readonly string[] = DASHBOARD_AUTH_ROUTES;
+const publicOrderPaths: readonly string[] = ORDER_AUTH_ROUTES;
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -64,9 +65,10 @@ export async function proxy(request: NextRequest) {
     if (role === "WAITER") return NextResponse.redirect(new URL("/order", request.url));
   }
 
-  // Order routes
-  if (pathname.startsWith("/order")) {
-    if (!session) return toLogin("/login");
+  // Order routes (waiter station). /order/login is public so an unauthenticated
+  // waiter can reach it without redirect-looping.
+  if (pathname.startsWith("/order") && !publicOrderPaths.includes(pathname)) {
+    if (!session) return toLogin("/order/login");
     if (role === "RECEPTIONIST") return NextResponse.redirect(new URL("/reception", request.url));
   }
 

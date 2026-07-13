@@ -19,7 +19,12 @@ export function CornerOrnament({ corner }: { corner: Corner }) {
     <svg
       aria-hidden="true"
       className={`pointer-events-none absolute ${position} h-14 w-14 text-gold`}
-      style={{ transform: rotation, opacity: 0.55 }}
+      // position must ALSO be inline: globals.css has `.paper-texture > * {
+      // position: relative }` (to lift content above the noise overlay), which
+      // ties with `.absolute` on specificity and wins on source order — the
+      // four ornaments then stack in normal flow as ~224px of blank spacers
+      // pushing every section heading toward the middle of the page.
+      style={{ transform: rotation, opacity: 0.55, position: "absolute" }}
       viewBox="0 0 60 60"
       fill="none"
       stroke="currentColor"

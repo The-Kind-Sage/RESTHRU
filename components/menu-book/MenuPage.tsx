@@ -19,7 +19,7 @@ export function MenuPage({
 }) {
   return (
     <div
-      className={`paper-texture relative flex w-full flex-col overflow-hidden px-4 py-6 sm:px-7 sm:py-7 lg:px-10 lg:py-8 ${
+      className={`paper-texture relative flex w-full flex-col overflow-hidden px-4 py-4 sm:px-7 sm:py-5 lg:px-10 lg:py-5 ${
         flow ? "rounded-2xl" : "h-full"
       }`}
       style={{
@@ -35,7 +35,7 @@ export function MenuPage({
       <div className={flow ? "" : "flex-1 overflow-y-auto"}>{children}</div>
 
       {pageNumber !== undefined && (
-        <div className="mt-6 flex items-center justify-center gap-3">
+        <div className="mt-3 flex items-center justify-center gap-3">
           <span className="h-px w-8" style={{ backgroundColor: "var(--gold)", opacity: 0.6 }} />
           <span className="font-serif text-xs italic" style={{ color: "var(--ink-mute)" }}>
             {String(pageNumber).padStart(2, "0")}

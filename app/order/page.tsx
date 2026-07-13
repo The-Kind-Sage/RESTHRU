@@ -15,8 +15,12 @@ export const metadata: Metadata = {
 export default async function OrderPage() {
   const session = await getSession();
   if (!session || !session.restaurantId) {
-    redirect('/login');
+    redirect('/order/login');
   }
+
+  const waiterName = [session.firstName, session.lastName].filter(Boolean).join(' ').trim()
+    || session.username
+    || 'Waiter';
 
   const [menuResult, categoriesResult, tablesResult] = await Promise.all([
     getMenuItems(session.restaurantId, { availableOnly: true }),
@@ -40,6 +44,7 @@ export default async function OrderPage() {
       menuItems={menuItems}
       categories={categories}
       tables={tables}
+      waiterName={waiterName}
     />
   );
 }

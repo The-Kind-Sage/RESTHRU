@@ -271,6 +271,11 @@ export const DASHBOARD_AUTH_ROUTES = [
 // layout share one source of truth instead of an inline list.
 export const SUPERADMIN_AUTH_ROUTES = ['/superadmin/login'] as const;
 
+// Waiter order-station routes that render without a session — the waiter login
+// page. Shared by proxy.ts (skip the auth redirect here so it can't loop) and
+// app/order/layout.tsx (skip the guard) so the two never drift.
+export const ORDER_AUTH_ROUTES = ['/order/login'] as const;
+
 // Canonical landing route for each role. Legacy STAFF maps to the owner
 // dashboard. Kept edge-safe (no server-only imports) so proxy.ts can
 // import it too. Used to bounce an authenticated-but-wrong-role user back to

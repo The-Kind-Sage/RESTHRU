@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
-import { Search, X, Users, WifiOff, ClipboardList, UtensilsCrossed } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, X, Users, WifiOff, ClipboardList, UtensilsCrossed, LogOut, UserRound, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useWaiterOrderStore } from '@/store/waiter-order-store';
 import { useOrderSync } from '@/hooks/useOrderSync';
 import { useReadyNotifications } from '@/hooks/useReadyNotifications';
+import { logout } from '@/lib/actions/auth';
 import type { PosView } from './OrderPageClient';
 
 export interface PosCategory {
@@ -18,10 +19,12 @@ export default function OrderHeader({
   categories,
   view,
   onViewChange,
+  waiterName,
 }: {
   categories: PosCategory[];
   view: PosView;
   onViewChange: (view: PosView) => void;
+  waiterName: string;
 }) {
   // Initialize sync and offline listeners
   useOrderSync();
@@ -35,6 +38,23 @@ export default function OrderHeader({
     isOffline, orderState
   } = useWaiterOrderStore();
 
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    // Clear this station's persisted draft so the next waiter to sign in on a
+    // shared device doesn't inherit the previous waiter's table/order.
+    try {
+      localStorage.removeItem('waiter-order-storage');
+    } catch {
+      // localStorage may be unavailable (private mode) — safe to ignore.
+    }
+    await logout();
+    // Full navigation so no in-memory store state carries into the next session.
+    window.location.assign('/order/login');
+  };
+
   return (
     <header className="sticky top-0 z-20 bg-card border-b border-border shadow-sm pt-safe-top">
       {/* Offline Banner */}
@@ -44,6 +64,23 @@ export default function OrderHeader({
           <span>Offline - Saving locally</span>
         </div>
       )}
+
+      {/* Waiter identity + sign-out. Thin strip so it's clear who's signed in on
+          a shared station and easy to hand off between waiters. */}
+      <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-4 py-1.5">
+        <span className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <UserRound size={13} className="flex-shrink-0" />
+          <span className="truncate">{waiterName}</span>
+        </span>
+        <button
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="flex flex-shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:text-destructive disabled:opacity-60"
+        >
+          {loggingOut ? <Loader2 size={13} className="animate-spin" /> : <LogOut size={13} />}
+          <span>{loggingOut ? 'Signing out…' : 'Sign out'}</span>
+        </button>
+      </div>
 
       {/* Top Bar: Table Info, View Toggle & Live Status */}
       <div className="flex items-center justify-between px-4 py-3">

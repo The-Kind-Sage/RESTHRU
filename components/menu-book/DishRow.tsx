@@ -24,7 +24,7 @@ export function DishRow({
   const isFeatured = item.featured;
   return (
     <div
-      className="group relative flex items-start gap-4 rounded-lg p-3 transition-all duration-300 ease-out hover:-translate-y-0.5 sm:gap-5 sm:p-4"
+      className="group relative flex items-start gap-3 rounded-lg px-3 py-2 transition-all duration-300 ease-out hover:-translate-y-0.5 sm:gap-4 sm:px-4 sm:py-2.5"
       style={{
         opacity: dimmed ? 0.32 : 1,
         backgroundColor: "transparent",
@@ -32,7 +32,9 @@ export function DishRow({
       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(197,165,90,0.07)")}
       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
     >
-      <FoodImage src={item.imageUrl} variant="circle" size={isFeatured ? "large" : imageSize} />
+      {/* Featured dishes get one size up (medium), not the huge "large" circle —
+          a single featured row used to consume ~1.5 normal rows of page height. */}
+      <FoodImage src={item.imageUrl} variant="circle" size={isFeatured ? "medium" : imageSize} />
 
       <div className="min-w-0 flex-1 pt-1">
         {isFeatured && item.tags?.includes("chefs-pick") && (
@@ -55,7 +57,7 @@ export function DishRow({
             {formatPrice(item.price)}
           </span>
         </div>
-        <p className="mt-1 max-w-[52ch] font-sans text-[12.5px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
+        <p className="mt-0.5 max-w-[52ch] font-sans text-[12.5px] leading-snug line-clamp-2" style={{ color: "var(--ink-soft)" }}>
           {item.description}
         </p>
         {item.details && item.details.length > 0 && (
