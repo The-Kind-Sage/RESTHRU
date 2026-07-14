@@ -3,14 +3,14 @@ import { redirect } from 'next/navigation';
 import { getSession, type SessionUser } from '@/lib/auth';
 import { homeForRole } from '@/lib/constants';
 
-// Layout-level defense-in-depth gate. proxy.ts is the primary guard for
+// Layout-level defense-in-depth gate. middleware.ts is the primary guard for
 // every /dashboard, /reception, /order and /superadmin request; this repeats
 // the same session + role check inside the Server Component layout so a request
-// that somehow reaches the layout without passing through the proxy
+// that somehow reaches the layout without passing through the middleware
 // (misconfigured matcher, replayed/cached HTML, a direct RSC fetch) still can't
 // render authenticated content.
 //
-// Relies on the `x-pathname` header that the proxy sets on every matched
+// Relies on the `x-pathname` header that the middleware sets on every matched
 // request. If the header is absent (proxy didn't run) we treat the path
 // as non-public and fall through to the session check — failing closed.
 export async function guardArea(opts: {

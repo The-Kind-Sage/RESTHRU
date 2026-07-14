@@ -69,7 +69,7 @@ export async function login(
   username: string,
   password: string,
   redirectTo?: string,
-  options?: { adminConsole?: boolean; blockAdmin?: boolean }
+  options?: { adminConsole?: boolean; blockAdmin?: boolean; waiterOnly?: boolean }
 ) {
   try {
     // Allow login by email OR username
@@ -109,6 +109,12 @@ export async function login(
       options?.blockAdmin &&
       (user.role === "ADMIN" || user.role === "SUPER_ADMIN")
     ) {
+      return { error: "Invalid username or password" };
+    }
+
+    // Waiter station gate: only WAITER role may sign in here. Owners, staff,
+    // and receptionists must use their own login doors.
+    if (options?.waiterOnly && user.role !== "WAITER") {
       return { error: "Invalid username or password" };
     }
 

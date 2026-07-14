@@ -14,7 +14,7 @@ import { login } from '@/lib/actions/auth';
 // waiter lands on /order.
 function WaiterLoginForm() {
   const searchParams = useSearchParams();
-  // The proxy forwards the original target as ?redirect=; default to the
+  // The middleware forwards the original target as ?redirect=; default to the
   // station itself so a waiter always ends up on /order.
   const redirectTo = searchParams.get('redirect') || '/order';
 
@@ -28,9 +28,9 @@ function WaiterLoginForm() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    // blockAdmin: an admin's credentials must never open the waiter station —
-    // admins sign in only through the admin console.
-    const result = await login(username.trim(), password, redirectTo, { blockAdmin: true });
+    // waiterOnly: only WAITER credentials may open the waiter station.
+    // Owners, staff, and receptionists must use their own login doors.
+    const result = await login(username.trim(), password, redirectTo, { waiterOnly: true });
     if (result?.error) {
       setError(result.error);
       setLoading(false);

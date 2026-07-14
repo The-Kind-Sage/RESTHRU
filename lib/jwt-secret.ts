@@ -1,5 +1,5 @@
 // Single source of truth for the JWT signing secret, imported by both
-// lib/auth.ts (session mint/verify) and proxy.ts (edge auth gate) so the two
+// lib/auth.ts (session mint/verify) and middleware.ts (edge auth gate) so the two
 // can never drift onto different secrets.
 //
 // Previously both files fell back to a hardcoded "fallback-secret" string —

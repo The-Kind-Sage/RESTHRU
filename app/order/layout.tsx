@@ -10,7 +10,7 @@ export default async function OrderLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // The proxy is the primary gate (unauthenticated /order → /order/login,
+  // The middleware is the primary gate (unauthenticated /order → /order/login,
   // RECEPTIONIST → /reception); this repeats the check at the layout level.
   // /order/login is public so the guard doesn't redirect-loop the login page.
   await guardArea({
