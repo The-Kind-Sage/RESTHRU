@@ -7,6 +7,8 @@ import { getMenuItems, getCategories } from '@/lib/actions/menu';
 import { getTables } from '@/lib/actions/tables';
 import { MenuItem } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Waitstaff Order Entry | Resthru',
   description: 'Fast, mobile-optimized order entry system for waitstaff.',
