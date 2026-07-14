@@ -65,8 +65,11 @@ export function MobileMenu({
   // Keep the active chip centred in the rail as you scroll.
   useEffect(() => {
     const chip = chipRefs.current[active];
-    if (chip) {
-      chip.scrollIntoView({ behavior: scrollBehavior(), inline: "center", block: "nearest" });
+    const rail = chip?.parentElement;
+    if (chip && rail) {
+      const chipCenter = chip.offsetLeft + chip.offsetWidth / 2;
+      const railCenter = rail.clientWidth / 2;
+      rail.scrollTo({ left: chipCenter - railCenter, behavior: scrollBehavior() });
     }
   }, [active]);
 
