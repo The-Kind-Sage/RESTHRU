@@ -158,6 +158,13 @@ export enum StaffRole {
   KITCHEN = 'KITCHEN',
   CASHIER = 'CASHIER',
   MANAGER = 'MANAGER',
+  DISHWASHER = 'DISHWASHER',
+  COOK = 'COOK',
+  HEAD_CHEF = 'HEAD_CHEF',
+  CHEF = 'CHEF',
+  FOOD_RUNNER = 'FOOD_RUNNER',
+  BARTENDER = 'BARTENDER',
+  BUSSER = 'BUSSER',
 }
 
 export enum StaffStatus {

@@ -1,4 +1,4 @@
-const CACHE = "resthru-v1";
+const CACHE = "resthru-v2";
 const STATIC_ASSETS = [
   "/",
   "/dashboard",

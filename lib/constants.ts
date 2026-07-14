@@ -97,6 +97,12 @@ export const STAFF_ROLES = [
   { value: 'waiter', label: 'Waiter', color: '#06b6d4' },
   { value: 'cashier', label: 'Cashier', color: '#22c55e' },
   { value: 'kitchen_staff', label: 'Kitchen Staff', color: '#f59e0b' },
+  { value: 'dishwasher', label: 'Dishwasher', color: '#6b7280' },
+  { value: 'cook', label: 'Cook', color: '#f97316' },
+  { value: 'head_chef', label: 'Head Chef', color: '#7c3aed' },
+  { value: 'food_runner', label: 'Food Runner', color: '#06b6d4' },
+  { value: 'bartender', label: 'Bartender', color: '#ec4899' },
+  { value: 'busser', label: 'Busser', color: '#14b8a6' },
 ];
 
 // Plan Types

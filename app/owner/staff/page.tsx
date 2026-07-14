@@ -85,6 +85,13 @@ const roleColors: { [key: string]: string } = {
   CASHIER: 'bg-primary-light text-primary',
   MANAGER: 'bg-primary-light text-primary',
   RECEPTIONIST: 'bg-primary-light text-primary',
+  DISHWASHER: 'bg-muted-foreground/10 text-muted-foreground',
+  COOK: 'bg-accent-light text-warning',
+  HEAD_CHEF: 'bg-primary-light text-primary',
+  CHEF: 'bg-primary-light text-primary',
+  FOOD_RUNNER: 'bg-primary-light text-primary',
+  BARTENDER: 'bg-primary-light text-primary',
+  BUSSER: 'bg-primary-light text-primary',
 };
 
 const avatarBgColors: { [key: string]: string } = {
@@ -93,6 +100,13 @@ const avatarBgColors: { [key: string]: string } = {
   CASHIER: 'bg-primary',
   MANAGER: 'bg-primary',
   RECEPTIONIST: 'bg-primary',
+  DISHWASHER: 'bg-muted-foreground',
+  COOK: 'bg-accent',
+  HEAD_CHEF: 'bg-primary',
+  CHEF: 'bg-primary',
+  FOOD_RUNNER: 'bg-primary',
+  BARTENDER: 'bg-primary',
+  BUSSER: 'bg-primary',
 };
 
 // Roles whose staff sign in to a console, and which action issues that login.
@@ -351,6 +365,13 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
                 <SelectItem value="kitchen">Kitchen</SelectItem>
                 <SelectItem value="cashier">Cashier</SelectItem>
                 <SelectItem value="manager">Manager</SelectItem>
+                <SelectItem value="dishwasher">Dishwasher</SelectItem>
+                <SelectItem value="cook">Cook</SelectItem>
+                <SelectItem value="head_chef">Head Chef</SelectItem>
+                <SelectItem value="chef">Chef</SelectItem>
+                <SelectItem value="food_runner">Food Runner</SelectItem>
+                <SelectItem value="bartender">Bartender</SelectItem>
+                <SelectItem value="busser">Busser</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -604,6 +625,13 @@ export default function StaffPage() {
                   <SelectItem value="kitchen">Kitchen</SelectItem>
                   <SelectItem value="cashier">Cashier</SelectItem>
                   <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="dishwasher">Dishwasher</SelectItem>
+                  <SelectItem value="cook">Cook</SelectItem>
+                  <SelectItem value="head_chef">Head Chef</SelectItem>
+                  <SelectItem value="chef">Chef</SelectItem>
+                  <SelectItem value="food_runner">Food Runner</SelectItem>
+                  <SelectItem value="bartender">Bartender</SelectItem>
+                  <SelectItem value="busser">Busser</SelectItem>
                 </SelectContent>
               </Select>
             </div>
