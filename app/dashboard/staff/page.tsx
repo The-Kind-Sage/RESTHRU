@@ -84,6 +84,7 @@ const roleColors: { [key: string]: string } = {
   KITCHEN: 'bg-accent-light text-warning',
   CASHIER: 'bg-primary-light text-primary',
   MANAGER: 'bg-primary-light text-primary',
+  RECEPTIONIST: 'bg-primary-light text-primary',
 };
 
 const avatarBgColors: { [key: string]: string } = {
@@ -91,6 +92,21 @@ const avatarBgColors: { [key: string]: string } = {
   KITCHEN: 'bg-accent',
   CASHIER: 'bg-primary',
   MANAGER: 'bg-primary',
+  RECEPTIONIST: 'bg-primary',
+};
+
+// Roles whose staff sign in to a console, and which action issues that login.
+// Other roles (kitchen, cashier, manager) are directory-only — there is no
+// console for them to sign in to, so Add Staff never asks for credentials.
+const LOGIN_CAPABLE_ROLES: Record<
+  string,
+  {
+    createLogin: (d: { firstName: string; lastName?: string; username: string; password: string }) => Promise<any>;
+    consoleLabel: string;
+  }
+> = {
+  waiter: { createLogin: createWaiterLogin, consoleLabel: 'the order station' },
+  receptionist: { createLogin: createReceptionLogin, consoleLabel: 'the reception console' },
 };
 
 function StaffAvatar({
@@ -228,12 +244,10 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
     role: '',
     phone: '',
     email: '',
-    password: '',
-    confirmPassword: '',
   });
 
   const resetForm = () => {
-    setFormData({ fullName: '', role: '', phone: '', email: '', password: '', confirmPassword: '' });
+    setFormData({ fullName: '', role: '', phone: '', email: '' });
     setAvatarFile(null);
     setAvatarPreview(null);
   };
@@ -241,10 +255,6 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!restaurantId) { toast.error('Restaurant not found'); return; }
-    if (formData.password && formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
 
     setIsLoading(true);
     try {
@@ -370,35 +380,13 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
               }
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Password
-            </label>
-            <Input
-              type="password"
-              placeholder="Enter password"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Confirm Password
-            </label>
-            <Input
-              type="password"
-              placeholder="Confirm password"
-              value={formData.confirmPassword}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  confirmPassword: e.target.value,
-                })
-              }
-            />
-          </div>
+
+          {formData.role === 'waiter' || formData.role === 'receptionist' ? (
+            <div className="rounded-lg bg-primary/5 border border-primary/20 px-3 py-2 text-xs text-muted-foreground">
+              After adding, create a login for this {formData.role} in the{' '}
+              <strong>{formData.role === 'receptionist' ? 'Reception Logins' : 'Waiter Logins'}</strong> section below so they can sign in.
+            </div>
+          ) : null}
           <div>
             <label className="block text-sm font-medium mb-2">
               Profile Photo (Optional)
