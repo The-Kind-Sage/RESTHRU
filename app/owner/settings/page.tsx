@@ -21,6 +21,7 @@ import { useAuthStore } from '@/store/auth-store';
 import {
   getRestaurant, getSettingsData, getActiveSubscription,
   updateRestaurant, upsertSettings, updateRestaurantDirect, updateCoverPhoto, setUserPassword, cancelSubscription,
+  getAvailablePlans, subscribeToPlan,
 } from '@/lib/actions/settings';
 import {
   getTaxRates, createTaxRate, updateTaxRate, deleteTaxRate,
@@ -62,6 +63,7 @@ interface SettingsData {
 }
 
 interface SubscriptionData {
+  plan_id: string;
   plan_name: string;
   price: number;
   status: string;
@@ -106,6 +108,10 @@ export default function SettingsPage() {
   const [showTabConfirm, setShowTabConfirm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [availablePlans, setAvailablePlans] = useState<any[]>([]);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [showSubscribeConfirm, setShowSubscribeConfirm] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState<any>(null);
 
   const [restaurant, setRestaurant] = useState<RestaurantData>({
     name: '',
@@ -141,10 +147,11 @@ export default function SettingsPage() {
 
     setIsLoading(true);
     try {
-      const [restRes, setRes, subRes] = await Promise.all([
+      const [restRes, setRes, subRes, plansRes] = await Promise.all([
         getRestaurant(restaurantId),
         getSettingsData(restaurantId),
         getActiveSubscription(restaurantId),
+        getAvailablePlans(),
       ]);
 
       if (restRes.data) {
@@ -188,12 +195,17 @@ export default function SettingsPage() {
       if (subRes.data) {
         const s = subRes.data as any;
         setSubscription({
+          plan_id: s.planId ?? '',
           plan_name: s.plan?.name ?? 'Free',
           price: s.plan?.monthlyPrice ?? 0,
           status: s.status ?? 'active',
           current_period_end: s.endDate ?? null,
           features: s.plan?.features ?? [],
         });
+      }
+
+      if (plansRes.data) {
+        setAvailablePlans(plansRes.data);
       }
 
       setIsDirty(false);
@@ -664,19 +676,145 @@ export default function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="subscription" className="space-y-6">
+            {/* Current Plan */}
             {subscription ? (
               <Card className="border-primary/20 bg-gradient-to-br from-primary-light to-emerald-50">
-                <CardHeader><CardTitle className="text-2xl">{subscription.plan_name} Plan</CardTitle><CardDescription>Your current subscription</CardDescription></CardHeader>
-                <CardContent className="space-y-6">
-                  <div><p className="text-3xl font-bold">{subscription.price === 0 ? 'Free' : `NPR ${subscription.price.toLocaleString()}`}</p>{subscription.price > 0 && <p className="text-muted-foreground">/month</p>}</div>
-                  {subscription.current_period_end && <p className="text-sm text-muted-foreground">Next billing date: <span className="font-semibold text-foreground">{new Date(subscription.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span></p>}
-                  {subscription.features.length > 0 && <div><h4 className="mb-3 font-semibold">Included Features:</h4><ul className="space-y-2 text-sm">{subscription.features.map((feature, index) => <li key={`${feature}-${index}`} className="flex gap-2"><span className="text-primary">✓</span>{feature}</li>)}</ul></div>}
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-2xl">{subscription.plan_name} Plan</CardTitle>
+                      <CardDescription>Your current subscription</CardDescription>
+                    </div>
+                    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                      subscription.status === 'ACTIVE'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {subscription.status}
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <p className="text-3xl font-bold">
+                      {subscription.price === 0 ? 'Free' : `NPR ${subscription.price.toLocaleString()}`}
+                    </p>
+                    {subscription.price > 0 && <p className="text-muted-foreground">/month</p>}
+                  </div>
+                  {subscription.current_period_end && (
+                    <p className="text-sm text-muted-foreground">
+                      Renews on: <span className="font-semibold text-foreground">
+                        {new Date(subscription.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </p>
+                  )}
+                  {subscription.features.length > 0 && (
+                    <div>
+                      <h4 className="mb-2 font-semibold text-sm">Included Features:</h4>
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-sm">
+                        {subscription.features.map((feature, index) => (
+                          <li key={`${feature}-${index}`} className="flex gap-2">
+                            <span className="text-primary">✓</span>{feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ) : (
-              <Card><CardContent className="py-12 text-center"><p className="mb-4 text-muted-foreground">No active subscription found.</p><Button>View Plans</Button></CardContent></Card>
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <p className="mb-4 text-muted-foreground">No active subscription. Choose a plan below to get started.</p>
+                </CardContent>
+              </Card>
             )}
-            <div className="space-y-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4"><h3 className="font-semibold text-destructive">Danger Zone</h3><p className="text-sm text-muted-foreground">Cancel your subscription. Your data will be retained for 30 days.</p><Button variant="destructive" onClick={() => setShowCancelConfirm(true)}>Cancel Subscription</Button></div>
+
+            {/* Available Plans */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Available Plans</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {availablePlans.map((plan) => {
+                  const isCurrent = subscription?.plan_id === plan.id;
+                  const features = Array.isArray(plan.features) ? plan.features : [];
+                  return (
+                    <Card
+                      key={plan.id}
+                      className={`relative flex flex-col ${
+                        isCurrent
+                          ? 'border-primary ring-2 ring-primary/20'
+                          : plan.isPopular
+                          ? 'border-primary/50'
+                          : ''
+                      }`}
+                    >
+                      {plan.isPopular && !isCurrent && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                          <span className="bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                            Popular
+                          </span>
+                        </div>
+                      )}
+                      {isCurrent && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                          <span className="bg-green-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                            Current Plan
+                          </span>
+                        </div>
+                      )}
+                      <CardHeader className="text-center pt-8">
+                        <CardTitle className="text-xl">{plan.name}</CardTitle>
+                        <div className="mt-2">
+                          <span className="text-3xl font-bold">
+                            {plan.monthlyPrice === 0 ? 'Free' : `NPR ${plan.monthlyPrice?.toLocaleString()}`}
+                          </span>
+                          {plan.monthlyPrice > 0 && (
+                            <span className="text-muted-foreground text-sm">/month</span>
+                          )}
+                        </div>
+                        {plan.annualPrice > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            NPR {plan.annualPrice?.toLocaleString()}/year (save 20%)
+                          </p>
+                        )}
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col">
+                        <ul className="space-y-2 text-sm flex-1">
+                          {features.map((feature: string, i: number) => (
+                            <li key={i} className="flex gap-2">
+                              <span className="text-primary mt-0.5">✓</span>
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <Button
+                          className="mt-4 w-full"
+                          variant={isCurrent ? 'outline' : 'default'}
+                          disabled={isCurrent || isSubscribing}
+                          onClick={() => {
+                            setPendingPlan(plan);
+                            setShowSubscribeConfirm(true);
+                          }}
+                        >
+                          {isCurrent ? 'Current Plan' : subscription ? 'Switch Plan' : 'Subscribe'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Danger Zone */}
+            {subscription && (
+              <div className="space-y-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+                <h3 className="font-semibold text-destructive">Danger Zone</h3>
+                <p className="text-sm text-muted-foreground">Cancel your subscription. Your data will be retained for 30 days.</p>
+                <Button variant="destructive" onClick={() => setShowCancelConfirm(true)}>
+                  Cancel Subscription
+                </Button>
+              </div>
+            )}
           </TabsContent>
 
           {/* ══ SECURITY ═════════════════════════════════════════════════ */}
@@ -759,6 +897,49 @@ export default function SettingsPage() {
               }}
             >
               {isCancelling ? 'Cancelling...' : 'Yes, Cancel Subscription'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Subscribe / Upgrade confirmation */}
+      <AlertDialog open={showSubscribeConfirm} onOpenChange={setShowSubscribeConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              {pendingPlan && subscription && pendingPlan.monthlyPrice > subscription.price
+                ? 'Upgrade Plan?'
+                : pendingPlan && subscription && pendingPlan.monthlyPrice < subscription.price
+                ? 'Downgrade Plan?'
+                : 'Subscribe to Plan?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingPlan && pendingPlan.monthlyPrice === 0
+                ? 'Switch to the Free plan. Your current subscription will be cancelled immediately.'
+                : pendingPlan && subscription && pendingPlan.monthlyPrice < subscription.price
+                ? `Downgrading to ${pendingPlan.name} will take effect at the end of your current billing period. Some features may be restricted.`
+                : pendingPlan
+                ? `Subscribe to the ${pendingPlan.name} plan for NPR ${pendingPlan.monthlyPrice?.toLocaleString()}/month. Your subscription will be active for 1 year.`
+                : 'Proceed with this plan?'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingPlan(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isSubscribing}
+              onClick={async () => {
+                if (!restaurantId || !pendingPlan) return;
+                setIsSubscribing(true);
+                const result = await subscribeToPlan(restaurantId, pendingPlan.id);
+                setIsSubscribing(false);
+                setShowSubscribeConfirm(false);
+                setPendingPlan(null);
+                if (result.error) { toast.error(result.error); return; }
+                toast.success(`Subscribed to ${pendingPlan.name} plan!`);
+                loadData();
+              }}
+            >
+              {isSubscribing ? 'Processing...' : pendingPlan?.monthlyPrice === 0 ? 'Switch to Free' : 'Confirm Subscribe'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
