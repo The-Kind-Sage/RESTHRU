@@ -4,7 +4,7 @@ import { getSession, type SessionUser } from '@/lib/auth';
 import { homeForRole } from '@/lib/constants';
 
 // Layout-level defense-in-depth gate. proxy.ts is the primary guard for
-// every /dashboard, /reception, /order and /superadmin request; this repeats
+// every /owner, /reception, /order and /superadmin request; this repeats
 // the same session + role check inside the Server Component layout so a request
 // that somehow reaches the layout without passing through the proxy
 // (misconfigured matcher, replayed/cached HTML, a direct RSC fetch) still can't

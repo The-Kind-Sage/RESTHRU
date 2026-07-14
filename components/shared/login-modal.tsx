@@ -63,7 +63,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 
       toast.success('Welcome back to Resthru!');
       onOpenChange(false);
-      router.push(result.redirectTo || '/dashboard');
+      router.push(result.redirectTo || '/owner');
     } catch {
       toast.error('An unexpected error occurred');
     } finally {
@@ -136,7 +136,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
                         Password
                       </Label>
                       <Link
-                        href="/dashboard/forgot-password"
+                        href="/owner/forgot-password"
                         className="text-xs text-primary hover:text-primary-hover font-medium transition-colors"
                         onClick={() => onOpenChange(false)}
                       >

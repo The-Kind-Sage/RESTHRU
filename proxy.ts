@@ -46,22 +46,22 @@ export async function proxy(request: NextRequest) {
     if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
       // Authenticated but not an admin (e.g. a restaurant owner). Send them to
       // the admin login so they can sign in with an admin account — NOT to their
-      // own /dashboard, which silently swallows the request and makes the admin
+      // own /owner, which silently swallows the request and makes the admin
       // console look unreachable.
       return toLogin("/superadmin/login");
     }
   }
 
-  // Dashboard routes
-  if (pathname.startsWith("/dashboard") && !publicDashboardPaths.includes(pathname)) {
-    if (!session) return toLogin("/dashboard/login");
+  // Owner dashboard routes
+  if (pathname.startsWith("/owner") && !publicDashboardPaths.includes(pathname)) {
+    if (!session) return toLogin("/owner/login");
     if (role === "RECEPTIONIST") return NextResponse.redirect(new URL("/reception", request.url));
     if (role === "WAITER") return NextResponse.redirect(new URL("/order", request.url));
   }
 
   // Reception routes
   if (pathname.startsWith("/reception")) {
-    if (!session) return toLogin("/dashboard/login");
+    if (!session) return toLogin("/owner/login");
     if (role === "WAITER") return NextResponse.redirect(new URL("/order", request.url));
   }
 
@@ -81,5 +81,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/superadmin/:path*", "/dashboard/:path*", "/reception/:path*", "/reception", "/order/:path*", "/order"],
+  matcher: ["/superadmin/:path*", "/owner/:path*", "/owner", "/reception/:path*", "/reception", "/order/:path*", "/order"],
 };

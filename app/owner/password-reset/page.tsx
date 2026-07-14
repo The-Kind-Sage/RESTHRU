@@ -62,7 +62,7 @@ export default function PasswordResetPage() {
             <CardDescription>Your password has been changed successfully</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <Button onClick={() => router.push("/dashboard")} className="w-full">Back to Dashboard</Button>
+            <Button onClick={() => router.push("/owner")} className="w-full">Back to Dashboard</Button>
           </CardContent>
         </Card>
       </div>
@@ -101,7 +101,7 @@ export default function PasswordResetPage() {
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" disabled={loading} className="w-full">{loading ? "Updating..." : "Update Password"}</Button>
             <div className="text-center text-sm">
-              <button type="button" onClick={() => router.push("/dashboard")} className="text-primary hover:underline">Back to dashboard</button>
+              <button type="button" onClick={() => router.push("/owner")} className="text-primary hover:underline">Back to dashboard</button>
             </div>
           </form>
         </CardContent>

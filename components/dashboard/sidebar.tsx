@@ -32,13 +32,13 @@ import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard',          href: '/dashboard',           Icon: LayoutDashboard },
-  { label: 'Reception Desk',     href: '/reception',           Icon: ArrowRight      },
-  { label: 'Menu Management',    href: '/dashboard/menu',      Icon: ClipboardList   },
-  { label: 'Staff Management',   href: '/dashboard/staff',     Icon: Users           },
-  { label: 'Inventory',          href: '/dashboard/inventory', Icon: Package         },
-  { label: 'Reports & Analytics',href: '/dashboard/reports',   Icon: BarChart3       },
-  { label: 'Settings',           href: '/dashboard/settings',  Icon: Settings        },
+  { label: 'Dashboard',          href: '/owner',                Icon: LayoutDashboard },
+  { label: 'Reception Desk',     href: '/reception',            Icon: ArrowRight      },
+  { label: 'Menu Management',    href: '/owner/menu',           Icon: ClipboardList   },
+  { label: 'Staff Management',   href: '/owner/staff',          Icon: Users           },
+  { label: 'Inventory',          href: '/owner/inventory',      Icon: Package         },
+  { label: 'Reports & Analytics',href: '/owner/reports',        Icon: BarChart3       },
+  { label: 'Settings',           href: '/owner/settings',       Icon: Settings        },
 ];
 
 // ── Main sidebar — memo prevents re-render when parent re-renders
@@ -67,7 +67,7 @@ const Sidebar = memo(function Sidebar() {
   // Stable isActive — uses useCallback so NavLink memo comparisons work.
   const isActive = useCallback(
     (href: string) => {
-      if (href === '/dashboard') return pathname === '/dashboard';
+      if (href === '/owner') return pathname === '/owner';
       return pathname.startsWith(href);
     },
     [pathname]

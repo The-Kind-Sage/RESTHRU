@@ -82,7 +82,7 @@ export default function ForgotPasswordPage() {
             <CardDescription>Your password has been updated successfully</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <Link href="/dashboard/login">
+            <Link href="/owner/login">
               <Button className="w-full">Sign In with New Password</Button>
             </Link>
           </CardContent>
@@ -111,7 +111,7 @@ export default function ForgotPasswordPage() {
               {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" disabled={loading} className="w-full">{loading ? "Sending..." : "Send Verification Code"}</Button>
               <div className="text-center text-sm">
-                <Link href="/dashboard/login" className="text-primary hover:underline">Back to login</Link>
+                <Link href="/owner/login" className="text-primary hover:underline">Back to login</Link>
               </div>
             </form>
           </CardContent>

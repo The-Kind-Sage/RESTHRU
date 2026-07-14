@@ -47,12 +47,12 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 
 const PAGE_TITLES: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/dashboard/menu': 'Menu Management',
-  '/dashboard/staff': 'Staff Management',
-  '/dashboard/inventory': 'Inventory',
-  '/dashboard/reports': 'Reports & Analytics',
-  '/dashboard/settings': 'Settings',
+  '/owner': 'Dashboard',
+  '/owner/menu': 'Menu Management',
+  '/owner/staff': 'Staff Management',
+  '/owner/inventory': 'Inventory',
+  '/owner/reports': 'Reports & Analytics',
+  '/owner/settings': 'Settings',
   '/reception': 'Reception Desk',
   '/reception/orders': 'Live Orders',
   '/reception/checkout': 'Checkout',
@@ -274,7 +274,7 @@ export default function TopHeader() {
                     variant="ghost"
                     size="sm"
                     className="w-full h-8 text-xs text-muted-foreground hover:text-foreground"
-                    onClick={() => router.push('/dashboard/settings')}
+                    onClick={() => router.push('/owner/settings')}
                   >
                     Notification settings
                   </Button>
@@ -302,12 +302,12 @@ export default function TopHeader() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             {user?.role !== "RECEPTIONIST" && (
-              <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+              <DropdownMenuItem onClick={() => router.push('/owner/settings')}>
                 <User className="mr-2 h-4 w-4" /> Profile
               </DropdownMenuItem>
             )}
             {user?.role !== "RECEPTIONIST" && (
-              <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+              <DropdownMenuItem onClick={() => router.push('/owner/settings')}>
                 <Settings className="mr-2 h-4 w-4" /> Settings
               </DropdownMenuItem>
             )}

@@ -142,7 +142,7 @@ export default function QRCodeCenterPage() {
         </div>
         <div className="flex gap-3">
           <Button variant="outline" size="sm" asChild>
-            <a href="/dashboard/menu" className="gap-2">
+            <a href="/owner/menu" className="gap-2">
               <ArrowUpRight className="w-4 h-4" />
               Menu QR (Recommended)
             </a>

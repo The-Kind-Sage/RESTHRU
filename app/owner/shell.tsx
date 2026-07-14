@@ -36,7 +36,7 @@ export default function DashboardShell({
 
   useEffect(() => {
     // Never install the SW on the login/reset pages — doing so would
-    // precache an authenticated snapshot of /dashboard before the user
+    // precache an authenticated snapshot of /owner before the user
     // has even signed in.
     if (!isPublicAuthRoute) {
       registerServiceWorker();

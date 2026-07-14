@@ -148,7 +148,7 @@ export default function RegisterPage() {
     }
   };
 
-  const goToDashboard = () => router.push('/dashboard');
+  const goToDashboard = () => router.push('/owner');
 
   const stepLabels: Record<number, { title: string; subtitle: string }> = {
     1: { title: 'Create your account', subtitle: 'Enter your details to get started' },

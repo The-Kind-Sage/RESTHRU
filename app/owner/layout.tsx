@@ -13,14 +13,14 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Belt-and-suspenders: proxy.ts is the primary gate for /dashboard, but
+  // Belt-and-suspenders: proxy.ts is the primary gate for /owner, but
   // this repeats the check at the layout level so a request that somehow
   // reaches this Server Component without passing through the proxy
   // (misconfigured matcher, cached/replayed HTML, direct RSC fetch) still can't
   // render authenticated content. Owner + legacy STAFF only.
   await guardArea({
     allowedRoles: ['RESTAURANT_OWNER', 'STAFF'],
-    loginPath: '/dashboard/login',
+    loginPath: '/owner/login',
     publicPaths: DASHBOARD_AUTH_ROUTES,
   });
 

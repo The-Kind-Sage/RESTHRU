@@ -59,7 +59,7 @@ export default function DashboardLoginPage() {
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" disabled={loading} className="w-full">{loading ? "Signing in..." : "Sign In"}</Button>
             <div className="text-center text-sm">
-              <Link href="/dashboard/forgot-password" className="text-primary hover:underline">Forgot password?</Link>
+              <Link href="/owner/forgot-password" className="text-primary hover:underline">Forgot password?</Link>
             </div>
           </form>
         </CardContent>

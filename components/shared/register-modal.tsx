@@ -195,7 +195,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
 
   const goToDashboard = () => {
     resetAndClose();
-    router.push('/dashboard');
+    router.push('/owner');
   };
 
   return (

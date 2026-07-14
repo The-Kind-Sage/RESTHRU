@@ -9,7 +9,7 @@ export function registerServiceWorker() {
 }
 
 // Logout only clears the session cookie server-side — without this, the SW's
-// precached /dashboard snapshot in Cache Storage can still be replayed
+// precached /owner snapshot in Cache Storage can still be replayed
 // (e.g. offline) after the user has signed out. Unregister and drop the
 // cache so the next visit is forced back to the network/login.
 export async function unregisterServiceWorker() {

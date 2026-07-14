@@ -57,7 +57,7 @@ export default function LoginPage() {
         return;
       }
       toast.success('Welcome back to Resthru!');
-      router.push(result.redirectTo || '/dashboard');
+      router.push(result.redirectTo || '/owner');
     } catch {
       toast.error('An unexpected error occurred');
     } finally {
@@ -186,7 +186,7 @@ export default function LoginPage() {
                     <div className="flex items-center justify-between">
                       <Label htmlFor="password">Password</Label>
                       <Link
-                        href="/dashboard/forgot-password"
+                        href="/owner/forgot-password"
                         className="text-xs text-primary hover:text-primary/80 font-medium"
                       >
                         Forgot password?

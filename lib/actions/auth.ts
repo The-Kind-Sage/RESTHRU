@@ -57,7 +57,7 @@ export async function createSessionFromSupabaseLogin(userId: string, email: stri
       restaurantId: restaurant?.id ?? prismaUser.restaurantId ?? null,
     });
 
-    return { success: true, redirectTo: "/dashboard" };
+    return { success: true, redirectTo: "/owner" };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("createSessionFromSupabaseLogin error:", message, err instanceof Error ? err.stack : "");
@@ -101,7 +101,7 @@ export async function login(
     }
 
     // Reverse gate for the public / staff login doors (home-page dialog,
-    // /login, /dashboard/login): admins may ONLY sign in through the admin
+    // /login, /owner/login): admins may ONLY sign in through the admin
     // console, never through these. Reject before creating a session, with the
     // same generic message so these forms can't be used to discover that an
     // account is an admin.
@@ -127,7 +127,7 @@ export async function login(
       restaurantId: user.restaurantId,
     });
 
-    const destination = redirectTo || (user.role === "ADMIN" || user.role === "SUPER_ADMIN" ? "/superadmin" : user.role === "RECEPTIONIST" ? "/reception" : user.role === "WAITER" ? "/order" : "/dashboard");
+    const destination = redirectTo || (user.role === "ADMIN" || user.role === "SUPER_ADMIN" ? "/superadmin" : user.role === "RECEPTIONIST" ? "/reception" : user.role === "WAITER" ? "/order" : "/owner");
     return { success: true, redirectTo: destination };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -247,7 +247,7 @@ export async function register(data: {
       restaurantId: restaurant.id,
     });
 
-    return { success: true, redirectTo: "/dashboard" };
+    return { success: true, redirectTo: "/owner" };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("register error:", message, err instanceof Error ? err.stack : "");

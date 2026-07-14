@@ -259,11 +259,11 @@ export const STATUS_BADGE_VARIANTS: Record<string, keyof typeof ADMIN_TONE_CLASS
 };
 
 // Dashboard routes that render without the authenticated shell (sidebar/header) — the single
-// source of truth so proxy.ts and app/dashboard/shell.tsx can't drift out of sync.
+// source of truth so proxy.ts and app/owner/layout.tsx can't drift out of sync.
 export const DASHBOARD_AUTH_ROUTES = [
-  '/dashboard/login',
-  '/dashboard/forgot-password',
-  '/dashboard/password-reset',
+  '/owner/login',
+  '/owner/forgot-password',
+  '/owner/password-reset',
 ] as const;
 
 // Superadmin routes that render without the authenticated admin shell — kept
@@ -283,14 +283,14 @@ export const ORDER_AUTH_ROUTES = ['/order/login'] as const;
 export const ROLE_HOME: Record<string, string> = {
   SUPER_ADMIN: '/superadmin',
   ADMIN: '/superadmin',
-  RESTAURANT_OWNER: '/dashboard',
-  STAFF: '/dashboard',
+  RESTAURANT_OWNER: '/owner',
+  STAFF: '/owner',
   RECEPTIONIST: '/reception',
   WAITER: '/order',
 };
 
 export function homeForRole(role: string | null | undefined): string {
-  return (role && ROLE_HOME[role]) || '/dashboard';
+  return (role && ROLE_HOME[role]) || '/owner';
 }
 
 // Operating Hours Default
