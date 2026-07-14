@@ -15,6 +15,7 @@ import {
   Star,
   Printer,
   ChefHat,
+  Package,
   LogOut,
 } from 'lucide-react';
 
@@ -41,6 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Table Map',     href: '/reception/tables',    Icon: LayoutGrid      },
   { label: 'Shifts',        href: '/reception/shifts',    Icon: Clock           },
   { label: 'Invoices',      href: '/reception/invoices',  Icon: Receipt         },
+  { label: 'Inventory',     href: '/reception/inventory', Icon: Package         },
   { label: 'CRM',           href: '/reception/crm',       Icon: Star            },
   { label: 'Print Center',  href: '/reception/prints',    Icon: Printer         },
   { label: 'Kitchen Display',href: '/reception/kitchen',  Icon: ChefHat         },

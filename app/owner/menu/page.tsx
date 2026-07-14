@@ -577,15 +577,6 @@ export default function MenuPage() {
           </div>
         </ScrollArea>
 
-        {/* Edit Menu + QR buttons at bottom of sidebar */}
-        <div className="p-3 border-t space-y-2">
-          <Button variant="outline" className="w-full gap-2" onClick={() => setIsEditMenuOpen(true)}>
-            <Palette className="w-4 h-4" /> Edit Menu
-          </Button>
-          <Button className="w-full gap-2 bg-primary hover:bg-primary-hover" onClick={() => setIsQrOpen(true)}>
-            <QrCode className="w-4 h-4" /> Generate QR
-          </Button>
-        </div>
       </div>
 
       {/* ── Right Panel: Items ── */}
@@ -608,6 +599,12 @@ export default function MenuPage() {
               </Button>
               <Button variant="outline" onClick={() => window.open(`/r/${restaurantId}`, '_blank')}>
                 <Eye className="w-4 h-4 mr-2" />Preview
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={() => setIsEditMenuOpen(true)}>
+                <Palette className="w-4 h-4" /> Edit Menu
+              </Button>
+              <Button className="gap-2 bg-primary hover:bg-primary-hover" onClick={() => setIsQrOpen(true)}>
+                <QrCode className="w-4 h-4" /> Generate QR
               </Button>
             </div>
           </div>
