@@ -30,18 +30,27 @@ export function MenuBook({ data }: { data: MenuData }) {
     return () => document.documentElement.classList.remove("dark");
   }, [dark]);
 
-  // Build sections from real data: drop empty categories, keep every non-empty
-  // one (including custom categories), alternate tint for rhythm.
+  const ITEMS_PER_PAGE = 7;
+
   const sections: SectionData[] = useMemo(
     () =>
       data.categories
         .filter((c) => c.items.length > 0)
-        .map((c, i) => ({
-          id: c.slug || slugify(c.name),
-          title: c.name,
-          items: c.items,
-          tint: i % 2 === 1,
-        })),
+        .flatMap((c, i) => {
+          const chunks: SectionData[] = [];
+          const slug = c.slug || slugify(c.name);
+          const totalItems = c.items.length;
+          const pages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+          for (let p = 0; p < pages; p++) {
+            chunks.push({
+              id: pages > 1 ? `${slug}-${p + 1}` : slug,
+              title: c.name,
+              items: c.items.slice(p * ITEMS_PER_PAGE, (p + 1) * ITEMS_PER_PAGE),
+              tint: (i + p) % 2 === 1,
+            });
+          }
+          return chunks;
+        }),
     [data.categories]
   );
 
