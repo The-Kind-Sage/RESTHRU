@@ -17,6 +17,7 @@ import {
   X,
   UserPlus,
   Loader2,
+  Trash2,
 } from 'lucide-react';
 import {
   Card,
@@ -52,6 +53,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { formatDate, formatCurrency } from '@/lib/format';
 import { uploadImage } from '@/lib/upload';
 import { toast } from 'sonner';
@@ -60,7 +72,7 @@ import {
   createReceptionLogin, getReceptionLogins, deactivateReceptionLogin,
   createWaiterLogin, getWaiterLogins, deactivateWaiterLogin,
 } from '@/lib/actions/auth';
-import { getStaff, addStaff } from '@/lib/actions/staff';
+import { getStaff, addStaff, deleteStaff } from '@/lib/actions/staff';
 import { useUpgradeStore } from '@/store/upgrade-store';
 
 interface StaffMember {
@@ -648,19 +660,35 @@ export default function StaffPage() {
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         <div className="flex items-center gap-1">
-                          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); }}>
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); }}>
-                            <QrCode className="h-4 w-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); }}>
-                            {staff.status === 'On Duty' ? (
-                              <Unlock className="h-4 w-4" />
-                            ) : (
-                              <Lock className="h-4 w-4" />
-                            )}
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Staff Member</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete <strong>{staff.name}</strong>? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive hover:bg-destructive/90"
+                                  onClick={async () => {
+                                    const res = await deleteStaff(String(staff.id));
+                                    if (res.error) { toast.error(res.error); return; }
+                                    setStaffMembers((prev) => prev.filter((s) => s.id !== staff.id));
+                                    toast.success(`${staff.name} deleted`);
+                                  }}
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </TableCell>
                     </TableRow>

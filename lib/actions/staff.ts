@@ -51,3 +51,15 @@ export async function addStaff(data: {
     return { error: err?.message || "Failed to add staff member" };
   }
 }
+
+export async function deleteStaff(staffId: string) {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  try {
+    await prisma.staff.delete({ where: { id: staffId } });
+    return { success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to delete staff member" };
+  }
+}
