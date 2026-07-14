@@ -11,10 +11,11 @@ export default async function OrderLayout({
   children: React.ReactNode;
 }) {
   // The proxy is the primary gate (unauthenticated /order → /order/login,
-  // RECEPTIONIST → /reception); this repeats the check at the layout level.
-  // /order/login is public so the guard doesn't redirect-loop the login page.
+  // RECEPTIONIST → /reception, RESTAURANT_OWNER → /owner); this repeats the
+  // check at the layout level. /order/login is public so the guard doesn't
+  // redirect-loop the login page.
   await guardArea({
-    allowedRoles: ['WAITER', 'RESTAURANT_OWNER', 'STAFF'],
+    allowedRoles: ['WAITER'],
     loginPath: '/order/login',
     publicPaths: ORDER_AUTH_ROUTES,
   });

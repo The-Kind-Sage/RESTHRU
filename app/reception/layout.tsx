@@ -12,10 +12,10 @@ export default async function ReceptionLayout({
   children: React.ReactNode;
 }) {
   // The proxy is the primary gate (unauthenticated /reception → /owner/login,
-  // WAITER → /order); this repeats the check at the layout level. Reception is
-  // usable by the receptionist and by the owner/legacy-staff running the till.
+  // WAITER → /order, RESTAURANT_OWNER → /owner); this repeats the check at the
+  // layout level.
   await guardArea({
-    allowedRoles: ['RECEPTIONIST', 'RESTAURANT_OWNER', 'STAFF'],
+    allowedRoles: ['RECEPTIONIST'],
     loginPath: '/owner/login',
   });
 

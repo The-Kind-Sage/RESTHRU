@@ -59,10 +59,12 @@ export async function proxy(request: NextRequest) {
     if (role === "WAITER") return NextResponse.redirect(new URL("/order", request.url));
   }
 
-  // Reception routes
+  // Reception routes — owner-only access in the console, so owner is redirected
+  // to their own dashboard.
   if (pathname.startsWith("/reception")) {
     if (!session) return toLogin("/owner/login");
     if (role === "WAITER") return NextResponse.redirect(new URL("/order", request.url));
+    if (role === "RESTAURANT_OWNER") return NextResponse.redirect(new URL("/owner", request.url));
   }
 
   // Order routes (waiter station). /order/login is public so an unauthenticated
@@ -70,6 +72,7 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith("/order") && !publicOrderPaths.includes(pathname)) {
     if (!session) return toLogin("/order/login");
     if (role === "RECEPTIONIST") return NextResponse.redirect(new URL("/reception", request.url));
+    if (role === "RESTAURANT_OWNER") return NextResponse.redirect(new URL("/owner", request.url));
   }
 
   // Exposes the matched path to Server Components (e.g. app/dashboard/layout.tsx)
