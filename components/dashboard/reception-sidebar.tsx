@@ -34,9 +34,10 @@ import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS: NavItem[] = [
+  { label: 'Reception',     href: '/reception',           Icon: ConciergeBell   },
+  { label: 'Order',         href: '/reception/order',     Icon: UtensilsCrossed },
   { label: 'Live Orders',   href: '/reception/orders',    Icon: ShoppingBag     },
   { label: 'Checkout',      href: '/reception/checkout',  Icon: DollarSign      },
-  { label: 'Reception',     href: '/reception',           Icon: ConciergeBell   },
   { label: 'Table Map',     href: '/reception/tables',    Icon: LayoutGrid      },
   { label: 'Shifts',        href: '/reception/shifts',    Icon: Clock           },
   { label: 'Invoices',      href: '/reception/invoices',  Icon: Receipt         },
