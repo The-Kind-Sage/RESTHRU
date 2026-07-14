@@ -65,6 +65,7 @@
     "eslint": "^8.57.0",
     "eslint-config-next": "^15.5.19",
     "framer-motion": "^12.40.0",
+    "google-auth-library": "^10.9.0",
     "input-otp": "^1.4.1",
     "jose": "^6.2.3",
     "lucide-react": "^0.446.0",

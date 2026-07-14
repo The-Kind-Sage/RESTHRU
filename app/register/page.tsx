@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { register } from '@/lib/actions/auth';
+import { GoogleSignInButton } from '@/components/shared/google-sign-in';
 import { NEPAL_CITIES, RESTAURANT_TYPES } from '@/lib/constants';
 import { getPublicPlans, type PublicPlan } from '@/lib/actions/get-plans-public';
 
@@ -282,6 +283,15 @@ export default function RegisterPage() {
               >
                 <Card className="border border-white/20 bg-white/95 shadow-xl shadow-primary/5 backdrop-blur-xl">
                   <CardContent className="p-6 sm:p-8">
+                    <GoogleSignInButton text="Sign up with Google" className="mb-6" />
+                    <div className="relative my-6">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-border/60" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-white px-3 text-muted-foreground/70 font-medium tracking-wider">or fill in details</span>
+                      </div>
+                    </div>
                     <Form {...step1Form}>
                       <form id="register-form" onSubmit={step1Form.handleSubmit((data) => { setFormData((prev) => ({ ...prev, step1: data })); setCurrentStep(2); })} className="space-y-4">
                         <FormField control={step1Form.control} name="fullName" render={({ field }) => (

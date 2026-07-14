@@ -52,6 +52,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/owner/staff': 'Staff Management',
   '/owner/inventory': 'Inventory',
   '/owner/reports': 'Reports & Analytics',
+  '/owner/logs': 'Activity Logs',
   '/owner/settings': 'Settings',
   '/reception': 'Reception Desk',
   '/reception/orders': 'Live Orders',

@@ -13,6 +13,7 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  ScrollText,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Staff Management',   href: '/owner/staff',          Icon: Users           },
   { label: 'Inventory',          href: '/owner/inventory',      Icon: Package         },
   { label: 'Reports & Analytics',href: '/owner/reports',        Icon: BarChart3       },
+  { label: 'Logs',               href: '/owner/logs',           Icon: ScrollText      },
   { label: 'Settings',           href: '/owner/settings',       Icon: Settings        },
 ];
 
