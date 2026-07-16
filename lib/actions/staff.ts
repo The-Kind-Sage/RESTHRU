@@ -52,6 +52,34 @@ export async function addStaff(data: {
   }
 }
 
+export async function updateStaff(data: {
+  id: string;
+  name: string;
+  role: string;
+  phone: string;
+  email?: string;
+  avatarUrl?: string | null;
+}) {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  try {
+    const member = await prisma.staff.update({
+      where: { id: data.id },
+      data: {
+        firstName: data.name,
+        role: data.role.toUpperCase(),
+        phoneNumber: data.phone,
+        email: data.email || "",
+        profileImage: data.avatarUrl || undefined,
+      },
+    });
+    return { data: member };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to update staff member" };
+  }
+}
+
 export async function deleteStaff(staffId: string) {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };

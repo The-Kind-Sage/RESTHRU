@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/select';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -72,7 +73,7 @@ import {
   createReceptionLogin, getReceptionLogins, deactivateReceptionLogin, deleteReceptionLogin,
   createWaiterLogin, getWaiterLogins, deactivateWaiterLogin, deleteWaiterLogin,
 } from '@/lib/actions/auth';
-import { getStaff, addStaff, deleteStaff } from '@/lib/actions/staff';
+import { getStaff, addStaff, updateStaff, deleteStaff } from '@/lib/actions/staff';
 import { useUpgradeStore } from '@/store/upgrade-store';
 
 interface StaffMember {
@@ -483,6 +484,64 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
   );
 }
 
+function EditStaffForm({ staff, onUpdated }: { staff: StaffMember; onUpdated: (updated: StaffMember) => void }) {
+  const [form, setForm] = useState({ name: staff.name, role: staff.role.toLowerCase(), phone: staff.phone, email: staff.email });
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!form.name || !form.role || !form.phone) { toast.error('Name, role, and phone are required'); return; }
+    setSaving(true);
+    const res = await updateStaff({ id: String(staff.id), ...form });
+    setSaving(false);
+    if ('error' in res) { toast.error(res.error); return; }
+    toast.success('Staff updated');
+    onUpdated({ ...staff, name: form.name, role: form.role.toUpperCase(), phone: form.phone, email: form.email });
+  };
+
+  return (
+    <div className="space-y-4">
+      <DialogHeader>
+        <DialogTitle>Edit Staff Member</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm font-medium mb-1">Full Name *</label>
+          <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Role *</label>
+          <Select value={form.role} onValueChange={(value) => setForm({ ...form, role: value })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="waiter">Waiter</SelectItem>
+              <SelectItem value="bartender">Bartender</SelectItem>
+              <SelectItem value="chef">Chef</SelectItem>
+              <SelectItem value="cook">Cook</SelectItem>
+              <SelectItem value="kitchen">Kitchen</SelectItem>
+              <SelectItem value="busser">Busser</SelectItem>
+              <SelectItem value="housekeeper">Housekeeper</SelectItem>
+              <SelectItem value="receptionist">Receptionist</SelectItem>
+              <SelectItem value="manager">Manager</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Phone *</label>
+          <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Email</label>
+          <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+        </div>
+      </div>
+      <DialogFooter>
+        <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+        <Button disabled={saving} onClick={handleSave}>{saving ? 'Saving...' : 'Save'}</Button>
+      </DialogFooter>
+    </div>
+  );
+}
+
 export default function StaffPage() {
   const { restaurant } = useAuthStore();
   const restaurantId = restaurant?.id || '';
@@ -695,6 +754,18 @@ export default function StaffPage() {
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         <div className="flex items-center gap-1">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent onClick={(e) => e.stopPropagation()} className="max-w-md">
+                              <EditStaffForm staff={staff} onUpdated={(updated) => {
+                                setStaffMembers((prev) => prev.map((s) => s.id === updated.id ? { ...s, ...updated } : s));
+                              }} />
+                            </DialogContent>
+                          </Dialog>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
