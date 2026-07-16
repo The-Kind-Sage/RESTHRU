@@ -755,7 +755,7 @@ function StaffLoginsSection({
   role: string;
   title: string;
   description: string;
-  createFn: (data: { firstName: string; lastName?: string; username: string; password: string }) => Promise<any>;
+  createFn: (data: { firstName: string; lastName?: string; username: string; password: string; phoneNumber?: string }) => Promise<any>;
   listFn: () => Promise<any>;
   toggleFn: (id: string) => Promise<any>;
   deleteFn?: (id: string) => Promise<any>;
@@ -764,7 +764,7 @@ function StaffLoginsSection({
   const [logins, setLogins] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ firstName: "", lastName: "", username: "", password: "" });
+  const [form, setForm] = useState({ firstName: "", lastName: "", username: "", password: "", phoneNumber: "" });
   const [creating, setCreating] = useState(false);
 
   const fetchLogins = async () => {
@@ -787,7 +787,7 @@ function StaffLoginsSection({
     if ("error" in res) { toast.error(res.error); return; }
     toast.success(`${title.slice(0, -1)} created`);
     setShowCreate(false);
-    setForm({ firstName: "", lastName: "", username: "", password: "" });
+    setForm({ firstName: "", lastName: "", username: "", password: "", phoneNumber: "" });
     fetchLogins();
   };
 
@@ -830,6 +830,7 @@ function StaffLoginsSection({
               <Input placeholder="First name *" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
               <Input placeholder="Last name" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
               <Input placeholder="Username * (Gmail: name@gmail.com)" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+              <Input placeholder="Phone No (alternative login)" value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} />
               <Input type="password" placeholder="Password * (min 6 chars)" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
             </div>
             <div className="flex gap-2 justify-end">
@@ -853,6 +854,7 @@ function StaffLoginsSection({
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{l.firstName} {l.lastName}</span>
                     <span className="text-xs text-muted-foreground">@{l.username}</span>
+                    {l.phoneNumber && <span className="text-xs text-muted-foreground">| {l.phoneNumber}</span>}
                     <span className={`text-[10px] px-1.5 py-0.5 rounded ${l.isActive ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
                       {l.isActive ? "Active" : "Inactive"}
                     </span>
@@ -876,7 +878,7 @@ function StaffLoginsSection({
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete {title.slice(0, -1)} Login</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will permanently delete <strong>{l.firstName} {l.lastName}</strong>'s login (@{l.username}). This action cannot be undone.
+                            This will permanently delete <strong>{l.firstName} {l.lastName}</strong>'s login (@{l.username}{l.phoneNumber ? ` | ${l.phoneNumber}` : ''}). This action cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

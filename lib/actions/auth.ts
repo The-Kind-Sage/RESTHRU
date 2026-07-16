@@ -470,6 +470,7 @@ export async function createReceptionLogin(data: {
   lastName?: string;
   username: string;
   password: string;
+  phoneNumber?: string;
 }) {
   const session = await getSession();
   if (!session?.restaurantId || !session?.id) return { error: "Not authenticated" };
@@ -493,6 +494,13 @@ export async function createReceptionLogin(data: {
     });
     if (existing) return { error: "Username already taken" };
 
+    if (data.phoneNumber) {
+      const existingPhone = await prisma.user.findFirst({
+        where: { phoneNumber: data.phoneNumber, restaurantId: session.restaurantId },
+      });
+      if (existingPhone) return { error: "Phone number already in use within your restaurant" };
+    }
+
     const passwordHash = await bcrypt.hash(data.password, 12);
     const user = await prisma.user.create({
       data: {
@@ -501,13 +509,14 @@ export async function createReceptionLogin(data: {
         firstName: data.firstName,
         lastName: data.lastName || "",
         email: data.username,
+        phoneNumber: data.phoneNumber || null,
         role: "RECEPTIONIST",
         restaurantId: session.restaurantId,
         isActive: true,
       },
     });
 
-    return { data: { id: user.id, firstName: user.firstName, lastName: user.lastName, username: user.username, isActive: user.isActive, role: user.role } };
+    return { data: { id: user.id, firstName: user.firstName, lastName: user.lastName, username: user.username, phoneNumber: user.phoneNumber, isActive: user.isActive, role: user.role } };
   } catch (err: any) {
     return { error: err?.message || "Failed to create reception login" };
   }
@@ -520,7 +529,7 @@ export async function getReceptionLogins() {
   try {
     const users = await prisma.user.findMany({
       where: { restaurantId: session.restaurantId, role: "RECEPTIONIST" },
-      select: { id: true, firstName: true, lastName: true, username: true, isActive: true, lastLoginAt: true, createdAt: true },
+      select: { id: true, firstName: true, lastName: true, username: true, phoneNumber: true, isActive: true, lastLoginAt: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     });
     return { data: users };
@@ -581,6 +590,7 @@ export async function createWaiterLogin(data: {
   lastName?: string;
   username: string;
   password: string;
+  phoneNumber?: string;
 }) {
   const session = await getSession();
   if (!session?.restaurantId || !session?.id) return { error: "Not authenticated" };
@@ -604,6 +614,13 @@ export async function createWaiterLogin(data: {
     });
     if (existing) return { error: "Username already taken" };
 
+    if (data.phoneNumber) {
+      const existingPhone = await prisma.user.findFirst({
+        where: { phoneNumber: data.phoneNumber, restaurantId: session.restaurantId },
+      });
+      if (existingPhone) return { error: "Phone number already in use within your restaurant" };
+    }
+
     const passwordHash = await bcrypt.hash(data.password, 12);
     const user = await prisma.user.create({
       data: {
@@ -612,13 +629,14 @@ export async function createWaiterLogin(data: {
         firstName: data.firstName,
         lastName: data.lastName || "",
         email: data.username,
+        phoneNumber: data.phoneNumber || null,
         role: "WAITER",
         restaurantId: session.restaurantId,
         isActive: true,
       },
     });
 
-    return { data: { id: user.id, firstName: user.firstName, lastName: user.lastName, username: user.username, isActive: user.isActive, role: user.role } };
+    return { data: { id: user.id, firstName: user.firstName, lastName: user.lastName, username: user.username, phoneNumber: user.phoneNumber, isActive: user.isActive, role: user.role } };
   } catch (err: any) {
     return { error: err?.message || "Failed to create waiter login" };
   }
@@ -631,7 +649,7 @@ export async function getWaiterLogins() {
   try {
     const users = await prisma.user.findMany({
       where: { restaurantId: session.restaurantId, role: "WAITER" },
-      select: { id: true, firstName: true, lastName: true, username: true, isActive: true, lastLoginAt: true, createdAt: true },
+      select: { id: true, firstName: true, lastName: true, username: true, phoneNumber: true, isActive: true, lastLoginAt: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     });
     return { data: users };
