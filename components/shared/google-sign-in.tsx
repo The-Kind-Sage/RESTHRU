@@ -55,6 +55,12 @@ function ensureGisLoaded(clientId: string): Promise<void> {
         client_id: clientId,
         callback: (response) => globalGisCallback(response),
         ux_mode: 'popup',
+        error_callback: (error: any) => {
+          console.error('[GIS] Error:', error);
+          if (error?.type === 'idpiframe_initialization_failed' || error?.message?.includes?.('origin is not allowed')) {
+            console.warn('[GIS] The current origin is not authorized. Add', window.location.origin, 'to Authorized JavaScript origins in Google Cloud Console.');
+          }
+        },
       });
       resolve();
     };
