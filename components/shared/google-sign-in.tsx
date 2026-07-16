@@ -155,6 +155,18 @@ export function GoogleSignInButton({
   }, [router]);
 
   // Keep the cross-instance callback up to date without re-initializing GIS
+  const handleClick = useCallback(() => {
+    if (!window.google?.accounts?.id) {
+      console.error('[GIS] Google Identity Services not available');
+      return;
+    }
+    try {
+      window.google.accounts.id.prompt();
+    } catch (e) {
+      console.error('[GIS] prompt() error:', e);
+    }
+  }, []);
+
   useEffect(() => {
     globalGisCallback = handleCredentialResponse;
     return () => { globalGisCallback = () => {}; };
@@ -210,19 +222,6 @@ export function GoogleSignInButton({
     );
   }
 
-  const handleClick = useCallback(() => {
-    if (!window.google?.accounts?.id) {
-      console.error('[GIS] Google Identity Services not available');
-      return;
-    }
-    try {
-      window.google.accounts.id.prompt();
-    } catch (e) {
-      console.error('[GIS] prompt() error:', e);
-    }
-  }, []);
-
-  // Render Google's rendered button inside our container
   return (
     <Button
       type="button"
