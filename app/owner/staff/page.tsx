@@ -829,7 +829,7 @@ function StaffLoginsSection({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Input placeholder="First name *" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
               <Input placeholder="Last name" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
-              <Input placeholder="Username * (Gmail: name@gmail.com)" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+              <Input placeholder="Gmail * (name@gmail.com)" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
               <Input placeholder="Phone No (alternative login)" value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} />
               <Input type="password" placeholder="Password * (min 6 chars)" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
             </div>

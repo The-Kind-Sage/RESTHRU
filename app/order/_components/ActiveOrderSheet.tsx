@@ -28,6 +28,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { createOrder } from '@/lib/actions/orders';
 import { formatCurrency } from '@/lib/format';
+import { VAT_RATE } from '@/lib/constants';
 
 export default function ActiveOrderSheet() {
   const { 
@@ -168,9 +169,19 @@ export default function ActiveOrderSheet() {
         </ScrollArea>
 
         <DrawerFooter className="border-t border-border pt-4 pb-safe gap-3">
-          <div className="flex justify-between items-center px-2 mb-2">
-            <span className="text-muted-foreground font-medium">Subtotal (before 13% VAT)</span>
-            <span className="text-2xl font-bold text-foreground">{formatCurrency(totalPrice)}</span>
+          <div className="px-2 space-y-1 mb-2">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Subtotal (excl. VAT)</span>
+              <span className="text-foreground">{formatCurrency(Math.round(totalPrice / (1 + VAT_RATE / 100)))}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">VAT ({VAT_RATE}%)</span>
+              <span className="text-foreground">{formatCurrency(totalPrice - Math.round(totalPrice / (1 + VAT_RATE / 100)))}</span>
+            </div>
+            <div className="flex justify-between items-center pt-1 border-t border-border mt-1">
+              <span className="font-semibold text-muted-foreground">Total (incl. VAT)</span>
+              <span className="text-2xl font-bold text-foreground">{formatCurrency(totalPrice)}</span>
+            </div>
           </div>
           
           {orderState === 'DRAFT' ? (

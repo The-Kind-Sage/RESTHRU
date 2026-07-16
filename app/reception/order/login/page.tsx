@@ -69,7 +69,7 @@ function WaiterLoginForm() {
             autoCapitalize="none"
             autoCorrect="off"
             autoComplete="username"
-            placeholder="Your username"
+            placeholder="you@example.com or +977..."
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             disabled={loading}
