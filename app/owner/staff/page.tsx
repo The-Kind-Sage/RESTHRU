@@ -87,6 +87,13 @@ interface StaffMember {
   salary: number;
   avatar: string;
   avatarUrl?: string | null;
+  address?: string;
+  dateOfBirth?: string | null;
+  identityDocType?: string;
+  identityDocImage?: string | null;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  bloodGroup?: string;
 }
 
 // No mock data — staff will be loaded from the database
@@ -203,6 +210,43 @@ function StaffDetailDialog({ staff, open, onOpenChange }: { staff: StaffMember; 
               <p className="text-sm text-muted-foreground">Email</p>
               <p className="font-medium">{staff.email}</p>
             </div>
+            {staff.address && (
+              <div>
+                <p className="text-sm text-muted-foreground">Address</p>
+                <p className="font-medium">{staff.address}</p>
+              </div>
+            )}
+            {staff.dateOfBirth && (
+              <div>
+                <p className="text-sm text-muted-foreground">Date of Birth</p>
+                <p className="font-medium">{staff.dateOfBirth}</p>
+              </div>
+            )}
+            {staff.emergencyContactName && (
+              <div>
+                <p className="text-sm text-muted-foreground">Emergency Contact</p>
+                <p className="font-medium">{staff.emergencyContactName}{staff.emergencyContactPhone ? ` — ${staff.emergencyContactPhone}` : ''}</p>
+              </div>
+            )}
+            {staff.bloodGroup && (
+              <div>
+                <p className="text-sm text-muted-foreground">Blood Group</p>
+                <p className="font-medium">{staff.bloodGroup}</p>
+              </div>
+            )}
+            {staff.identityDocType && (
+              <div>
+                <p className="text-sm text-muted-foreground">Identity Document</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium capitalize">{staff.identityDocType.replace(/_/g, ' ')}</p>
+                  {staff.identityDocImage && (
+                    <a href={staff.identityDocImage} target="_blank" rel="noopener noreferrer" className="text-primary text-xs hover:underline">
+                      View Photo
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
             <div className="border-t pt-3">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm text-muted-foreground">Monthly Salary</p>
@@ -282,12 +326,23 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
     role: '',
     phone: '',
     email: '',
+    address: '',
+    dateOfBirth: '',
+    identityDocType: '',
+    identityDocImage: null as string | null,
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    bloodGroup: '',
   });
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [docPreview, setDocPreview] = useState<string | null>(null);
 
   const resetForm = () => {
-    setFormData({ fullName: '', role: '', phone: '', email: '' });
+    setFormData({ fullName: '', role: '', phone: '', email: '', address: '', dateOfBirth: '', identityDocType: '', identityDocImage: null, emergencyContactName: '', emergencyContactPhone: '', bloodGroup: '' });
     setAvatarFile(null);
     setAvatarPreview(null);
+    setDocFile(null);
+    setDocPreview(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -302,6 +357,12 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
         if (!avatar_url) toast.error('Avatar upload failed — continuing without photo');
       }
 
+      let docImageUrl: string | null = null;
+      if (docFile) {
+        docImageUrl = await uploadImage(docFile, 'identity-docs');
+        if (!docImageUrl) toast.error('Document upload failed');
+      }
+
       const result = await addStaff({
         restaurantId,
         name: formData.fullName,
@@ -309,6 +370,13 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
         phone: formData.phone,
         email: formData.email || undefined,
         avatarUrl: avatar_url,
+        address: formData.address || undefined,
+        dateOfBirth: formData.dateOfBirth || null,
+        identityDocType: formData.identityDocType,
+        identityDocImage: docImageUrl || formData.identityDocImage,
+        emergencyContactName: formData.emergencyContactName,
+        emergencyContactPhone: formData.emergencyContactPhone,
+        bloodGroup: formData.bloodGroup,
       });
 
       if ('limitReached' in result && result.limitReached) { showUpgrade(result.limitReached); return; }
@@ -424,6 +492,74 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
             />
           </div>
 
+          <details className="group">
+            <summary className="text-sm font-semibold text-muted-foreground cursor-pointer hover:text-foreground transition-colors list-none flex items-center gap-2 py-1">
+              <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+              Additional Information
+            </summary>
+            <div className="mt-3 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Address</label>
+                <Input placeholder="Street, city" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Date of Birth</label>
+                <Input type="date" value={formData.dateOfBirth} onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Identity Document Type</label>
+                <Select value={formData.identityDocType} onValueChange={(value) => setFormData({ ...formData, identityDocType: value })}>
+                  <SelectTrigger><SelectValue placeholder="Select document type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="citizenship">Citizenship</SelectItem>
+                    <SelectItem value="driving_license">Driving License</SelectItem>
+                    <SelectItem value="passport">Passport</SelectItem>
+                    <SelectItem value="national_id">National ID</SelectItem>
+                    <SelectItem value="voter_id">Voter ID</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Upload Document Photo</label>
+                <label className="flex flex-col items-center justify-center border-2 border-dashed border-input rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition">
+                  {docPreview ? (
+                    <img src={docPreview} alt="Document preview" className="h-24 object-cover rounded mb-2" />
+                  ) : (
+                    <div className="text-center">
+                      <Upload className="h-6 w-6 mx-auto text-muted-foreground mb-1" />
+                      <p className="text-xs text-muted-foreground">PNG, JPG up to 10MB</p>
+                    </div>
+                  )}
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) { setDocFile(file); setDocPreview(URL.createObjectURL(file)); }
+                  }} />
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Emergency Contact Name</label>
+                  <Input placeholder="Full name" value={formData.emergencyContactName} onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Emergency Contact Phone</label>
+                  <Input placeholder="Phone number" value={formData.emergencyContactPhone} onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Blood Group</label>
+                <Select value={formData.bloodGroup} onValueChange={(value) => setFormData({ ...formData, bloodGroup: value })}>
+                  <SelectTrigger><SelectValue placeholder="Select blood group" /></SelectTrigger>
+                  <SelectContent>
+                    {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((bg) => (
+                      <SelectItem key={bg} value={bg}>{bg}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </details>
+
           {formData.role === 'waiter' || formData.role === 'receptionist' ? (
             <div className="rounded-lg bg-primary/5 border border-primary/20 px-3 py-2 text-xs text-muted-foreground">
               After adding, create a login for this {formData.role} in the{' '}
@@ -485,17 +621,23 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
 }
 
 function EditStaffForm({ staff, onUpdated }: { staff: StaffMember; onUpdated: (updated: StaffMember) => void }) {
-  const [form, setForm] = useState({ name: staff.name, role: staff.role.toLowerCase(), phone: staff.phone, email: staff.email });
+  const [form, setForm] = useState({
+    name: staff.name, role: staff.role.toLowerCase(), phone: staff.phone, email: staff.email,
+    address: staff.address || '', dateOfBirth: staff.dateOfBirth || '',
+    identityDocType: staff.identityDocType || '', identityDocImage: staff.identityDocImage || null,
+    emergencyContactName: staff.emergencyContactName || '', emergencyContactPhone: staff.emergencyContactPhone || '',
+    bloodGroup: staff.bloodGroup || '',
+  });
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     if (!form.name || !form.role || !form.phone) { toast.error('Name, role, and phone are required'); return; }
     setSaving(true);
-    const res = await updateStaff({ id: String(staff.id), ...form });
+    const res = await updateStaff({ id: String(staff.id), ...form, identityDocImage: form.identityDocImage || null });
     setSaving(false);
     if ('error' in res) { toast.error(res.error); return; }
     toast.success('Staff updated');
-    onUpdated({ ...staff, name: form.name, role: form.role.toUpperCase(), phone: form.phone, email: form.email });
+    onUpdated({ ...staff, name: form.name, role: form.role.toUpperCase(), phone: form.phone, email: form.email, address: form.address, dateOfBirth: form.dateOfBirth || null, identityDocType: form.identityDocType, identityDocImage: form.identityDocImage, emergencyContactName: form.emergencyContactName, emergencyContactPhone: form.emergencyContactPhone, bloodGroup: form.bloodGroup });
   };
 
   return (
@@ -503,7 +645,7 @@ function EditStaffForm({ staff, onUpdated }: { staff: StaffMember; onUpdated: (u
       <DialogHeader>
         <DialogTitle>Edit Staff Member</DialogTitle>
       </DialogHeader>
-      <div className="space-y-3">
+      <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
         <div>
           <label className="block text-sm font-medium mb-1">Full Name *</label>
           <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -532,6 +674,49 @@ function EditStaffForm({ staff, onUpdated }: { staff: StaffMember; onUpdated: (u
         <div>
           <label className="block text-sm font-medium mb-1">Email</label>
           <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Address</label>
+          <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Date of Birth</label>
+          <Input type="date" value={form.dateOfBirth} onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Identity Document Type</label>
+          <Select value={form.identityDocType} onValueChange={(v) => setForm({ ...form, identityDocType: v })}>
+            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">None</SelectItem>
+              <SelectItem value="citizenship">Citizenship</SelectItem>
+              <SelectItem value="driving_license">Driving License</SelectItem>
+              <SelectItem value="passport">Passport</SelectItem>
+              <SelectItem value="national_id">National ID</SelectItem>
+              <SelectItem value="voter_id">Voter ID</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-medium mb-1">Emergency Contact Name</label>
+            <Input value={form.emergencyContactName} onChange={(e) => setForm({ ...form, emergencyContactName: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Emergency Phone</label>
+            <Input value={form.emergencyContactPhone} onChange={(e) => setForm({ ...form, emergencyContactPhone: e.target.value })} />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Blood Group</label>
+          <Select value={form.bloodGroup} onValueChange={(v) => setForm({ ...form, bloodGroup: v })}>
+            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+            <SelectContent>
+              {['', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((bg) => (
+                <SelectItem key={bg} value={bg}>{bg || 'None'}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <DialogFooter>
@@ -575,6 +760,13 @@ export default function StaffPage() {
             salary:     s.salary || 0,
             avatar:     (firstName.split(' ')[0]?.[0] || 'S').toUpperCase() + ((firstName.split(' ')[1]?.[0] || 'T').toUpperCase()),
             avatarUrl:  s.profileImage || null,
+            address:    s.address || undefined,
+            dateOfBirth: s.dateOfBirth ? new Date(s.dateOfBirth).toISOString().split('T')[0] : null,
+            identityDocType: s.identityDocType || '',
+            identityDocImage: s.identityDocImage || null,
+            emergencyContactName: s.emergencyContactName || '',
+            emergencyContactPhone: s.emergencyContactPhone || '',
+            bloodGroup: s.bloodGroup || '',
           };
         }));
       }

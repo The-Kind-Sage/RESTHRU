@@ -19,18 +19,27 @@ export async function getStaff(restaurantId: string) {
   }
 }
 
-export async function addStaff(data: {
-  restaurantId: string;
+interface StaffInput {
+  restaurantId?: string;
   name: string;
   role: string;
   phone: string;
   email?: string;
   avatarUrl?: string | null;
-}) {
+  address?: string;
+  dateOfBirth?: string | null;
+  identityDocType?: string;
+  identityDocImage?: string | null;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  bloodGroup?: string;
+  salary?: number;
+}
+
+export async function addStaff(data: StaffInput & { restaurantId: string }) {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
-  // Enforce the plan's staff cap before inserting.
   const limitReached = await checkResourceLimit(data.restaurantId, "staff");
   if (limitReached) return { error: limitMessage(limitReached), limitReached };
 
@@ -43,7 +52,14 @@ export async function addStaff(data: {
         phoneNumber: data.phone,
         email: data.email || "",
         profileImage: data.avatarUrl || undefined,
-        salary: 0,
+        address: data.address || undefined,
+        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+        identityDocType: data.identityDocType || "",
+        identityDocImage: data.identityDocImage || undefined,
+        emergencyContactName: data.emergencyContactName || "",
+        emergencyContactPhone: data.emergencyContactPhone || "",
+        bloodGroup: data.bloodGroup || "",
+        salary: data.salary || 0,
       },
     });
     return { data: member };
@@ -52,14 +68,7 @@ export async function addStaff(data: {
   }
 }
 
-export async function updateStaff(data: {
-  id: string;
-  name: string;
-  role: string;
-  phone: string;
-  email?: string;
-  avatarUrl?: string | null;
-}) {
+export async function updateStaff(data: StaffInput & { id: string }) {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
 
@@ -72,6 +81,14 @@ export async function updateStaff(data: {
         phoneNumber: data.phone,
         email: data.email || "",
         profileImage: data.avatarUrl || undefined,
+        address: data.address || undefined,
+        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
+        identityDocType: data.identityDocType || "",
+        identityDocImage: data.identityDocImage || undefined,
+        emergencyContactName: data.emergencyContactName || "",
+        emergencyContactPhone: data.emergencyContactPhone || "",
+        bloodGroup: data.bloodGroup || "",
+        salary: data.salary ?? undefined,
       },
     });
     return { data: member };

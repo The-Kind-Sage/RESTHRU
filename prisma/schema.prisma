@@ -168,22 +168,27 @@ model Subscription {
 }
 
 model Staff {
-  id            String   @id @default(cuid())
-  restaurantId  String   @map("restaurant_id")
-  firstName     String   @map("first_name")
-  lastName      String   @default("") @map("last_name")
-  email         String   @default("")
-  phoneNumber   String   @default("") @map("phone_number")
-  profileImage  String?  @map("profile_image")
-  role          String
-  status        String   @default("ACTIVE")
-  salary        Float    @default(0)
-  joinDate      DateTime @default(now()) @map("join_date")
-  dateOfBirth   DateTime? @map("date_of_birth")
-  address       String?
-  isActive      Boolean  @default(true) @map("is_active")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id                  String    @id @default(cuid())
+  restaurantId        String    @map("restaurant_id")
+  firstName           String    @map("first_name")
+  lastName            String    @default("") @map("last_name")
+  email               String    @default("")
+  phoneNumber         String    @default("") @map("phone_number")
+  profileImage        String?   @map("profile_image")
+  role                String
+  status              String    @default("ACTIVE")
+  salary              Float     @default(0)
+  joinDate            DateTime  @default(now()) @map("join_date")
+  dateOfBirth         DateTime? @map("date_of_birth")
+  address             String?
+  identityDocType     String    @default("") @map("identity_doc_type")
+  identityDocImage    String?   @map("identity_doc_image")
+  emergencyContactName  String  @default("") @map("emergency_contact_name")
+  emergencyContactPhone String  @default("") @map("emergency_contact_phone")
+  bloodGroup          String    @default("") @map("blood_group")
+  isActive            Boolean   @default(true) @map("is_active")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   shifts     Shift[]
