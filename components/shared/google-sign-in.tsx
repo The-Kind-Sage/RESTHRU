@@ -82,10 +82,10 @@ export function GoogleSignInButton({
   onSuccessRef.current = onSuccess;
   redirectToRef.current = redirectTo;
 
-  const handleCredentialResponse = useCallback(async (response: { credential: string }) => {
+  const handleCredentialResponse = useCallback(async (token: string) => {
     setIsLoading(true);
     try {
-      const result = await googleLogin(response.credential);
+      const result = await googleLogin(token);
       if (result?.error) {
         toast.error(result.error);
         return;
@@ -131,9 +131,11 @@ export function GoogleSignInButton({
           return;
         }
         if (response.id_token) {
-          handleCredentialResponse({ credential: response.id_token });
+          handleCredentialResponse(response.id_token);
+        } else if (response.access_token) {
+          handleCredentialResponse(response.access_token);
         } else {
-          toast.error('No ID token received from Google');
+          toast.error('No token received from Google');
         }
       },
     }).requestAccessToken();

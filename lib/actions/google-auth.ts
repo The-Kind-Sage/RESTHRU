@@ -18,25 +18,38 @@ export async function googleLogin(credential: string) {
   }
 
   try {
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: googleClientId,
+    let email: string;
+    let firstName: string;
+    let lastName: string;
+    let picture: string;
+
+    // Try as access token first, fall back to id_token
+    const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${credential}` },
     });
 
-    const payload = ticket.getPayload();
-    if (!payload) {
-      return { error: "Invalid Google token" };
+    if (userInfoRes.ok) {
+      const info = await userInfoRes.json();
+      email = info.email || "";
+      firstName = info.given_name || "";
+      lastName = info.family_name || "";
+      picture = info.picture || "";
+    } else {
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: googleClientId,
+      });
+      const payload = ticket.getPayload();
+      if (!payload) return { error: "Invalid Google token" };
+      email = payload.email || "";
+      firstName = payload.given_name || "";
+      lastName = payload.family_name || "";
+      picture = payload.picture || "";
     }
 
-    const email = payload.email;
     if (!email) {
       return { error: "Email not found in Google account" };
     }
-
-    const firstName = payload.given_name || "";
-    const lastName = payload.family_name || "";
-    const googleId = payload.sub;
-    const picture = payload.picture || "";
 
     // Find existing user by email
     let user = await prisma.user.findUnique({ where: { email } });
