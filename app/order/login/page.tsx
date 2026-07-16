@@ -61,15 +61,14 @@ function WaiterLoginForm() {
       >
         <div className="space-y-2">
           <Label htmlFor="username" className="text-sm font-medium">
-            Username
+            Email or Phone No
           </Label>
           <Input
             id="username"
-            inputMode="text"
             autoCapitalize="none"
             autoCorrect="off"
             autoComplete="username"
-            placeholder="Your username"
+            placeholder="you@example.com or +977..."
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             disabled={loading}

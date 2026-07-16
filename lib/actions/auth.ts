@@ -78,9 +78,9 @@ export async function login(
   options?: { adminConsole?: boolean; blockAdmin?: boolean }
 ) {
   try {
-    // Allow login by email OR username
+    // Allow login by email, phone number, OR username
     const user = await prisma.user.findFirst({
-      where: { OR: [{ username }, { email: username }], isActive: true },
+      where: { OR: [{ username }, { email: username }, { phoneNumber: username }], isActive: true },
     });
 
     if (!user || !user.passwordHash) {
@@ -188,9 +188,16 @@ export async function register(data: {
   planId?: string;
 }) {
   try {
-    const existing = await prisma.user.findUnique({ where: { email: data.email } });
-    if (existing) {
+    const existingByEmail = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existingByEmail) {
       return { error: "An account with this email already exists" };
+    }
+
+    if (data.phone) {
+      const existingByPhone = await prisma.user.findFirst({ where: { phoneNumber: data.phone } });
+      if (existingByPhone) {
+        return { error: "An account with this phone number already exists" };
+      }
     }
 
     const passwordHash = await bcrypt.hash(data.password, 12);
@@ -203,7 +210,7 @@ export async function register(data: {
         passwordHash,
         firstName: nameParts[0] || "",
         lastName: nameParts.slice(1).join(" ") || "",
-        phoneNumber: data.phone || "",
+        phoneNumber: data.phone || null,
         role: "RESTAURANT_OWNER",
         isActive: true,
       },
@@ -437,7 +444,7 @@ export async function changePassword(
   }
 
   const user = await prisma.user.findFirst({
-    where: { username, isActive: true },
+    where: { OR: [{ username }, { email: username }, { phoneNumber: username }], isActive: true },
   });
 
   if (!user || !user.passwordHash) {
@@ -684,7 +691,7 @@ export async function resetPassword(username: string, newPassword: string) {
   }
 
   const user = await prisma.user.findFirst({
-    where: { username, isActive: true },
+    where: { OR: [{ username }, { email: username }, { phoneNumber: username }], isActive: true },
   });
 
   if (!user) {

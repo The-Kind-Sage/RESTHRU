@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
     setError("");
 
     if (!username.trim()) {
-      setError("Please enter your username or email");
+      setError("Please enter your email, phone, or username");
       return;
     }
 
@@ -100,13 +100,13 @@ export default function ForgotPasswordPage() {
               <Mail className="h-7 w-7 text-primary-foreground" />
             </div>
             <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
-            <CardDescription>Enter your username or email to receive a verification code</CardDescription>
+            <CardDescription>Enter your email, phone, or username to receive a verification code</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSendCode} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Username / Email</Label>
-                <Input id="username" placeholder="Enter username or email" value={username} onChange={(e) => setUsername(e.target.value)} disabled={loading} required />
+                <Label htmlFor="username">Email / Phone / Username</Label>
+                <Input id="username" placeholder="you@example.com or +977..." value={username} onChange={(e) => setUsername(e.target.value)} disabled={loading} required />
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" disabled={loading} className="w-full">{loading ? "Sending..." : "Send Verification Code"}</Button>

@@ -32,7 +32,7 @@ import { GoogleSignInButton } from '@/components/shared/google-sign-in';
 import { GoogleRegistrationDialog } from '@/components/shared/google-registration-dialog';
 
 const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  email: z.string().min(1, 'Email or phone is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
@@ -109,15 +109,14 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
                 render={({ field }) => (
                   <FormItem>
                     <Label htmlFor="modal-email" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Email address
+                      Email or Phone No
                     </Label>
                     <div className="relative mt-1.5">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <FormControl>
                         <Input
                           id="modal-email"
-                          placeholder="you@example.com"
-                          type="email"
+                          placeholder="you@example.com or +977..."
                           disabled={isLoading}
                           className="pl-10 h-11 border-border/70 bg-muted/30 focus:bg-white transition-colors"
                           {...field}

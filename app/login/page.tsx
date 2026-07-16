@@ -25,7 +25,7 @@ import { GoogleSignInButton } from '@/components/shared/google-sign-in';
 import { GoogleRegistrationDialog } from '@/components/shared/google-registration-dialog';
 
 const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  email: z.string().min(1, 'Email or phone is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
@@ -162,14 +162,13 @@ export default function LoginPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <Label htmlFor="email">Email address</Label>
+                    <Label htmlFor="email">Email or Phone No</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <FormControl>
                         <Input
                           id="email"
-                          placeholder="you@example.com"
-                          type="email"
+                          placeholder="you@example.com or +977..."
                           disabled={isLoading}
                           className="pl-10 h-11"
                           {...field}

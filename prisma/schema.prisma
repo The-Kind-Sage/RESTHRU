@@ -15,7 +15,7 @@ model User {
   passwordHash  String?  @map("password_hash")
   firstName     String   @default("") @map("first_name")
   lastName      String   @default("") @map("last_name")
-  phoneNumber   String   @default("") @map("phone_number")
+  phoneNumber   String?  @map("phone_number")
   profileImage  String?  @map("profile_image")
   role          String   @default("STAFF")
   restaurantId  String?  @map("restaurant_id")

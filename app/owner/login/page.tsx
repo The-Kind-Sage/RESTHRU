@@ -44,8 +44,8 @@ export default function DashboardLoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input id="username" placeholder="Enter username" value={username} onChange={(e) => setUsername(e.target.value)} disabled={loading} required />
+              <Label htmlFor="username">Email or Phone No</Label>
+              <Input id="username" placeholder="you@example.com or +977..." value={username} onChange={(e) => setUsername(e.target.value)} disabled={loading} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
