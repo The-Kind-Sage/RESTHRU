@@ -24,6 +24,7 @@ export const RESTAURANT_TYPES = [
   { value: 'bar', label: 'Bar' },
   { value: 'fast_food', label: 'Fast Food' },
   { value: 'bakery', label: 'Bakery' },
+  { value: 'mixed', label: 'Mixed' },
 ];
 
 // Payment Methods
