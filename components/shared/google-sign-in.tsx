@@ -74,12 +74,20 @@ function ensureGisLoaded(clientId: string): Promise<void> {
   return gisReadyPromise;
 }
 
+interface GoogleUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  picture: string;
+}
+
 interface GoogleSignInButtonProps {
   text?: string;
   className?: string;
   disabled?: boolean;
   redirectTo?: string;
-  onSuccess?: (user: { id: string; email: string; firstName: string; lastName: string; picture: string }) => void;
+  onSuccess?: (user: GoogleUser & { hasRestaurant?: boolean; restaurant?: any }) => void;
 }
 
 export function GoogleSignInButton({
@@ -107,13 +115,17 @@ export function GoogleSignInButton({
         return;
       }
 
-      if (result.needsRegistration && result.user && onSuccessRef.current) {
-        onSuccessRef.current(result.user);
+      if (result.user && onSuccessRef.current) {
+        onSuccessRef.current({
+          ...result.user,
+          hasRestaurant: result.hasRestaurant,
+          restaurant: result.restaurant,
+        });
         return;
       }
 
       toast.success('Welcome to Resthru!');
-      router.push(redirectToRef.current || result.redirectTo || '/owner');
+      router.push(redirectToRef.current || '/owner');
     } catch {
       toast.error('An unexpected error occurred');
     } finally {

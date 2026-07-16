@@ -333,40 +333,78 @@ export async function completeGoogleRegistration(userId: string, data: {
       });
     }
 
-    // Create restaurant
-    const restaurant = await prisma.restaurant.create({
-      data: {
-        ownerId: userId,
-        name: data.restaurantName,
-        type: data.restaurantType.toUpperCase().replace(/\s+/g, '_'),
-        street: data.address || '',
-        city: data.city || '',
-        phoneNumber: data.restaurantPhone || '',
-        totalTables: 0,
-        isActive: true,
-      },
-    });
+    // Check if user already has a restaurant
+    const existingRestaurant = user.restaurantId
+      ? await prisma.restaurant.findUnique({ where: { id: user.restaurantId } })
+      : null;
 
-    // Link user to restaurant
-    await prisma.user.update({
-      where: { id: userId },
-      data: { restaurantId: restaurant.id },
-    });
+    let restaurantId: string;
 
-    // Create subscription if plan selected
+    if (existingRestaurant) {
+      // Update existing restaurant
+      await prisma.restaurant.update({
+        where: { id: existingRestaurant.id },
+        data: {
+          name: data.restaurantName,
+          type: data.restaurantType.toUpperCase().replace(/\s+/g, '_'),
+          street: data.address || existingRestaurant.street || '',
+          city: data.city || existingRestaurant.city || '',
+          phoneNumber: data.restaurantPhone || existingRestaurant.phoneNumber || '',
+        },
+      });
+      restaurantId = existingRestaurant.id;
+    } else {
+      // Create new restaurant
+      const restaurant = await prisma.restaurant.create({
+        data: {
+          ownerId: userId,
+          name: data.restaurantName,
+          type: data.restaurantType.toUpperCase().replace(/\s+/g, '_'),
+          street: data.address || '',
+          city: data.city || '',
+          phoneNumber: data.restaurantPhone || '',
+          totalTables: 0,
+          isActive: true,
+        },
+      });
+      restaurantId = restaurant.id;
+
+      // Link user to restaurant
+      await prisma.user.update({
+        where: { id: userId },
+        data: { restaurantId: restaurant.id },
+      });
+    }
+
+    // Create or update subscription if plan selected
     if (data.planId) {
       const plan = await prisma.plan.findUnique({ where: { type: data.planId.toUpperCase() } });
       if (plan) {
-        await prisma.subscription.create({
-          data: {
-            restaurantId: restaurant.id,
-            planId: plan.id,
-            status: "ACTIVE",
-            startDate: new Date(),
-            endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-            billingCycle: "MONTHLY",
-          },
+        const existingSub = await prisma.subscription.findFirst({
+          where: { restaurantId },
         });
+        if (existingSub) {
+          await prisma.subscription.update({
+            where: { id: existingSub.id },
+            data: {
+              planId: plan.id,
+              status: "ACTIVE",
+              startDate: new Date(),
+              endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+            },
+          });
+        } else {
+          await prisma.subscription.create({
+            data: {
+              restaurantId,
+              planId: plan.id,
+              status: "ACTIVE",
+              startDate: new Date(),
+              endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+              billingCycle: "MONTHLY",
+            },
+          });
+        }
       }
     }
 
@@ -378,7 +416,7 @@ export async function completeGoogleRegistration(userId: string, data: {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      restaurantId: restaurant.id,
+      restaurantId,
     });
 
     return { success: true, redirectTo: "/owner" };

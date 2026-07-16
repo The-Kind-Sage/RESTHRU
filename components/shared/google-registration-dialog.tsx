@@ -78,6 +78,15 @@ interface GoogleUser {
   firstName: string;
   lastName: string;
   picture: string;
+  hasRestaurant?: boolean;
+  restaurant?: {
+    id: string;
+    name: string;
+    type: string;
+    street?: string;
+    city?: string;
+    phoneNumber?: string;
+  } | null;
 }
 
 interface GoogleRegistrationDialogProps {
@@ -110,7 +119,13 @@ export function GoogleRegistrationDialog({ open, onOpenChange, user }: GoogleReg
 
   const step2Form = useForm<Step2Data>({
     resolver: zodResolver(step2Schema),
-    defaultValues: { restaurantName: '', restaurantType: '', address: '', city: '', restaurantPhone: '' },
+    defaultValues: {
+      restaurantName: user.restaurant?.name || '',
+      restaurantType: user.restaurant?.type || '',
+      address: user.restaurant?.street || '',
+      city: user.restaurant?.city || '',
+      restaurantPhone: user.restaurant?.phoneNumber || '',
+    },
   });
 
   const step3Form = useForm<Step3Data>({

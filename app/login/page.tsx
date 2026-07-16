@@ -41,6 +41,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [googleUser, setGoogleUser] = useState<{ id: string; email: string; firstName: string; lastName: string; picture: string } | null>(null);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -247,7 +248,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <GoogleSignInButton />
+          <GoogleSignInButton onSuccess={(user) => setGoogleUser(user)} />
 
           <p className="text-center text-sm text-muted-foreground mt-8">
             Don&apos;t have an account?{' '}
@@ -259,6 +260,14 @@ export default function LoginPage() {
             </Link>
           </p>
         </motion.div>
+
+        {googleUser && (
+          <GoogleRegistrationDialog
+            open={!!googleUser}
+            onOpenChange={(open) => { if (!open) setGoogleUser(null); }}
+            user={googleUser}
+          />
+        )}
       </div>
     </div>
   );

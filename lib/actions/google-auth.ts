@@ -2,7 +2,6 @@
 
 import { OAuth2Client } from "google-auth-library";
 import prisma from "@/lib/prisma";
-import { createSession } from "@/lib/auth";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
 const client = new OAuth2Client(googleClientId);
@@ -73,36 +72,22 @@ export async function googleLogin(credential: string) {
     // Find restaurant by ownerId
     const restaurant = await prisma.restaurant.findFirst({
       where: { ownerId: user.id },
-      select: { id: true },
+      select: { id: true, name: true, type: true, street: true, city: true, phoneNumber: true },
     });
 
-    // If user already has a restaurant, they're an existing user — log them in directly
-    if (restaurant) {
-      // Link user to restaurant if needed
-      if (!user.restaurantId) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { restaurantId: restaurant.id },
-        });
-      }
-
-      await createSession({
-        id: user.id,
-        username: user.username || "",
-        role: user.role,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        restaurantId: restaurant.id,
-      });
-
-      return { success: true, redirectTo: "/owner" };
-    }
-
-    // New Google user (no restaurant yet) — return user data for registration flow
+    // Always go through the start free trial dialog — never redirect directly
     return {
       success: true,
       needsRegistration: true,
+      hasRestaurant: !!restaurant,
+      restaurant: restaurant ? {
+        id: restaurant.id,
+        name: restaurant.name,
+        type: restaurant.type,
+        street: restaurant.street,
+        city: restaurant.city,
+        phoneNumber: restaurant.phoneNumber,
+      } : null,
       user: {
         id: user.id,
         email: user.email,
