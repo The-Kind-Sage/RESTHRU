@@ -10,89 +10,44 @@ declare global {
   interface Window {
     google?: {
       accounts: {
-        id: {
-          initialize: (config: {
+        oauth2: {
+          initTokenClient: (config: {
             client_id: string;
-            callback: (response: { credential: string }) => void;
-            ux_mode?: string;
-            error_callback?: (error: { type: string; message: string }) => void;
-          }) => void;
-          renderButton: (
-            parent: HTMLElement,
-            config: {
-              theme?: string;
-              size?: string;
-              width?: number;
-              text?: string;
-              shape?: string;
-            }
-          ) => void;
-          prompt: () => void;
+            scope: string;
+            callback: (response: {
+              access_token?: string;
+              id_token?: string;
+              error?: string;
+            }) => void;
+            error_callback?: (error: any) => void;
+          }) => { requestAccessToken: () => void };
         };
       };
     };
   }
 }
 
-// ── Module-level singleton ──
-// GIS script + initialize() must run exactly once. We use a module-level
-// callback that `initialize()` references so every component instance is
-// reached without re-initializing.
-type GisCallback = (response: { credential: string }) => void;
-let globalGisCallback: GisCallback = () => {};
-let gisReadyPromise: Promise<void> | null = null;
+let scriptLoadPromise: Promise<void> | null = null;
 
-let gisInitialized = false;
-
-function ensureGisLoaded(clientId: string): Promise<void> {
-  if (gisReadyPromise) return gisReadyPromise;
-
-  gisReadyPromise = new Promise((resolve) => {
-    const init = () => {
-      if (gisInitialized) return;
-      gisInitialized = true;
-      console.log('[GIS] Initializing with client_id:', clientId, 'origin:', window.location.origin);
-      if (!window.google?.accounts?.id) {
-        console.error('[GIS] Google Identity Services not available after script load');
-        resolve();
-        return;
-      }
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: (response) => globalGisCallback(response),
-        ux_mode: 'popup',
-        error_callback: (error: any) => {
-          console.error('[GIS] Error:', error);
-          if (error?.type === 'idpiframe_initialization_failed' || error?.message?.includes?.('origin is not allowed')) {
-            console.warn('[GIS] The current origin is not authorized. Add', window.location.origin, 'to Authorized JavaScript origins in Google Cloud Console.');
-          }
-        },
-      });
-      resolve();
-    };
-
-    if (window.google?.accounts?.id) {
-      init();
-      return;
-    }
-
+function loadGsiScript(): Promise<void> {
+  if (scriptLoadPromise) return scriptLoadPromise;
+  scriptLoadPromise = new Promise((resolve) => {
+    if (window.google?.accounts?.oauth2) { resolve(); return; }
     const existing = document.querySelector<HTMLScriptElement>(
       'script[src*="accounts.google.com/gsi/client"]',
     );
     if (existing) {
-      existing.addEventListener('load', init, { once: true });
-      if (window.google?.accounts?.id) init();
+      existing.addEventListener('load', () => resolve(), { once: true });
+      if (window.google?.accounts?.oauth2) resolve();
       return;
     }
-
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.onload = init;
-    document.head.appendChild(script);
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.onload = () => resolve();
+    document.head.appendChild(s);
   });
-
-  return gisReadyPromise;
+  return scriptLoadPromise;
 }
 
 interface GoogleUser {
@@ -120,9 +75,10 @@ export function GoogleSignInButton({
 }: GoogleSignInButtonProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [ready, setReady] = useState(!!gisReadyPromise);
+  const [ready, setReady] = useState(false);
   const onSuccessRef = useRef(onSuccess);
   const redirectToRef = useRef(redirectTo);
+  const popupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   onSuccessRef.current = onSuccess;
   redirectToRef.current = redirectTo;
@@ -154,34 +110,65 @@ export function GoogleSignInButton({
     }
   }, [router]);
 
-  // Keep the cross-instance callback up to date without re-initializing GIS
   const handleClick = useCallback(() => {
-    if (!window.google?.accounts?.id) {
-      console.error('[GIS] Google Identity Services not available');
+    if (!window.google?.accounts?.oauth2) {
+      toast.error('Google Identity Services not available');
       return;
     }
-    try {
-      window.google.accounts.id.prompt();
-    } catch (e) {
-      console.error('[GIS] prompt() error:', e);
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      toast.error('Google sign-in is not configured');
+      return;
     }
-  }, []);
 
-  useEffect(() => {
-    globalGisCallback = handleCredentialResponse;
-    return () => { globalGisCallback = () => {}; };
+    try {
+      setIsLoading(true);
+
+      popupTimerRef.current = setTimeout(() => {
+        setIsLoading(false);
+        toast.error('Popup blocked. Please allow popups for this site to sign in with Google.');
+      }, 3000);
+
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'openid email profile',
+        callback: (response) => {
+          if (popupTimerRef.current) {
+            clearTimeout(popupTimerRef.current);
+            popupTimerRef.current = null;
+          }
+          setIsLoading(false);
+          if (response.error) {
+            if (response.error === 'popup_closed_by_user') return;
+            console.error('[OAuth] error:', response.error);
+            toast.error('Google sign-in failed');
+            return;
+          }
+          if (response.id_token) {
+            handleCredentialResponse({ credential: response.id_token });
+          } else {
+            toast.error('No ID token received from Google');
+          }
+        },
+      });
+      client.requestAccessToken();
+    } catch (e) {
+      if (popupTimerRef.current) {
+        clearTimeout(popupTimerRef.current);
+        popupTimerRef.current = null;
+      }
+      setIsLoading(false);
+      console.error('[OAuth] error:', e);
+      toast.error('Failed to start Google sign-in');
+    }
   }, [handleCredentialResponse]);
 
   useEffect(() => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId) return;
-
-    ensureGisLoaded(clientId).then(() => setReady(true));
+    loadGsiScript().then(() => setReady(true));
   }, []);
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
-  // Fallback button if GIS is not configured
   if (!clientId) {
     return (
       <Button
@@ -204,7 +191,6 @@ export function GoogleSignInButton({
     );
   }
 
-  // Loading state while GIS loads
   if (!ready || isLoading) {
     return (
       <Button
