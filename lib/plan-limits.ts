@@ -48,7 +48,7 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     rank: 0,
     maxTables: 5,
     maxStaff: 10,
-    maxMenuItems: 10,
+    maxMenuItems: 30,
     maxRestaurants: 1,
     features: [],
   },
