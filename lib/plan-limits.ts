@@ -47,7 +47,7 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     label: "Free",
     rank: 0,
     maxTables: 5,
-    maxStaff: 3,
+    maxStaff: 10,
     maxMenuItems: 10,
     maxRestaurants: 1,
     features: [],

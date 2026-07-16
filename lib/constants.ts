@@ -121,7 +121,7 @@ export const PLANS = [
     currency: 'NPR',
     features: [
       'Up to 5 tables',
-      'Up to 3 staff members',
+      'Up to 10 staff members',
       'Up to 10 menu items',
       'QR ordering',
       'Email support',
