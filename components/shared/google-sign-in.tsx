@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ declare global {
           initialize: (config: {
             client_id: string;
             callback: (response: { credential: string }) => void;
+            ux_mode?: string;
           }) => void;
           renderButton: (
             parent: HTMLElement,
@@ -32,11 +33,53 @@ declare global {
   }
 }
 
+// ── Module-level singleton ──
+// GIS script + initialize() must run exactly once. We use a module-level
+// callback that `initialize()` references so every component instance is
+// reached without re-initializing.
+type GisCallback = (response: { credential: string }) => void;
+let globalGisCallback: GisCallback = () => {};
+let gisReadyPromise: Promise<void> | null = null;
+
+function ensureGisLoaded(clientId: string): Promise<void> {
+  if (gisReadyPromise) return gisReadyPromise;
+
+  gisReadyPromise = new Promise((resolve) => {
+    const existing = document.querySelector<HTMLScriptElement>(
+      'script[src="https://accounts.google.com/gsi/client"]',
+    );
+
+    const init = () => {
+      console.log('[GIS] Initializing with client_id:', clientId, 'origin:', window.location.origin);
+      window.google!.accounts.id.initialize({
+        client_id: clientId,
+        callback: (response) => globalGisCallback(response),
+        ux_mode: 'popup',
+      });
+      resolve();
+    };
+
+    if (existing && window.google) {
+      init();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.onload = init;
+    document.head.appendChild(script);
+  });
+
+  return gisReadyPromise;
+}
+
 interface GoogleSignInButtonProps {
   text?: string;
   className?: string;
   disabled?: boolean;
   redirectTo?: string;
+  onSuccess?: (user: { id: string; email: string; firstName: string; lastName: string; picture: string }) => void;
 }
 
 export function GoogleSignInButton({
@@ -44,12 +87,18 @@ export function GoogleSignInButton({
   className = '',
   disabled = false,
   redirectTo,
+  onSuccess,
 }: GoogleSignInButtonProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [gisReady, setGisReady] = useState(false);
+  const [ready, setReady] = useState(!!gisReadyPromise);
+  const onSuccessRef = useRef(onSuccess);
+  const redirectToRef = useRef(redirectTo);
 
-  const handleCredentialResponse = async (response: { credential: string }) => {
+  onSuccessRef.current = onSuccess;
+  redirectToRef.current = redirectTo;
+
+  const handleCredentialResponse = useCallback(async (response: { credential: string }) => {
     setIsLoading(true);
     try {
       const result = await googleLogin(response.credential);
@@ -57,41 +106,32 @@ export function GoogleSignInButton({
         toast.error(result.error);
         return;
       }
+
+      if (result.needsRegistration && result.user && onSuccessRef.current) {
+        onSuccessRef.current(result.user);
+        return;
+      }
+
       toast.success('Welcome to Resthru!');
-      router.push(redirectTo || result.redirectTo || '/owner');
+      router.push(redirectToRef.current || result.redirectTo || '/owner');
     } catch {
       toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router]);
+
+  // Keep the cross-instance callback up to date without re-initializing GIS
+  useEffect(() => {
+    globalGisCallback = handleCredentialResponse;
+    return () => { globalGisCallback = () => {}; };
+  }, [handleCredentialResponse]);
 
   useEffect(() => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     if (!clientId) return;
 
-    // Load Google Identity Services script
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.onload = () => {
-      if (window.google) {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleCredentialResponse,
-        });
-        setGisReady(true);
-      }
-    };
-    document.head.appendChild(script);
-
-    return () => {
-      // Clean up script on unmount
-      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-      if (existingScript) {
-        existingScript.remove();
-      }
-    };
+    ensureGisLoaded(clientId).then(() => setReady(true));
   }, []);
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -120,7 +160,7 @@ export function GoogleSignInButton({
   }
 
   // Loading state while GIS loads
-  if (!gisReady || isLoading) {
+  if (!ready || isLoading) {
     return (
       <Button
         type="button"

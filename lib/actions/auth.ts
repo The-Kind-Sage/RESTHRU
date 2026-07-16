@@ -5,6 +5,12 @@ import bcrypt from "bcryptjs";
 import { createSession, clearSession, getSession } from "@/lib/auth";
 import { isApproverRole } from "@/lib/manager-approval";
 
+// Validate that a username is in Gmail format (a valid email ending in @gmail.com).
+export async function isValidGmail(username: string): Promise<boolean> {
+  const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+  return gmailRegex.test(username.trim());
+}
+
 function generateUsername(email: string): string {
   let base = email.split("@")[0] || "user";
   // Replace non-alphanumeric chars (except - and _) to keep it safe
@@ -306,6 +312,83 @@ export async function getUserFromSession() {
   };
 }
 
+export async function completeGoogleRegistration(userId: string, data: {
+  phone?: string;
+  restaurantName: string;
+  restaurantType: string;
+  address?: string;
+  city?: string;
+  restaurantPhone?: string;
+  planId?: string;
+}) {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return { error: "User not found" };
+
+    // Update phone if provided
+    if (data.phone) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { phoneNumber: data.phone },
+      });
+    }
+
+    // Create restaurant
+    const restaurant = await prisma.restaurant.create({
+      data: {
+        ownerId: userId,
+        name: data.restaurantName,
+        type: data.restaurantType.toUpperCase().replace(/\s+/g, '_'),
+        street: data.address || '',
+        city: data.city || '',
+        phoneNumber: data.restaurantPhone || '',
+        totalTables: 0,
+        isActive: true,
+      },
+    });
+
+    // Link user to restaurant
+    await prisma.user.update({
+      where: { id: userId },
+      data: { restaurantId: restaurant.id },
+    });
+
+    // Create subscription if plan selected
+    if (data.planId) {
+      const plan = await prisma.plan.findUnique({ where: { type: data.planId.toUpperCase() } });
+      if (plan) {
+        await prisma.subscription.create({
+          data: {
+            restaurantId: restaurant.id,
+            planId: plan.id,
+            status: "ACTIVE",
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+            billingCycle: "MONTHLY",
+          },
+        });
+      }
+    }
+
+    // Create session
+    await createSession({
+      id: user.id,
+      username: user.username || "",
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      restaurantId: restaurant.id,
+    });
+
+    return { success: true, redirectTo: "/owner" };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("completeGoogleRegistration error:", message);
+    return { error: "Failed to complete registration" };
+  }
+}
+
 export async function changePassword(
   username: string,
   currentPassword: string,
@@ -352,6 +435,9 @@ export async function createReceptionLogin(data: {
   if (!data.firstName || !data.username || !data.password) {
     return { error: "First name, username, and password are required" };
   }
+  if (!(await isValidGmail(data.username))) {
+    return { error: "Username must be a valid Gmail address (e.g. name@gmail.com)" };
+  }
   if (data.password.length < 6) {
     return { error: "Password must be at least 6 characters" };
   }
@@ -369,7 +455,7 @@ export async function createReceptionLogin(data: {
         passwordHash,
         firstName: data.firstName,
         lastName: data.lastName || "",
-        email: `${data.username}@reception.local`,
+        email: data.username,
         role: "RECEPTIONIST",
         restaurantId: session.restaurantId,
         isActive: true,
@@ -423,6 +509,26 @@ export async function deactivateReceptionLogin(userId: string) {
   }
 }
 
+export async function deleteReceptionLogin(userId: string) {
+  const session = await getSession();
+  if (!session?.restaurantId) return { error: "Not authenticated" };
+  if (session.role !== "RESTAURANT_OWNER") {
+    return { error: "Only the restaurant owner can delete reception logins" };
+  }
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: { id: userId, restaurantId: session.restaurantId, role: "RECEPTIONIST" },
+    });
+    if (!user) return { error: "Reception login not found" };
+
+    await prisma.user.delete({ where: { id: userId } });
+    return { success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to delete reception login" };
+  }
+}
+
 // ── Waiter logins ──
 
 export async function createWaiterLogin(data: {
@@ -439,6 +545,9 @@ export async function createWaiterLogin(data: {
 
   if (!data.firstName || !data.username || !data.password) {
     return { error: "First name, username, and password are required" };
+  }
+  if (!(await isValidGmail(data.username))) {
+    return { error: "Username must be a valid Gmail address (e.g. name@gmail.com)" };
   }
   if (data.password.length < 6) {
     return { error: "Password must be at least 6 characters" };
@@ -457,7 +566,7 @@ export async function createWaiterLogin(data: {
         passwordHash,
         firstName: data.firstName,
         lastName: data.lastName || "",
-        email: `${data.username}@waiter.local`,
+        email: data.username,
         role: "WAITER",
         restaurantId: session.restaurantId,
         isActive: true,
@@ -508,6 +617,26 @@ export async function deactivateWaiterLogin(userId: string) {
     return { data: updated };
   } catch (err: any) {
     return { error: err?.message || "Failed to toggle waiter login" };
+  }
+}
+
+export async function deleteWaiterLogin(userId: string) {
+  const session = await getSession();
+  if (!session?.restaurantId) return { error: "Not authenticated" };
+  if (session.role !== "RESTAURANT_OWNER") {
+    return { error: "Only the restaurant owner can delete waiter logins" };
+  }
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: { id: userId, restaurantId: session.restaurantId, role: "WAITER" },
+    });
+    if (!user) return { error: "Waiter login not found" };
+
+    await prisma.user.delete({ where: { id: userId } });
+    return { success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to delete waiter login" };
   }
 }
 

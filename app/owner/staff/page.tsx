@@ -69,8 +69,8 @@ import { uploadImage } from '@/lib/upload';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
 import {
-  createReceptionLogin, getReceptionLogins, deactivateReceptionLogin,
-  createWaiterLogin, getWaiterLogins, deactivateWaiterLogin,
+  createReceptionLogin, getReceptionLogins, deactivateReceptionLogin, deleteReceptionLogin,
+  createWaiterLogin, getWaiterLogins, deactivateWaiterLogin, deleteWaiterLogin,
 } from '@/lib/actions/auth';
 import { getStaff, addStaff, deleteStaff } from '@/lib/actions/staff';
 import { useUpgradeStore } from '@/store/upgrade-store';
@@ -728,6 +728,7 @@ export default function StaffPage() {
         createFn={createReceptionLogin}
         listFn={getReceptionLogins}
         toggleFn={deactivateReceptionLogin}
+        deleteFn={deleteReceptionLogin}
       />
       <StaffLoginsSection
         role="WAITER"
@@ -736,6 +737,7 @@ export default function StaffPage() {
         createFn={createWaiterLogin}
         listFn={getWaiterLogins}
         toggleFn={deactivateWaiterLogin}
+        deleteFn={deleteWaiterLogin}
       />
     </div>
   );
@@ -748,6 +750,7 @@ function StaffLoginsSection({
   createFn,
   listFn,
   toggleFn,
+  deleteFn,
 }: {
   role: string;
   title: string;
@@ -755,6 +758,7 @@ function StaffLoginsSection({
   createFn: (data: { firstName: string; lastName?: string; username: string; password: string }) => Promise<any>;
   listFn: () => Promise<any>;
   toggleFn: (id: string) => Promise<any>;
+  deleteFn?: (id: string) => Promise<any>;
 }) {
   const { user } = useAuthStore();
   const [logins, setLogins] = useState<any[]>([]);
@@ -794,6 +798,16 @@ function StaffLoginsSection({
     fetchLogins();
   };
 
+  const isOwner = user?.role === "RESTAURANT_OWNER";
+
+  const handleDelete = async (id: string) => {
+    if (!deleteFn) return;
+    const res = await deleteFn(id);
+    if ("error" in res) { toast.error(res.error); return; }
+    toast.success("Login deleted permanently");
+    fetchLogins();
+  };
+
   if (user?.role === role) return null;
 
   return (
@@ -815,7 +829,7 @@ function StaffLoginsSection({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Input placeholder="First name *" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
               <Input placeholder="Last name" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
-              <Input placeholder="Username *" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+              <Input placeholder="Username * (Gmail: name@gmail.com)" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
               <Input type="password" placeholder="Password * (min 6 chars)" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
             </div>
             <div className="flex gap-2 justify-end">
@@ -847,9 +861,32 @@ function StaffLoginsSection({
                     <p className="text-xs text-muted-foreground mt-0.5">Last login: {new Date(l.lastLoginAt).toLocaleString()}</p>
                   )}
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => handleToggle(l.id)}>
-                  {l.isActive ? <Lock className="w-3 h-3 text-destructive" /> : <Unlock className="w-3 h-3 text-success" />}
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="sm" onClick={() => handleToggle(l.id)}>
+                    {l.isActive ? <Lock className="w-3 h-3 text-destructive" /> : <Unlock className="w-3 h-3 text-success" />}
+                  </Button>
+                  {isOwner && deleteFn && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete {title.slice(0, -1)} Login</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete <strong>{l.firstName} {l.lastName}</strong>'s login (@{l.username}). This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(l.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
               </div>
             ))}
           </div>

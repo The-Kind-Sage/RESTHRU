@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/select';
 import { register } from '@/lib/actions/auth';
 import { GoogleSignInButton } from '@/components/shared/google-sign-in';
+import { GoogleRegistrationDialog } from '@/components/shared/google-registration-dialog';
 import { NEPAL_CITIES, RESTAURANT_TYPES } from '@/lib/constants';
 import { getPublicPlans, type PublicPlan } from '@/lib/actions/get-plans-public';
 
@@ -81,6 +82,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [usePersonalPhone, setUsePersonalPhone] = useState(false);
   const [plans, setPlans] = useState<PublicPlan[]>([]);
+  const [googleUser, setGoogleUser] = useState<{ id: string; email: string; firstName: string; lastName: string; picture: string } | null>(null);
 
   useEffect(() => {
     getPublicPlans().then(setPlans);
@@ -283,7 +285,11 @@ export default function RegisterPage() {
               >
                 <Card className="border border-white/20 bg-white/95 shadow-xl shadow-primary/5 backdrop-blur-xl">
                   <CardContent className="p-6 sm:p-8">
-                    <GoogleSignInButton text="Sign up with Google" className="mb-6" />
+                    <GoogleSignInButton
+                      text="Sign up with Google"
+                      className="mb-6"
+                      onSuccess={(user) => setGoogleUser(user)}
+                    />
                     <div className="relative my-6">
                       <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-border/60" />
@@ -547,6 +553,15 @@ export default function RegisterPage() {
           )}
         </div>
       </div>
+
+      {/* Google Registration Dialog */}
+      {googleUser && (
+        <GoogleRegistrationDialog
+          open={!!googleUser}
+          onOpenChange={(open) => { if (!open) setGoogleUser(null); }}
+          user={googleUser}
+        />
+      )}
     </div>
   );
 }

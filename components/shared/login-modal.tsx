@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/form';
 import { login } from '@/lib/actions/auth';
 import { GoogleSignInButton } from '@/components/shared/google-sign-in';
+import { GoogleRegistrationDialog } from '@/components/shared/google-registration-dialog';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -46,6 +47,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [googleUser, setGoogleUser] = useState<{ id: string; email: string; firstName: string; lastName: string; picture: string } | null>(null);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -205,7 +207,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
           </div>
 
           {/* Google button */}
-          <GoogleSignInButton />
+          <GoogleSignInButton onSuccess={(user) => setGoogleUser(user)} />
 
           {/* Footer */}
           <p className="text-center text-sm text-muted-foreground mt-6">
@@ -223,6 +225,15 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
           </p>
         </div>
       </DialogContent>
+
+      {/* Google Registration Dialog */}
+      {googleUser && (
+        <GoogleRegistrationDialog
+          open={!!googleUser}
+          onOpenChange={(open) => { if (!open) setGoogleUser(null); }}
+          user={googleUser}
+        />
+      )}
     </Dialog>
   );
 }

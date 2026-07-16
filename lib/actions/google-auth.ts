@@ -76,27 +76,41 @@ export async function googleLogin(credential: string) {
       select: { id: true },
     });
 
-    // Link user to restaurant if needed
-    if (restaurant && !user.restaurantId) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { restaurantId: restaurant.id },
+    // If user already has a restaurant, they're an existing user — log them in directly
+    if (restaurant) {
+      // Link user to restaurant if needed
+      if (!user.restaurantId) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { restaurantId: restaurant.id },
+        });
+      }
+
+      await createSession({
+        id: user.id,
+        username: user.username || "",
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        restaurantId: restaurant.id,
       });
-      user.restaurantId = restaurant.id;
+
+      return { success: true, redirectTo: "/owner" };
     }
 
-    // Create JWT session
-    await createSession({
-      id: user.id,
-      username: user.username || "",
-      role: user.role,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      restaurantId: restaurant?.id ?? user.restaurantId ?? null,
-    });
-
-    return { success: true, redirectTo: "/owner" };
+    // New Google user (no restaurant yet) — return user data for registration flow
+    return {
+      success: true,
+      needsRegistration: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        picture: user.profileImage || "",
+      },
+    };
   } catch (err: any) {
     console.error("googleLogin error:", err?.message);
     return { error: "Failed to verify Google sign-in. Please try again." };

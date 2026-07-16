@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/form';
 import { login } from '@/lib/actions/auth';
 import { GoogleSignInButton } from '@/components/shared/google-sign-in';
+import { GoogleRegistrationDialog } from '@/components/shared/google-registration-dialog';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
