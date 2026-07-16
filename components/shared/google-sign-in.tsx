@@ -15,6 +15,7 @@ declare global {
             client_id: string;
             callback: (response: { credential: string }) => void;
             ux_mode?: string;
+            error_callback?: (error: { type: string; message: string }) => void;
           }) => void;
           renderButton: (
             parent: HTMLElement,
@@ -41,17 +42,22 @@ type GisCallback = (response: { credential: string }) => void;
 let globalGisCallback: GisCallback = () => {};
 let gisReadyPromise: Promise<void> | null = null;
 
+let gisInitialized = false;
+
 function ensureGisLoaded(clientId: string): Promise<void> {
   if (gisReadyPromise) return gisReadyPromise;
 
   gisReadyPromise = new Promise((resolve) => {
-    const existing = document.querySelector<HTMLScriptElement>(
-      'script[src="https://accounts.google.com/gsi/client"]',
-    );
-
     const init = () => {
+      if (gisInitialized) return;
+      gisInitialized = true;
       console.log('[GIS] Initializing with client_id:', clientId, 'origin:', window.location.origin);
-      window.google!.accounts.id.initialize({
+      if (!window.google?.accounts?.id) {
+        console.error('[GIS] Google Identity Services not available after script load');
+        resolve();
+        return;
+      }
+      window.google.accounts.id.initialize({
         client_id: clientId,
         callback: (response) => globalGisCallback(response),
         ux_mode: 'popup',
@@ -65,8 +71,17 @@ function ensureGisLoaded(clientId: string): Promise<void> {
       resolve();
     };
 
-    if (existing && window.google) {
+    if (window.google?.accounts?.id) {
       init();
+      return;
+    }
+
+    const existing = document.querySelector<HTMLScriptElement>(
+      'script[src*="accounts.google.com/gsi/client"]',
+    );
+    if (existing) {
+      existing.addEventListener('load', init, { once: true });
+      if (window.google?.accounts?.id) init();
       return;
     }
 
