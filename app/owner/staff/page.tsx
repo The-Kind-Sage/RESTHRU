@@ -945,14 +945,14 @@ export default function StaffPage() {
                         {formatDate(staff.joinedDate)}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
+                              <Button size="icon" variant="ghost">
                                 <Edit2 className="h-4 w-4" />
                               </Button>
                             </DialogTrigger>
-                            <DialogContent onClick={(e) => e.stopPropagation()} className="max-w-md">
+                            <DialogContent className="max-w-md">
                               <EditStaffForm staff={staff} onUpdated={(updated) => {
                                 setStaffMembers((prev) => prev.map((s) => s.id === updated.id ? { ...s, ...updated } : s));
                               }} />
@@ -960,11 +960,11 @@ export default function StaffPage() {
                           </Dialog>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
+                              <Button size="icon" variant="ghost">
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                            <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Delete Staff Member</AlertDialogTitle>
                                 <AlertDialogDescription>

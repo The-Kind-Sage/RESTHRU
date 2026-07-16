@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getSession, type SessionUser } from '@/lib/auth';
-import { homeForRole } from '@/lib/constants';
+import { homeForRole, portalForPath } from '@/lib/constants';
 
 // Layout-level defense-in-depth gate. proxy.ts is the primary guard for
 // every /owner, /reception, /order and /superadmin request; this repeats
@@ -28,7 +28,9 @@ export async function guardArea(opts: {
   // session — skip the gate so we don't redirect-loop the login page itself.
   if (opts.publicPaths?.includes(pathname)) return null;
 
-  const session = await getSession();
+  // Pin the lookup to this area's own session cookie so another portal's
+  // session in the same browser can never satisfy (or pollute) this gate.
+  const session = await getSession(portalForPath(pathname) ?? undefined);
   if (!session) {
     redirect(`${opts.loginPath}?redirect=${encodeURIComponent(pathname || opts.loginPath)}`);
   }

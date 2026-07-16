@@ -294,6 +294,45 @@ export function homeForRole(role: string | null | undefined): string {
   return (role && ROLE_HOME[role]) || '/owner';
 }
 
+// ── Session portals ──
+// Each portal (superadmin console, owner dashboard, reception, waiter station)
+// gets its OWN session cookie, so logging in or out as one role never touches
+// another role's session in the same browser. Kept edge-safe (no server-only
+// imports) so proxy.ts can use these too.
+export type SessionPortal = 'admin' | 'owner' | 'reception' | 'waiter';
+
+// Order matters: it's the lookup priority when a request outside any portal
+// (home page, /login) needs "whoever is signed in".
+export const SESSION_PORTALS: readonly SessionPortal[] = ['owner', 'admin', 'reception', 'waiter'];
+
+export function portalForRole(role: string | null | undefined): SessionPortal {
+  switch (role) {
+    case 'SUPER_ADMIN':
+    case 'ADMIN':
+      return 'admin';
+    case 'RECEPTIONIST':
+      return 'reception';
+    case 'WAITER':
+      return 'waiter';
+    default:
+      // RESTAURANT_OWNER, legacy STAFF, managers — all live in the owner portal.
+      return 'owner';
+  }
+}
+
+export function portalForPath(pathname: string | null | undefined): SessionPortal | null {
+  if (!pathname) return null;
+  if (pathname === '/superadmin' || pathname.startsWith('/superadmin/')) return 'admin';
+  if (pathname === '/owner' || pathname.startsWith('/owner/')) return 'owner';
+  if (pathname === '/reception' || pathname.startsWith('/reception/')) return 'reception';
+  if (pathname === '/order' || pathname.startsWith('/order/')) return 'waiter';
+  return null;
+}
+
+export function sessionCookieName(portal: SessionPortal): string {
+  return `session_${portal}`;
+}
+
 // Operating Hours Default
 export const OPERATING_HOURS_DEFAULT = {
   monday: { open: '10:00', close: '22:00' },
