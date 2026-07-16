@@ -78,7 +78,6 @@ export function GoogleSignInButton({
   const [ready, setReady] = useState(false);
   const onSuccessRef = useRef(onSuccess);
   const redirectToRef = useRef(redirectTo);
-  const popupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   onSuccessRef.current = onSuccess;
   redirectToRef.current = redirectTo;
@@ -121,46 +120,23 @@ export function GoogleSignInButton({
       return;
     }
 
-    try {
-      setIsLoading(true);
-
-      popupTimerRef.current = setTimeout(() => {
-        setIsLoading(false);
-        toast.error('Popup blocked. Please allow popups for this site to sign in with Google.');
-      }, 3000);
-
-      const client = window.google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: 'openid email profile',
-        callback: (response) => {
-          if (popupTimerRef.current) {
-            clearTimeout(popupTimerRef.current);
-            popupTimerRef.current = null;
-          }
-          setIsLoading(false);
-          if (response.error) {
-            if (response.error === 'popup_closed_by_user') return;
-            console.error('[OAuth] error:', response.error);
-            toast.error('Google sign-in failed');
-            return;
-          }
-          if (response.id_token) {
-            handleCredentialResponse({ credential: response.id_token });
-          } else {
-            toast.error('No ID token received from Google');
-          }
-        },
-      });
-      client.requestAccessToken();
-    } catch (e) {
-      if (popupTimerRef.current) {
-        clearTimeout(popupTimerRef.current);
-        popupTimerRef.current = null;
-      }
-      setIsLoading(false);
-      console.error('[OAuth] error:', e);
-      toast.error('Failed to start Google sign-in');
-    }
+    window.google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'openid email profile',
+      callback: (response) => {
+        if (response.error) {
+          if (response.error === 'popup_closed_by_user') return;
+          console.error('[OAuth] error:', response.error);
+          toast.error('Google sign-in failed: ' + response.error);
+          return;
+        }
+        if (response.id_token) {
+          handleCredentialResponse({ credential: response.id_token });
+        } else {
+          toast.error('No ID token received from Google');
+        }
+      },
+    }).requestAccessToken();
   }, [handleCredentialResponse]);
 
   useEffect(() => {
