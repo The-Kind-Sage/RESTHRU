@@ -118,7 +118,7 @@ const avatarBgColors: { [key: string]: string } = {
 };
 
 // Roles whose staff sign in to a console, and which action issues that login.
-// Other roles (kitchen, cashier, manager) are directory-only — there is no
+// Other roles are directory-only — there is no
 // console for them to sign in to, so Add Staff never asks for credentials.
 const LOGIN_CAPABLE_ROLES: Record<
   string,
@@ -134,10 +134,21 @@ const LOGIN_CAPABLE_ROLES: Record<
 function StaffAvatar({
   initials,
   role,
+  imageUrl,
 }: {
   initials: string;
   role: string;
+  imageUrl?: string | null;
 }) {
+  if (imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt={initials}
+        className="h-10 w-10 rounded-full object-cover"
+      />
+    );
+  }
   return (
     <div
       className={`${avatarBgColors[role] || 'bg-muted'} h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold text-sm`}
@@ -162,11 +173,15 @@ function StaffDetailDialog({ staff, open, onOpenChange }: { staff: StaffMember; 
         </DialogHeader>
         <div className="space-y-4">
           <div className="flex justify-center">
-            <div
-              className={`${avatarBgColors[staff.role] || 'bg-muted'} h-20 w-20 rounded-full flex items-center justify-center text-white font-bold text-2xl`}
-            >
-              {staff.avatar}
-            </div>
+            {staff.avatarUrl ? (
+              <img src={staff.avatarUrl} alt={staff.avatar} className="h-20 w-20 rounded-full object-cover" />
+            ) : (
+              <div
+                className={`${avatarBgColors[staff.role] || 'bg-muted'} h-20 w-20 rounded-full flex items-center justify-center text-white font-bold text-2xl`}
+              >
+                {staff.avatar}
+              </div>
+            )}
           </div>
           <div className="space-y-3">
             <div>
@@ -376,7 +391,7 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
                 <SelectItem value="kitchen">Kitchen</SelectItem>
                 <SelectItem value="busser">Busser</SelectItem>
                 <SelectItem value="housekeeper">Housekeeper</SelectItem>
-                <SelectItem value="cashier">Cashier</SelectItem>
+                <SelectItem value="receptionist">Receptionist</SelectItem>
                 <SelectItem value="manager">Manager</SelectItem>
               </SelectContent>
             </Select>
@@ -500,7 +515,7 @@ export default function StaffPage() {
             joinedDate: s.createdAt ? new Date(s.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             salary:     s.salary || 0,
             avatar:     (firstName.split(' ')[0]?.[0] || 'S').toUpperCase() + ((firstName.split(' ')[1]?.[0] || 'T').toUpperCase()),
-            avatarUrl:  null,
+            avatarUrl:  s.profileImage || null,
           };
         }));
       }
@@ -634,7 +649,7 @@ export default function StaffPage() {
                   <SelectItem value="kitchen">Kitchen</SelectItem>
                   <SelectItem value="busser">Busser</SelectItem>
                   <SelectItem value="housekeeper">Housekeeper</SelectItem>
-                  <SelectItem value="cashier">Cashier</SelectItem>
+                <SelectItem value="receptionist">Receptionist</SelectItem>
                   <SelectItem value="manager">Manager</SelectItem>
                 </SelectContent>
               </Select>
@@ -658,7 +673,7 @@ export default function StaffPage() {
                   filteredStaff.map((staff) => (
                     <TableRow key={staff.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedStaff(staff)}>
                       <TableCell className="whitespace-nowrap">
-                        <StaffAvatar initials={staff.avatar} role={staff.role} />
+                        <StaffAvatar initials={staff.avatar} role={staff.role} imageUrl={staff.avatarUrl} />
                       </TableCell>
                       <TableCell className="font-medium whitespace-nowrap truncate">{staff.name}</TableCell>
                       <TableCell className="whitespace-nowrap">
