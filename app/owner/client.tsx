@@ -191,9 +191,9 @@ export default function DashboardClient({
             },
             {
               icon: ShoppingBag,
-              title: "Total Orders",
-              value: liveStats?.totalOrders ?? 0,
-              change: liveStats?.todayOrders ? `${liveStats.todayOrders} today` : "No orders yet",
+              title: "Today's Orders",
+              value: liveStats?.todayOrders ?? 0,
+              change: liveStats?.totalOrders ? `${liveStats.totalOrders} total all time` : "No orders yet",
               color: "text-primary",
             },
             {
