@@ -382,7 +382,7 @@ export default function DashboardClient({
             <div className="flex items-center justify-between">
               <CardTitle>Live Orders</CardTitle>
               <Link
-                href="/reception/orders"
+                href="/owner/orders"
                 className="text-sm text-primary hover:underline flex items-center gap-1"
               >
                 View All <ArrowRight className="w-4 h-4" />

@@ -624,20 +624,22 @@ function EditStaffForm({ staff, onUpdated }: { staff: StaffMember; onUpdated: (u
   const [form, setForm] = useState({
     name: staff.name, role: staff.role.toLowerCase(), phone: staff.phone, email: staff.email,
     address: staff.address || '', dateOfBirth: staff.dateOfBirth || '',
-    identityDocType: staff.identityDocType || '', identityDocImage: staff.identityDocImage || null,
+    identityDocType: staff.identityDocType || 'none', identityDocImage: staff.identityDocImage || null,
     emergencyContactName: staff.emergencyContactName || '', emergencyContactPhone: staff.emergencyContactPhone || '',
-    bloodGroup: staff.bloodGroup || '',
+    bloodGroup: staff.bloodGroup || 'none',
   });
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     if (!form.name || !form.role || !form.phone) { toast.error('Name, role, and phone are required'); return; }
     setSaving(true);
-    const res = await updateStaff({ id: String(staff.id), ...form, identityDocImage: form.identityDocImage || null });
+    const docType = form.identityDocType === 'none' ? '' : form.identityDocType;
+    const bGroup = form.bloodGroup === 'none' ? '' : form.bloodGroup;
+    const res = await updateStaff({ id: String(staff.id), ...form, identityDocType: docType, bloodGroup: bGroup, identityDocImage: form.identityDocImage || null });
     setSaving(false);
     if ('error' in res) { toast.error(res.error); return; }
     toast.success('Staff updated');
-    onUpdated({ ...staff, name: form.name, role: form.role.toUpperCase(), phone: form.phone, email: form.email, address: form.address, dateOfBirth: form.dateOfBirth || null, identityDocType: form.identityDocType, identityDocImage: form.identityDocImage, emergencyContactName: form.emergencyContactName, emergencyContactPhone: form.emergencyContactPhone, bloodGroup: form.bloodGroup });
+    onUpdated({ ...staff, name: form.name, role: form.role.toUpperCase(), phone: form.phone, email: form.email, address: form.address, dateOfBirth: form.dateOfBirth || null, identityDocType: docType, identityDocImage: form.identityDocImage, emergencyContactName: form.emergencyContactName, emergencyContactPhone: form.emergencyContactPhone, bloodGroup: bGroup });
   };
 
   return (
@@ -688,7 +690,7 @@ function EditStaffForm({ staff, onUpdated }: { staff: StaffMember; onUpdated: (u
           <Select value={form.identityDocType} onValueChange={(v) => setForm({ ...form, identityDocType: v })}>
             <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">None</SelectItem>
+              <SelectItem value="none">None</SelectItem>
               <SelectItem value="citizenship">Citizenship</SelectItem>
               <SelectItem value="driving_license">Driving License</SelectItem>
               <SelectItem value="passport">Passport</SelectItem>
@@ -712,8 +714,8 @@ function EditStaffForm({ staff, onUpdated }: { staff: StaffMember; onUpdated: (u
           <Select value={form.bloodGroup} onValueChange={(v) => setForm({ ...form, bloodGroup: v })}>
             <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
             <SelectContent>
-              {['', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((bg) => (
-                <SelectItem key={bg} value={bg}>{bg || 'None'}</SelectItem>
+              {['none', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((bg) => (
+                <SelectItem key={bg} value={bg}>{bg === 'none' ? 'None' : bg}</SelectItem>
               ))}
             </SelectContent>
           </Select>

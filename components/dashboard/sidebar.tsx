@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
   ScrollText,
+  ShoppingCart,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,7 @@ import { cn } from '@/lib/utils';
 
 const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard',          href: '/owner',                Icon: LayoutDashboard },
+  { label: 'Orders',             href: '/owner/orders',         Icon: ShoppingCart    },
   { label: 'Menu Management',    href: '/owner/menu',           Icon: ClipboardList   },
   { label: 'Staff Management',   href: '/owner/staff',          Icon: Users           },
   { label: 'Inventory',          href: '/owner/inventory',      Icon: Package         },
@@ -68,7 +70,7 @@ const Sidebar = memo(function Sidebar() {
   const isActive = useCallback(
     (href: string) => {
       if (href === '/owner') return pathname === '/owner';
-      return pathname.startsWith(href);
+      return pathname === href || pathname.startsWith(href + '/');
     },
     [pathname]
   );

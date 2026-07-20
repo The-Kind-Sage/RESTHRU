@@ -35,17 +35,17 @@ import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Reception',     href: '/reception',           Icon: ConciergeBell   },
-  { label: 'Order',         href: '/reception/order',     Icon: UtensilsCrossed },
   { label: 'Live Orders',   href: '/reception/orders',    Icon: ShoppingBag     },
-  { label: 'Checkout',      href: '/reception/checkout',  Icon: DollarSign      },
-  { label: 'Table Map',     href: '/reception/tables',    Icon: LayoutGrid      },
-  { label: 'Shifts',        href: '/reception/shifts',    Icon: Clock           },
   { label: 'Invoices',      href: '/reception/invoices',  Icon: Receipt         },
-  { label: 'Inventory',     href: '/reception/inventory', Icon: Package         },
-  { label: 'CRM',           href: '/reception/crm',       Icon: Star            },
-  { label: 'Print Center',  href: '/reception/prints',    Icon: Printer         },
+  { label: 'Table Map',     href: '/reception/tables',    Icon: LayoutGrid      },
+  { label: 'Checkout',      href: '/reception/checkout',  Icon: DollarSign      },
+  { label: 'Order',         href: '/reception/order',     Icon: UtensilsCrossed },
+  { label: 'Reception',     href: '/reception',           Icon: ConciergeBell   },
   { label: 'Kitchen Display',href: '/reception/kitchen',  Icon: ChefHat         },
+  { label: 'Print Center',  href: '/reception/prints',    Icon: Printer         },
+  { label: 'CRM',           href: '/reception/crm',       Icon: Star            },
+  { label: 'Inventory',     href: '/reception/inventory', Icon: Package         },
+  { label: 'Shifts',        href: '/reception/shifts',    Icon: Clock           },
 ];
 
 const ReceptionSidebar = memo(function ReceptionSidebar() {
@@ -69,7 +69,8 @@ const ReceptionSidebar = memo(function ReceptionSidebar() {
   const isActive = useCallback(
     (href: string) => {
       if (href === '/reception') return pathname === '/reception';
-      return pathname.startsWith(href);
+      // Exact match — prevents /reception/order from matching /reception/orders
+      return pathname === href || pathname.startsWith(href + '/');
     },
     [pathname]
   );
