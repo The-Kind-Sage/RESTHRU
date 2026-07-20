@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
-  AlertTriangle, X, Plus, Edit2, Clock, Search,
+  AlertTriangle, X, Plus, Clock, Search,
   TrendingUp, TrendingDown, AlertCircle, Check,
 } from 'lucide-react';
 import {
@@ -213,7 +213,7 @@ function StockHistoryDialog({ item, onStockChanged }: {
                 <Input placeholder="Add notes..." value={usageNotes} onChange={e => setUsageNotes(e.target.value)} />
               </div>
               <div className="flex gap-2">
-                <Button size="sm" className="bg-accent hover:bg-accent" onClick={handleRecordUsage} disabled={isSubmitting}>
+                <Button size="sm" className="bg-accent hover:bg-accent/80" onClick={handleRecordUsage} disabled={isSubmitting}>
                   {isSubmitting ? 'Recording...' : 'Record Usage'}
                 </Button>
                 <Button
@@ -774,13 +774,6 @@ export default function InventoryPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
                             <StockHistoryDialog
                               item={item}
                               onStockChanged={(id, newStock) => setInventoryItems(prev => prev.map(i =>
