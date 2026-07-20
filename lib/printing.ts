@@ -41,7 +41,6 @@ export function formatReceiptHTML(data: {
   <div class="divider"></div>
   <table>
     <tr><td>Subtotal</td><td class="right">${formatNum(data.subtotal)}</td></tr>
-    <tr><td>VAT</td><td class="right">${formatNum(data.taxAmount)}</td></tr>
     ${data.serviceCharge ? `<tr><td>Service Charge</td><td class="right">${formatNum(data.serviceCharge)}</td></tr>` : ""}
     ${data.discountAmount ? `<tr><td>Discount</td><td class="right">-${formatNum(data.discountAmount)}</td></tr>` : ""}
     <tr class="bold"><td>Total</td><td class="right">${formatNum(data.totalAmount)}</td></tr>

@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { logActivity } from "./logs";
 
 export async function getTaxRates() {
   const session = await getSession();
@@ -46,6 +47,12 @@ export async function createTaxRate(data: {
         appliesToItemTypes: data.appliesToItemTypes || [],
       },
     });
+    await logActivity(session, {
+      actionType: "TAX_RATE_CREATE",
+      entityType: "TaxRate",
+      entityId: rate.id,
+      description: `Tax rate "${rate.name}" (${rate.rate}%) created`,
+    });
     return { data: rate };
   } catch (err: any) {
     return { error: err?.message || "Failed to create tax rate" };
@@ -78,6 +85,12 @@ export async function updateTaxRate(
       where: { id },
       data,
     });
+    await logActivity(session, {
+      actionType: "TAX_RATE_UPDATE",
+      entityType: "TaxRate",
+      entityId: id,
+      description: `Tax rate "${rate.name}" updated`,
+    });
     return { data: rate };
   } catch (err: any) {
     return { error: err?.message || "Failed to update tax rate" };
@@ -96,6 +109,12 @@ export async function deleteTaxRate(id: string) {
     if (rate.isDefault) return { error: "Cannot delete the default tax rate" };
 
     await prisma.taxRate.delete({ where: { id } });
+    await logActivity(session, {
+      actionType: "TAX_RATE_DELETE",
+      entityType: "TaxRate",
+      entityId: id,
+      description: `Tax rate deleted`,
+    });
     return { data: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to delete tax rate" };

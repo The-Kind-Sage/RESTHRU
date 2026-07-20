@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { logActivity } from "./logs";
 import { verifyManagerApproval } from "@/lib/manager-approval";
 
 export async function getPendingBills() {
@@ -89,6 +90,13 @@ export async function createBillDraft(orderId: string) {
       },
     });
 
+    await logActivity(session, {
+      actionType: "BILL_DRAFT",
+      entityType: "Bill",
+      entityId: bill.id,
+      description: `Bill draft created for order ${orderId}`,
+    });
+
     return { data: bill };
   } catch (err: any) {
     return { error: err?.message || "Failed to create bill draft" };
@@ -149,6 +157,13 @@ export async function recordPayment(data: {
         });
       }
 
+      await logActivity(session, {
+        actionType: "PAYMENT_RECORD",
+        entityType: "Payment",
+        entityId: data.billId,
+        description: `Payment of ${data.amount} recorded via ${data.method}`,
+      });
+
       return { data: updated };
     });
   } catch (err: any) {
@@ -170,6 +185,14 @@ export async function holdBill(billId: string) {
       where: { id: billId },
       data: { status: "HELD" },
     });
+
+    await logActivity(session, {
+      actionType: "BILL_HOLD",
+      entityType: "Bill",
+      entityId: billId,
+      description: `Bill put on hold`,
+    });
+
     return { data: updated };
   } catch (err: any) {
     return { error: err?.message || "Failed to hold bill" };
@@ -194,6 +217,14 @@ export async function resumeHeldBill(billId: string) {
         payments: true,
       },
     });
+
+    await logActivity(session, {
+      actionType: "BILL_RESUME",
+      entityType: "Bill",
+      entityId: billId,
+      description: `Bill resumed from hold`,
+    });
+
     return { data: updated };
   } catch (err: any) {
     return { error: err?.message || "Failed to resume bill" };
@@ -247,6 +278,13 @@ export async function splitBill(data: {
       label: split.label,
       amount: idx === 0 ? equalShare + remainder : equalShare,
     }));
+
+    await logActivity(session, {
+      actionType: "BILL_SPLIT",
+      entityType: "Bill",
+      entityId: data.billId,
+      description: `Bill split into ${data.splits.length} parts`,
+    });
 
     return { data: { splits: splitBills, total: bill.totalAmount } };
   } catch (err: any) {
@@ -340,6 +378,13 @@ export async function applyDiscountToBill(billId: string, discountAmount: number
       },
     });
 
+    await logActivity(session, {
+      actionType: "DISCOUNT_APPLY",
+      entityType: "Bill",
+      entityId: billId,
+      description: `Discount of ${discountAmount} applied${discountReason ? ` (${discountReason})` : ""}`,
+    });
+
     return { data: updated };
   } catch (err: any) {
     return { error: err?.message || "Failed to apply discount" };
@@ -390,6 +435,13 @@ export async function applyCouponToBill(billId: string, couponCode: string) {
           totalAmount: newTotal,
           notes: `Coupon: ${coupon.code} (${clampedDiscount})`,
         },
+      });
+
+      await logActivity(session, {
+        actionType: "COUPON_APPLY",
+        entityType: "Bill",
+        entityId: billId,
+        description: `Coupon "${couponCode}" applied to bill`,
       });
 
       return { data: { bill: updated, coupon: coupon.code, discount: clampedDiscount } };

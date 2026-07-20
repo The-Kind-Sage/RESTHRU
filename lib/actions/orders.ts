@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { logActivity } from "./logs";
 import { verifyManagerApproval } from "@/lib/manager-approval";
 
 /** Looks up the restaurant's default effective tax rate (TaxRate model > restaurant.taxPercentage > 13%). */
@@ -223,6 +224,13 @@ export async function createOrder(data: {
       }
     }
 
+    await logActivity(session, {
+      actionType: "ORDER_CREATE",
+      entityType: "Order",
+      entityId: order.id,
+      description: `Order ${order.orderId} created for table ${data.tableNumber} (${data.draftItems.length} items)`,
+    });
+
     if (unavailable.length > 0) {
       return { data: order, warning: `Skipped unavailable items: ${unavailable.join(", ")}` };
     }
@@ -279,7 +287,11 @@ export async function getActiveOrders() {
         ],
       },
       include: {
-        items: true,
+        items: {
+          include: {
+            menuItem: { select: { imageUrl: true } },
+          },
+        },
         table: { select: { tableNumber: true } },
         bills: { select: { id: true } },
       },
@@ -350,6 +362,13 @@ export async function updateOrderStatus(orderId: string, status: string) {
         "ORDER_READY"
       );
     }
+
+    await logActivity(session, {
+      actionType: "ORDER_STATUS_UPDATE",
+      entityType: "Order",
+      entityId: orderId,
+      description: `Order status updated to ${status}`,
+    });
 
     return { data: order };
   } catch (err: any) {
@@ -460,6 +479,13 @@ export async function settleOrder(data: {
         throw err;
       }
     }
+
+    await logActivity(session, {
+      actionType: "ORDER_SETTLE",
+      entityType: "Order",
+      entityId: order.id,
+      description: `Order ${order.orderId} settled`,
+    });
 
     return { data: bill };
   } catch (err: any) {

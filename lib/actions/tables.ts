@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { checkResourceLimit, limitMessage } from "@/lib/plan-guard";
+import { logActivity } from "./logs";
 
 export async function getTables(restaurantId: string) {
   const session = await getSession();
@@ -50,6 +51,12 @@ export async function addTable(data: {
         positionY: data.positionY,
       },
     });
+    await logActivity(session, {
+      actionType: "TABLE_ADD",
+      entityType: "RestaurantTable",
+      entityId: table.id,
+      description: `Table "${table.name || table.tableNumber}" added`,
+    });
     return { data: { id: table.id } };
   } catch (err: any) {
     if (err?.code === "P2002") {
@@ -69,6 +76,12 @@ export async function updateTableStatus(id: string, status: string) {
       data: { status },
     });
     if (result.count === 0) return { error: "Table not found" };
+    await logActivity(session, {
+      actionType: "TABLE_STATUS_UPDATE",
+      entityType: "RestaurantTable",
+      entityId: id,
+      description: `Table status updated to ${status}`,
+    });
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to update table status" };
@@ -85,6 +98,12 @@ export async function updateTablePosition(id: string, x: number, y: number) {
       data: { positionX: x, positionY: y },
     });
     if (result.count === 0) return { error: "Table not found" };
+    await logActivity(session, {
+      actionType: "TABLE_POSITION_UPDATE",
+      entityType: "RestaurantTable",
+      entityId: id,
+      description: `Table position updated`,
+    });
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to update table position" };
@@ -109,6 +128,12 @@ export async function deleteTable(id: string) {
       where: { id, restaurantId: session.restaurantId },
     });
     if (result.count === 0) return { error: "Table not found" };
+    await logActivity(session, {
+      actionType: "TABLE_DELETE",
+      entityType: "RestaurantTable",
+      entityId: id,
+      description: `Table deleted`,
+    });
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to delete table" };

@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { logActivity } from "./logs";
 
 export async function getInventoryItems(restaurantId: string) {
   const session = await getSession();
@@ -39,6 +40,12 @@ export async function addInventoryItem(data: {
         unit: data.unit,
         reorderLevel: data.minThreshold,
       },
+    });
+    await logActivity(session, {
+      actionType: "INVENTORY_ADD",
+      entityType: "InventoryItem",
+      entityId: item.id,
+      description: `Inventory item "${data.name}" added (qty: ${data.currentStock})`,
     });
     return { data: item };
   } catch (err: any) {
@@ -82,6 +89,12 @@ export async function updateInventoryStock(id: string, newQuantity: number, reas
     if (delta !== 0) {
       await recordMovement(id, "ADJUSTMENT", delta, session.id, reason || "Manual stock edit");
     }
+    await logActivity(session, {
+      actionType: "INVENTORY_STOCK_UPDATE",
+      entityType: "InventoryItem",
+      entityId: id,
+      description: `Stock updated to ${newQuantity}${reason ? ` (${reason})` : ""}`,
+    });
     return { data: item };
   } catch (err: any) {
     return { error: err?.message || "Failed to update stock" };
@@ -100,6 +113,12 @@ export async function addStock(id: string, quantity: number, notes?: string) {
       data: { currentQuantity: { increment: quantity }, lastRestockDate: new Date() },
     });
     await recordMovement(id, "ADD", quantity, session.id, notes);
+    await logActivity(session, {
+      actionType: "INVENTORY_STOCK_ADD",
+      entityType: "InventoryItem",
+      entityId: id,
+      description: `Added ${quantity} units${notes ? ` (${notes})` : ""}`,
+    });
     return { data: item };
   } catch (err: any) {
     return { error: err?.message || "Failed to add stock" };
@@ -122,6 +141,12 @@ export async function recordUsage(id: string, quantity: number, notes?: string) 
       data: { currentQuantity: { decrement: clamped } },
     });
     await recordMovement(id, "USAGE", clamped, session.id, notes);
+    await logActivity(session, {
+      actionType: "INVENTORY_USAGE",
+      entityType: "InventoryItem",
+      entityId: id,
+      description: `Used ${quantity} units${notes ? ` (${notes})` : ""}`,
+    });
     return { data: item };
   } catch (err: any) {
     return { error: err?.message || "Failed to record usage" };

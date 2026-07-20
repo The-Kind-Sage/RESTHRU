@@ -1,7 +1,36 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getSession, type SessionUser } from "@/lib/auth";
+
+export type LogActivityData = {
+  restaurantId?: string;
+  actionType: string;
+  entityType: string;
+  entityId: string;
+  description: string;
+  changesBefore?: Record<string, unknown>;
+  changesAfter?: Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
+};
+
+export async function logActivity(session: SessionUser, data: LogActivityData) {
+  await prisma.activityLog.create({
+    data: {
+      restaurantId: session.restaurantId || data.restaurantId || "",
+      userId: session.id,
+      actionType: data.actionType,
+      entityType: data.entityType,
+      entityId: data.entityId,
+      description: data.description,
+      changesBefore: data.changesBefore as any,
+      changesAfter: data.changesAfter as any,
+      ipAddress: data.ipAddress ?? undefined,
+      userAgent: data.userAgent ?? undefined,
+    },
+  });
+}
 
 export type LogEntry = {
   id: string;

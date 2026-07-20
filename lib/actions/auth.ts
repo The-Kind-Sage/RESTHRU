@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { createSession, clearSession, getSession } from "@/lib/auth";
 import { isApproverRole } from "@/lib/manager-approval";
+import { logActivity } from "./logs";
 
 // Validate that a username is in Gmail format (a valid email ending in @gmail.com).
 export async function isValidGmail(username: string): Promise<boolean> {
@@ -516,6 +517,13 @@ export async function createReceptionLogin(data: {
       },
     });
 
+    await logActivity(session, {
+      actionType: "RECEPTION_LOGIN_CREATE",
+      entityType: "User",
+      entityId: user.id,
+      description: `Reception login created for ${data.firstName} ${data.lastName}`,
+    });
+
     return { data: { id: user.id, firstName: user.firstName, lastName: user.lastName, username: user.username, phoneNumber: user.phoneNumber, isActive: user.isActive, role: user.role } };
   } catch (err: any) {
     return { error: err?.message || "Failed to create reception login" };
@@ -557,6 +565,13 @@ export async function deactivateReceptionLogin(userId: string) {
       select: { id: true, isActive: true },
     });
 
+    await logActivity(session, {
+      actionType: "RECEPTION_LOGIN_DEACTIVATE",
+      entityType: "User",
+      entityId: userId,
+      description: `Reception login deactivated`,
+    });
+
     return { data: updated };
   } catch (err: any) {
     return { error: err?.message || "Failed to toggle reception login" };
@@ -577,6 +592,14 @@ export async function deleteReceptionLogin(userId: string) {
     if (!user) return { error: "Reception login not found" };
 
     await prisma.user.delete({ where: { id: userId } });
+
+    await logActivity(session, {
+      actionType: "RECEPTION_LOGIN_DELETE",
+      entityType: "User",
+      entityId: userId,
+      description: `Reception login deleted`,
+    });
+
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to delete reception login" };
@@ -636,6 +659,13 @@ export async function createWaiterLogin(data: {
       },
     });
 
+    await logActivity(session, {
+      actionType: "WAITER_LOGIN_CREATE",
+      entityType: "User",
+      entityId: user.id,
+      description: `Waiter login created for ${data.firstName} ${data.lastName}`,
+    });
+
     return { data: { id: user.id, firstName: user.firstName, lastName: user.lastName, username: user.username, phoneNumber: user.phoneNumber, isActive: user.isActive, role: user.role } };
   } catch (err: any) {
     return { error: err?.message || "Failed to create waiter login" };
@@ -677,6 +707,13 @@ export async function deactivateWaiterLogin(userId: string) {
       select: { id: true, isActive: true },
     });
 
+    await logActivity(session, {
+      actionType: "WAITER_LOGIN_DEACTIVATE",
+      entityType: "User",
+      entityId: userId,
+      description: `Waiter login deactivated`,
+    });
+
     return { data: updated };
   } catch (err: any) {
     return { error: err?.message || "Failed to toggle waiter login" };
@@ -697,6 +734,14 @@ export async function deleteWaiterLogin(userId: string) {
     if (!user) return { error: "Waiter login not found" };
 
     await prisma.user.delete({ where: { id: userId } });
+
+    await logActivity(session, {
+      actionType: "WAITER_LOGIN_DELETE",
+      entityType: "User",
+      entityId: userId,
+      description: `Waiter login deleted`,
+    });
+
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to delete waiter login" };

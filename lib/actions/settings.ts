@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { logActivity } from "./logs";
 
 export async function getRestaurant(restaurantId: string) {
   const session = await getSession();
@@ -65,6 +66,14 @@ export async function updateRestaurant(restaurantId: string, data: Record<string
       where: { id: restaurantId },
       data: updateData,
     });
+
+    await logActivity(session, {
+      actionType: "RESTAURANT_UPDATE",
+      entityType: "Restaurant",
+      entityId: session.restaurantId || "",
+      description: `Restaurant settings updated`,
+    });
+
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to save settings" };
@@ -122,6 +131,14 @@ export async function updateCoverPhoto(restaurantId: string, coverUrl: string) {
       where: { id: restaurantId },
       data: { bannerImageUrl: coverUrl },
     });
+
+    await logActivity(session, {
+      actionType: "COVER_PHOTO_UPDATE",
+      entityType: "Restaurant",
+      entityId: restaurantId,
+      description: `Cover photo updated`,
+    });
+
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to upload cover" };
@@ -143,6 +160,13 @@ export async function cancelSubscription(restaurantId: string) {
     await prisma.subscription.update({
       where: { id: subscription.id },
       data: { status: "CANCELLED", endDate: new Date() },
+    });
+
+    await logActivity(session, {
+      actionType: "SUBSCRIPTION_CANCEL",
+      entityType: "Restaurant",
+      entityId: session.restaurantId || "",
+      description: `Subscription cancelled`,
     });
 
     return { success: true };

@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { logActivity } from "./logs";
 import { checkResourceLimit, limitMessage } from "@/lib/plan-guard";
 
 export async function getStaff(restaurantId: string) {
@@ -62,6 +63,12 @@ export async function addStaff(data: StaffInput & { restaurantId: string }) {
         salary: data.salary || 0,
       },
     });
+    await logActivity(session, {
+      actionType: "STAFF_ADD",
+      entityType: "Staff",
+      entityId: member.id,
+      description: `Staff member "${data.name}" added as ${data.role}`,
+    });
     return { data: member };
   } catch (err: any) {
     return { error: err?.message || "Failed to add staff member" };
@@ -91,6 +98,12 @@ export async function updateStaff(data: StaffInput & { id: string }) {
         salary: data.salary ?? undefined,
       },
     });
+    await logActivity(session, {
+      actionType: "STAFF_UPDATE",
+      entityType: "Staff",
+      entityId: data.id,
+      description: `Staff member updated`,
+    });
     return { data: member };
   } catch (err: any) {
     return { error: err?.message || "Failed to update staff member" };
@@ -103,6 +116,12 @@ export async function deleteStaff(staffId: string) {
 
   try {
     await prisma.staff.delete({ where: { id: staffId } });
+    await logActivity(session, {
+      actionType: "STAFF_DELETE",
+      entityType: "Staff",
+      entityId: staffId,
+      description: `Staff member deleted`,
+    });
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to delete staff member" };

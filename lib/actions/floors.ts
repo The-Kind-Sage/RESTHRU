@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { logActivity } from "./logs";
 
 // Floors are per-restaurant, fully custom (add/rename/delete) — see the Floor
 // model in prisma/schema.prisma. RestaurantTable.floor is a free-text column,
@@ -60,6 +61,13 @@ export async function addFloor(restaurantId: string, name: string) {
       },
     });
 
+    await logActivity(session, {
+      actionType: "FLOOR_ADD",
+      entityType: "Floor",
+      entityId: floor.id,
+      description: `Floor "${name}" added`,
+    });
+
     return { data: { id: floor.id, name: floor.name, displayOrder: floor.displayOrder, tableCount: 0 } };
   } catch (err: any) {
     if (err?.code === "P2002") {
@@ -93,6 +101,13 @@ export async function renameFloor(floorId: string, restaurantId: string, newName
       }),
     ]);
 
+    await logActivity(session, {
+      actionType: "FLOOR_RENAME",
+      entityType: "Floor",
+      entityId: floorId,
+      description: `Floor renamed to "${newName}"`,
+    });
+
     return { data: { id: updatedFloor.id, name: updatedFloor.name } };
   } catch (err: any) {
     if (err?.code === "P2002") {
@@ -119,6 +134,14 @@ export async function deleteFloor(floorId: string, restaurantId: string) {
     }
 
     await prisma.floor.delete({ where: { id: floorId } });
+
+    await logActivity(session, {
+      actionType: "FLOOR_DELETE",
+      entityType: "Floor",
+      entityId: floorId,
+      description: `Floor deleted`,
+    });
+
     return { data: { id: floorId } };
   } catch (err: any) {
     return { error: err?.message || "Failed to delete floor" };

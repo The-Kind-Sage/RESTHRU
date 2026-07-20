@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { checkResourceLimit, limitMessage } from "@/lib/plan-guard";
+import { logActivity } from "./logs";
 
 export async function addCategory(data: {
   name: string;
@@ -21,6 +22,12 @@ export async function addCategory(data: {
       VALUES (gen_random_uuid()::text, ${data.restaurantId}, ${data.name}, ${data.sortOrder || 0}, ${data.active ?? true}, now(), now())
       RETURNING id
     `;
+    await logActivity(session, {
+      actionType: "CATEGORY_ADD",
+      entityType: "Category",
+      entityId: result[0].id,
+      description: `Category "${data.name}" added`,
+    });
     return { data: { id: result[0].id } };
   } catch (err: any) {
     return { error: err?.message || "Database error" };
@@ -46,6 +53,12 @@ export async function updateCategory(
       SET name = ${data.name}, display_order = ${data.sortOrder || 0}, is_active = ${data.active ?? true}
       WHERE id = ${id}
     `;
+    await logActivity(session, {
+      actionType: "CATEGORY_UPDATE",
+      entityType: "Category",
+      entityId: id,
+      description: `Category "${data.name}" updated`,
+    });
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Database error" };
@@ -58,6 +71,12 @@ export async function deleteCategory(id: string) {
 
   try {
     await prisma.$executeRaw`DELETE FROM categories WHERE id = ${id}`;
+    await logActivity(session, {
+      actionType: "CATEGORY_DELETE",
+      entityType: "Category",
+      entityId: id,
+      description: `Category deleted`,
+    });
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Database error" };
@@ -70,6 +89,12 @@ export async function toggleCategoryActive(id: string, active: boolean) {
 
   try {
     await prisma.$executeRaw`UPDATE categories SET is_active = ${active} WHERE id = ${id}`;
+    await logActivity(session, {
+      actionType: active ? "CATEGORY_ACTIVATE" : "CATEGORY_DEACTIVATE",
+      entityType: "Category",
+      entityId: id,
+      description: `Category ${active ? "activated" : "deactivated"}`,
+    });
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Database error" };
@@ -148,6 +173,12 @@ export async function addMenuItem(data: {
         sizeOptions: data.sizeOptions || null,
       },
     });
+    await logActivity(session, {
+      actionType: "MENU_ITEM_ADD",
+      entityType: "MenuItem",
+      entityId: item.id,
+      description: `Menu item "${item.name}" added`,
+    });
     return { data: item };
   } catch (err: any) {
     return { error: err?.message || "Failed to add menu item" };
@@ -189,6 +220,12 @@ export async function updateMenuItem(id: string, data: Record<string, any>) {
       }
     }
     await prisma.menuItem.update({ where: { id }, data: updateData });
+    await logActivity(session, {
+      actionType: "MENU_ITEM_UPDATE",
+      entityType: "MenuItem",
+      entityId: id,
+      description: `Menu item "${data.name}" updated`,
+    });
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to update menu item" };
@@ -201,6 +238,12 @@ export async function deleteMenuItem(id: string) {
 
   try {
     await prisma.menuItem.delete({ where: { id } });
+    await logActivity(session, {
+      actionType: "MENU_ITEM_DELETE",
+      entityType: "MenuItem",
+      entityId: id,
+      description: `Menu item deleted`,
+    });
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to delete menu item" };
@@ -213,6 +256,12 @@ export async function toggleMenuItemAvailable(id: string, isAvailable: boolean) 
 
   try {
     await prisma.menuItem.update({ where: { id }, data: { isAvailable } });
+    await logActivity(session, {
+      actionType: isAvailable ? "MENU_ITEM_AVAILABLE" : "MENU_ITEM_UNAVAILABLE",
+      entityType: "MenuItem",
+      entityId: id,
+      description: `Menu item ${isAvailable ? "made available" : "marked unavailable"}`,
+    });
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to toggle availability" };
@@ -228,6 +277,12 @@ export async function bulkUpdateItemsAvailable(ids: string[], isAvailable: boole
 
   try {
     await prisma.menuItem.updateMany({ where: { id: { in: ids } }, data: { isAvailable } });
+    await logActivity(session, {
+      actionType: isAvailable ? "BULK_AVAILABLE" : "BULK_UNAVAILABLE",
+      entityType: "MenuItem",
+      entityId: ids.join(","),
+      description: `${ids.length} menu items ${isAvailable ? "made available" : "marked unavailable"}`,
+    });
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to update availability" };
@@ -265,6 +320,12 @@ export async function bulkAdjustItemPrices(
         )
       );
     }
+    await logActivity(session, {
+      actionType: "BULK_PRICE_ADJUST",
+      entityType: "MenuItem",
+      entityId: ids.join(","),
+      description: `Bulk price ${mode} of ${value} applied to ${ids.length} items`,
+    });
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to adjust prices" };
@@ -326,6 +387,12 @@ export async function updateMenuSettings(restaurantId: string, updates: Record<s
       `UPDATE restaurants SET ${setClauses.join(", ")} WHERE id = $1`,
       ...values
     );
+    await logActivity(session, {
+      actionType: "MENU_SETTINGS_UPDATE",
+      entityType: "MenuSettings",
+      entityId: restaurantId,
+      description: `Menu settings updated`,
+    });
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to save menu settings" };

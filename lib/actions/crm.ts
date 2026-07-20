@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { logActivity } from "./logs";
 
 export async function searchCustomers(query: string) {
   const session = await getSession();
@@ -59,6 +60,12 @@ export async function createCustomer(data: {
         loyaltyPoints: 0,
       },
     });
+    await logActivity(session, {
+      actionType: "CUSTOMER_CREATE",
+      entityType: "Customer",
+      entityId: customer.id,
+      description: `Customer "${customer.name || customer.phone}" created`,
+    });
     return { data: customer };
   } catch (err: any) {
     if (err?.code === "P2002") {
@@ -98,6 +105,12 @@ export async function addLoyaltyPoints(customerId: string, points: number) {
       where: { id: customerId },
       data: { loyaltyPoints: { increment: points } },
     });
+    await logActivity(session, {
+      actionType: "LOYALTY_POINTS_ADD",
+      entityType: "Customer",
+      entityId: customerId,
+      description: `${points} loyalty points added`,
+    });
     return { data: updated };
   } catch (err: any) {
     return { error: err?.message || "Failed to add loyalty points" };
@@ -120,6 +133,12 @@ export async function redeemLoyaltyPoints(customerId: string, points: number) {
     const updated = await prisma.customer.update({
       where: { id: customerId },
       data: { loyaltyPoints: { decrement: points } },
+    });
+    await logActivity(session, {
+      actionType: "LOYALTY_POINTS_REDEEM",
+      entityType: "Customer",
+      entityId: customerId,
+      description: `${points} loyalty points redeemed`,
     });
     return { data: updated };
   } catch (err: any) {
@@ -166,6 +185,12 @@ export async function createCoupon(data: {
         usageCount: 0,
         isActive: true,
       },
+    });
+    await logActivity(session, {
+      actionType: "COUPON_CREATE",
+      entityType: "Coupon",
+      entityId: coupon.id,
+      description: `Coupon "${coupon.code}" created (${coupon.discountType} ${coupon.discountValue})`,
     });
     return { data: coupon };
   } catch (err: any) {
@@ -215,6 +240,12 @@ export async function toggleCoupon(couponId: string) {
       where: { id: couponId },
       data: { isActive: !coupon.isActive },
     });
+    await logActivity(session, {
+      actionType: "COUPON_TOGGLE",
+      entityType: "Coupon",
+      entityId: couponId,
+      description: `Coupon ${coupon.isActive ? "activated" : "deactivated"}`,
+    });
     return { data: updated };
   } catch (err: any) {
     return { error: err?.message || "Failed to toggle coupon" };
@@ -256,6 +287,12 @@ export async function createCorporateAccount(data: {
         isActive: true,
       },
     });
+    await logActivity(session, {
+      actionType: "CORPORATE_ACCOUNT_CREATE",
+      entityType: "CorporateAccount",
+      entityId: account.id,
+      description: `Corporate account "${account.companyName}" created`,
+    });
     return { data: account };
   } catch (err: any) {
     return { error: err?.message || "Failed to create corporate account" };
@@ -275,6 +312,12 @@ export async function toggleCorporateAccount(accountId: string) {
     const updated = await prisma.corporateAccount.update({
       where: { id: accountId },
       data: { isActive: !account.isActive },
+    });
+    await logActivity(session, {
+      actionType: "CORPORATE_ACCOUNT_TOGGLE",
+      entityType: "CorporateAccount",
+      entityId: accountId,
+      description: `Corporate account ${account.isActive ? "activated" : "deactivated"}`,
     });
     return { data: updated };
   } catch (err: any) {

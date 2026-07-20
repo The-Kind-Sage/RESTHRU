@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { logActivity } from "./logs";
 
 export async function getReservations(date?: string) {
   const session = await getSession();
@@ -53,6 +54,12 @@ export async function createReservation(data: {
       },
       include: { table: { select: { tableNumber: true, name: true } } },
     });
+    await logActivity(session, {
+      actionType: "RESERVATION_CREATE",
+      entityType: "Reservation",
+      entityId: reservation.id,
+      description: `Reservation for ${data.customerName} (${data.partySize} guests) on ${data.reservedFor}`,
+    });
     return { data: reservation };
   } catch (err: any) {
     return { error: err?.message || "Failed to create reservation" };
@@ -88,6 +95,12 @@ export async function checkInReservation(reservationId: string, tableId?: string
       });
     }
 
+    await logActivity(session, {
+      actionType: "RESERVATION_CHECKIN",
+      entityType: "Reservation",
+      entityId: reservationId,
+      description: `Reservation checked in`,
+    });
     return { data: updated };
   } catch (err: any) {
     return { error: err?.message || "Failed to check in reservation" };
@@ -130,6 +143,12 @@ export async function cancelReservation(reservationId: string) {
       }
     }
 
+    await logActivity(session, {
+      actionType: "RESERVATION_CANCEL",
+      entityType: "Reservation",
+      entityId: reservationId,
+      description: `Reservation cancelled`,
+    });
     return { data: updated };
   } catch (err: any) {
     return { error: err?.message || "Failed to cancel reservation" };
@@ -228,6 +247,12 @@ export async function walkInAssignTable(data: {
       return created;
     });
 
+    await logActivity(session, {
+      actionType: "WALK_IN_ASSIGN",
+      entityType: "RestaurantTable",
+      entityId: data.tableId,
+      description: `Walk-in assigned to table`,
+    });
     return { data: order };
   } catch (err: any) {
     return { error: err?.message || "Failed to assign table" };
@@ -263,7 +288,7 @@ export async function mergeTables(sourceTableIds: string[], targetTableId: strin
 
     if (sourceOrders.length === 0) return { error: "No active orders on source tables" };
 
-    return await prisma.$transaction(async (tx) => {
+    const mergeResult = await prisma.$transaction(async (tx) => {
       let primaryOrder = targetOrder;
 
       for (const sourceOrder of sourceOrders) {
@@ -318,6 +343,14 @@ export async function mergeTables(sourceTableIds: string[], targetTableId: strin
 
       return { data: { primaryOrderId: primaryOrder.id } };
     });
+
+    await logActivity(session, {
+      actionType: "TABLE_MERGE",
+      entityType: "RestaurantTable",
+      entityId: targetTableId,
+      description: `Table ${targetTableId} merged into table ${sourceTableIds[0]}`,
+    });
+    return mergeResult;
   } catch (err: any) {
     return { error: err?.message || "Failed to merge tables" };
   }
@@ -456,6 +489,12 @@ export async function addToWaitlist(data: {
         status: "WAITING",
       },
     });
+    await logActivity(session, {
+      actionType: "WAITLIST_ADD",
+      entityType: "WaitlistEntry",
+      entityId: entry.id,
+      description: `${data.partySize} guests added to waitlist for ${data.customerName}`,
+    });
     return { data: entry };
   } catch (err: any) {
     return { error: err?.message || "Failed to add to waitlist" };
@@ -470,6 +509,12 @@ export async function notifyWaitlistEntry(entryId: string) {
     const updated = await prisma.waitlistEntry.update({
       where: { id: entryId },
       data: { status: "NOTIFIED", notifiedAt: new Date() },
+    });
+    await logActivity(session, {
+      actionType: "WAITLIST_NOTIFY",
+      entityType: "WaitlistEntry",
+      entityId: entryId,
+      description: `Waitlist entry notified`,
     });
     return { data: updated };
   } catch (err: any) {
@@ -502,7 +547,7 @@ export async function seatWaitlistEntry(entryId: string, tableId: string) {
     const lastNumber = parseInt(lastOrder?.orderId ?? "", 10);
     const nextNumber = isNaN(lastNumber) ? 1001 : lastNumber + 1;
 
-    return await prisma.$transaction(async (tx) => {
+    const seatResult = await prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
         data: {
           restaurantId: session.restaurantId as string,
@@ -536,6 +581,14 @@ export async function seatWaitlistEntry(entryId: string, tableId: string) {
 
       return { data: { order, entry } };
     });
+
+    await logActivity(session, {
+      actionType: "WAITLIST_SEAT",
+      entityType: "WaitlistEntry",
+      entityId: entryId,
+      description: `Waitlist entry seated at table`,
+    });
+    return seatResult;
   } catch (err: any) {
     return { error: err?.message || "Failed to seat waitlist entry" };
   }
@@ -549,6 +602,12 @@ export async function removeFromWaitlist(entryId: string) {
     const updated = await prisma.waitlistEntry.update({
       where: { id: entryId },
       data: { status: "CANCELLED" },
+    });
+    await logActivity(session, {
+      actionType: "WAITLIST_REMOVE",
+      entityType: "WaitlistEntry",
+      entityId: entryId,
+      description: `Waitlist entry removed`,
     });
     return { data: updated };
   } catch (err: any) {
