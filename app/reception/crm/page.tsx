@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -49,6 +48,7 @@ import {
   searchCustomers,
   createCustomer,
   addLoyaltyPoints,
+  redeemLoyaltyPoints,
 } from "@/lib/actions/crm";
 import {
   getCoupons,
@@ -153,7 +153,7 @@ export default function CrmPage() {
     if (isNaN(pts) || pts <= 0) { toast.error("Enter valid points"); return; }
     if (pts > (selectedCustomer.loyaltyPoints || 0)) { toast.error("Not enough points"); return; }
     setRedeemingPoints(true);
-    const result: any = await addLoyaltyPoints(selectedCustomer.id, -pts);
+    const result: any = await redeemLoyaltyPoints(selectedCustomer.id, pts);
     setRedeemingPoints(false);
     if (result.error) { toast.error(result.error); return; }
     toast.success(`${pts} points redeemed`);
