@@ -33,15 +33,15 @@ export default function PrintsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshingIdx, setRefreshingIdx] = useState<number | null>(null);
 
-  const fetchPrinters = useCallback(async () => {
+  const fetchPrinters = useCallback(async (showLoader = false) => {
     if (!restaurantId) return;
-    setLoading(true);
+    if (showLoader) setLoading(true);
     const res = await getSettingsData(restaurantId);
     if ("data" in res && res.data) {
       const config = (res.data as any).printer_config || [];
       setPrinters(config.map((p: any) => ({ ...p, status: 'unverified' })));
     }
-    setLoading(false);
+    if (showLoader) setLoading(false);
   }, [restaurantId]);
 
   const handleRefreshPrinter = async (idx: number) => {
@@ -52,20 +52,8 @@ export default function PrintsPage() {
   };
 
   useEffect(() => {
-    if (!restaurantId) return;
-    (async () => {
-      setLoading(true);
-      const res = await getSettingsData(restaurantId);
-      if ("data" in res && res.data) {
-        const config = (res.data as any).printer_config || [];
-        setPrinters(config.map((p: any) => ({
-          ...p,
-          status: 'unverified',
-        })));
-      }
-      setLoading(false);
-    })();
-  }, [restaurantId]);
+    fetchPrinters(true);
+  }, [restaurantId, fetchPrinters]);
 
   const handlePrintTest = async (printer: any) => {
     toast.success(`Test page sent to ${printer.name}`);
