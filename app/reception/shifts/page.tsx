@@ -73,6 +73,7 @@ export default function ShiftsPage() {
 
   const [detailShiftId, setDetailShiftId] = useState<string | null>(null);
   const [detailSummary, setDetailSummary] = useState<any>(null);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const [s, a, h] = await Promise.all([getShiftableStaff(), getActiveShifts(), getShiftHistory()]);
@@ -153,8 +154,11 @@ export default function ShiftsPage() {
   const viewDetails = async (shiftId: string) => {
     setDetailShiftId(shiftId);
     setDetailSummary(null);
+    setDetailError(null);
     const result = await getShiftSummary(shiftId);
     if ('data' in result) setDetailSummary(result.data);
+    else if ('error' in result) setDetailError(result.error as string);
+    else setDetailError('Failed to load shift summary');
   };
 
   return (
@@ -397,7 +401,13 @@ export default function ShiftsPage() {
           <DialogHeader>
             <DialogTitle>Shift Summary</DialogTitle>
           </DialogHeader>
-          {!detailSummary ? (
+          {!detailSummary ? detailError ? (
+            <div className="py-8 text-center text-sm text-destructive">
+              <AlertTriangle className="h-6 w-6 mx-auto mb-2" />
+              <p>{detailError}</p>
+              <Button size="sm" variant="outline" className="mt-3" onClick={() => viewDetails(detailShiftId!)}>Retry</Button>
+            </div>
+          ) : (
             <div className="py-8 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
           ) : (
             <div className="space-y-3 text-sm">
