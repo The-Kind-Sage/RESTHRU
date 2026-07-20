@@ -2,7 +2,8 @@
 
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { UtensilsCrossed, Eye, EyeOff, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { UtensilsCrossed, Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -125,6 +126,14 @@ function WaiterLoginForm() {
             'Sign In'
           )}
         </Button>
+
+        <Link
+          href="/"
+          className="flex items-center justify-center gap-2 pt-2 text-sm text-white/70 transition-colors hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Home
+        </Link>
       </form>
     </div>
   );
