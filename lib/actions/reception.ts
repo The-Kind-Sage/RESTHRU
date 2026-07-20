@@ -474,30 +474,92 @@ export async function addToWaitlist(data: {
   customerPhone: string;
   partySize: number;
   quotedWaitMinutes?: number;
+  notifyMethod?: "SMS" | "PUSH" | "CALL";
 }) {
   const session = await getSession();
   if (!session?.restaurantId) return { error: "Not authenticated" };
 
   try {
+    // Calculate estimated wait time based on current queue and table turnover
+    const estimatedWait = await calculateEstimatedWaitTime(
+      session.restaurantId,
+      data.partySize
+    );
+
     const entry = await prisma.waitlistEntry.create({
       data: {
         restaurantId: session.restaurantId,
         customerName: data.customerName,
         customerPhone: data.customerPhone,
         partySize: data.partySize,
-        quotedWaitMinutes: data.quotedWaitMinutes || null,
+        quotedWaitMinutes: data.quotedWaitMinutes ?? estimatedWait,
+        estimatedReadyAt: new Date(Date.now() + (data.quotedWaitMinutes ?? estimatedWait) * 60 * 1000),
         status: "WAITING",
+        notifyMethod: data.notifyMethod ?? "SMS",
       },
     });
     await logActivity(session, {
       actionType: "WAITLIST_ADD",
       entityType: "WaitlistEntry",
       entityId: entry.id,
-      description: `${data.partySize} guests added to waitlist for ${data.customerName}`,
+      description: `${data.partySize} guests added to waitlist for ${data.customerName} (est. ${entry.quotedWaitMinutes} min)`,
     });
     return { data: entry };
   } catch (err: any) {
     return { error: err?.message || "Failed to add to waitlist" };
+  }
+}
+
+async function calculateEstimatedWaitTime(restaurantId: string, partySize: number): Promise<number> {
+  try {
+    // Get current waiting entries ahead in queue
+    const waitingCount = await prisma.waitlistEntry.count({
+      where: { restaurantId, status: "WAITING" },
+    });
+
+    // Get average table turnover time (last 20 completed orders)
+    const recentOrders = await prisma.order.findMany({
+      where: {
+        restaurantId,
+        status: "SERVED",
+        tableId: { not: null },
+        table: { capacity: { gte: partySize } },
+      },
+      orderBy: { completedAt: "desc" },
+      take: 20,
+      select: {
+        createdAt: true,
+        completedAt: true,
+      },
+    });
+
+    let avgTurnover = 45; // default 45 minutes
+    if (recentOrders.length > 0) {
+      const totalMinutes = recentOrders.reduce((sum, o) => {
+        if (o.completedAt) {
+          return sum + (o.completedAt.getTime() - o.createdAt.getTime()) / 60000;
+        }
+        return sum;
+      }, 0);
+      avgTurnover = Math.round(totalMinutes / recentOrders.length);
+    }
+
+    // Estimate: waiting parties * avg turnover / available tables for party size
+    const availableTables = await prisma.restaurantTable.count({
+      where: {
+        restaurantId,
+        status: "AVAILABLE",
+        capacity: { gte: partySize },
+      },
+    });
+
+    const tablesNeeded = Math.max(1, waitingCount + 1);
+    const tablesAvailable = Math.max(1, availableTables);
+    const estimatedMinutes = Math.round((tablesNeeded / tablesAvailable) * avgTurnover);
+
+    return Math.min(Math.max(estimatedMinutes, 10), 120); // clamp 10-120 min
+  } catch {
+    return 30; // fallback
   }
 }
 
@@ -506,19 +568,50 @@ export async function notifyWaitlistEntry(entryId: string) {
   if (!session?.restaurantId) return { error: "Not authenticated" };
 
   try {
+    const entry = await prisma.waitlistEntry.findFirst({
+      where: { id: entryId, restaurantId: session.restaurantId },
+    });
+    if (!entry) return { error: "Waitlist entry not found" };
+
+    // Send notification based on method
+    await sendWaitlistNotification(entry);
+
     const updated = await prisma.waitlistEntry.update({
       where: { id: entryId },
-      data: { status: "NOTIFIED", notifiedAt: new Date() },
+      data: {
+        status: "NOTIFIED",
+        notifiedAt: new Date(),
+      },
     });
     await logActivity(session, {
       actionType: "WAITLIST_NOTIFY",
       entityType: "WaitlistEntry",
       entityId: entryId,
-      description: `Waitlist entry notified`,
+      description: `Waitlist entry notified via ${entry.notifyMethod}`,
     });
     return { data: updated };
   } catch (err: any) {
     return { error: err?.message || "Failed to notify waitlist entry" };
+  }
+}
+
+async function sendWaitlistNotification(entry: any) {
+  const message = `Your table for ${entry.partySize} is ready at ${entry.restaurant?.name || "the restaurant"}. Please proceed to the host stand.`;
+  
+  switch (entry.notifyMethod) {
+    case "SMS":
+      // TODO: Integrate with SMS provider (Twilio, etc.)
+      console.log(`[SMS to ${entry.customerPhone}] ${message}`);
+      // await sendSMS(entry.customerPhone, message);
+      break;
+    case "PUSH":
+      // TODO: Integrate with push notification service
+      console.log(`[PUSH to ${entry.customerPhone}] ${message}`);
+      break;
+    case "CALL":
+      // Manual call - just log
+      console.log(`[CALL to ${entry.customerPhone}] ${message}`);
+      break;
   }
 }
 

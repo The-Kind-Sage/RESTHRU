@@ -79,6 +79,7 @@ model Restaurant {
   shifts           Shift[]
   reservations     Reservation[]
   waitlistEntries  WaitlistEntry[]
+  barTabs          BarTab[]
   customers        Customer[]
   coupons          Coupon[]
   corporateAccounts CorporateAccount[]
@@ -221,6 +222,7 @@ model RestaurantTable {
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
   orders       Order[]
   reservations Reservation[]
+  barTabs      BarTab[]
 
   @@unique([restaurantId, tableNumber])
   @@map("tables")
@@ -314,6 +316,9 @@ model Order {
   voidedBy        String?  @map("voided_by")
   voidReason      String?  @map("void_reason")
   voidedAt        DateTime? @map("voided_at")
+  // Course firing
+  currentCourse   String   @default("STARTER") @map("current_course") // STARTER, MAIN, DESSERT, DRINKS
+  courseFiredAt   Json?    @map("course_fired_at") // { STARTER: ISODate, MAIN: ISODate, ... }
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
   completedAt     DateTime? @map("completed_at")
@@ -322,6 +327,7 @@ model Order {
   table       RestaurantTable? @relation(fields: [tableId], references: [id])
   items       OrderItem[]
   bills       Bill[]
+  barTab      BarTab?
 
   @@unique([restaurantId, orderId])
   @@index([restaurantId, createdAt])
@@ -345,6 +351,10 @@ model OrderItem {
   voidedBy            String?  @map("voided_by")
   voidReason          String?  @map("void_reason")
   voidedAt            DateTime? @map("voided_at")
+  // Course firing
+  course              String   @default("MAIN") // STARTER, MAIN, DESSERT, DRINKS
+  firedAt             DateTime? @map("fired_at")
+  firedBy             String?  @map("fired_by")
 
   order    Order    @relation(fields: [orderId], references: [id])
   menuItem MenuItem @relation(fields: [menuItemId], references: [id])
@@ -428,6 +438,32 @@ model Bill {
   @@index([restaurantId, createdAt])
   @@index([orderId])
   @@map("bills")
+}
+
+model BarTab {
+  id            String   @id @default(cuid())
+  restaurantId  String   @map("restaurant_id")
+  tableId       String?  @map("table_id")
+  orderId       String?  @unique @map("order_id")
+  name          String   // Customer name or "Walk-in"
+  phone         String?
+  status        String   @default("OPEN") // OPEN, CLOSED, TRANSFERRED
+  totalAmount   Float    @default(0) @map("total_amount")
+  paidAmount    Float    @default(0) @map("paid_amount")
+  createdBy     String   @map("created_by")
+  closedBy      String?  @map("closed_by")
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  closedAt      DateTime? @map("closed_at")
+
+  restaurant Restaurant      @relation(fields: [restaurantId], references: [id])
+  table      RestaurantTable? @relation(fields: [tableId], references: [id])
+  order      Order?          @relation(fields: [orderId], references: [id])
+
+  @@index([restaurantId, status])
+  @@index([tableId])
+  @@map("bar_tabs")
 }
 
 model Notification {
@@ -560,6 +596,11 @@ model Reservation {
   status        String    @default("BOOKED")
   notes         String?
   checkedInAt   DateTime? @map("checked_in_at")
+  occasion      String?   // BIRTHDAY, ANNIVERSARY, BUSINESS, DATE, OTHER
+  vip           Boolean   @default(false)
+  depositAmount Float     @default(0) @map("deposit_amount")
+  depositPaid   Boolean   @default(false) @map("deposit_paid")
+  source        String    @default("PHONE") // ONLINE, PHONE, WALKIN, IN_PERSON
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
@@ -581,6 +622,9 @@ model WaitlistEntry {
   status            String    @default("WAITING")
   notifiedAt        DateTime? @map("notified_at")
   seatedAt          DateTime? @map("seated_at")
+  notifyMethod      String?   @default("SMS") @map("notify_method") // SMS, PUSH, CALL
+  estimatedReadyAt  DateTime? @map("estimated_ready_at")
+  priority          Int       @default(0) // Higher = more urgent
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
@@ -597,7 +641,14 @@ model Customer {
   phone         String
   email         String?
   dietaryNotes  String?  @map("dietary_notes")
+  allergens     String[] @default([]) @map("allergens") // e.g., ["NUTS", "SHELLFISH", "GLUTEN"]
+  preferences   Json?    @map("preferences") // { favoriteTable: "5", seatingPref: "BOOTH", spiceLevel: "MEDIUM" }
   loyaltyPoints Int      @default(0) @map("loyalty_points")
+  visitCount    Int      @default(0) @map("visit_count")
+  totalSpent    Float    @default(0) @map("total_spent")
+  lastVisitAt   DateTime? @map("last_visit_at")
+  tags          String[] @default([]) // VIP, BIRTHDAY, ANNIVERSARY, REGULAR, ALLERGY_ALERT
+  favoriteItems String[] @default([]) @map("favorite_items")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 

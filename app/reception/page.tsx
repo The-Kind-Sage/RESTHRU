@@ -21,6 +21,12 @@ import {
   Split,
   ChevronRight,
   RotateCcw,
+  Crown,
+  AlertTriangle,
+  Shield,
+  Star,
+  Heart,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,9 +55,10 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { formatCurrency, formatTime, formatDate } from "@/lib/format";
+import { formatCurrency, formatTime, formatDate, formatDateTime } from "@/lib/format";
 import BillReceiptDialog from "@/components/receipt/BillReceiptDialog";
 import { createBillDraft, getBill } from "@/lib/actions/bills";
+import { getCustomerByPhone } from "@/lib/actions/crm";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 import {
@@ -89,6 +96,10 @@ export default function ReceptionPage() {
   const [activeOrders, setActiveOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [billReceipt, setBillReceipt] = useState<{ open: boolean; items: any[]; bill: any; orderId?: string; tableName?: string }>({ open: false, items: [], bill: null });
+  const [showVipAlert, setShowVipAlert] = useState(false);
+  const [vipAlert, setVipAlert] = useState<{ type: "vip" | "allergy"; message: string; details: string } | null>(null);
+  const [showCustomerProfile, setShowCustomerProfile] = useState(false);
+  const [checkInCustomer, setCheckInCustomer] = useState<any>(null);
 
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
 
@@ -141,7 +152,35 @@ export default function ReceptionPage() {
     refreshAll();
   };
 
+  const [seatDialogEntry, setSeatDialogEntry] = useState<any>(null);
+  const [seatDialogTable, setSeatDialogTable] = useState<string>("");
+
   const handleCheckIn = async (reservation: any) => {
+    // Fetch customer profile for VIP/allergy alerts
+    const customerRes = await getCustomerByPhone(reservation.customerPhone);
+    if (!("error" in customerRes) && customerRes.data) {
+      const customer = customerRes.data;
+      // Check for VIP or allergy alerts
+      if (customer.tags?.includes("VIP")) {
+        setVipAlert({
+          type: "vip",
+          message: `⭐ VIP Guest: ${customer.name}`,
+          details: customer.tags?.filter((t: string) => t !== "VIP").join(", ") || "VIP customer",
+        });
+        setShowVipAlert(true);
+      }
+      if (customer.allergens?.length > 0) {
+        setVipAlert({
+          type: "allergy",
+          message: `⚠️ Allergy Alert: ${customer.name}`,
+          details: `Allergens: ${customer.allergens.join(", ")}`,
+        });
+        setShowVipAlert(true);
+      }
+      // Show full profile
+      setCheckInCustomer(customer);
+      setShowCustomerProfile(true);
+    }
     const result = await checkInReservation(reservation.id) as any;
     if (result.error) { toast.error(result.error); return; }
     toast.success(`${reservation.customerName} checked in`);
@@ -210,9 +249,6 @@ export default function ReceptionPage() {
     toast.success(`${entry.customerName} notified`);
     refreshAll();
   };
-
-  const [seatDialogEntry, setSeatDialogEntry] = useState<any>(null);
-  const [seatDialogTable, setSeatDialogTable] = useState<string>("");
 
   const handleSeatWaitlist = async (entry: any, tableId: string) => {
     const table = tables.find((t: any) => t.id === tableId);
@@ -963,6 +999,245 @@ export default function ReceptionPage() {
         orderId={billReceipt.orderId}
         tableName={billReceipt.tableName}
       />
+
+      {/* VIP / Allergy Alert */}
+      <Dialog open={showVipAlert} onOpenChange={setShowVipAlert}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {vipAlert?.type === "vip" ? (
+                <Crown className="w-5 h-5 text-yellow-500" />
+              ) : (
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+              )}
+              {vipAlert?.type === "vip" ? "VIP Guest Alert" : "Allergy Alert"}
+            </DialogTitle>
+            <DialogDescription>
+              {vipAlert?.type === "vip" 
+                ? "This guest has VIP status. Provide exceptional service."
+                : "This guest has food allergies. Notify kitchen immediately."
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className={`p-3 rounded-lg border ${
+              vipAlert?.type === "vip" 
+                ? "bg-yellow-50 border-yellow-200 text-yellow-900" 
+                : "bg-red-50 border-red-200 text-red-900"
+            }`}>
+              <p className="font-semibold">{vipAlert?.message}</p>
+              <p className="text-sm mt-1">{vipAlert?.details}</p>
+            </div>
+            {checkInCustomer && (
+              <div className="p-3 rounded-lg border bg-muted/30">
+                <p className="text-xs text-muted-foreground">Customer Profile</p>
+                <p className="font-medium">{checkInCustomer.name}</p>
+                <p className="text-sm text-muted-foreground">{checkInCustomer.phone}</p>
+                {checkInCustomer.visitCount > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {checkInCustomer.visitCount} visits • {formatCurrency(checkInCustomer.totalSpent || 0)} total spend
+                  </p>
+                )}
+                {checkInCustomer.tags?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {checkInCustomer.tags.map((tag: string) => (
+                      <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowVipAlert(false)}>Dismiss</Button>
+            <Button onClick={() => { setShowVipAlert(false); setShowCustomerProfile(true); }}>
+              View Full Profile
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Customer Profile Dialog */}
+      <Dialog open={showCustomerProfile} onOpenChange={setShowCustomerProfile}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Customer Profile</DialogTitle>
+            <DialogDescription>
+              {checkInCustomer?.name} • {checkInCustomer?.phone}
+            </DialogDescription>
+          </DialogHeader>
+          {checkInCustomer && (
+            <div className="space-y-6 py-2">
+              {/* Header Card */}
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-xl font-bold">{checkInCustomer.name}</h3>
+                      <p className="text-muted-foreground">{checkInCustomer.phone}</p>
+                      {checkInCustomer.email && (
+                        <p className="text-sm text-muted-foreground">{checkInCustomer.email}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {checkInCustomer.tags?.map((tag: string) => (
+                        <Badge key={tag} variant="secondary" className="mr-1">{tag}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 mt-4 text-center">
+                    <div className="p-2 rounded-lg bg-muted/50">
+                      <p className="text-2xl font-bold">{checkInCustomer.visitCount || 0}</p>
+                      <p className="text-xs text-muted-foreground">Visits</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-muted/50">
+                      <p className="text-2xl font-bold">{formatCurrency(checkInCustomer.totalSpent || 0)}</p>
+                      <p className="text-xs text-muted-foreground">Total Spend</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-muted/50">
+                      <p className="text-2xl font-bold">{checkInCustomer.loyaltyPoints || 0}</p>
+                      <p className="text-xs text-muted-foreground">Loyalty Points</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Allergens & Preferences */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-red-500" />
+                      Allergens & Dietary
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {checkInCustomer.allergens?.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {checkInCustomer.allergens.map((allergen: string) => (
+                          <Badge key={allergen} variant="destructive" className="text-sm">{allergen}</Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">No allergens recorded</p>
+                    )}
+                    {checkInCustomer.dietaryNotes && (
+                      <p className="mt-2 text-sm"><strong>Notes:</strong> {checkInCustomer.dietaryNotes}</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-pink-500" />
+                      Preferences
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-sm">
+                      {checkInCustomer.favoriteItems?.length > 0 && (
+                        <>
+                          <p className="font-medium">Favorite Items:</p>
+                          <p className="text-muted-foreground">{checkInCustomer.favoriteItems.join(", ")}</p>
+                        </>
+                      )}
+                      {checkInCustomer.preferences && Object.keys(checkInCustomer.preferences).length > 0 && (
+                        <>
+                          <p className="font-medium">Seating & Preferences:</p>
+                          <ul className="text-muted-foreground space-y-1">
+                            {Object.entries(checkInCustomer.preferences).map(([key, value]) => (
+                              <li key={key} className="flex justify-between">
+                                <span>{key}</span>
+                                <span className="font-medium">{String(value)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                      {!checkInCustomer.favoriteItems?.length && !Object.keys(checkInCustomer.preferences || {}).length && (
+                        <p className="text-muted-foreground">No preferences recorded</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Recent Activity */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Tabs defaultValue="orders" className="w-full">
+                    <TabsList>
+                      <TabsTrigger value="orders">Orders ({checkInCustomer.recentOrders?.length || 0})</TabsTrigger>
+                      <TabsTrigger value="reservations">Reservations ({checkInCustomer.reservations?.length || 0})</TabsTrigger>
+                      <TabsTrigger value="bills">Bills ({checkInCustomer.bills?.length || 0})</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="orders">
+                      <div className="space-y-2 mt-4">
+                        {checkInCustomer.recentOrders?.length > 0 ? (
+                          checkInCustomer.recentOrders.map((order: any) => (
+                            <div key={order.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                              <div>
+                                <p className="font-medium">Order #{order.orderId}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {order.items?.map((i: any) => `${i.quantity}x ${i.menuItemName}`).join(", ")}
+                                </p>
+                                <p className="text-xs text-muted-foreground">{formatDateTime(order.createdAt)}</p>
+                              </div>
+                              <span className="font-semibold">{formatCurrency(order.totalAmount)}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-center text-muted-foreground py-8">No recent orders</p>
+                        )}
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="reservations">
+                      <div className="space-y-2 mt-4">
+                        {checkInCustomer.reservations?.length > 0 ? (
+                          checkInCustomer.reservations.map((res: any) => (
+                            <div key={res.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                              <div>
+                                <p className="font-medium">{formatDateTime(res.reservedFor)}</p>
+                                <p className="text-sm text-muted-foreground">Party of {res.partySize} • {res.status}</p>
+                              </div>
+                              <Badge variant={res.vip ? "default" : "secondary"}>
+                                {res.vip ? "VIP" : res.occasion || "Standard"}
+                              </Badge>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-center text-muted-foreground py-8">No reservations</p>
+                        )}
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="bills">
+                      <div className="space-y-2 mt-4">
+                        {checkInCustomer.bills?.length > 0 ? (
+                          checkInCustomer.bills.map((bill: any) => (
+                            <div key={bill.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                              <div>
+                                <p className="font-medium">{bill.billNumber}</p>
+                                <p className="text-sm text-muted-foreground">{formatDateTime(bill.billDate)} • {bill.status}</p>
+                              </div>
+                              <span className="font-semibold">{formatCurrency(bill.totalAmount)}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-center text-muted-foreground py-8">No bills</p>
+                        )}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -40,6 +40,93 @@ export async function getCustomerByPhone(phone: string) {
   }
 }
 
+export async function getCustomerProfile(phone: string) {
+  const session = await getSession();
+  if (!session?.restaurantId) return { error: "Not authenticated" };
+
+  try {
+    const customer = await prisma.customer.findUnique({
+      where: { restaurantId_phone: { restaurantId: session.restaurantId, phone } },
+    });
+    if (!customer) return { data: null };
+
+    // Get recent orders for this customer
+    const recentOrders = await prisma.order.findMany({
+      where: {
+        restaurantId: session.restaurantId,
+        customerPhone: phone,
+        status: { in: ["SERVED", "COMPLETED"] },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        orderId: true,
+        totalAmount: true,
+        createdAt: true,
+        items: { select: { menuItemName: true, quantity: true } },
+      },
+    });
+
+    // Get reservations
+    const reservations = await prisma.reservation.findMany({
+      where: {
+        restaurantId: session.restaurantId,
+        customerPhone: phone,
+      },
+      orderBy: { reservedFor: "desc" },
+      take: 10,
+    });
+
+    // Get bills
+    const bills = await prisma.bill.findMany({
+      where: {
+        restaurantId: session.restaurantId,
+        order: { customerPhone: phone },
+      },
+      orderBy: { billDate: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        billNumber: true,
+        totalAmount: true,
+        billDate: true,
+        status: true,
+      },
+    });
+
+    return {
+      data: {
+        ...customer,
+        recentOrders,
+        reservations,
+        bills,
+        // Computed insights
+        favoriteItems: getFavoriteItems(recentOrders),
+        avgSpend: recentOrders.length > 0
+          ? recentOrders.reduce((sum, o) => sum + o.totalAmount, 0) / recentOrders.length
+          : 0,
+        lastVisit: recentOrders[0]?.createdAt || customer.lastVisitAt,
+      },
+    };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to fetch customer profile" };
+  }
+}
+
+function getFavoriteItems(orders: any[]): string[] {
+  const itemCounts: Record<string, number> = {};
+  for (const order of orders) {
+    for (const item of order.items) {
+      itemCounts[item.menuItemName] = (itemCounts[item.menuItemName] || 0) + item.quantity;
+    }
+  }
+  return Object.entries(itemCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5)
+    .map(([name]) => name);
+}
+
 export async function createCustomer(data: {
   name: string;
   phone: string;
