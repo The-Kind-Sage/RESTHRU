@@ -50,6 +50,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { formatCurrency, formatTime, formatDate } from "@/lib/format";
+import BillReceiptDialog from "@/components/receipt/BillReceiptDialog";
+import { createBillDraft, getBill } from "@/lib/actions/bills";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 import {
@@ -86,6 +88,7 @@ export default function ReceptionPage() {
   const [waitlist, setWaitlist] = useState<any[]>([]);
   const [activeOrders, setActiveOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [billReceipt, setBillReceipt] = useState<{ open: boolean; items: any[]; bill: any; orderId?: string; tableName?: string }>({ open: false, items: [], bill: null });
 
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
 
@@ -277,6 +280,37 @@ export default function ReceptionPage() {
     setSplitItemIds([]);
     setSplitTargetTable("");
     refreshAll();
+  };
+
+  const handleShowBill = async (table: any) => {
+    const order = activeOrders.find((o: any) => o.tableId === table.id);
+    if (!order) { toast.error("No active order for this table"); return; }
+    let billData: any = order.bills?.find((b: any) => b.status !== "VOID");
+    try {
+      if (billData) {
+        const res = await getBill(billData.id);
+        if ("error" in res) { toast.error(res.error); return; }
+        billData = res.data;
+      } else {
+        const res = await createBillDraft(order.id);
+        if ("error" in res) { toast.error(res.error); return; }
+        billData = res.data;
+        toast.success("Bill generated");
+      }
+    } catch { toast.error("Failed to process bill"); return; }
+    const items = (billData.order?.items || order.items || []).map((i: any) => ({
+      name: i.menuItemName,
+      qty: i.quantity,
+      price: i.pricePerUnit,
+      total: i.pricePerUnit * i.quantity,
+    }));
+    setBillReceipt({
+      open: true,
+      items,
+      bill: billData,
+      orderId: order.orderId,
+      tableName: table.name || `T${table.tableNumber}`,
+    });
   };
 
   const availableTables = useMemo(
@@ -564,7 +598,9 @@ export default function ReceptionPage() {
                       {(tablesByFloor[floor] || []).map((table: any) => (
                         <div
                           key={table.id}
-                          className={`p-2 rounded-lg border text-center cursor-pointer hover:shadow-md transition-shadow ${
+                          className={`p-2 rounded-lg border text-center ${
+                            table.status === "AVAILABLE" ? "cursor-pointer hover:shadow-md" : ""
+                          } transition-shadow ${
                             FLOOR_BG[table.status] || "bg-muted/20"
                           }`}
                           onClick={() => {
@@ -577,6 +613,16 @@ export default function ReceptionPage() {
                           <p className="text-xs font-bold">{table.name || `T${table.tableNumber}`}</p>
                           <p className="text-[10px] text-muted-foreground">{table.status}</p>
                           <p className="text-[10px] text-muted-foreground">Cap: {table.capacity}</p>
+                          {["OCCUPIED", "BILL_REQUESTED"].includes(table.status) && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="mt-1.5 h-6 text-[10px] px-2 w-full gap-1"
+                              onClick={(e) => { e.stopPropagation(); handleShowBill(table); }}
+                            >
+                              Bill
+                            </Button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -908,6 +954,15 @@ export default function ReceptionPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <BillReceiptDialog
+        open={billReceipt.open}
+        onOpenChange={(o) => setBillReceipt((prev) => ({ ...prev, open: o }))}
+        items={billReceipt.items}
+        bill={billReceipt.bill}
+        orderId={billReceipt.orderId}
+        tableName={billReceipt.tableName}
+      />
     </div>
   );
 }

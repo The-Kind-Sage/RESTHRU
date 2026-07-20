@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, BellOff, Loader2, ArrowRight, XCircle, Banknote, Ban } from "lucide-react";
+import { Bell, BellOff, Loader2, ArrowRight, XCircle, Banknote, Ban, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import ManagerApprovalDialog from "@/components/dashboard/manager-approval-dialog";
+import BillReceiptDialog from "@/components/receipt/BillReceiptDialog";
+import { getBill } from "@/lib/actions/bills";
 
 type OrderStatus = "PENDING" | "PREPARING" | "READY" | "SERVED" | "CANCELLED";
 
@@ -61,6 +63,7 @@ export default function LiveOrdersPage() {
   const [voidOrderTarget, setVoidOrderTarget] = useState<any>(null);
   const [cancelTarget, setCancelTarget] = useState<any>(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [billReceipt, setBillReceipt] = useState<{ open: boolean; items: any[]; bill: any; orderId?: string; tableName?: string }>({ open: false, items: [], bill: null });
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   const playSound = useCallback(() => {
@@ -159,6 +162,27 @@ export default function LiveOrdersPage() {
   };
 
   const hasBill = (order: any) => (order?.bills?.length ?? 0) > 0;
+
+  const handleShowBill = async (order: any) => {
+    const billId = order.bills?.[0]?.id;
+    if (!billId) { toast.error("No bill found for this order"); return; }
+    const res = await getBill(billId);
+    if ("error" in res) { toast.error(res.error); return; }
+    const billData = res.data;
+    const items = (billData.order?.items || []).map((i: any) => ({
+      name: i.menuItemName,
+      qty: i.quantity,
+      price: i.pricePerUnit,
+      total: i.pricePerUnit * i.quantity,
+    }));
+    setBillReceipt({
+      open: true,
+      items,
+      bill: billData,
+      orderId: order.orderId,
+      tableName: order.table ? `T${order.table.tableNumber}` : undefined,
+    });
+  };
 
   const handleVoidItem = async (data: { reason: string; approverUsername: string; approverPassword: string }) => {
     const result = await voidOrderItem({ orderItemId: voidItemTarget.id, ...data });
@@ -319,6 +343,16 @@ export default function LiveOrdersPage() {
                                 </Button>
                               </div>
                             )}
+                            {!statusConfig[status].nextStatus && ["READY", "SERVED"].includes(status) && hasBill(order) && (
+                              <div className="flex gap-2 pt-1">
+                                <Button size="sm" variant="outline" className="flex-1 gap-1 text-xs" onClick={() => handleShowBill(order)}>
+                                  <Receipt className="w-3 h-3" /> Show Bill
+                                </Button>
+                                <Button size="sm" variant="outline" className="flex-1 gap-1 text-xs text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => { setVoidOrderTarget(order); }}>
+                                  <Ban className="w-3 h-3" /> Void
+                                </Button>
+                              </div>
+                            )}
                           </CardContent>
                         </Card>
                       </motion.div>
@@ -414,6 +448,21 @@ export default function LiveOrdersPage() {
                   </div>
                 </div>
               )}
+              {["READY", "SERVED"].includes(selectedOrder.status) && hasBill(selectedOrder) && (
+                <div>
+                  <h3 className="font-semibold text-sm mb-2 flex items-center gap-1">
+                    <Receipt className="w-4 h-4" /> Bill
+                  </h3>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                    onClick={() => handleShowBill(selectedOrder)}
+                  >
+                    <Receipt className="w-3 h-3" /> Show Bill
+                  </Button>
+                </div>
+              )}
             </div>
           )}
           <DialogFooter className="gap-2">
@@ -449,6 +498,15 @@ export default function LiveOrdersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <BillReceiptDialog
+        open={billReceipt.open}
+        onOpenChange={(o) => setBillReceipt((prev) => ({ ...prev, open: o }))}
+        items={billReceipt.items}
+        bill={billReceipt.bill}
+        orderId={billReceipt.orderId}
+        tableName={billReceipt.tableName}
+      />
 
       <ManagerApprovalDialog
         open={!!voidItemTarget}

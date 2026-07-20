@@ -54,6 +54,15 @@ export default function BillReceiptDialog({
   const receiptRef = useRef<HTMLDivElement>(null);
   const [printLoading, setPrintLoading] = useState(false);
 
+  const addrStr = restaurant?.address
+    ? typeof restaurant.address === "string"
+      ? restaurant.address
+      : [restaurant.address.street, restaurant.address.city, restaurant.address.state]
+          .filter(Boolean)
+          .join(", ")
+    : "";
+  const phoneStr = (restaurant as any)?.phoneNumber || (restaurant as any)?.phone || "";
+
   const now = new Date();
   const dateStr = bill?.createdAt
     ? new Date(bill.createdAt).toLocaleDateString("en-US", {
@@ -80,8 +89,8 @@ export default function BillReceiptDialog({
     setPrintLoading(true);
     const html = formatReceiptHTML({
       restaurantName: restaurant?.name || "Restaurant",
-      address: restaurant?.address || "",
-      phone: restaurant?.phone || "",
+      address: addrStr,
+      phone: phoneStr,
       billNumber: bill?.billNumber || orderId || "N/A",
       items,
       subtotal: bill?.subtotal ?? 0,
@@ -93,7 +102,6 @@ export default function BillReceiptDialog({
       change: bill?.change ?? 0,
       paymentMethod: bill?.paymentMethod || "N/A",
       date: `${dateStr} ${timeStr}`,
-      footer: restaurant?.bill_footer_message || undefined,
     });
     printReceipt(html);
     setTimeout(() => setPrintLoading(false), 1000);
@@ -114,11 +122,11 @@ export default function BillReceiptDialog({
               <h2 className="text-lg font-bold text-gray-900 tracking-tight">
                 {restaurant?.name || "Restaurant"}
               </h2>
-              {restaurant?.address && (
-                <p className="text-[11px] text-gray-500 mt-0.5">{restaurant.address}</p>
+              {addrStr && (
+                <p className="text-[11px] text-gray-500 mt-0.5">{addrStr}</p>
               )}
-              {restaurant?.phone && (
-                <p className="text-[11px] text-gray-500">{restaurant.phone}</p>
+              {phoneStr && (
+                <p className="text-[11px] text-gray-500">{phoneStr}</p>
               )}
             </div>
 
@@ -208,11 +216,6 @@ export default function BillReceiptDialog({
               <p className="text-[10px] text-gray-500 italic">
                 Thank you for your visit!
               </p>
-              {restaurant?.bill_footer_message && (
-                <p className="text-[10px] text-gray-400 mt-1">
-                  {restaurant.bill_footer_message}
-                </p>
-              )}
             </div>
           </div>
 

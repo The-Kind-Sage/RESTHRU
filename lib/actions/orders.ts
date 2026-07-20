@@ -445,6 +445,7 @@ export async function settleOrder(data: {
               change: amountPaid - totalAmount,
               paymentMethod: data.paymentMethod,
               paymentRef: data.paymentRef || null,
+              status: "PAID",
               settledAt: new Date(),
               createdBy: session.id,
             },
