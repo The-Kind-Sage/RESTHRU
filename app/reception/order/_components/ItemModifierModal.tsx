@@ -58,10 +58,19 @@ export default function ItemModifierModal() {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="rounded-2xl p-0 overflow-hidden mt-safe sm:max-w-[400px]">
         <DialogHeader className="p-5 pb-3 border-b border-border">
-          <DialogTitle className="text-xl font-bold leading-tight">
-            {activeItem.name}
-          </DialogTitle>
-          <p className="text-primary font-bold">{formatCurrency(activeItem.discountPrice ?? activeItem.price)}</p>
+          <div className="flex items-center gap-3">
+            {activeItem.imageUrl && (
+              <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-muted">
+                <img src={activeItem.imageUrl} alt={activeItem.name} className="w-full h-full object-cover" />
+              </div>
+            )}
+            <div>
+              <DialogTitle className="text-xl font-bold leading-tight">
+                {activeItem.name}
+              </DialogTitle>
+              <p className="text-primary font-bold">{formatCurrency(activeItem.discountPrice ?? activeItem.price)}</p>
+            </div>
+          </div>
         </DialogHeader>
 
         <div className="p-5 space-y-6">

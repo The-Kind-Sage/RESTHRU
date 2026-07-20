@@ -372,10 +372,6 @@ export default function LiveOrdersPage() {
                     <span>Subtotal</span>
                     <span>{formatCurrency(selectedOrder.subtotal)}</span>
                   </div>
-                  <div className="flex justify-between items-center text-sm text-muted-foreground">
-                    <span>VAT (13%)</span>
-                    <span>{formatCurrency(selectedOrder.taxAmount)}</span>
-                  </div>
                   <div className="flex justify-between items-center font-semibold">
                     <span>Total</span>
                     <span className="text-lg">{formatCurrency(selectedOrder.totalAmount)}</span>

@@ -229,8 +229,7 @@ export default function CustomerMenuPage() {
 
   const itemCount = getItemCount();
   const subtotal = getSubtotal();
-  const tax = getTax(13);
-  const total = getTotal(13);
+  const total = getSubtotal();
 
   const emojis = ['🍜', '🍛', '🥘', '🍲', '🥗', '🍖'];
 
@@ -604,14 +603,10 @@ export default function CustomerMenuPage() {
                       <span>Subtotal</span>
                       <span>{formatCurrency(subtotal)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Tax (13% VAT)</span>
-                      <span>{formatCurrency(tax)}</span>
-                    </div>
                     <div className="border-t pt-2 flex justify-between font-bold">
                       <span>Total</span>
                       <span className="text-base text-primary">
-                        {formatCurrency(total)}
+                        {formatCurrency(subtotal)}
                       </span>
                     </div>
                   </div>

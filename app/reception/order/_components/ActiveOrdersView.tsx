@@ -14,7 +14,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { formatCurrency, formatRelativeTime } from '@/lib/format';
-import { VAT_RATE } from '@/lib/constants';
 import { getActiveOrders, updateOrderStatus, settleOrder } from '@/lib/actions/orders';
 import { Order } from '@/types';
 import { cn } from '@/lib/utils';
@@ -190,16 +189,8 @@ export default function ActiveOrdersView() {
                 </div>
               ))}
               <div className="pt-2 mt-1 border-t border-border text-sm space-y-0.5">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal (excl. VAT)</span>
-                  <span className="text-foreground">{formatCurrency(order.subtotal)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">VAT ({VAT_RATE}%)</span>
-                  <span className="text-foreground">{formatCurrency(order.taxAmount)}</span>
-                </div>
-                <div className="flex justify-between font-semibold pt-0.5">
-                  <span className="text-muted-foreground">Total (incl. VAT)</span>
+                <div className="flex justify-between font-semibold">
+                  <span className="text-muted-foreground">Total</span>
                   <span className="text-foreground">{formatCurrency(order.totalAmount)}</span>
                 </div>
               </div>

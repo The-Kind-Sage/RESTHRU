@@ -620,7 +620,7 @@ export default function ReportsPage() {
                   <p className="mt-2 text-2xl font-bold">{formatCurrency(td.totalTaxable)}</p>
                 </div>
                 <div className="rounded-lg border p-4">
-                  <p className="text-sm text-muted-foreground">VAT Collected (13%)</p>
+                  <p className="text-sm text-muted-foreground">Tax Collected</p>
                   <p className="mt-2 text-2xl font-bold text-primary">{formatCurrency(td.totalVAT)}</p>
                 </div>
                 <div className="rounded-lg border p-4">
@@ -638,7 +638,7 @@ export default function ReportsPage() {
 
               {/* Monthly VAT Summary */}
               <div>
-                <h3 className="font-semibold mb-4">Monthly VAT Summary</h3>
+                <h3 className="font-semibold mb-4">Monthly Tax Summary</h3>
                 {td.monthlyVATData.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -646,7 +646,7 @@ export default function ReportsPage() {
                         <tr className="text-muted-foreground">
                           <th className="text-left py-3 px-4 font-medium">Month</th>
                           <th className="text-right py-3 px-4 font-medium">Taxable Amount</th>
-                          <th className="text-right py-3 px-4 font-medium">VAT (13%)</th>
+                          <th className="text-right py-3 px-4 font-medium">Tax</th>
                         </tr>
                       </thead>
                       <tbody>

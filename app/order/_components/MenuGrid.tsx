@@ -67,6 +67,11 @@ export default function MenuGrid({ menuItems }: { menuItems: MenuItem[] }) {
             onMouseUp={handleTouchEnd}
             onMouseLeave={handleTouchEnd}
           >
+            {item.imageUrl && (
+              <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 mr-3 bg-muted">
+                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+              </div>
+            )}
             <div className="flex-1 pr-4">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-bold text-foreground leading-tight">{item.name}</h3>

@@ -28,7 +28,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { createOrder } from '@/lib/actions/orders';
 import { formatCurrency } from '@/lib/format';
-import { VAT_RATE } from '@/lib/constants';
 
 export default function ActiveOrderSheet() {
   const { 
@@ -170,16 +169,8 @@ export default function ActiveOrderSheet() {
 
         <DrawerFooter className="border-t border-border pt-4 pb-safe gap-3">
           <div className="px-2 space-y-1 mb-2">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-muted-foreground">Subtotal (excl. VAT)</span>
-              <span className="text-foreground">{formatCurrency(Math.round(totalPrice / (1 + VAT_RATE / 100)))}</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-muted-foreground">VAT ({VAT_RATE}%)</span>
-              <span className="text-foreground">{formatCurrency(totalPrice - Math.round(totalPrice / (1 + VAT_RATE / 100)))}</span>
-            </div>
             <div className="flex justify-between items-center pt-1 border-t border-border mt-1">
-              <span className="font-semibold text-muted-foreground">Total (incl. VAT)</span>
+              <span className="font-semibold text-muted-foreground">Total</span>
               <span className="text-2xl font-bold text-foreground">{formatCurrency(totalPrice)}</span>
             </div>
           </div>
@@ -192,7 +183,7 @@ export default function ActiveOrderSheet() {
                 className="w-full h-14 text-lg font-bold rounded-xl bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
               >
                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
-                {isSubmitting ? 'Sending...' : 'Confirm & Send to Kitchen'}
+                {isSubmitting ? 'Sending...' : 'Confirm'}
               </Button>
               <AlertDialog open={showCancelAlert} onOpenChange={setShowCancelAlert}>
                 <AlertDialogTrigger asChild>

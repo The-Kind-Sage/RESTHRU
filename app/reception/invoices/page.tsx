@@ -75,7 +75,6 @@ function printReceipt(bill: any) {
         <hr />
         <table>
           <tr><td>Subtotal</td><td style="text-align:right">${formatCurrency(bill.subtotal)}</td></tr>
-          <tr><td>Tax</td><td style="text-align:right">${formatCurrency(bill.taxAmount)}</td></tr>
           <tr><td>Service</td><td style="text-align:right">${formatCurrency(bill.serviceCharge)}</td></tr>
           ${bill.discountAmount ? `<tr><td>Discount</td><td style="text-align:right">-${formatCurrency(bill.discountAmount)}</td></tr>` : ''}
           <tr class="total"><td>Total</td><td style="text-align:right">${formatCurrency(bill.totalAmount)}</td></tr>
@@ -279,7 +278,6 @@ export default function InvoicesPage() {
                   ))}
                   <Separator className="my-1" />
                   <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>{formatCurrency(selected.subtotal)}</span></div>
-                  <div className="flex justify-between text-muted-foreground"><span>Tax</span><span>{formatCurrency(selected.taxAmount)}</span></div>
                   {selected.discountAmount > 0 && (
                     <div className="flex justify-between text-muted-foreground"><span>Discount</span><span>-{formatCurrency(selected.discountAmount)}</span></div>
                   )}

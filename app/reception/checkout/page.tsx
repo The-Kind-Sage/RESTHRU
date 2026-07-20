@@ -643,10 +643,6 @@ export default function CheckoutPage() {
                           <span>Subtotal</span>
                           <span>{formatCurrency(activeBill.subtotal)}</span>
                         </div>
-                          <div className="flex justify-between text-muted-foreground">
-                              <span>VAT</span>
-                              <span>{formatCurrency(activeBill.taxAmount)}</span>
-                            </div>
                         {activeBill.serviceCharge > 0 && (
                           <div className="flex justify-between text-muted-foreground">
                             <span>Service Charge</span>
