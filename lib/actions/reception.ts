@@ -298,12 +298,12 @@ export async function mergeTables(sourceTableIds: string[], targetTableId: strin
             data: { orderId: primaryOrder.id },
           });
 
-          const sourceTotal = sourceOrder.subtotal + sourceOrder.taxAmount + sourceOrder.serviceCharge;
+          // No VAT — merged totals are plain menu prices (+ service charge).
+          const sourceTotal = sourceOrder.subtotal + sourceOrder.serviceCharge;
           await tx.order.update({
             where: { id: primaryOrder.id },
             data: {
               subtotal: { increment: sourceOrder.subtotal },
-              taxAmount: { increment: sourceOrder.taxAmount },
               serviceCharge: { increment: sourceOrder.serviceCharge },
               totalAmount: { increment: sourceTotal },
             },
@@ -395,8 +395,8 @@ export async function splitOrderItems(orderId: string, itemIds: string[], target
           orderType: "DINE_IN",
           status: "PENDING",
           subtotal: splitSubtotal,
-          taxAmount: splitSubtotal * 0.13,
-          totalAmount: splitSubtotal * 1.13,
+          taxAmount: 0,
+          totalAmount: splitSubtotal,
           assignedWaiterId: sourceOrder.assignedWaiterId,
         },
       });
@@ -433,8 +433,8 @@ export async function splitOrderItems(orderId: string, itemIds: string[], target
           where: { id: orderId },
           data: {
             subtotal: remainingSubtotal,
-            taxAmount: remainingSubtotal * 0.13,
-            totalAmount: remainingSubtotal * 1.13,
+            taxAmount: 0,
+            totalAmount: remainingSubtotal,
           },
         });
       }
@@ -644,6 +644,7 @@ export async function getActiveOrdersForTableMerge() {
       include: {
         items: true,
         table: { select: { tableNumber: true, name: true } },
+        bills: { select: { id: true, billNumber: true, status: true } },
       },
       orderBy: { createdAt: "desc" },
     });

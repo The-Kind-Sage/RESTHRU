@@ -76,9 +76,11 @@ export async function createBillDraft(orderId: string) {
         orderId: order.id,
         billNumber: `B-${nextNum.toString().padStart(5, "0")}`,
         subtotal: order.subtotal,
-        taxAmount: order.taxAmount,
+        // No VAT — recompute the total from menu prices instead of copying the
+        // order's stored total, so even older orders with tax baked in bill clean.
+        taxAmount: 0,
         serviceCharge: order.serviceCharge,
-        totalAmount: order.totalAmount,
+        totalAmount: order.subtotal + order.serviceCharge - order.discountAmount,
         amountPaid: 0,
         change: 0,
         status: "PENDING",
@@ -366,7 +368,8 @@ export async function applyDiscountToBill(billId: string, discountAmount: number
     if (bill.status !== "PENDING") return { error: "Can only discount a pending bill" };
 
     const clamped = Math.min(Math.max(discountAmount, 0), bill.subtotal);
-    const newTotal = bill.subtotal + bill.taxAmount + bill.serviceCharge - clamped;
+    // No VAT — totals are plain menu prices (+ service charge) minus discount.
+    const newTotal = bill.subtotal + bill.serviceCharge - clamped;
 
     const updated = await prisma.bill.update({
       where: { id: billId },
@@ -420,7 +423,8 @@ export async function applyCouponToBill(billId: string, couponCode: string) {
       : coupon.discountValue;
 
     const clampedDiscount = Math.min(discountValue, bill.subtotal);
-    const newTotal = bill.subtotal + bill.taxAmount + bill.serviceCharge - clampedDiscount;
+    // No VAT — totals are plain menu prices (+ service charge) minus discount.
+    const newTotal = bill.subtotal + bill.serviceCharge - clampedDiscount;
 
     return await prisma.$transaction(async (tx) => {
       await tx.coupon.update({

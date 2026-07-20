@@ -175,9 +175,9 @@ export async function createOrder(data: {
     const lastNumber = parseInt(lastOrder?.orderId ?? "", 10);
     let nextNumber = isNaN(lastNumber) ? 1001 : lastNumber + 1;
 
-    const effectiveTaxRate = await getEffectiveTaxRate(restaurantId);
-    const taxAmount = subtotal * (effectiveTaxRate / 100);
-    const totalAmount = subtotal + taxAmount;
+    // No VAT/tax is added — the order total is exactly the sum of menu prices.
+    const taxAmount = 0;
+    const totalAmount = subtotal;
 
     // Retry on orderId collision from concurrent order creation
     let order;
@@ -416,7 +416,10 @@ export async function settleOrder(data: {
     if (order.bills.length > 0) return { error: "This order has already been billed" };
 
     const discount = Math.min(Math.max(data.discountAmount ?? 0, 0), order.subtotal);
-    const totalAmount = order.subtotal + order.taxAmount + order.serviceCharge - discount;
+    // No VAT — total is menu price (+ service charge if any) minus discount.
+    // order.taxAmount is deliberately excluded so even older orders that still
+    // carry a stored tax value settle at the plain menu total.
+    const totalAmount = order.subtotal + order.serviceCharge - discount;
     const amountPaid = data.amountPaid ?? totalAmount;
     if (amountPaid < totalAmount - 0.01) {
       return { error: `Amount paid (${amountPaid}) is less than the total (${totalAmount.toFixed(2)})` };
@@ -434,7 +437,7 @@ export async function settleOrder(data: {
               orderId: order.id,
               billNumber: `B-${nextBillNumber.toString().padStart(5, "0")}`,
               subtotal: order.subtotal,
-              taxAmount: order.taxAmount,
+              taxAmount: 0,
               serviceCharge: order.serviceCharge,
               discountAmount: discount,
               totalAmount,
@@ -545,14 +548,14 @@ export async function markNotificationsRead(ids: string[]) {
   }
 }
 
-/** Recomputes subtotal/tax/total from an order's non-cancelled items. */
-function recomputeOrderTotals(items: { pricePerUnit: number; quantity: number; status: string }[], serviceCharge: number, discountAmount: number, taxRatePercent = 13) {
+/** Recomputes subtotal/total from an order's non-cancelled items. No VAT is added — totals are plain menu prices. */
+function recomputeOrderTotals(items: { pricePerUnit: number; quantity: number; status: string }[], serviceCharge: number, discountAmount: number) {
   const subtotal = items
     .filter((i) => i.status !== "CANCELLED")
     .reduce((s, i) => s + i.pricePerUnit * i.quantity, 0);
-  const taxAmount = subtotal * (taxRatePercent / 100);
+  const taxAmount = 0;
   const discount = Math.min(Math.max(discountAmount, 0), subtotal);
-  const totalAmount = subtotal + taxAmount + serviceCharge - discount;
+  const totalAmount = subtotal + serviceCharge - discount;
   return { subtotal, taxAmount, totalAmount, discount };
 }
 
@@ -589,7 +592,6 @@ export async function voidOrderItem(data: {
       return { error: "Cannot void an item on a paid bill" };
     }
 
-    const taxRatePct = await getEffectiveTaxRate(session.restaurantId);
     const order = await prisma.$transaction(async (tx) => {
       await tx.orderItem.update({
         where: { id: item.id },
@@ -607,8 +609,7 @@ export async function voidOrderItem(data: {
       const { subtotal, taxAmount, totalAmount, discount } = recomputeOrderTotals(
         remainingItems,
         item.order.serviceCharge,
-        item.order.discountAmount,
-        taxRatePct
+        item.order.discountAmount
       );
 
       return tx.order.update({

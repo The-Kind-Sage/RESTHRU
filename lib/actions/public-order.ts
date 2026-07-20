@@ -7,7 +7,7 @@
 // trust anything the client sends beyond identifiers to look up.
 
 import prisma from "@/lib/prisma";
-import { getEffectiveTaxRate, notifyServers } from "@/lib/actions/orders";
+import { notifyServers } from "@/lib/actions/orders";
 
 const MAX_QUANTITY_PER_ITEM = 20;
 const MAX_DISTINCT_ITEMS = 50;
@@ -111,9 +111,9 @@ export async function createPublicOrder(data: {
     const lastNumber = parseInt(lastOrder?.orderId ?? "", 10);
     let nextNumber = isNaN(lastNumber) ? 1001 : lastNumber + 1;
 
-    const effectiveTaxRate = await getEffectiveTaxRate(data.restaurantId);
-    const taxAmount = subtotal * (effectiveTaxRate / 100);
-    const totalAmount = subtotal + taxAmount;
+    // No VAT/tax is added — the order total is exactly the sum of menu prices.
+    const taxAmount = 0;
+    const totalAmount = subtotal;
 
     void data.guestCount; // accepted for parity with createOrder's signature; Order has no guestCount column upstream either
 
