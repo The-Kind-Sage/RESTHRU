@@ -533,6 +533,46 @@ export default function CheckoutPage() {
               </Card>
             )}
 
+            {activePendingBills.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2 pt-3">
+                  <CardTitle className="text-sm flex items-center gap-1">
+                    <Banknote className="w-4 h-4" /> Pending Bills ({activePendingBills.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 pt-0">
+                  {activePendingBills.map((bill: any) => (
+                    <div
+                      key={bill.id}
+                      className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer"
+                      onClick={() => {
+                        setActiveBill(bill);
+                        setAmountReceived("");
+                        setPayMethod("CASH");
+                        setShowSplit(false);
+                        setSplitResult(null);
+                      }}
+                    >
+                      <div>
+                        <p className="text-sm font-medium">{bill.billNumber}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {bill.order?.table
+                            ? `Table ${bill.order.table.tableNumber}`
+                            : "Takeaway"}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold">
+                          {formatCurrency(bill.totalAmount)}
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardHeader className="pb-2 pt-3">
                 <CardTitle className="text-sm">

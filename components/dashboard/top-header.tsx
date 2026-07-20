@@ -63,7 +63,6 @@ const PAGE_TITLES: Record<string, string> = {
   '/reception/invoices': 'Invoice History',
   '/reception/crm': 'CRM & Discounts',
   '/reception/prints': 'Print Center',
-  '/reception/kitchen': 'Kitchen Display',
 };
 
 const NOTIF_ICONS: Record<AppNotification['type'], React.ReactNode> = {
