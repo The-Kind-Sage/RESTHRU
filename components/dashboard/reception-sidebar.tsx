@@ -15,6 +15,7 @@ import {
   Star,
   Printer,
   Package,
+  Settings,
   LogOut,
 } from 'lucide-react';
 
@@ -44,6 +45,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'CRM',           href: '/reception/crm',       Icon: Star            },
   { label: 'Inventory',     href: '/reception/inventory', Icon: Package         },
   { label: 'Shifts',        href: '/reception/shifts',    Icon: Clock           },
+  { label: 'Settings',      href: '/reception/settings',  Icon: Settings        },
 ];
 
 const ReceptionSidebar = memo(function ReceptionSidebar() {

@@ -6,6 +6,7 @@ import {
   Printer, Plus, Settings, RefreshCw,
   Clock, FileText, Download, WifiOff,
 } from 'lucide-react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -83,9 +84,11 @@ export default function PrintsPage() {
           <h1 className="text-2xl font-bold text-foreground">Print Center</h1>
           <p className="text-muted-foreground">Manage printers and print queue</p>
         </div>
-        <Button className="bg-primary hover:bg-primary-dark text-white w-full sm:w-auto" onClick={() => toast.info('Configure printers in Settings')}>
-          <Plus className="h-4 w-4 mr-2" /> Add Printer
-        </Button>
+        <Link href="/reception/settings">
+          <Button className="bg-primary hover:bg-primary-dark text-white w-full sm:w-auto">
+            <Settings className="h-4 w-4 mr-2" /> Printer Settings
+          </Button>
+        </Link>
       </motion.div>
 
       <Tabs defaultValue="printers" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -103,7 +106,11 @@ export default function PrintsPage() {
               <div className="col-span-2 text-center py-16 text-muted-foreground">
                 <Printer className="h-12 w-12 mx-auto mb-3 opacity-30" />
                 <p className="font-medium">No printers configured</p>
-                <p className="text-sm mt-1">Go to Settings &gt; Printers to add one.</p>
+                <p className="text-sm mt-1">
+                  <Link href="/reception/settings" className="text-primary hover:underline">
+                    Go to Settings
+                  </Link> to add one.
+                </p>
               </div>
             ) : (
               printers.map((printer, idx) => (
@@ -139,7 +146,7 @@ export default function PrintsPage() {
                         <Button variant="outline" size="icon" onClick={() => handleRefreshPrinter(idx)} disabled={refreshingIdx === idx}>
                           <RefreshCw className={`h-4 w-4 ${refreshingIdx === idx ? 'animate-spin' : ''}`} />
                         </Button>
-                        <Button variant="outline" size="icon" onClick={() => toast.info('Configure printers in Settings')}>
+                        <Button variant="outline" size="icon" onClick={() => window.open('/reception/settings', '_self')}>
                           <Settings className="h-4 w-4" />
                         </Button>
                       </div>
