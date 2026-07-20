@@ -108,7 +108,6 @@ export default function InvoicesPage() {
     setLoading(true);
     const result: any = await searchBills({ query: query || undefined, status, dateFrom: dateFrom || undefined, dateTo: dateTo || undefined });
     if (result.data) setBills(result.data as any[]);
-    else if (Array.isArray(result)) setBills(result);
     setLoading(false);
     setPage(0);
   }, [query, status, dateFrom, dateTo]);
