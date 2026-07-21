@@ -254,7 +254,7 @@ export async function register(data: {
     });
 
     if (data.planId) {
-      const plan = await prisma.plan.findUnique({ where: { type: data.planId.toUpperCase() } });
+      const plan = await prisma.plan.findUnique({ where: { id: data.planId } });
       if (plan) {
         await prisma.subscription.create({
           data: {
@@ -404,7 +404,7 @@ export async function completeGoogleRegistration(userId: string, data: {
 
     // Create or update subscription if plan selected
     if (data.planId) {
-      const plan = await prisma.plan.findUnique({ where: { type: data.planId.toUpperCase() } });
+      const plan = await prisma.plan.findUnique({ where: { id: data.planId } });
       if (plan) {
         const existingSub = await prisma.subscription.findFirst({
           where: { restaurantId },
