@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/select';
 import { register } from '@/lib/actions/auth';
 import { getPublicPlans, type PublicPlan } from '@/lib/actions/get-plans-public';
+import { consumeSelectedPlan } from '@/lib/selected-plan';
 import { NEPAL_CITIES, RESTAURANT_TYPES } from '@/lib/constants';
 import { phoneSchema } from '@/lib/phone-validator';
 
@@ -96,6 +97,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
   const [isLoading, setIsLoading] = useState(false);
   const [usePersonalPhone, setUsePersonalPhone] = useState(false);
   const [plans, setPlans] = useState<PublicPlan[]>([]);
+  const [pendingPlanId, setPendingPlanId] = useState<string | null>(null);
 
   const step1Form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
@@ -121,6 +123,23 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
     document.addEventListener('open-register', handler as EventListener);
     return () => document.removeEventListener('open-register', handler as EventListener);
   }, [onOpenChange]);
+
+  // When the modal opens, pick up the plan the visitor clicked in the pricing
+  // section (recorded in sessionStorage) so step 3 comes pre-selected.
+  useEffect(() => {
+    if (open) {
+      const planId = consumeSelectedPlan();
+      if (planId) setPendingPlanId(planId);
+    }
+  }, [open]);
+
+  // Apply the pre-selection once plans have loaded (match by id, fall back to type).
+  useEffect(() => {
+    if (!pendingPlanId || plans.length === 0) return;
+    const match = plans.find((p) => p.id === pendingPlanId || p.type === pendingPlanId);
+    if (match) step3Form.setValue('selectedPlan', match.id, { shouldValidate: true });
+    setPendingPlanId(null);
+  }, [pendingPlanId, plans]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUsePersonalPhone = (checked: boolean) => {
     setUsePersonalPhone(checked);

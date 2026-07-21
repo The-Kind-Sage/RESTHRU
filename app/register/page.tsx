@@ -35,6 +35,7 @@ import { GoogleSignInButton } from '@/components/shared/google-sign-in';
 import { GoogleRegistrationDialog } from '@/components/shared/google-registration-dialog';
 import { NEPAL_CITIES, RESTAURANT_TYPES } from '@/lib/constants';
 import { getPublicPlans, type PublicPlan } from '@/lib/actions/get-plans-public';
+import { consumeSelectedPlan } from '@/lib/selected-plan';
 import { phoneSchema, phonePlaceholder } from '@/lib/phone-validator';
 
 const step1Schema = z.object({
@@ -83,10 +84,20 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [usePersonalPhone, setUsePersonalPhone] = useState(false);
   const [plans, setPlans] = useState<PublicPlan[]>([]);
+  const [desiredPlanId, setDesiredPlanId] = useState<string | null>(null);
   const [googleUser, setGoogleUser] = useState<{ id: string; email: string; firstName: string; lastName: string; picture: string } | null>(null);
 
   useEffect(() => {
     getPublicPlans().then(setPlans);
+  }, []);
+
+  // Capture the plan the visitor clicked in the pricing section: the ?plan=
+  // query param wins, with the sessionStorage copy as a fallback. Consume the
+  // stored value regardless so it can't linger and pre-select later.
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get('plan');
+    const stored = consumeSelectedPlan();
+    setDesiredPlanId(fromUrl || stored);
   }, []);
 
   const step1Form = useForm<Step1Data>({
@@ -103,6 +114,14 @@ export default function RegisterPage() {
     resolver: zodResolver(step3Schema),
     defaultValues: { selectedPlan: '' },
   });
+
+  // Pre-select the pricing-section plan once plans have loaded (match by id,
+  // fall back to type) so the visitor lands on step 3 with it already chosen.
+  useEffect(() => {
+    if (!desiredPlanId || plans.length === 0) return;
+    const match = plans.find((p) => p.id === desiredPlanId || p.type === desiredPlanId);
+    if (match) step3Form.setValue('selectedPlan', match.id, { shouldValidate: true });
+  }, [desiredPlanId, plans]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUsePersonalPhone = (checked: boolean) => {
     setUsePersonalPhone(checked);

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Check, ArrowRight, Loader2 } from 'lucide-react';
 import { getPublicPlans, type PublicPlan } from '@/lib/actions/get-plans-public';
+import { recordSelectedPlan } from '@/lib/selected-plan';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -65,7 +66,11 @@ export function PricingPreview() {
                       </div>
                     ))}
                   </div>
-                  <Link href="/register" className={`group flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-semibold transition-all ${plan.isPopular ? 'bg-primary text-white hover:bg-primary-hover shadow-sm' : 'border border-border bg-background text-foreground hover:border-primary/30 hover:bg-primary/5'}`}>
+                  <Link
+                    href={`/register?plan=${encodeURIComponent(plan.id)}`}
+                    onClick={() => recordSelectedPlan(plan.id)}
+                    className={`group flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-semibold transition-all ${plan.isPopular ? 'bg-primary text-white hover:bg-primary-hover shadow-sm' : 'border border-border bg-background text-foreground hover:border-primary/30 hover:bg-primary/5'}`}
+                  >
                     Get started
                     <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                   </Link>
