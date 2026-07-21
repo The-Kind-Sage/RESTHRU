@@ -26,6 +26,7 @@ model User {
 
   restaurant    Restaurant?     @relation(fields: [restaurantId], references: [id])
   notifications Notification[]
+  supportTickets SupportTicket[]
 
   @@index([restaurantId])
   @@map("users")
@@ -85,6 +86,7 @@ model Restaurant {
   corporateAccounts CorporateAccount[]
   taxRates         TaxRate[]
   floors           Floor[]
+  supportTickets   SupportTicket[]
 
   @@map("restaurants")
 }
@@ -722,4 +724,22 @@ model PromoCode {
   createdAt     DateTime  @default(now()) @map("created_at")
 
   @@map("promo_codes")
+}
+
+model SupportTicket {
+  id           String   @id @default(cuid())
+  restaurantId String   @map("restaurant_id")
+  userId       String   @map("user_id")
+  subject      String
+  message      String
+  imageUrl     String?  @map("image_url")
+  status       String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@index([restaurantId, createdAt])
+  @@map("support_tickets")
 }

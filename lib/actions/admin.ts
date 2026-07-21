@@ -78,7 +78,10 @@ export async function getAllRestaurants() {
         where: { status: "ACTIVE" },
         take: 1,
         orderBy: { createdAt: "desc" },
-        include: { plan: { select: { name: true } } },
+        // Resolve the pack by plan *type* (the stable tier identity the whole
+        // platform gates on), not the marketing `name` — e.g. the PRO tier is
+        // named "Enterprise", which would misreport the column.
+        include: { plan: { select: { type: true } } },
       },
     },
   });

@@ -9,34 +9,36 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Building2, Users, UtensilsCrossed, Table2, ShoppingCart } from "lucide-react";
 import { RestaurantActions, AddRestaurantButton } from "./restaurant-actions";
+import { normalizePlanType, PLAN_LIMITS, PLAN_ORDER, type PlanType } from "@/lib/plan-limits";
 
-// Which plan (pack) each restaurant is on. Restaurants without an active
-// subscription are on the Free pack — resolved here so they still show up.
-function planOf(r: { subscriptions: { plan: { name: string } }[] }): string {
-  return r.subscriptions[0]?.plan.name ?? "Free";
+// Which pack each restaurant is on, resolved from the plan *type* — the stable
+// tier identity the platform gates on — rather than the marketing name (the PRO
+// tier, for example, is named "Enterprise"). Restaurants without an active
+// subscription fall back to FREE so they still show up.
+function planOf(r: { subscriptions: { plan: { type: string } }[] }): PlanType {
+  return normalizePlanType(r.subscriptions[0]?.plan.type);
 }
 
-function PlanBadge({ plan }: { plan: string }) {
-  const colors: Record<string, string> = {
-    Enterprise: "bg-accent/10 text-accent border-accent/30",
-    Pro: "bg-primary/10 text-primary border-primary/30",
-    Basic: "bg-info/10 text-info border-info/30",
-    Free: "bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30",
+function PlanBadge({ plan }: { plan: PlanType }) {
+  const colors: Record<PlanType, string> = {
+    ENTERPRISE: "bg-accent/10 text-accent border-accent/30",
+    PRO: "bg-primary/10 text-primary border-primary/30",
+    BASIC: "bg-info/10 text-info border-info/30",
+    FREE: "bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30",
   };
-  return <Badge className={`border ${colors[plan] ?? colors.Free}`}>{plan}</Badge>;
+  return <Badge className={`border ${colors[plan]}`}>{PLAN_LIMITS[plan].label}</Badge>;
 }
 
 export default async function AdminRestaurants() {
   const restaurants = await getAllRestaurants();
 
   // Plan distribution summary (Free included).
-  const dist = restaurants.reduce<Record<string, number>>((acc, r) => {
+  const dist = restaurants.reduce<Partial<Record<PlanType, number>>>((acc, r) => {
     const plan = planOf(r);
     acc[plan] = (acc[plan] ?? 0) + 1;
     return acc;
   }, {});
-  const PLAN_ORDER = ["Free", "Basic", "Pro", "Enterprise"];
-  const distEntries = Object.entries(dist).sort(
+  const distEntries = (Object.entries(dist) as [PlanType, number][]).sort(
     (a, b) => PLAN_ORDER.indexOf(a[0]) - PLAN_ORDER.indexOf(b[0])
   );
 

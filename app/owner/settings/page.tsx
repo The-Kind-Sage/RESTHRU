@@ -14,7 +14,7 @@ import {
   AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Bell, Loader2, Plus, Trash2, Upload, Percent, AlertTriangle } from 'lucide-react';
+import { Bell, Loader2, Plus, Trash2, Upload, Percent, AlertTriangle, MessageSquare, Paperclip, Send, Phone, Mail, Globe } from 'lucide-react';
 import { uploadImage } from '@/lib/upload';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
@@ -23,6 +23,7 @@ import {
   updateRestaurant, upsertSettings, updateRestaurantDirect, updateCoverPhoto, setUserPassword, cancelSubscription,
   getAvailablePlans, subscribeToPlan, saveOperatingHours,
 } from '@/lib/actions/settings';
+import { createSupportTicket } from '@/lib/actions/support';
 import {
   getTaxRates, createTaxRate, updateTaxRate, deleteTaxRate,
 } from '@/lib/actions/tax';
@@ -421,6 +422,7 @@ export default function SettingsPage() {
             { value: 'printers', label: 'Printers' },
             { value: 'notifications', label: 'Notifications' },
             { value: 'subscription', label: 'Subscription' },
+            { value: 'support', label: 'Support Center' },
             { value: 'security', label: 'Security' },
           ].map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value} className="w-full justify-start rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60 data-[state=active]:bg-primary data-[state=active]:text-white">
@@ -848,6 +850,49 @@ export default function SettingsPage() {
             )}
           </TabsContent>
 
+          {/* ══ SUPPORT ═════════════════════════════════════════════════ */}
+          <TabsContent value="support" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Contact Support</CardTitle>
+                <CardDescription>Reach out to the development team</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="flex items-center gap-3 rounded-lg border p-4">
+                    <Mail className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium">Email</p>
+                      <a href="mailto:support@drillthu.tech" className="text-sm text-muted-foreground hover:text-primary">support@drillthu.tech</a>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 rounded-lg border p-4">
+                    <Phone className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium">Phone</p>
+                      <p className="text-sm text-muted-foreground">+977 986-9511129</p>
+                      <p className="text-sm text-muted-foreground">+977 984-0814142</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 rounded-lg border p-4">
+                    <Globe className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium">Website</p>
+                      <a href="https://www.drillthu.tech" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary">www.drillthu.tech</a>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="font-semibold mb-4">Quick Support Message</h3>
+                  <SupportMessageForm restaurantId={restaurantId || ''} />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* ══ SECURITY ═════════════════════════════════════════════════ */}
           <TabsContent value="security" className="space-y-6">
             <Card>
@@ -975,6 +1020,110 @@ export default function SettingsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Footer */}
+      <div className="border-t pt-6 mt-8">
+        <p className="text-center text-sm text-muted-foreground">
+          Made with ❤️ by <a href="https://www.drillthu.tech" target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">Drill Thru</a>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SupportMessageForm({ restaurantId }: { restaurantId: string }) {
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!subject.trim() || !message.trim()) {
+      toast.error('Subject and message are required');
+      return;
+    }
+    setSending(true);
+    try {
+      let imageUrl = '';
+      if (imageFile) {
+        const url = await uploadImage(imageFile, 'support');
+        if (url) imageUrl = url;
+      }
+      const formData = new FormData();
+      formData.set('restaurantId', restaurantId);
+      formData.set('subject', subject);
+      formData.set('message', message);
+      formData.set('imageUrl', imageUrl);
+
+      const result = await createSupportTicket(formData);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success('Message sent successfully! Support team will get back to you.');
+        setSubject('');
+        setMessage('');
+        setImageFile(null);
+        setImagePreview(null);
+      }
+    } catch {
+      toast.error('Failed to send message');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Subject</Label>
+        <Input
+          placeholder="Brief title for your issue..."
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Message</Label>
+        <textarea
+          placeholder="Describe your issue in detail..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          rows={4}
+          className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Attachment (optional)</Label>
+        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed p-3 text-sm text-muted-foreground hover:border-primary transition-colors">
+          <Paperclip className="h-4 w-4" />
+          <span>{imageFile ? imageFile.name : 'Attach a screenshot or photo'}</span>
+          <input type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+        </label>
+        {imagePreview && (
+          <div className="relative mt-2 inline-block">
+            <img src={imagePreview} alt="Preview" className="h-32 w-auto rounded-lg border object-cover" />
+            <button
+              onClick={() => { setImageFile(null); setImagePreview(null); }}
+              className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-white text-xs flex items-center justify-center"
+            >
+              ×
+            </button>
+          </div>
+        )}
+      </div>
+      <Button onClick={handleSubmit} disabled={sending} className="gap-2">
+        {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+        {sending ? 'Sending...' : 'Send Message'}
+      </Button>
     </div>
   );
 }
