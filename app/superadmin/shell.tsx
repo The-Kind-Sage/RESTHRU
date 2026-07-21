@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Building2, CreditCard, TrendingUp,
   Headphones, Activity, Users, Megaphone, ShieldCheck,
   Wallet, Settings, FlaskConical, Bell, ChevronLeft,
-  Menu, Command, LogOut, ChevronDown,
+  Menu, Command, LogOut, ChevronDown, UtensilsCrossed,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,6 +31,7 @@ const AdminCommandPalette = dynamic(
 const adminNavItems = [
   { label: 'Dashboard',      icon: LayoutDashboard, href: '/superadmin'               },
   { label: 'Restaurants',    icon: Building2,        href: '/superadmin/restaurants'   },
+  { label: 'Menu Management',icon: UtensilsCrossed,  href: '/superadmin/menu'          },
   { label: 'Subscriptions',  icon: CreditCard,       href: '/superadmin/subscriptions' },
   { label: 'Analytics',      icon: TrendingUp,       href: '/superadmin/analytics'     },
   { label: 'Support Center', icon: Headphones,       href: '/superadmin/support'       },
