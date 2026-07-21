@@ -122,8 +122,6 @@ export default function ReceptionPage() {
   useEffect(() => {
     if (!restaurantId) return;
     refreshAll();
-    const interval = setInterval(refreshAll, 15_000);
-    return () => clearInterval(interval);
   }, [restaurantId, refreshAll]);
 
   /* ── Reservation state ── */

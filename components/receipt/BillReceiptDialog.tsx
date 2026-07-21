@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Printer, Loader2 } from "lucide-react";
@@ -110,6 +111,7 @@ export default function BillReceiptDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm p-0 overflow-hidden rounded-2xl">
+        <DialogTitle className="sr-only">Bill Receipt</DialogTitle>
         <div className="bg-gradient-to-b from-primary/5 to-background p-6">
           {/* Receipt */}
           <div

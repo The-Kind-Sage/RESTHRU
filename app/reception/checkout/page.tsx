@@ -27,6 +27,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -116,6 +118,7 @@ export default function CheckoutPage() {
   const [pendingWalletPayments, setPendingWalletPayments] = useState<any[]>([]);
   const [verifyingPaymentId, setVerifyingPaymentId] = useState<string | null>(null);
   const [showQR, setShowQR] = useState(false);
+  const [noDiscount, setNoDiscount] = useState(true);
 
   const refresh = useCallback(async () => {
     if (!restaurantId) return;
@@ -134,8 +137,6 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (!restaurantId) return;
     refresh();
-    const interval = setInterval(refresh, 15_000);
-    return () => clearInterval(interval);
   }, [restaurantId, refresh]);
 
   const readyToBillOrders = useMemo(() => {
@@ -486,7 +487,7 @@ export default function CheckoutPage() {
                 <Tabs
                   defaultValue="ready"
                   value={orderTypeFilter === "all" ? "ready" : orderTypeFilter}
-                  onValueChange={(v) => setOrderTypeFilter(v as any)}
+                  onValueChange={(v) => setOrderTypeFilter(v === "ready" ? "all" : v as any)}
                 >
                   <TabsList className="w-full">
                     <TabsTrigger value="ready" className="flex-1">Ready</TabsTrigger>
@@ -774,48 +775,56 @@ export default function CheckoutPage() {
                     )}
                   </Card>
 
-                  {/* Unified Adjustments panel */}
+                  {/* Discounts panel */}
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Adjustments</CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm">Discounts</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="no-discount" className="text-xs text-muted-foreground cursor-pointer">No Discount</Label>
+                          <Switch id="no-discount" checked={noDiscount} onCheckedChange={setNoDiscount} />
+                        </div>
+                      </div>
                     </CardHeader>
-                    <CardContent className="pt-0">
-                      <Tabs defaultValue="discount">
-                        <TabsList className="w-full mb-2">
-                          <TabsTrigger value="discount" className="flex-1 text-xs"><Percent className="w-3 h-3 mr-1" />Discount</TabsTrigger>
-                          <TabsTrigger value="coupon" className="flex-1 text-xs"><Tag className="w-3 h-3 mr-1" />Coupon</TabsTrigger>
-                          <TabsTrigger value="corporate" className="flex-1 text-xs"><Building2 className="w-3 h-3 mr-1" />Corporate</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="discount" className="space-y-2 m-0">
-                          <Input type="number" placeholder="Discount amount" value={discountInput} onChange={(e) => setDiscountInput(e.target.value)} />
-                          <Input placeholder="Reason (optional)" value={discountReason} onChange={(e) => setDiscountReason(e.target.value)} />
-                          <Button size="sm" className="w-full" onClick={handleApplyDiscount}>Apply Discount</Button>
-                        </TabsContent>
-                        <TabsContent value="coupon" className="space-y-2 m-0">
-                          <Input placeholder="Coupon code" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} />
-                          <Button size="sm" className="w-full" onClick={handleApplyCoupon}>Apply Coupon</Button>
-                          {appliedCoupon && (
-                            <p className="text-xs text-success">Coupon {appliedCoupon.coupon}: {formatCurrency(appliedCoupon.discount)} off</p>
-                          )}
-                        </TabsContent>
-                        <TabsContent value="corporate" className="space-y-2 m-0">
-                          <p className="text-xs text-muted-foreground">Select corporate account:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {corpAccounts.filter((a: any) => a.isActive).map((a: any) => (
-                              <Button key={a.id} variant="outline" size="sm" onClick={() => handleApplyCorporate(a.id)}>
-                                {a.companyName}
-                              </Button>
-                            ))}
-                            {corpAccounts.filter((a: any) => a.isActive).length === 0 && (
-                              <p className="text-xs text-muted-foreground">No active corporate accounts</p>
+                    {!noDiscount && (
+                      <CardContent className="pt-0">
+                        <Tabs defaultValue="discount">
+                          <TabsList className="w-full mb-2">
+                            <TabsTrigger value="discount" className="flex-1 text-xs"><Percent className="w-3 h-3 mr-1" />Discount</TabsTrigger>
+                            <TabsTrigger value="coupon" className="flex-1 text-xs"><Tag className="w-3 h-3 mr-1" />Coupon</TabsTrigger>
+                            <TabsTrigger value="corporate" className="flex-1 text-xs"><Building2 className="w-3 h-3 mr-1" />Corporate</TabsTrigger>
+                          </TabsList>
+                          <TabsContent value="discount" className="space-y-2 m-0">
+                            <Input type="number" placeholder="Discount amount" value={discountInput} onChange={(e) => setDiscountInput(e.target.value)} />
+                            <Input placeholder="Reason (optional)" value={discountReason} onChange={(e) => setDiscountReason(e.target.value)} />
+                            <Button size="sm" className="w-full" onClick={handleApplyDiscount}>Apply Discount</Button>
+                          </TabsContent>
+                          <TabsContent value="coupon" className="space-y-2 m-0">
+                            <Input placeholder="Coupon code" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} />
+                            <Button size="sm" className="w-full" onClick={handleApplyCoupon}>Apply Coupon</Button>
+                            {appliedCoupon && (
+                              <p className="text-xs text-success">Coupon {appliedCoupon.coupon}: {formatCurrency(appliedCoupon.discount)} off</p>
                             )}
-                          </div>
-                          {selectedCorpAccount && (
-                            <p className="text-xs text-success">Assigned: {selectedCorpAccount.companyName}</p>
-                          )}
-                        </TabsContent>
-                      </Tabs>
-                    </CardContent>
+                          </TabsContent>
+                          <TabsContent value="corporate" className="space-y-2 m-0">
+                            <p className="text-xs text-muted-foreground">Select corporate account:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {corpAccounts.filter((a: any) => a.isActive).map((a: any) => (
+                                <Button key={a.id} variant="outline" size="sm" onClick={() => handleApplyCorporate(a.id)}>
+                                  {a.companyName}
+                                </Button>
+                              ))}
+                              {corpAccounts.filter((a: any) => a.isActive).length === 0 && (
+                                <p className="text-xs text-muted-foreground">No active corporate accounts</p>
+                              )}
+                            </div>
+                            {selectedCorpAccount && (
+                              <p className="text-xs text-success">Assigned: {selectedCorpAccount.companyName}</p>
+                            )}
+                          </TabsContent>
+                        </Tabs>
+                      </CardContent>
+                    )}
                   </Card>
 
                   {/* Customer lookup */}
@@ -975,14 +984,14 @@ export default function CheckoutPage() {
                             className="text-lg font-semibold"
                           />
                           {/* Quick amounts */}
-                          <div className="flex gap-1.5 mt-2">
+                          <div className="grid grid-cols-2 gap-1.5 mt-2">
                             {QUICK_AMOUNTS.map((amt) => (
                               <Button
                                 key={amt}
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleQuickAmount(amt)}
-                                className="flex-1 text-xs"
+                                className="text-xs"
                               >
                                 {formatCurrency(amt)}
                               </Button>
