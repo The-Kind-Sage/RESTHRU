@@ -128,13 +128,16 @@ export async function getBookMenuData(restaurantId: string) {
       orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }],
     });
 
+    // Ordered Mon→Sun to read naturally; open days only. Empty when none are
+    // set, so the menu book's contact page hides the row rather than showing
+    // a placeholder.
+    const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const hoursStr = restaurant.operatingHours
       .filter((h) => h.isOpen)
-      .map((h) => {
-        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        return `${days[h.dayOfWeek]} ${h.openTime}–${h.closeTime}`;
-      })
-      .join(" · ") || "Hours not set";
+      .slice()
+      .sort((a, b) => ((a.dayOfWeek + 6) % 7) - ((b.dayOfWeek + 6) % 7))
+      .map((h) => `${dayLabels[h.dayOfWeek]} ${h.openTime}–${h.closeTime}`)
+      .join(" · ");
 
     const addressParts = [restaurant.street, restaurant.city, restaurant.state].filter(Boolean);
     const address = addressParts.length > 0 ? addressParts.join(", ") : "Address not set";
@@ -237,9 +240,11 @@ export async function getBookMenuData(restaurantId: string) {
         established: `Est. ${restaurant.createdAt.getFullYear()}`,
         address,
         hours: hoursStr,
-        phone: restaurant.phoneNumber || "Phone not set",
-        website: restaurant.websiteUrl || "Website not set",
-        social: restaurant.email ? `@${restaurant.email.split("@")[0]}` : "",
+        // Empty when unset — the menu book's back page renders only the
+        // contact rows that actually have a value.
+        phone: restaurant.phoneNumber || "",
+        website: restaurant.websiteUrl || "",
+        social: restaurant.email || "",
       },
       categories,
       drinks,

@@ -47,6 +47,9 @@ export function BackCoverPage({
 }
 
 function Row({ icon, text }: { icon: React.ReactNode; text: string }) {
+  // Only render a contact line when there's actually a value — an owner who
+  // hasn't set a phone/website/email shouldn't get a lone icon on the page.
+  if (!text?.trim()) return null;
   return (
     <div className="flex items-center justify-center gap-2 font-sans text-[13px]">
       <span style={{ color: "var(--gold)" }}>{icon}</span>

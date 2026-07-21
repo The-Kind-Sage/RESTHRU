@@ -1,6 +1,10 @@
 import { getBookMenuData } from '@/lib/actions/public-menu';
 import { MenuBook } from '@/components/menu-book/MenuBook';
 
+// Always render fresh so an owner's settings change (hours, phone, website,
+// email) shows on the menu book immediately, with no stale full-route cache.
+export const dynamic = 'force-dynamic';
+
 export default async function RestaurantMenuPage({ params }: { params: Promise<{ restaurantId: string }> }) {
   const { restaurantId } = await params;
   const data = await getBookMenuData(restaurantId);
