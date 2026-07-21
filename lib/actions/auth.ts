@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { createSession, clearSession, getSession } from "@/lib/auth";
 import { isApproverRole } from "@/lib/manager-approval";
 import { logActivity } from "./logs";
+import { validatePhone } from "@/lib/phone-validator";
 
 // Validate that a username is in Gmail format (a valid email ending in @gmail.com).
 export async function isValidGmail(username: string): Promise<boolean> {
@@ -207,16 +208,22 @@ export async function register(data: {
   planId?: string;
 }) {
   try {
-    const existingByEmail = await prisma.user.findUnique({ where: { email: data.email } });
-    if (existingByEmail) {
-      return { error: "An account with this email already exists" };
-    }
-
     if (data.phone) {
+      const phoneResult = validatePhone(data.phone);
+      if (!phoneResult.valid) return { error: phoneResult.error || "Invalid phone number" };
       const existingByPhone = await prisma.user.findFirst({ where: { phoneNumber: data.phone } });
       if (existingByPhone) {
         return { error: "An account with this phone number already exists" };
       }
+    }
+    if (data.restaurantPhone) {
+      const rpResult = validatePhone(data.restaurantPhone);
+      if (!rpResult.valid) return { error: `Restaurant phone: ${rpResult.error || "Invalid number"}` };
+    }
+
+    const existingByEmail = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existingByEmail) {
+      return { error: "An account with this email already exists" };
     }
 
     const passwordHash = await bcrypt.hash(data.password, 12);
@@ -348,6 +355,15 @@ export async function completeGoogleRegistration(userId: string, data: {
   planId?: string;
 }) {
   try {
+    if (data.phone) {
+      const phoneResult = validatePhone(data.phone);
+      if (!phoneResult.valid) return { error: phoneResult.error || "Invalid phone number" };
+    }
+    if (data.restaurantPhone) {
+      const rpResult = validatePhone(data.restaurantPhone);
+      if (!rpResult.valid) return { error: `Restaurant phone: ${rpResult.error || "Invalid number"}` };
+    }
+
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return { error: "User not found" };
 

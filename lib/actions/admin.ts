@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { logActivity } from "./logs";
+import { validatePhone } from "@/lib/phone-validator";
 
 // Every export in this module returns cross-tenant platform data, so each one
 // must independently verify the caller is an admin: Server Actions are invocable
@@ -818,6 +819,11 @@ export async function createRestaurantWithOwner(input: {
     return { error: "Owner password must be at least 6 characters" };
   }
 
+  if (input.phoneNumber) {
+    const phoneResult = validatePhone(input.phoneNumber);
+    if (!phoneResult.valid) return { error: `Phone: ${phoneResult.error}` };
+  }
+
   try {
     const existing = await prisma.user.findUnique({ where: { email: ownerEmail } });
     if (existing) return { error: "An account with that owner email already exists" };
@@ -921,6 +927,11 @@ export async function updateRestaurant(
 
   if (data.name !== undefined && !data.name.trim()) {
     return { error: "Name is required" };
+  }
+
+  if (data.phoneNumber) {
+    const phoneResult = validatePhone(data.phoneNumber);
+    if (!phoneResult.valid) return { error: `Phone: ${phoneResult.error}` };
   }
 
   try {

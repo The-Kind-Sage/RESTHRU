@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { logActivity } from "./logs";
+import { validatePhone } from "@/lib/phone-validator";
 
 export async function getRestaurant(restaurantId: string) {
   const session = await getSession();
@@ -59,6 +60,11 @@ export async function updateRestaurant(restaurantId: string, data: Record<string
   if (!session) return { error: "Not authenticated" };
 
   try {
+    if (data.phoneNumber) {
+      const phoneResult = validatePhone(data.phoneNumber);
+      if (!phoneResult.valid) return { error: `Phone: ${phoneResult.error}` };
+    }
+
     const allowedFields = [
       "name", "email", "street", "phoneNumber", "websiteUrl", "city", "timezone",
       "currency", "language", "taxPercentage", "bannerImageUrl",

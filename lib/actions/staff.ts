@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { logActivity } from "./logs";
 import { checkResourceLimit, limitMessage } from "@/lib/plan-guard";
+import { validatePhone } from "@/lib/phone-validator";
 
 export async function getStaff(restaurantId: string) {
   const session = await getSession();
@@ -45,6 +46,13 @@ export async function addStaff(data: StaffInput & { restaurantId: string }) {
   if (limitReached) return { error: limitMessage(limitReached), limitReached };
 
   try {
+    const phoneResult = validatePhone(data.phone);
+    if (!phoneResult.valid) return { error: `Staff phone: ${phoneResult.error || "Invalid number"}` };
+    if (data.emergencyContactPhone) {
+      const ecResult = validatePhone(data.emergencyContactPhone);
+      if (!ecResult.valid) return { error: `Emergency contact phone: ${ecResult.error || "Invalid number"}` };
+    }
+
     const member = await prisma.staff.create({
       data: {
         restaurantId: data.restaurantId,
@@ -80,6 +88,13 @@ export async function updateStaff(data: StaffInput & { id: string }) {
   if (!session) return { error: "Not authenticated" };
 
   try {
+    const phoneResult = validatePhone(data.phone);
+    if (!phoneResult.valid) return { error: `Staff phone: ${phoneResult.error || "Invalid number"}` };
+    if (data.emergencyContactPhone) {
+      const ecResult = validatePhone(data.emergencyContactPhone);
+      if (!ecResult.valid) return { error: `Emergency contact phone: ${ecResult.error || "Invalid number"}` };
+    }
+
     const member = await prisma.staff.update({
       where: { id: data.id },
       data: {
