@@ -383,7 +383,7 @@ export function GoogleRegistrationDialog({ open, onOpenChange, user }: GoogleReg
                       </FormItem>
                     )} />
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/[0.04] px-3 py-2.5 cursor-pointer hover:bg-primary/[0.08] transition-colors mt-1.5" onClick={() => handleUsePersonalPhone(!usePersonalPhone)}>
+                      <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/[0.04] px-3 py-2.5 cursor-pointer hover:bg-primary/[0.08] transition-colors mt-1.5">
                         <Checkbox id="usePersonalPhone" checked={usePersonalPhone} onCheckedChange={(val) => handleUsePersonalPhone(val === true)} />
                         <Label htmlFor="usePersonalPhone" className="text-sm font-medium cursor-pointer flex items-center gap-2">
                           <Smartphone className="w-3.5 h-3.5 text-primary" />
