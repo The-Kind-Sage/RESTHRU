@@ -36,7 +36,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { completeGoogleRegistration } from '@/lib/actions/auth';
-import { NEPAL_CITIES, RESTAURANT_TYPES, PLANS } from '@/lib/constants';
+import { getPublicPlans, type PublicPlan } from '@/lib/actions/get-plans-public';
+import { NEPAL_CITIES, RESTAURANT_TYPES } from '@/lib/constants';
 
 const step1Schema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
@@ -105,6 +106,7 @@ export function GoogleRegistrationDialog({ open, onOpenChange, user }: GoogleReg
   });
   const [isLoading, setIsLoading] = useState(false);
   const [usePersonalPhone, setUsePersonalPhone] = useState(false);
+  const [plans, setPlans] = useState<PublicPlan[]>([]);
 
   const fullName = `${user.firstName} ${user.lastName}`.trim();
 
@@ -132,6 +134,10 @@ export function GoogleRegistrationDialog({ open, onOpenChange, user }: GoogleReg
     resolver: zodResolver(step3Schema),
     defaultValues: { selectedPlan: '' },
   });
+
+  useEffect(() => {
+    getPublicPlans().then(setPlans);
+  }, []);
 
   const handleUsePersonalPhone = (checked: boolean) => {
     setUsePersonalPhone(checked);
@@ -404,7 +410,9 @@ export function GoogleRegistrationDialog({ open, onOpenChange, user }: GoogleReg
                 <Form {...step3Form}>
                   <form className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {PLANS.map((plan) => (
+                      {plans.length === 0 ? (
+                        <div className="col-span-full text-center py-8 text-sm text-muted-foreground">Loading plans...</div>
+                      ) : plans.map((plan) => (
                         <FormField key={plan.id} control={step3Form.control} name="selectedPlan" render={({ field }) => (
                           <div
                             className={`relative rounded-xl border-2 p-4 cursor-pointer transition-all ${
