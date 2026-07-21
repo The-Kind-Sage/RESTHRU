@@ -11,6 +11,11 @@ export async function getRestaurant(restaurantId: string) {
   try {
     const restaurant = await prisma.restaurant.findUnique({
       where: { id: restaurantId },
+      include: {
+        operatingHours: {
+          select: { dayOfWeek: true, isOpen: true, openTime: true, closeTime: true },
+        },
+      },
     });
     return { data: restaurant };
   } catch (err: any) {
@@ -55,7 +60,7 @@ export async function updateRestaurant(restaurantId: string, data: Record<string
 
   try {
     const allowedFields = [
-      "name", "email", "street", "phoneNumber", "city", "timezone",
+      "name", "email", "street", "phoneNumber", "websiteUrl", "city", "timezone",
       "currency", "language", "taxPercentage", "bannerImageUrl",
     ];
     const updateData: Record<string, any> = {};
@@ -77,6 +82,49 @@ export async function updateRestaurant(restaurantId: string, data: Record<string
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to save settings" };
+  }
+}
+
+/**
+ * Persists a restaurant's weekly operating hours into the relational
+ * `operating_hours` table (one row per weekday, 0=Sun … 6=Sat). This is the same
+ * table the public menu book reads, so saving here is what makes the owner's
+ * hours show up — and stay in sync — on the customer-facing menu's last page.
+ */
+export async function saveOperatingHours(
+  restaurantId: string,
+  hours: Array<{ dayOfWeek: number; isOpen: boolean; openTime: string; closeTime: string }>
+) {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  try {
+    await prisma.$transaction(
+      hours.map((h) =>
+        prisma.operatingHours.upsert({
+          where: { restaurantId_dayOfWeek: { restaurantId, dayOfWeek: h.dayOfWeek } },
+          update: { isOpen: h.isOpen, openTime: h.openTime, closeTime: h.closeTime },
+          create: {
+            restaurantId,
+            dayOfWeek: h.dayOfWeek,
+            isOpen: h.isOpen,
+            openTime: h.openTime,
+            closeTime: h.closeTime,
+          },
+        })
+      )
+    );
+
+    await logActivity(session, {
+      actionType: "OPERATING_HOURS_UPDATE",
+      entityType: "Restaurant",
+      entityId: restaurantId,
+      description: `Operating hours updated`,
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to save operating hours" };
   }
 }
 

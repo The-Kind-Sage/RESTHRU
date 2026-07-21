@@ -21,7 +21,7 @@ import { useAuthStore } from '@/store/auth-store';
 import {
   getRestaurant, getSettingsData, getActiveSubscription,
   updateRestaurant, upsertSettings, updateRestaurantDirect, updateCoverPhoto, setUserPassword, cancelSubscription,
-  getAvailablePlans, subscribeToPlan,
+  getAvailablePlans, subscribeToPlan, saveOperatingHours,
 } from '@/lib/actions/settings';
 import {
   getTaxRates, createTaxRate, updateTaxRate, deleteTaxRate,
@@ -32,6 +32,7 @@ interface RestaurantData {
   address: string;
   phone: string;
   email: string;
+  website: string;
   cover_url: string;
   pan_number: string;
   vat_registered: boolean;
@@ -72,6 +73,11 @@ interface SubscriptionData {
 }
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+// Maps a weekday name to the `operating_hours.day_of_week` index (0=Sun … 6=Sat)
+// used by the DB table and the public menu book.
+const DAY_INDEX: Record<string, number> = {
+  Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6,
+};
 const DEFAULT_HOURS = Object.fromEntries(
   DAYS.map((day) => [day, { open: '07:00', close: '22:00', enabled: true }])
 );
@@ -118,6 +124,7 @@ export default function SettingsPage() {
     address: '',
     phone: '',
     email: '',
+    website: '',
     cover_url: '',
     pan_number: '',
     vat_registered: false,
@@ -156,15 +163,28 @@ export default function SettingsPage() {
 
       if (restRes.data) {
         const r = restRes.data as any;
-        const rawH = r.operatingHours ?? {};
+        // operatingHours comes from the relational table as rows keyed by
+        // day_of_week (0=Sun … 6=Sat); fold it back into the day-name map the UI uses.
+        const rows: Array<{ dayOfWeek: number; isOpen: boolean; openTime: string; closeTime: string }> =
+          Array.isArray(r.operatingHours) ? r.operatingHours : [];
+        const byIndex = new Map(rows.map((h) => [h.dayOfWeek, h]));
         const hours = Object.fromEntries(
-          DAYS.map((day) => [day, rawH[day] ?? rawH[day.toLowerCase()] ?? { open: '07:00', close: '22:00', enabled: true }])
+          DAYS.map((day) => {
+            const rec = byIndex.get(DAY_INDEX[day]);
+            return [
+              day,
+              rec
+                ? { open: rec.openTime, close: rec.closeTime, enabled: rec.isOpen }
+                : { open: '07:00', close: '22:00', enabled: true },
+            ];
+          })
         );
         setRestaurant({
           name: r.name ?? '',
           address: r.street ?? '',
           phone: r.phoneNumber ?? '',
           email: r.email ?? '',
+          website: r.websiteUrl ?? '',
           cover_url: r.bannerImageUrl ?? '',
           pan_number: r.panNumber ?? '',
           vat_registered: r.vatRegistered ?? false,
@@ -226,16 +246,27 @@ export default function SettingsPage() {
   const saveGeneral = async () => {
     if (!restaurantId) return;
     setIsSaving(true);
-    const result = await updateRestaurant(restaurantId, {
-      name: restaurant.name,
-      street: restaurant.address,
-      phoneNumber: restaurant.phone,
-      email: restaurant.email,
-      currency: restaurant.currency,
-      timezone: restaurant.timezone,
-    });
+    const hoursPayload = DAYS.map((day) => ({
+      dayOfWeek: DAY_INDEX[day],
+      isOpen: restaurant.operating_hours[day]?.enabled ?? true,
+      openTime: restaurant.operating_hours[day]?.open ?? '07:00',
+      closeTime: restaurant.operating_hours[day]?.close ?? '22:00',
+    }));
+    const [result, hoursResult] = await Promise.all([
+      updateRestaurant(restaurantId, {
+        name: restaurant.name,
+        street: restaurant.address,
+        phoneNumber: restaurant.phone,
+        email: restaurant.email,
+        websiteUrl: restaurant.website,
+        currency: restaurant.currency,
+        timezone: restaurant.timezone,
+      }),
+      saveOperatingHours(restaurantId, hoursPayload),
+    ]);
     setIsSaving(false);
     if (result.error) { toast.error(result.error); return; }
+    if (hoursResult.error) { toast.error(hoursResult.error); return; }
     setIsDirty(false);
     toast.success('General settings saved');
   };
@@ -436,6 +467,7 @@ export default function SettingsPage() {
                 <div className="space-y-2"><Label>Address</Label><Input value={restaurant.address} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, address: event.target.value })); }} placeholder="Street address" /></div>
                 <div className="space-y-2"><Label>Phone</Label><Input value={restaurant.phone} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, phone: event.target.value })); }} placeholder="+977-9XXXXXXXXX" /></div>
                 <div className="space-y-2"><Label>Email</Label><Input type="email" value={restaurant.email} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, email: event.target.value })); }} placeholder="restaurant@example.com" /></div>
+                <div className="space-y-2"><Label>Website</Label><Input type="url" value={restaurant.website} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, website: event.target.value })); }} placeholder="https://your-restaurant.com" /></div>
                 <Separator />
                 <div className="space-y-4">
                   <h3 className="font-semibold">Operating Hours</h3>
