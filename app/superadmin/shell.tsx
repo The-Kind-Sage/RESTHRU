@@ -15,11 +15,16 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { logout, getCurrentUser } from '@/lib/actions/auth';
 import { unregisterServiceWorker } from '@/lib/service-worker';
-import { getAdminAttentionCount } from '@/lib/actions/admin';
+import { getAdminAttentionCount, getSuperadminNotifications } from '@/lib/actions/admin';
 import { AdminBreadcrumbs } from '@/components/superadmin/breadcrumbs';
+import { formatRelativeTime } from '@/lib/format';
 
 // ── Lazy-load the command palette — it's heavy (all 12 nav icon refs +
 //    keyboard handler + overlay) and only needed when Cmd+K is pressed.
@@ -86,13 +91,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // (Replaces a platform-wide unread count of restaurant-staff operational
   // notifications, which was meaningless for a platform admin.)
   const [attentionCount, setAttentionCount] = useState(0);
+  const [notifications, setNotifications] = useState<{ openTickets: any[]; recentAnnouncements: any[] }>({ openTickets: [], recentAnnouncements: [] });
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  const fetchNotifs = useCallback(async () => {
+    try {
+      const data = await getSuperadminNotifications();
+      setNotifications(data);
+    } catch {}
+  }, []);
 
   useEffect(() => {
     getCurrentUser().then((user) => {
       if (user) setAdminUser(user);
     });
     getAdminAttentionCount().then(setAttentionCount).catch(() => {});
-  }, []);
+    fetchNotifs();
+  }, [fetchNotifs]);
 
   const initials    = 'SA';
   const displayName = 'Super Admin';
@@ -243,21 +258,72 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           <div className="flex items-center gap-3">
-            <Link href="/superadmin/compliance" className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-foreground hover:bg-muted h-9 w-9"
-                title={attentionCount > 0 ? `${attentionCount} restaurant${attentionCount === 1 ? '' : 's'} need attention (missing contact details)` : 'All restaurants have complete details'}
-              >
-                <Bell className="h-4 w-4" />
-              </Button>
-              {attentionCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[16px] h-[16px] px-0.5 rounded-full bg-destructive text-destructive-foreground text-[9px] font-semibold flex items-center justify-center pointer-events-none">
-                  {attentionCount > 9 ? '9+' : attentionCount}
-                </span>
-              )}
-            </Link>
+            <Popover open={notifOpen} onOpenChange={setNotifOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative text-muted-foreground hover:text-foreground hover:bg-muted h-9 w-9"
+                >
+                  <Bell className="h-4 w-4" />
+                  {notifications.openTickets.length + attentionCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-0.5 rounded-full bg-destructive text-destructive-foreground text-[9px] font-semibold flex items-center justify-center pointer-events-none">
+                      {notifications.openTickets.length + attentionCount > 9 ? '9+' : notifications.openTickets.length + attentionCount}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-80 p-0" sideOffset={8}>
+                <div className="p-3 border-b border-border">
+                  <p className="text-sm font-semibold text-foreground">Notifications</p>
+                </div>
+                <ScrollArea className="max-h-80">
+                  {notifications.openTickets.length === 0 && notifications.recentAnnouncements.length === 0 ? (
+                    <div className="py-8 text-center text-sm text-muted-foreground">All caught up</div>
+                  ) : (
+                    <div className="py-1">
+                      {notifications.openTickets.length > 0 && (
+                        <div className="px-3 py-1.5">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Open Support Tickets ({notifications.openTickets.length})</p>
+                          {notifications.openTickets.slice(0, 5).map((t) => (
+                            <Link
+                              key={t.id}
+                              href="/superadmin/support"
+                              onClick={() => setNotifOpen(false)}
+                              className="flex items-start gap-2 py-2 px-1 rounded-md hover:bg-muted/60 transition-colors group"
+                            >
+                              <div className="mt-0.5 h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-medium text-foreground truncate">{t.subject}</p>
+                                <p className="text-[10px] text-muted-foreground truncate">{t.restaurant?.name} &middot; {t.user?.firstName} {t.user?.lastName}</p>
+                              </div>
+                              <span className="text-[10px] text-muted-foreground shrink-0">{formatRelativeTime(t.createdAt)}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                      {attentionCount > 0 && (
+                        <Link
+                          href="/superadmin/compliance"
+                          onClick={() => setNotifOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 mx-2 rounded-md hover:bg-muted/60 transition-colors text-xs text-muted-foreground"
+                        >
+                          <Building2 className="h-3.5 w-3.5" />
+                          {attentionCount} restaurant{attentionCount === 1 ? '' : 's'} missing contact details
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </ScrollArea>
+                <Link
+                  href="/superadmin/support"
+                  onClick={() => setNotifOpen(false)}
+                  className="block border-t border-border p-2.5 text-center text-xs font-medium text-primary hover:bg-muted/50 transition-colors rounded-b-lg"
+                >
+                  View all notifications
+                </Link>
+              </PopoverContent>
+            </Popover>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

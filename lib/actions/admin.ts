@@ -510,6 +510,7 @@ export async function getSentAnnouncements() {
 // which only surfaced restaurant-staff operational alerts irrelevant to an admin.
 export async function getAdminAttentionCount() {
   await requireAdmin();
+
   return prisma.restaurant.count({
     where: {
       isActive: true,
@@ -518,6 +519,30 @@ export async function getAdminAttentionCount() {
   });
 }
 
+export async function getSuperadminNotifications() {
+  await requireAdmin();
+
+  const [openTickets, recentAnnouncements] = await Promise.all([
+    prisma.supportTicket.findMany({
+      where: { status: "OPEN" },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      include: {
+        restaurant: { select: { name: true } },
+        user: { select: { firstName: true, lastName: true } },
+      },
+    }),
+    prisma.notification.findMany({
+      where: { type: "ANNOUNCEMENT" },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: { id: true, title: true, message: true, createdAt: true },
+      distinct: ["title"],
+    }),
+  ]);
+
+  return { openTickets, recentAnnouncements };
+}
 // Mass Communication (Support Center) — previously "Send" had no handler at
 // all. Real email/SMS delivery infrastructure doesn't exist in this app, so
 // this creates real in-app Notification rows for every user of every
