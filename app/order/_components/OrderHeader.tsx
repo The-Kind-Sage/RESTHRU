@@ -151,6 +151,16 @@ export default function OrderHeader({
           {/* Category Pills (real categories from the menu) */}
           <div className="flex overflow-x-auto hide-scrollbar px-4 pb-3 gap-2">
             <button
+              onClick={() => setSelectedCategory("__popular__")}
+              className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                selectedCategory === "__popular__"
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              Popular
+            </button>
+            <button
               onClick={() => setSelectedCategory(null)}
               className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 !selectedCategory

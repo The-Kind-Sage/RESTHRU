@@ -112,6 +112,7 @@ export default function CustomerMenuPage() {
         addOns: [],
         isAvailable: true,
         displayOrder: 0,
+        totalOrders: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
       })));

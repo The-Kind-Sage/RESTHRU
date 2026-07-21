@@ -296,6 +296,7 @@ export interface MenuItem {
   addOns: AddOn[];
   isAvailable: boolean;
   displayOrder: number;
+  totalOrders: number;
   createdAt: Date;
   updatedAt: Date;
 }

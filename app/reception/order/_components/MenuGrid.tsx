@@ -11,17 +11,27 @@ export default function MenuGrid({ menuItems }: { menuItems: MenuItem[] }) {
   const { searchQuery, selectedCategory, draftItems, addItem, updateQuantity, orderState } = useWaiterOrderStore();
   const [longPressTimeout, setLongPressTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  // Filter logic
+  // Filter & sort logic
   const filteredMenu = useMemo(() => {
-    return menuItems.filter((item) => {
+    let items = menuItems.filter((item) => {
       const matchesSearch = 
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        item.id.includes(searchQuery); // using id as a mock "short code" for now
+        item.id.includes(searchQuery);
       
-      const matchesCategory = selectedCategory ? item.categoryId === selectedCategory : true;
+      const matchesCategory = selectedCategory && selectedCategory !== "__popular__"
+        ? item.categoryId === selectedCategory
+        : true;
       
       return matchesSearch && matchesCategory;
     });
+
+    if (selectedCategory === "__popular__") {
+      items.sort((a, b) => (b.totalOrders ?? 0) - (a.totalOrders ?? 0));
+    } else {
+      items.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    return items;
   }, [searchQuery, selectedCategory, menuItems]);
 
   const handleTouchStart = (item: MenuItem) => {

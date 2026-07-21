@@ -116,7 +116,23 @@ export async function getMenuItems(restaurantId: string, opts?: { availableOnly?
       include: { addOns: true },
       orderBy: { createdAt: "desc" },
     });
-    return { data: items };
+
+    const orderCounts = await prisma.orderItem.groupBy({
+      by: ["menuItemId"],
+      _sum: { quantity: true },
+      where: {
+        menuItem: { restaurantId },
+      },
+    });
+
+    const countMap = new Map(orderCounts.map((c) => [c.menuItemId, c._sum.quantity ?? 0]));
+
+    const itemsWithCounts = items.map((item) => ({
+      ...item,
+      totalOrders: countMap.get(item.id) ?? 0,
+    }));
+
+    return { data: itemsWithCounts };
   } catch (err: any) {
     return { error: err?.message || "Failed to load menu items" };
   }
