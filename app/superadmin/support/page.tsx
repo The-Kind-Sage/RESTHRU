@@ -20,6 +20,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatNumber, formatRelativeTime } from '@/lib/format';
 import { getSupportQuickStats, getSentAnnouncements, sendMassCommunication } from '@/lib/actions/admin';
 import { getSupportTickets, updateTicketStatus } from '@/lib/actions/support';
+import { getCurrentUser } from '@/lib/actions/auth';
+import { TicketChat } from '@/components/shared/ticket-chat';
 import { toast } from 'sonner';
 
 type Announcement = {
@@ -75,10 +77,15 @@ export default function SupportCenter() {
   const [tickets, setTickets] = useState<any[]>([]);
   const [activeTicketTab, setActiveTicketTab] = useState(defaultTab);
   const [notifSearch, setNotifSearch] = useState('');
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [adminUser, setAdminUser] = useState<{ id: string } | null>(null);
 
   useEffect(() => {
     getSupportTickets().then((res) => {
       if (res.data) setTickets(res.data);
+    });
+    getCurrentUser().then((user) => {
+      if (user) setAdminUser(user);
     });
   }, []);
 
@@ -140,93 +147,125 @@ export default function SupportCenter() {
         </TabsList>
 
         <TabsContent value="support" className="space-y-6 mt-6">
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-            <div className="xl:col-span-3 space-y-6">
-              {tickets.length === 0 ? (
-                <Card>
-                  <CardContent className="py-12 text-center text-muted-foreground text-sm">
-                    No support tickets yet. They will appear here when restaurant owners send messages.
+          {selectedTicketId && adminUser ? (
+            <div className="border rounded-lg overflow-hidden bg-card" style={{ height: '600px' }}>
+              <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
+                <p className="text-sm font-medium">
+                  {tickets.find(t => t.id === selectedTicketId)?.subject || 'Ticket'}
+                </p>
+                <div className="flex items-center gap-2">
+                  {tickets.find(t => t.id === selectedTicketId)?.status === 'OPEN' && (
+                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={async () => {
+                      await handleResolve(selectedTicketId);
+                      setSelectedTicketId(null);
+                    }}>
+                      <CheckCircle2 className="h-3 w-3 mr-1" /> Mark Resolved
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setSelectedTicketId(null)}>
+                    Back to tickets
+                  </Button>
+                </div>
+              </div>
+              <TicketChat
+                ticketId={selectedTicketId}
+                currentUserId={adminUser.id}
+                currentRole="SUPERADMIN"
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+              <div className="xl:col-span-3 space-y-6">
+                {tickets.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center text-muted-foreground text-sm">
+                      No support tickets yet. They will appear here when restaurant owners send messages.
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-3">
+                    {tickets.map((ticket) => (
+                      <button
+                        key={ticket.id}
+                        onClick={() => setSelectedTicketId(ticket.id)}
+                        className="w-full text-left"
+                      >
+                        <Card className="bg-card border-border shadow-sm hover:border-primary/40 transition-colors cursor-pointer">
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <MessageSquare className="h-4 w-4 text-primary" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="text-sm font-medium text-foreground">{ticket.subject}</p>
+                                  <Badge className={`text-[10px] ${
+                                    ticket.status === 'OPEN' ? 'bg-amber-500/10 text-amber-600 border-amber-200' :
+                                    ticket.status === 'IN_PROGRESS' ? 'bg-blue-500/10 text-blue-600 border-blue-200' :
+                                    'bg-green-500/10 text-green-600 border-green-200'
+                                  }`}>
+                                    {statusIcon(ticket.status)}
+                                    <span className="ml-1">{ticket.status.replace('_', ' ')}</span>
+                                  </Badge>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {ticket.restaurant?.name} &middot; {ticket.user?.firstName} {ticket.user?.lastName} &middot; {formatRelativeTime(ticket.createdAt)}
+                                </p>
+                                <p className="text-sm mt-2 text-foreground/80 line-clamp-2">{ticket.message}</p>
+                                {ticket.imageUrl && (
+                                  <a href={ticket.imageUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
+                                    <ImageIcon className="h-3 w-3" /> View Attachment
+                                  </a>
+                                )}
+                                {ticket._count?.replies > 0 && (
+                                  <p className="text-xs text-muted-foreground mt-1.5">
+                                    {ticket._count.replies} reply{ticket._count.replies > 1 ? 'ies' : ''}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-6">
+                <Card className="bg-card border-border shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-sm font-medium text-foreground">Ticket Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4 text-amber-500" />
+                          <span className="text-sm text-foreground">Open</span>
+                        </div>
+                        <span className="text-sm font-medium text-foreground">{tickets.filter(t => t.status === 'OPEN').length}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          <span className="text-sm text-foreground">Resolved</span>
+                        </div>
+                        <span className="text-sm font-medium text-foreground">{tickets.filter(t => t.status === 'RESOLVED').length}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <MessageSquare className="h-4 w-4 text-primary" />
+                          <span className="text-sm text-foreground">Total</span>
+                        </div>
+                        <span className="text-sm font-medium text-foreground">{tickets.length}</span>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
-              ) : (
-                <div className="space-y-3">
-                  {tickets.map((ticket) => (
-                    <Card key={ticket.id} className="bg-card border-border shadow-sm">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                            <MessageSquare className="h-4 w-4 text-primary" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-sm font-medium text-foreground">{ticket.subject}</p>
-                              <Badge className={`text-[10px] ${
-                                ticket.status === 'OPEN' ? 'bg-amber-500/10 text-amber-600 border-amber-200' :
-                                ticket.status === 'IN_PROGRESS' ? 'bg-blue-500/10 text-blue-600 border-blue-200' :
-                                'bg-green-500/10 text-green-600 border-green-200'
-                              }`}>
-                                {statusIcon(ticket.status)}
-                                <span className="ml-1">{ticket.status.replace('_', ' ')}</span>
-                              </Badge>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {ticket.restaurant?.name} &middot; {ticket.user?.firstName} {ticket.user?.lastName} &middot; {formatRelativeTime(ticket.createdAt)}
-                            </p>
-                            <p className="text-sm mt-2 text-foreground/80">{ticket.message}</p>
-                            {ticket.imageUrl && (
-                              <a href={ticket.imageUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:underline">
-                                <ImageIcon className="h-3 w-3" /> View Attachment
-                              </a>
-                            )}
-                            {ticket.status === 'OPEN' && (
-                              <div className="flex gap-2 mt-3">
-                                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleResolve(ticket.id)}>
-                                  <CheckCircle2 className="h-3 w-3 mr-1" /> Mark Resolved
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+              </div>
             </div>
-
-            <div className="space-y-6">
-              <Card className="bg-card border-border shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium text-foreground">Ticket Summary</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-amber-500" />
-                        <span className="text-sm text-foreground">Open</span>
-                      </div>
-                      <span className="text-sm font-medium text-foreground">{tickets.filter(t => t.status === 'OPEN').length}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        <span className="text-sm text-foreground">Resolved</span>
-                      </div>
-                      <span className="text-sm font-medium text-foreground">{tickets.filter(t => t.status === 'RESOLVED').length}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4 text-primary" />
-                        <span className="text-sm text-foreground">Total</span>
-                      </div>
-                      <span className="text-sm font-medium text-foreground">{tickets.length}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+          )}
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-6 mt-6">
@@ -257,44 +296,43 @@ export default function SupportCenter() {
                     t.restaurant?.name?.toLowerCase().includes(notifSearch.toLowerCase())
                   )
                   .map((ticket) => (
-                    <Card key={ticket.id} className="bg-card border-border shadow-sm">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                            <MessageSquare className="h-4 w-4 text-primary" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-sm font-medium text-foreground">{ticket.subject}</p>
-                              <Badge className={`text-[10px] ${
-                                ticket.status === 'OPEN' ? 'bg-amber-500/10 text-amber-600 border-amber-200' :
-                                ticket.status === 'IN_PROGRESS' ? 'bg-blue-500/10 text-blue-600 border-blue-200' :
-                                'bg-green-500/10 text-green-600 border-green-200'
-                              }`}>
-                                {statusIcon(ticket.status)}
-                                <span className="ml-1">{ticket.status.replace('_', ' ')}</span>
-                              </Badge>
+                    <button
+                      key={ticket.id}
+                      onClick={() => { setSelectedTicketId(ticket.id); setActiveTicketTab('support'); }}
+                      className="w-full text-left"
+                    >
+                      <Card className="bg-card border-border shadow-sm hover:border-primary/40 transition-colors cursor-pointer">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <MessageSquare className="h-4 w-4 text-primary" />
                             </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {ticket.restaurant?.name} &middot; {ticket.user?.firstName} {ticket.user?.lastName} &middot; {formatRelativeTime(ticket.createdAt)}
-                            </p>
-                            <p className="text-sm mt-2 text-foreground/80">{ticket.message}</p>
-                            {ticket.imageUrl && (
-                              <a href={ticket.imageUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:underline">
-                                <ImageIcon className="h-3 w-3" /> View Attachment
-                              </a>
-                            )}
-                            {ticket.status === 'OPEN' && (
-                              <div className="flex gap-2 mt-3">
-                                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleResolve(ticket.id)}>
-                                  <CheckCircle2 className="h-3 w-3 mr-1" /> Mark Resolved
-                                </Button>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-sm font-medium text-foreground">{ticket.subject}</p>
+                                <Badge className={`text-[10px] ${
+                                  ticket.status === 'OPEN' ? 'bg-amber-500/10 text-amber-600 border-amber-200' :
+                                  ticket.status === 'IN_PROGRESS' ? 'bg-blue-500/10 text-blue-600 border-blue-200' :
+                                  'bg-green-500/10 text-green-600 border-green-200'
+                                }`}>
+                                  {statusIcon(ticket.status)}
+                                  <span className="ml-1">{ticket.status.replace('_', ' ')}</span>
+                                </Badge>
                               </div>
-                            )}
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {ticket.restaurant?.name} &middot; {ticket.user?.firstName} {ticket.user?.lastName} &middot; {formatRelativeTime(ticket.createdAt)}
+                              </p>
+                              <p className="text-sm mt-2 text-foreground/80 line-clamp-2">{ticket.message}</p>
+                              {ticket.imageUrl && (
+                                <a href={ticket.imageUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
+                                  <ImageIcon className="h-3 w-3" /> View Attachment
+                                </a>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </button>
                   ))}
               </div>
             </ScrollArea>

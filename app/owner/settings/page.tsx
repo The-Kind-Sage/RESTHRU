@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useCallback, useEffect, useState, useRef } from 'react';
+import { formatRelativeTime } from '@/lib/format';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +24,8 @@ import {
   updateRestaurant, upsertSettings, updateRestaurantDirect, updateCoverPhoto, setUserPassword, cancelSubscription,
   getAvailablePlans, subscribeToPlan, saveOperatingHours,
 } from '@/lib/actions/settings';
-import { createSupportTicket } from '@/lib/actions/support';
+import { createSupportTicket, getOwnerTickets } from '@/lib/actions/support';
+import { TicketChat } from '@/components/shared/ticket-chat';
 import {
   getTaxRates, createTaxRate, updateTaxRate, deleteTaxRate,
 } from '@/lib/actions/tax';
@@ -119,6 +121,8 @@ export default function SettingsPage() {
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [showSubscribeConfirm, setShowSubscribeConfirm] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<any>(null);
+  const [ownerTickets, setOwnerTickets] = useState<any[]>([]);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
 
   const [restaurant, setRestaurant] = useState<RestaurantData>({
     name: '',
@@ -233,6 +237,11 @@ export default function SettingsPage() {
 
       const taxRes = await getTaxRates();
       if ("data" in taxRes && taxRes.data) setTaxRates(taxRes.data);
+
+      if (restaurantId) {
+        const ticketRes = await getOwnerTickets(restaurantId);
+        if (ticketRes.data) setOwnerTickets(ticketRes.data);
+      }
     } catch (error) {
       console.error('Settings load:', error);
     } finally {
@@ -854,7 +863,7 @@ export default function SettingsPage() {
           <TabsContent value="support" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Contact Support</CardTitle>
+                <CardTitle>Support Center</CardTitle>
                 <CardDescription>Reach out to the development team</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -885,10 +894,77 @@ export default function SettingsPage() {
 
                 <Separator />
 
-                <div>
-                  <h3 className="font-semibold mb-4">Quick Support Message</h3>
-                  <SupportMessageForm restaurantId={restaurantId || ''} />
-                </div>
+                {selectedTicketId ? (
+                  <div className="border rounded-lg overflow-hidden" style={{ height: '500px' }}>
+                    <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
+                      <p className="text-sm font-medium">Ticket #{selectedTicketId.slice(0, 8)}</p>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setSelectedTicketId(null)}>
+                        Back to tickets
+                      </Button>
+                    </div>
+                    <TicketChat
+                      ticketId={selectedTicketId}
+                      currentUserId={user?.id || ''}
+                      currentRole="OWNER"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold">Your Tickets</h3>
+                      <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setSelectedTicketId('new')}>
+                        <MessageSquare className="h-3.5 w-3.5" /> New Ticket
+                      </Button>
+                    </div>
+
+                    {ownerTickets.length === 0 ? (
+                      <div className="text-center py-8 text-sm text-muted-foreground">
+                        No tickets yet. Create one to get support.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {ownerTickets.map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => setSelectedTicketId(t.id)}
+                            className="w-full text-left p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium">{t.subject}</p>
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                t.status === 'OPEN' ? 'bg-amber-500/10 text-amber-600' :
+                                t.status === 'IN_PROGRESS' ? 'bg-blue-500/10 text-blue-600' :
+                                'bg-green-500/10 text-green-600'
+                              }`}>
+                                {t.status.replace('_', ' ')}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{t.message}</p>
+                            <div className="flex items-center gap-3 mt-1.5 text-[10px] text-muted-foreground">
+                              <span>{formatRelativeTime(t.createdAt)}</span>
+                              {t._count?.replies > 0 && (
+                                <span>{t._count.replies} reply{t._count.replies > 1 ? 'ies' : ''}</span>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {selectedTicketId === 'new' && (
+                      <div className="border rounded-lg p-4 mt-4">
+                        <SupportMessageForm
+                          restaurantId={restaurantId || ''}
+                          onSuccess={async () => {
+                            setSelectedTicketId(null);
+                            const ticketRes = await getOwnerTickets(restaurantId || '');
+                            if (ticketRes.data) setOwnerTickets(ticketRes.data);
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -1031,7 +1107,7 @@ export default function SettingsPage() {
   );
 }
 
-function SupportMessageForm({ restaurantId }: { restaurantId: string }) {
+function SupportMessageForm({ restaurantId, onSuccess }: { restaurantId: string; onSuccess?: () => void }) {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -1073,6 +1149,7 @@ function SupportMessageForm({ restaurantId }: { restaurantId: string }) {
         setMessage('');
         setImageFile(null);
         setImagePreview(null);
+        onSuccess?.();
       }
     } catch {
       toast.error('Failed to send message');
