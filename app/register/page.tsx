@@ -85,7 +85,7 @@ export default function RegisterPage() {
   const [usePersonalPhone, setUsePersonalPhone] = useState(false);
   const [plans, setPlans] = useState<PublicPlan[]>([]);
   const [desiredPlanId, setDesiredPlanId] = useState<string | null>(null);
-  const [googleUser, setGoogleUser] = useState<{ id: string; email: string; firstName: string; lastName: string; picture: string } | null>(null);
+  const [googleUser, setGoogleUser] = useState<{ id: string; email: string; firstName: string; lastName: string; picture: string; alreadyRegistered?: boolean } | null>(null);
 
   useEffect(() => {
     getPublicPlans().then(setPlans);
@@ -580,6 +580,7 @@ export default function RegisterPage() {
           open={!!googleUser}
           onOpenChange={(open) => { if (!open) setGoogleUser(null); }}
           user={googleUser}
+          alreadyRegistered={googleUser.alreadyRegistered}
         />
       )}
     </div>

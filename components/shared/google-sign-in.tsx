@@ -58,12 +58,18 @@ interface GoogleUser {
   picture: string;
 }
 
+export type GoogleSignInResult = GoogleUser & {
+  hasRestaurant?: boolean;
+  alreadyRegistered?: boolean;
+  restaurant?: any;
+};
+
 interface GoogleSignInButtonProps {
   text?: string;
   className?: string;
   disabled?: boolean;
   redirectTo?: string;
-  onSuccess?: (user: GoogleUser & { hasRestaurant?: boolean; restaurant?: any }) => void;
+  onSuccess?: (user: GoogleSignInResult) => void;
 }
 
 export function GoogleSignInButton({
@@ -95,6 +101,7 @@ export function GoogleSignInButton({
         onSuccessRef.current({
           ...result.user,
           hasRestaurant: result.hasRestaurant,
+          alreadyRegistered: result.alreadyRegistered,
           restaurant: result.restaurant,
         });
         return;

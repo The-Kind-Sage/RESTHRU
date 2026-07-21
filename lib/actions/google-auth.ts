@@ -2,6 +2,7 @@
 
 import { OAuth2Client } from "google-auth-library";
 import prisma from "@/lib/prisma";
+import { createSession } from "@/lib/auth";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
 const client = new OAuth2Client(googleClientId);
@@ -88,19 +89,29 @@ export async function googleLogin(credential: string) {
       select: { id: true, name: true, type: true, street: true, city: true, phoneNumber: true },
     });
 
-    // Always go through the start free trial dialog — never redirect directly
+    // If the user already had a restaurant from a previous sign-up, don't let
+    // them create a second one — prompt them to log in instead.
+    if (restaurant) {
+      return {
+        success: true,
+        alreadyRegistered: true,
+        hasRestaurant: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          picture: user.profileImage || "",
+        },
+      };
+    }
+
+    // New user — go through the start free trial dialog
     return {
       success: true,
       needsRegistration: true,
-      hasRestaurant: !!restaurant,
-      restaurant: restaurant ? {
-        id: restaurant.id,
-        name: restaurant.name,
-        type: restaurant.type,
-        street: restaurant.street,
-        city: restaurant.city,
-        phoneNumber: restaurant.phoneNumber,
-      } : null,
+      hasRestaurant: false,
+      restaurant: null,
       user: {
         id: user.id,
         email: user.email,
@@ -112,5 +123,33 @@ export async function googleLogin(credential: string) {
   } catch (err: any) {
     console.error("googleLogin error:", err?.message);
     return { error: "Failed to verify Google sign-in. Please try again." };
+  }
+}
+
+/**
+ * Creates a JWT session for an existing Google user so they can sign in without
+ * going through the registration flow a second time.
+ */
+export async function sessionForExistingGoogleUser(userId: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, username: true, role: true, firstName: true, lastName: true, email: true, restaurantId: true },
+    });
+    if (!user) return { error: "User not found" };
+
+    await createSession({
+      id: user.id,
+      username: user.username || "",
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      restaurantId: user.restaurantId ?? null,
+    });
+
+    return { success: true, redirectTo: "/owner" };
+  } catch {
+    return { error: "Failed to create session" };
   }
 }

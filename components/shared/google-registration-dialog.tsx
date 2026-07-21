@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Check, ArrowRight, UtensilsCrossed, Smartphone, Building2, Mail, User } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, ArrowRight, UtensilsCrossed, Smartphone, Building2, Mail, User, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { completeGoogleRegistration } from '@/lib/actions/auth';
+import { sessionForExistingGoogleUser } from '@/lib/actions/google-auth';
 import { getPublicPlans, type PublicPlan } from '@/lib/actions/get-plans-public';
 import { NEPAL_CITIES, RESTAURANT_TYPES } from '@/lib/constants';
 import { phoneSchema } from '@/lib/phone-validator';
@@ -95,9 +96,10 @@ interface GoogleRegistrationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   user: GoogleUser;
+  alreadyRegistered?: boolean;
 }
 
-export function GoogleRegistrationDialog({ open, onOpenChange, user }: GoogleRegistrationDialogProps) {
+export function GoogleRegistrationDialog({ open, onOpenChange, user, alreadyRegistered }: GoogleRegistrationDialogProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
@@ -290,7 +292,57 @@ export function GoogleRegistrationDialog({ open, onOpenChange, user }: GoogleReg
           </div>
         )}
 
-        {/* Form Steps */}
+        {/* Already registered card */}
+        {alreadyRegistered ? (
+          <div className="px-8 pb-7 pt-4">
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-center space-y-6"
+            >
+              <div className="mx-auto w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center">
+                <Mail className="w-8 h-8 text-amber-600" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-bold text-foreground">Already Registered</h3>
+                <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                  <span className="font-medium text-foreground">{user.email}</span> is already registered with Resthru. Would you like to sign in instead?
+                </p>
+              </div>
+              <div className="flex gap-3 justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  className="min-w-[120px]"
+                >
+                  Go Back
+                </Button>
+                <Button
+                  onClick={async () => {
+                    setIsLoading(true);
+                    try {
+                      const result = await sessionForExistingGoogleUser(user.id);
+                      if (result.error) { toast.error(result.error); return; }
+                      onOpenChange(false);
+                      router.push('/owner');
+                    } catch {
+                      toast.error('Failed to sign in');
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  disabled={isLoading}
+                  className="min-w-[120px] gap-2"
+                >
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  Sign In
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        ) : (
+        /* Form Steps */
         <div className="px-8 pb-7 pt-4">
           <AnimatePresence mode="wait">
             {currentStep === 1 && (
@@ -509,6 +561,7 @@ export function GoogleRegistrationDialog({ open, onOpenChange, user }: GoogleReg
             </div>
           )}
         </div>
+        )}
       </DialogContent>
     </Dialog>
   );

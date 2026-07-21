@@ -47,7 +47,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [googleUser, setGoogleUser] = useState<{ id: string; email: string; firstName: string; lastName: string; picture: string } | null>(null);
+  const [googleUser, setGoogleUser] = useState<{ id: string; email: string; firstName: string; lastName: string; picture: string; alreadyRegistered?: boolean } | null>(null);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -231,6 +231,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
           open={!!googleUser}
           onOpenChange={(open) => { if (!open) setGoogleUser(null); }}
           user={googleUser}
+          alreadyRegistered={googleUser.alreadyRegistered}
         />
       )}
     </Dialog>
