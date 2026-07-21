@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { logActivity } from "./logs";
 import { verifyManagerApproval } from "@/lib/manager-approval";
+import { splitVatInclusive, NEPAL_VAT_RATE } from "@/lib/vat";
 
 const SELF_VOID_ROLES = ["RECEPTIONIST", "MANAGER", "RESTAURANT_OWNER", "ADMIN", "SUPER_ADMIN"];
 
@@ -70,10 +71,13 @@ export async function notifyServers(
   if (order.assignedWaiterId) {
     recipientIds = [order.assignedWaiterId];
   } else {
-    // Roles are inconsistent across the app (OWNER/STAFF/WAITER/…), so notify
-    // everyone active at the restaurant except kitchen staff and platform admins.
+    // Don't notify owners about ORDER_READY — they don't need to hear every
+    // "food ready" ring. Keep all other types flowing to everyone active.
+    const excludeRoles = type === "ORDER_READY"
+      ? ["KITCHEN", "ADMIN", "SUPER_ADMIN", "OWNER"]
+      : ["KITCHEN", "ADMIN", "SUPER_ADMIN"];
     const servers = await prisma.user.findMany({
-      where: { restaurantId, role: { notIn: ["KITCHEN", "ADMIN", "SUPER_ADMIN"] }, isActive: true },
+      where: { restaurantId, role: { notIn: excludeRoles }, isActive: true },
       select: { id: true },
     });
     recipientIds = servers.map((s) => s.id);
@@ -399,7 +403,7 @@ export async function settleOrder(data: {
   try {
     // Order lookup and bill-number lookup are independent — run them together
     // so the checkout tap pays one DB round-trip instead of two.
-    const [order, lastBill] = await Promise.all([
+    const [order, lastBill, restaurant] = await Promise.all([
       prisma.order.findFirst({
         where: { id: data.orderId, restaurantId },
         include: { bills: { select: { id: true } } },
@@ -408,6 +412,10 @@ export async function settleOrder(data: {
         where: { restaurantId },
         orderBy: { createdAt: "desc" },
         select: { billNumber: true },
+      }),
+      prisma.restaurant.findUnique({
+        where: { id: restaurantId },
+        select: { vatRegistered: true, taxPercentage: true },
       }),
     ]);
     if (!order) return { error: "Order not found" };
@@ -418,10 +426,12 @@ export async function settleOrder(data: {
     if (order.bills.length > 0) return { error: "This order has already been billed" };
 
     const discount = Math.min(Math.max(data.discountAmount ?? 0, 0), order.subtotal);
-    // No VAT — total is menu price (+ service charge if any) minus discount.
-    // order.taxAmount is deliberately excluded so even older orders that still
-    // carry a stored tax value settle at the plain menu total.
+    // Menu-inclusive total (courts bar adding VAT on top); the 13% VAT component
+    // is back-calculated from this gross for VAT-registered restaurants.
     const totalAmount = order.subtotal + order.serviceCharge - discount;
+    const { taxable, vat } = restaurant?.vatRegistered
+      ? splitVatInclusive(totalAmount, restaurant.taxPercentage || NEPAL_VAT_RATE)
+      : { taxable: totalAmount, vat: 0 };
     const amountPaid = data.amountPaid ?? totalAmount;
     if (amountPaid < totalAmount - 0.01) {
       return { error: `Amount paid (${amountPaid}) is less than the total (${totalAmount.toFixed(2)})` };
@@ -439,7 +449,8 @@ export async function settleOrder(data: {
               orderId: order.id,
               billNumber: `B-${nextBillNumber.toString().padStart(5, "0")}`,
               subtotal: order.subtotal,
-              taxAmount: 0,
+              taxableAmount: taxable,
+              taxAmount: vat,
               serviceCharge: order.serviceCharge,
               discountAmount: discount,
               totalAmount,
