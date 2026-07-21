@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/shared/page-header';
 
 import React, { useEffect, useState } from 'react';
 import {
-  FileText, Image,
+  FileText,
   Search, Building2, Globe, MapPin, UtensilsCrossed,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,27 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatNumber } from '@/lib/format';
 import { getPlatformStats, getAllRestaurants } from '@/lib/actions/admin';
-
-const statusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    Published: 'bg-primary/10 text-primary border-primary/30',
-    Draft: 'bg-accent/10 text-accent border-accent/30',
-  };
-  return colors[status] || 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/30';
-};
-
-const integrationStatusColors: Record<string, string> = {
-  Connected: 'bg-primary/10 text-primary border-primary/30',
-  'Not Connected': 'bg-destructive/10 text-destructive border-destructive/30',
-};
-
-const cmsIcons: Record<string, React.ElementType> = {
-  'Landing Page': FileText,
-  'Pricing Page': FileText,
-  'Blog Posts': FileText,
-  'Case Studies': FileText,
-  'Testimonials': FileText,
-};
 
 export default function AdminMarketing() {
   const [cmsTab, setCmsTab] = useState('all');
@@ -171,79 +150,6 @@ export default function AdminMarketing() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-card border-border shadow-sm">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Image className="h-4 w-4 text-accent" />
-              <CardTitle className="text-sm font-medium text-foreground">Press Kit</CardTitle>
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">Brand assets, logos, and screenshots</p>
-          </CardHeader>
-          <CardContent>
-            {restaurants.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground text-sm">No press kit data</div>
-            ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                {restaurants.slice(0, 8).map((r) => (
-                  <div key={r.id} className="p-3 rounded-lg bg-muted/50 border border-border text-center">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-1.5">
-                      <Building2 className="h-5 w-5 text-primary" />
-                    </div>
-                    <p className="text-[10px] text-foreground font-medium truncate">{r.name}</p>
-                    <p className="text-[9px] text-muted-foreground">{r.city}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <div className="space-y-6">
-          <Card className="bg-card border-border shadow-sm">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-info" />
-                <CardTitle className="text-sm font-medium text-foreground">A/B Testing</CardTitle>
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">Conversion experiments and results</p>
-            </CardHeader>
-            <CardContent>
-              <ComingSoon message="Test landing-page variants, pricing page layouts, and onboarding copy against restaurant sign-up conversion rates." />
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border shadow-sm">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-primary" />
-                <CardTitle className="text-sm font-medium text-foreground">Integration Status</CardTitle>
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">Marketing tool connectivity</p>
-            </CardHeader>
-            <CardContent>
-              {!stats ? (
-                <div className="text-center py-12 text-muted-foreground text-sm">No integration data</div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
-                    <span className="text-sm text-foreground">QR Menu</span>
-                    <Badge className="border bg-primary/10 text-primary border-primary/30 text-[10px]">Connected</Badge>
-                  </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
-                    <span className="text-sm text-foreground">Online Ordering</span>
-                    <Badge className="border bg-primary/10 text-primary border-primary/30 text-[10px]">Connected</Badge>
-                  </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
-                    <span className="text-sm text-foreground">Email Notifications</span>
-                    <Badge className="border bg-primary/10 text-primary border-primary/30 text-[10px]">Connected</Badge>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
     </div>
   );
 }

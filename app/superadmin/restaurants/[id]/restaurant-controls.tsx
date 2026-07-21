@@ -75,7 +75,7 @@ export function RestaurantControls({
     }
     startTransition(async () => {
       const res = await setRestaurantPlan(restaurantId, selectedPlanId, billingCycle);
-      if (res.error) return toast.error(res.error);
+      if (res.error) { toast.error(res.error); return; }
       toast.success(`${restaurantName} moved to the ${res.data?.planName} plan`);
       router.refresh();
     });
@@ -88,7 +88,8 @@ export function RestaurantControls({
       const res = await updateRestaurantFeatures(restaurantId, { [key]: value });
       if (res.error) {
         setFeatures((f) => ({ ...f, [key]: previous })); // revert on failure
-        return toast.error(res.error);
+        toast.error(res.error);
+        return;
       }
       toast.success('Feature updated');
     });
@@ -101,7 +102,7 @@ export function RestaurantControls({
     }
     startTransition(async () => {
       const res = await resetRestaurantOwnerPassword(restaurantId, newPassword);
-      if (res.error) return toast.error(res.error);
+      if (res.error) { toast.error(res.error); return; }
       toast.success('Owner password reset');
       setNewPassword('');
     });
@@ -111,7 +112,7 @@ export function RestaurantControls({
     const next = !ownerActive;
     startTransition(async () => {
       const res = await setRestaurantOwnerActive(restaurantId, next);
-      if (res.error) return toast.error(res.error);
+      if (res.error) { toast.error(res.error); return; }
       setOwnerActive(next);
       toast.success(next ? 'Owner login reactivated' : 'Owner login deactivated — they can no longer sign in');
     });

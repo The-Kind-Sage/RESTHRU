@@ -126,12 +126,15 @@ function WaiterLoginForm() {
           )}
         </Button>
 
-        <Link
-          href="/"
-          className="flex items-center justify-center gap-2 pt-2 text-sm text-white/70 transition-colors hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Home
+        <Link href="/" className="block pt-2">
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full rounded-xl h-12 text-base font-semibold"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            Home
+          </Button>
         </Link>
       </form>
     </div>

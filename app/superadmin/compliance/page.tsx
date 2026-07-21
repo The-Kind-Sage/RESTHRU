@@ -2,10 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  ShieldCheck,
   FileText,
-  AlertTriangle,
-  Download,
   CheckCircle,
   XCircle,
   Clock,
@@ -16,7 +13,6 @@ import { formatNumber } from '@/lib/format';
 import { getComplianceData } from '@/lib/actions/admin';
 import { ADMIN_TONE_CLASSES } from '@/lib/constants';
 import { SectionSkeleton, KpiSkeleton } from '@/components/superadmin/skeletons';
-import { ComingSoon } from '@/components/superadmin/coming-soon';
 import { PageHeader } from '@/components/shared/page-header';
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -45,11 +41,11 @@ export default function AdminCompliance() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Compliance Dashboard"
-        description="IRD compliance, document vault, fraud detection & data export"
+        description="PAN/VAT and contact-detail compliance across restaurants"
       >
         <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
           <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
-          Auto-Sync Active
+          Live
         </Badge>
       </PageHeader>
 
@@ -108,41 +104,6 @@ export default function AdminCompliance() {
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border shadow-sm">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-primary" />
-            <CardTitle className="text-sm font-medium text-foreground">Document Vault</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <ComingSoon message="Centralised document upload, expiry tracking, and PAN/VAT certificate management for every restaurant." />
-        </CardContent>
-      </Card>
-
-      <Card className="bg-card border-border shadow-sm">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-            <CardTitle className="text-sm font-medium text-foreground">Fraud Detection</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <ComingSoon message="Anomaly detection on order patterns, duplicate billing, and suspicious activity across the platform." />
-        </CardContent>
-      </Card>
-
-      <Card className="bg-card border-border shadow-sm">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Download className="h-4 w-4 text-primary" />
-            <CardTitle className="text-sm font-medium text-foreground">Data Export Requests</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <ComingSoon message="GDPR/IRD data export request queue with automated fulfilment, audit log, and download portal." />
-        </CardContent>
-      </Card>
     </div>
   );
 }
