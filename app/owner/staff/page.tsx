@@ -470,7 +470,7 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
               Phone Number *
             </label>
             <Input
-              placeholder="+977-9841234567"
+              placeholder="98XXXXXXXX (Nepal) or 6XXXXXXXXX (India)"
               value={formData.phone}
               onChange={(e) =>
                 setFormData({ ...formData, phone: e.target.value })
@@ -543,7 +543,7 @@ function AddStaffDialog({ restaurantId, onAdded }: { restaurantId: string; onAdd
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Emergency Contact Phone</label>
-                  <Input placeholder="Phone number" value={formData.emergencyContactPhone} onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })} />
+                  <Input placeholder="98XXXXXXXX (Nepal) or 6XXXXXXXXX (India)" value={formData.emergencyContactPhone} onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })} />
                 </div>
               </div>
               <div>

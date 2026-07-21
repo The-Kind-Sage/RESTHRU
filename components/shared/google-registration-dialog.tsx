@@ -38,11 +38,12 @@ import {
 import { completeGoogleRegistration } from '@/lib/actions/auth';
 import { getPublicPlans, type PublicPlan } from '@/lib/actions/get-plans-public';
 import { NEPAL_CITIES, RESTAURANT_TYPES } from '@/lib/constants';
+import { phoneSchema } from '@/lib/phone-validator';
 
 const step1Schema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
   email: z.string().email('Valid email is required'),
-  phone: z.string().min(10, 'Valid phone number is required'),
+  phone: phoneSchema,
 });
 
 const step2Schema = z.object({
@@ -50,7 +51,7 @@ const step2Schema = z.object({
   restaurantType: z.string().min(1, 'Restaurant type is required'),
   address: z.string().min(5, 'Address is required'),
   city: z.string().min(1, 'City is required'),
-  restaurantPhone: z.string().min(10, 'Valid phone number is required'),
+  restaurantPhone: phoneSchema,
 });
 
 const step3Schema = z.object({
@@ -334,7 +335,7 @@ export function GoogleRegistrationDialog({ open, onOpenChange, user }: GoogleReg
                     <FormField control={step1Form.control} name="phone" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Phone Number</FormLabel>
-                        <FormControl><Input placeholder="98XXXXXXXXX" className="h-11 border-border/70 bg-muted/30 focus:bg-white transition-colors mt-1.5" {...field} /></FormControl>
+                        <FormControl><Input placeholder="98XXXXXXXX (Nepal) or 6XXXXXXXXX (India)" className="h-11 border-border/70 bg-muted/30 focus:bg-white transition-colors mt-1.5" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -395,7 +396,7 @@ export function GoogleRegistrationDialog({ open, onOpenChange, user }: GoogleReg
                             <Building2 className="w-3.5 h-3.5" />
                             Restaurant Phone
                           </FormLabel>
-                          <FormControl><Input placeholder="98XXXXXXXXX" className="h-11 border-border/70 bg-muted/30 focus:bg-white transition-colors mt-1.5" disabled={usePersonalPhone} {...field} /></FormControl>
+                          <FormControl><Input placeholder="98XXXXXXXX (Nepal) or 6XXXXXXXXX (India)" className="h-11 border-border/70 bg-muted/30 focus:bg-white transition-colors mt-1.5" disabled={usePersonalPhone} {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
