@@ -325,13 +325,8 @@ export function GoogleRegistrationDialog({ open, onOpenChange, user }: GoogleReg
                         <FormMessage />
                       </FormItem>
                     )} />
-                    <FormField control={step1Form.control} name="email" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email Address</FormLabel>
-                        <FormControl><Input placeholder="you@example.com" type="email" className="h-11 border-border/70 bg-muted/30 focus:bg-white transition-colors mt-1.5" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
+                    {/* Email is pre-filled from Google and shown in the info card above — hidden but submitted */}
+                    <input type="hidden" {...step1Form.register('email')} />
                     <FormField control={step1Form.control} name="phone" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Phone Number</FormLabel>
