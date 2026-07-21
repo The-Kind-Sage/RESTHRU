@@ -48,9 +48,12 @@ const statusConfig: Record<OrderStatus, { label: string; bgColor: string; nextSt
 
 const PAYMENT_METHODS = ["CASH", "ESEWA", "KHALTI", "FONEPAY"] as const;
 
+const SELF_VOID_ROLES = ["RECEPTIONIST", "MANAGER", "RESTAURANT_OWNER", "ADMIN", "SUPER_ADMIN"];
+
 export default function LiveOrdersPage() {
-  const { restaurant } = useAuthStore();
+  const { restaurant, user } = useAuthStore();
   const restaurantId = restaurant?.id;
+  const canSelfVoid = user?.role && SELF_VOID_ROLES.includes(user.role);
   const [orders, setOrders] = useState<any[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<OrderStatus | "all">("all");
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -61,6 +64,8 @@ export default function LiveOrdersPage() {
   const [isSettling, setIsSettling] = useState(false);
   const [voidItemTarget, setVoidItemTarget] = useState<any>(null);
   const [voidOrderTarget, setVoidOrderTarget] = useState<any>(null);
+  const [selfVoidReason, setSelfVoidReason] = useState('');
+  const [selfVoidTarget, setSelfVoidTarget] = useState<any>(null); // 'item' | 'order'
   const [cancelTarget, setCancelTarget] = useState<any>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [billReceipt, setBillReceipt] = useState<{ open: boolean; items: any[]; bill: any; orderId?: string; tableName?: string }>({ open: false, items: [], bill: null });
@@ -184,7 +189,7 @@ export default function LiveOrdersPage() {
     });
   };
 
-  const handleVoidItem = async (data: { reason: string; approverUsername: string; approverPassword: string }) => {
+  const handleVoidItem = async (data: { reason: string; approverUsername?: string; approverPassword?: string }) => {
     const result = await voidOrderItem({ orderItemId: voidItemTarget.id, ...data });
     if (result.error) return { error: result.error };
     toast.success(`${voidItemTarget.menuItemName} voided`);
@@ -193,7 +198,7 @@ export default function LiveOrdersPage() {
     refresh();
   };
 
-  const handleVoidOrder = async (data: { reason: string; approverUsername: string; approverPassword: string }) => {
+  const handleVoidOrder = async (data: { reason: string; approverUsername?: string; approverPassword?: string }) => {
     const result = await voidOrder({ orderId: voidOrderTarget.id, ...data });
     if (result.error) return { error: result.error };
     toast.success(`Order ${voidOrderTarget.orderId} voided`);
@@ -508,20 +513,96 @@ export default function LiveOrdersPage() {
         tableName={billReceipt.tableName}
       />
 
-      <ManagerApprovalDialog
-        open={!!voidItemTarget}
-        onOpenChange={(o) => !o && setVoidItemTarget(null)}
-        title={`Void ${voidItemTarget?.menuItemName ?? "item"}`}
-        description="Voiding an item requires a manager, owner, or admin to authorize with their own login."
-        onConfirm={handleVoidItem}
-      />
-      <ManagerApprovalDialog
-        open={!!voidOrderTarget}
-        onOpenChange={(o) => !o && setVoidOrderTarget(null)}
-        title={`Void order ${voidOrderTarget?.orderId ?? ""}`}
-        description="Voiding an order requires a manager, owner, or admin to authorize with their own login."
-        onConfirm={handleVoidOrder}
-      />
+      {canSelfVoid ? (
+        <>
+          <AlertDialog open={!!voidItemTarget} onOpenChange={(o) => !o && setVoidItemTarget(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Void {voidItemTarget?.menuItemName ?? "item"}?</AlertDialogTitle>
+                <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="py-2">
+                <textarea
+                  className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  placeholder="Reason for voiding..."
+                  value={selfVoidReason}
+                  onChange={(e) => setSelfVoidReason(e.target.value)}
+                />
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => { setVoidItemTarget(null); setSelfVoidReason(''); }}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive hover:bg-destructive/90"
+                  disabled={!selfVoidReason.trim()}
+                  onClick={async () => {
+                    const result = await voidOrderItem({ orderItemId: voidItemTarget.id, reason: selfVoidReason.trim() });
+                    if (result.error) { toast.error(result.error); return; }
+                    toast.success(`${voidItemTarget.menuItemName} voided`);
+                    setSelectedOrder(result.data);
+                    setVoidItemTarget(null);
+                    setSelfVoidReason('');
+                    refresh();
+                  }}
+                >
+                  Void Item
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog open={!!voidOrderTarget} onOpenChange={(o) => !o && setVoidOrderTarget(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Void order {voidOrderTarget?.orderId ?? ""}?</AlertDialogTitle>
+                <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="py-2">
+                <textarea
+                  className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  placeholder="Reason for voiding..."
+                  value={selfVoidReason}
+                  onChange={(e) => setSelfVoidReason(e.target.value)}
+                />
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => { setVoidOrderTarget(null); setSelfVoidReason(''); }}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive hover:bg-destructive/90"
+                  disabled={!selfVoidReason.trim()}
+                  onClick={async () => {
+                    const result = await voidOrder({ orderId: voidOrderTarget.id, reason: selfVoidReason.trim() });
+                    if (result.error) { toast.error(result.error); return; }
+                    toast.success(`Order ${voidOrderTarget.orderId} voided`);
+                    setVoidOrderTarget(null);
+                    setSelfVoidReason('');
+                    setIsDialogOpen(false);
+                    refresh();
+                  }}
+                >
+                  Void Order
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      ) : (
+        <>
+          <ManagerApprovalDialog
+            open={!!voidItemTarget}
+            onOpenChange={(o) => !o && setVoidItemTarget(null)}
+            title={`Void ${voidItemTarget?.menuItemName ?? "item"}`}
+            description="Voiding an item requires a manager, owner, or admin to authorize with their own login."
+            onConfirm={handleVoidItem}
+          />
+          <ManagerApprovalDialog
+            open={!!voidOrderTarget}
+            onOpenChange={(o) => !o && setVoidOrderTarget(null)}
+            title={`Void order ${voidOrderTarget?.orderId ?? ""}`}
+            description="Voiding an order requires a manager, owner, or admin to authorize with their own login."
+            onConfirm={handleVoidOrder}
+          />
+        </>
+      )}
 
       <AlertDialog open={!!cancelTarget} onOpenChange={(o) => !o && setCancelTarget(null)}>
         <AlertDialogContent>

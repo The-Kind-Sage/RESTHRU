@@ -5,6 +5,8 @@ import { getSession } from "@/lib/auth";
 import { logActivity } from "./logs";
 import { verifyManagerApproval } from "@/lib/manager-approval";
 
+const SELF_VOID_ROLES = ["RECEPTIONIST", "MANAGER", "RESTAURANT_OWNER", "ADMIN", "SUPER_ADMIN"];
+
 /** Looks up the restaurant's default effective tax rate (TaxRate model > restaurant.taxPercentage > 13%). */
 export async function getEffectiveTaxRate(restaurantId: string): Promise<number> {
   try {
@@ -577,25 +579,38 @@ function recomputeOrderTotals(items: { pricePerUnit: number; quantity: number; s
 export async function voidOrderItem(data: {
   orderItemId: string;
   reason: string;
-  approverUsername: string;
-  approverPassword: string;
+  approverUsername?: string;
+  approverPassword?: string;
 }) {
   const session = await getSession();
   if (!session || !session.restaurantId) return { error: "Not authenticated" };
   if (!data.reason?.trim()) return { error: "A void reason is required" };
 
   try {
-    // bcrypt verification is the slow part (~100-200ms) — overlap it with the
-    // item fetch instead of paying for them back-to-back. Approval errors keep
-    // precedence over "not found" so failed logins read the same as before.
-    const [approval, item] = await Promise.all([
-      verifyManagerApproval(session.restaurantId, data.approverUsername, data.approverPassword),
+    const wantsApproval = !!(data.approverUsername?.trim() && data.approverPassword);
+
+    let voidedById = session.id;
+    let approvalNote = "self-authorized";
+
+    if (wantsApproval) {
+      const approval = await verifyManagerApproval(
+        session.restaurantId,
+        data.approverUsername!.trim(),
+        data.approverPassword!
+      );
+      if (!approval.ok) return { error: approval.error };
+      voidedById = approval.approverId;
+      approvalNote = `approved by ${approval.approverName}`;
+    } else if (!SELF_VOID_ROLES.includes(session.role)) {
+      return { error: "You are not allowed to void an item. Ask a manager or owner to approve." };
+    }
+
+    const [item] = await Promise.all([
       prisma.orderItem.findUnique({
         where: { id: data.orderItemId },
         include: { order: { include: { items: true, bills: { select: { status: true } } } } },
       }),
     ]);
-    if (!approval.ok) return { error: approval.error };
     if (!item || item.order.restaurantId !== session.restaurantId) return { error: "Order item not found" };
     if (item.status === "CANCELLED") return { error: "Item is already voided" };
     if (item.order.bills.some((b) => b.status === "PAID")) {
@@ -607,7 +622,7 @@ export async function voidOrderItem(data: {
         where: { id: item.id },
         data: {
           status: "CANCELLED",
-          voidedBy: approval.approverId,
+          voidedBy: voidedById,
           voidReason: data.reason.trim(),
           voidedAt: new Date(),
         },
@@ -636,7 +651,7 @@ export async function voidOrderItem(data: {
         actionType: "ORDER_ITEM_VOID",
         entityType: "OrderItem",
         entityId: item.id,
-        description: `${item.menuItemName} x${item.quantity} voided from order ${item.order.orderId} by ${session.username} (approved by ${approval.approverName}): ${data.reason.trim()}`,
+        description: `${item.menuItemName} x${item.quantity} voided from order ${item.order.orderId} by ${session.username} (${approvalNote}): ${data.reason.trim()}`,
       },
     });
 
@@ -654,23 +669,36 @@ export async function voidOrderItem(data: {
 export async function voidOrder(data: {
   orderId: string;
   reason: string;
-  approverUsername: string;
-  approverPassword: string;
+  approverUsername?: string;
+  approverPassword?: string;
 }) {
   const session = await getSession();
   if (!session || !session.restaurantId) return { error: "Not authenticated" };
   if (!data.reason?.trim()) return { error: "A void reason is required" };
 
   try {
-    // Same overlap as voidOrderItem — bcrypt + fetch run concurrently.
-    const [approval, order] = await Promise.all([
-      verifyManagerApproval(session.restaurantId, data.approverUsername, data.approverPassword),
-      prisma.order.findFirst({
-        where: { id: data.orderId, restaurantId: session.restaurantId },
-        include: { bills: { select: { status: true } } },
-      }),
-    ]);
-    if (!approval.ok) return { error: approval.error };
+    const wantsApproval = !!(data.approverUsername?.trim() && data.approverPassword);
+
+    let voidedById = session.id;
+    let approvalNote = "self-authorized";
+
+    if (wantsApproval) {
+      const approval = await verifyManagerApproval(
+        session.restaurantId,
+        data.approverUsername!.trim(),
+        data.approverPassword!
+      );
+      if (!approval.ok) return { error: approval.error };
+      voidedById = approval.approverId;
+      approvalNote = `approved by ${approval.approverName}`;
+    } else if (!SELF_VOID_ROLES.includes(session.role)) {
+      return { error: "You are not allowed to void an order. Ask a manager or owner to approve." };
+    }
+
+    const order = await prisma.order.findFirst({
+      where: { id: data.orderId, restaurantId: session.restaurantId },
+      include: { bills: { select: { status: true } } },
+    });
     if (!order) return { error: "Order not found" };
     if (order.status === "CANCELLED") return { error: "Order is already cancelled" };
     if (order.bills.some((b) => b.status === "PAID")) {
@@ -682,7 +710,7 @@ export async function voidOrder(data: {
         where: { id: order.id },
         data: {
           status: "CANCELLED",
-          voidedBy: approval.approverId,
+          voidedBy: voidedById,
           voidReason: data.reason.trim(),
           voidedAt: new Date(),
         },
@@ -703,7 +731,7 @@ export async function voidOrder(data: {
         actionType: "ORDER_VOID",
         entityType: "Order",
         entityId: order.id,
-        description: `Order ${order.orderId} voided by ${session.username} (approved by ${approval.approverName}): ${data.reason.trim()}`,
+        description: `Order ${order.orderId} voided by ${session.username} (${approvalNote}): ${data.reason.trim()}`,
       },
     });
 
