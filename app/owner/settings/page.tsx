@@ -467,7 +467,7 @@ export default function SettingsPage() {
                 </div>
                 <Separator />
                 <div className="space-y-2"><Label>Address</Label><Input value={restaurant.address} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, address: event.target.value })); }} placeholder="Street address" /></div>
-                <div className="space-y-2"><Label>Phone</Label><Input value={restaurant.phone} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, phone: event.target.value })); }} placeholder="98XXXXXXXX (Nepal) or 6XXXXXXXXX (India)" /></div>
+                <div className="space-y-2"><Label>Phone</Label><Input value={restaurant.phone} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, phone: event.target.value })); }} placeholder="98XXXXXXXX (Nepal mobile)" /></div>
                 <div className="space-y-2"><Label>Email</Label><Input type="email" value={restaurant.email} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, email: event.target.value })); }} placeholder="restaurant@example.com" /></div>
                 <div className="space-y-2"><Label>Website</Label><Input type="url" value={restaurant.website} onChange={(event) => { setIsDirty(true); setRestaurant((prev) => ({ ...prev, website: event.target.value })); }} placeholder="https://your-restaurant.com" /></div>
                 <Separator />

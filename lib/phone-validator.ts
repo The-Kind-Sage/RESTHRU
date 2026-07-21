@@ -32,6 +32,7 @@ export function phonePlaceholder(): string {
   return '98XXXXXXXX (Nepal mobile)';
 }
 
+
 export const phoneSchema = z.string().refine((val) => {
   const result = validatePhone(val);
   return result.valid;

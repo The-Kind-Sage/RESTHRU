@@ -337,7 +337,7 @@ export default function RegisterPage() {
                         <FormField control={step1Form.control} name="phone" render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-sm font-semibold">Phone Number</FormLabel>
-                            <FormControl><Input placeholder="98XXXXXXXX (Nepal) or 6XXXXXXXXX (India)" className="h-11 border-border/60 focus:border-primary transition-colors" {...field} /></FormControl>
+                            <FormControl><Input placeholder="98XXXXXXXX (Nepal mobile)" className="h-11 border-border/60 focus:border-primary transition-colors" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
@@ -424,7 +424,7 @@ export default function RegisterPage() {
                               <FormLabel className="flex items-center gap-1.5 text-sm font-semibold">
                                 Restaurant Phone
                               </FormLabel>
-                              <FormControl><Input placeholder="98XXXXXXXX (Nepal) or 6XXXXXXXXX (India)" className="h-11 border-border/60 focus:border-primary transition-colors" disabled={usePersonalPhone} {...field} /></FormControl>
+                              <FormControl><Input placeholder="98XXXXXXXX (Nepal mobile)" className="h-11 border-border/60 focus:border-primary transition-colors" disabled={usePersonalPhone} {...field} /></FormControl>
                               <FormMessage />
                             </FormItem>
                           )} />
