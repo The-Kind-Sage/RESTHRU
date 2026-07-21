@@ -1,5 +1,6 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import prisma from '@/lib/prisma';
 import { getSession, type SessionUser } from '@/lib/auth';
 import { homeForRole, portalForPath } from '@/lib/constants';
 
@@ -39,5 +40,21 @@ export async function guardArea(opts: {
     // asked (default: their own home) rather than the forbidden screen.
     redirect(opts.wrongRoleRedirect ?? homeForRole(session.role));
   }
+
+  // Platform kill switch, applied to sessions minted BEFORE the superadmin
+  // closed the restaurant: an owner / receptionist / waiter already signed in
+  // is bounced to their login the moment their restaurant is closed, matching
+  // the block that login() enforces at sign-in. Only restaurant-scoped roles
+  // carry a restaurantId, so admins (no restaurant link) are never gated here.
+  if (session.restaurantId) {
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id: session.restaurantId },
+      select: { isActive: true },
+    });
+    if (restaurant && !restaurant.isActive) {
+      redirect(`${opts.loginPath}?closed=1`);
+    }
+  }
+
   return session;
 }

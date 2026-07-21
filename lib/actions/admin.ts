@@ -1,7 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { logActivity } from "./logs";
 
 // Every export in this module returns cross-tenant platform data, so each one
 // must independently verify the caller is an admin: Server Actions are invocable
@@ -355,15 +358,13 @@ export async function getAnalyticsOverview(period: string) {
 
   // Feature adoption
   const totalActive = await prisma.restaurant.count({ where: { isActive: true } });
-  const [qrMenuCount, onlineOrderingCount, totalWithUsers, totalWithInventory] = await Promise.all([
-    prisma.restaurant.count({ where: { isActive: true, enableQRMenu: true } }),
+  const [qrMenuCount, totalWithUsers, totalWithInventory] = await Promise.all([
     prisma.restaurant.count({ where: { isActive: true, enableQRMenu: true } }),
     prisma.restaurant.count({ where: { isActive: true, users: { some: {} } } }),
     prisma.restaurant.count({ where: { isActive: true, inventory: { some: {} } } }),
   ]);
   const featureData = [
     { name: "QR Menu", adoption: totalActive > 0 ? (qrMenuCount / totalActive) * 100 : 0, fill: "#6366f1" },
-    { name: "Online Ordering", adoption: totalActive > 0 ? (onlineOrderingCount / totalActive) * 100 : 0, fill: "#10b981" },
     { name: "Team Accounts", adoption: totalActive > 0 ? (totalWithUsers / totalActive) * 100 : 0, fill: "#f59e0b" },
     { name: "Inventory Mgmt", adoption: totalActive > 0 ? (totalWithInventory / totalActive) * 100 : 0, fill: "#8b5cf6" },
   ];
@@ -432,36 +433,85 @@ export async function getPlatformStats() {
 
 export async function getSupportQuickStats() {
   await requireAdmin();
-  const [totalRestaurants, activeRestaurants, totalOrders, monthlyOrders, totalNotifications] = await Promise.all([
+  const [totalRestaurants, activeRestaurants, totalOrders, monthlyOrders] = await Promise.all([
     prisma.restaurant.count(),
     prisma.restaurant.count({ where: { isActive: true } }),
     prisma.order.count(),
     prisma.order.count({
       where: { createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } },
     }),
-    prisma.notification.count({ where: { createdAt: { gte: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000) } } }),
   ]);
 
-  return { totalRestaurants, activeRestaurants, totalOrders, monthlyOrders, totalNotifications };
+  return { totalRestaurants, activeRestaurants, totalOrders, monthlyOrders };
 }
 
-export async function getRecentNotifications() {
+// Broadcast history for the Support Center. sendMassCommunication() fans one
+// broadcast out into many per-user ANNOUNCEMENT Notification rows in a single
+// createMany, so rows from the same broadcast share title+message and a
+// near-identical timestamp. We collapse them back into one row per broadcast
+// (bucketed by title|message|minute) with recipient / restaurant counts. This
+// deliberately never surfaces the operational notifications (food-ready, order
+// alerts, etc.) that a platform admin has no reason to see.
+export async function getSentAnnouncements() {
   await requireAdmin();
-  return prisma.notification.findMany({
+  const rows = await prisma.notification.findMany({
+    where: { type: "ANNOUNCEMENT" },
     orderBy: { createdAt: "desc" },
-    take: 20,
-    include: {
-      restaurant: { select: { name: true } },
-      user: { select: { firstName: true, lastName: true } },
+    take: 500,
+    select: { title: true, message: true, restaurantId: true, createdAt: true },
+  });
+
+  const groups = new Map<string, {
+    subject: string;
+    message: string;
+    sentAt: Date;
+    recipientCount: number;
+    restaurantIds: Set<string>;
+  }>();
+
+  for (const r of rows) {
+    const minute = new Date(r.createdAt);
+    minute.setSeconds(0, 0);
+    const key = JSON.stringify([r.title, r.message, minute.getTime()]);
+    const existing = groups.get(key);
+    if (existing) {
+      existing.recipientCount++;
+      existing.restaurantIds.add(r.restaurantId);
+      if (r.createdAt > existing.sentAt) existing.sentAt = r.createdAt;
+    } else {
+      groups.set(key, {
+        subject: r.title,
+        message: r.message,
+        sentAt: r.createdAt,
+        recipientCount: 1,
+        restaurantIds: new Set([r.restaurantId]),
+      });
+    }
+  }
+
+  return Array.from(groups.values())
+    .map((g) => ({
+      subject: g.subject,
+      message: g.message,
+      sentAt: g.sentAt,
+      recipientCount: g.recipientCount,
+      restaurantCount: g.restaurantIds.size,
+    }))
+    .sort((a, b) => b.sentAt.getTime() - a.sentAt.getTime());
+}
+
+// Platform "attention" signal for the superadmin header bell: active restaurants
+// missing contact details — the same "Action Required" criteria as
+// getComplianceData. Replaces the old platform-wide unread-notification count,
+// which only surfaced restaurant-staff operational alerts irrelevant to an admin.
+export async function getAdminAttentionCount() {
+  await requireAdmin();
+  return prisma.restaurant.count({
+    where: {
+      isActive: true,
+      OR: [{ email: "" }, { phoneNumber: "" }],
     },
   });
-}
-
-// Platform-wide unread count, used for the superadmin header's notification
-// bell badge (C1 — previously the bell had no badge/count at all).
-export async function getUnreadNotificationCount() {
-  await requireAdmin();
-  return prisma.notification.count({ where: { isRead: false } });
 }
 
 // Mass Communication (Support Center) — previously "Send" had no handler at
@@ -573,10 +623,10 @@ export async function getInnovationData() {
   ]);
 
   const insights = [
-    { title: "Active Restaurants", value: activeRestaurants.toString(), icon: "Building2", trend: "+12%", trendUp: true },
-    { title: "Total Orders", value: totalOrders.toLocaleString(), icon: "ShoppingCart", trend: "+8%", trendUp: true },
-    { title: "Total Revenue", value: `NPR ${Math.round(totalRevenue._sum.totalAmount || 0).toLocaleString()}`, icon: "TrendingUp", trend: "+15%", trendUp: true },
-    { title: "Menu Items", value: totalMenuItems.toLocaleString(), icon: "UtensilsCrossed", trend: "+5%", trendUp: true },
+    { title: "Active Restaurants", value: activeRestaurants.toString(), icon: "Building2" },
+    { title: "Total Orders", value: totalOrders.toLocaleString(), icon: "ShoppingCart" },
+    { title: "Total Revenue", value: `NPR ${Math.round(totalRevenue._sum.totalAmount || 0).toLocaleString()}`, icon: "TrendingUp" },
+    { title: "Menu Items", value: totalMenuItems.toLocaleString(), icon: "UtensilsCrossed" },
   ];
 
   const benchmarks = restaurantsByType.map((r) => ({
@@ -692,7 +742,7 @@ export async function getRestaurantFullDetail(id: string) {
 
   if (!restaurant) return null;
 
-  const [orders, bills, staff, tables, notifications, activityLogs] = await Promise.all([
+  const [orders, bills, staff, tables, owner, activityLogs] = await Promise.all([
     prisma.order.findMany({
       where: { restaurantId: id },
       orderBy: { createdAt: "desc" },
@@ -713,10 +763,13 @@ export async function getRestaurantFullDetail(id: string) {
       where: { restaurantId: id },
       orderBy: { tableNumber: "asc" },
     }),
-    prisma.notification.findMany({
-      where: { restaurantId: id },
-      orderBy: { createdAt: "desc" },
-      take: 20,
+    // The restaurant's owner login — powers the "Controls" tab's owner-account
+    // section. Operational per-restaurant notifications are deliberately no
+    // longer fetched here: a platform admin has no reason to see them.
+    prisma.user.findFirst({
+      where: { restaurantId: id, role: "RESTAURANT_OWNER" },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, firstName: true, lastName: true, email: true, username: true, isActive: true },
     }),
     prisma.activityLog.findMany({
       where: { restaurantId: id },
@@ -726,5 +779,397 @@ export async function getRestaurantFullDetail(id: string) {
     }),
   ]);
 
-  return { restaurant, orders, bills, staff, tables, notifications, activityLogs };
+  return { restaurant, orders, bills, staff, tables, owner, activityLogs };
+}
+
+// === Restaurant CRUD (superadmin Action column) ===
+
+// Create a brand-new restaurant together with its owner login. A restaurant is
+// useless without an account that can sign in and run it, so this provisions
+// both in one transaction: the owner User (password hashed) and the Restaurant,
+// mutually linked. The new restaurant starts active; the superadmin can close
+// it later from the same Action menu.
+export async function createRestaurantWithOwner(input: {
+  name: string;
+  type?: string;
+  email?: string;
+  phoneNumber?: string;
+  city?: string;
+  ownerFirstName: string;
+  ownerLastName?: string;
+  ownerEmail: string;
+  ownerPassword: string;
+}) {
+  await requireAdmin();
+
+  const name = input.name?.trim();
+  const ownerEmail = input.ownerEmail?.trim().toLowerCase();
+  const ownerFirstName = input.ownerFirstName?.trim();
+
+  if (!name) return { error: "Restaurant name is required" };
+  if (!ownerFirstName) return { error: "Owner first name is required" };
+  if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(ownerEmail || "")) {
+    return { error: "Owner email must be a valid Gmail address (e.g. name@gmail.com)" };
+  }
+  if (!input.ownerPassword || input.ownerPassword.length < 6) {
+    return { error: "Owner password must be at least 6 characters" };
+  }
+
+  try {
+    const existing = await prisma.user.findUnique({ where: { email: ownerEmail } });
+    if (existing) return { error: "An account with that owner email already exists" };
+
+    const passwordHash = await bcrypt.hash(input.ownerPassword, 12);
+
+    const restaurant = await prisma.$transaction(async (tx) => {
+      const owner = await tx.user.create({
+        data: {
+          email: ownerEmail!,
+          username: `${(ownerEmail!.split("@")[0] || "owner").replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase()}_${Math.random().toString(36).slice(2, 7)}`,
+          passwordHash,
+          firstName: ownerFirstName!,
+          lastName: input.ownerLastName?.trim() || "",
+          role: "RESTAURANT_OWNER",
+          isActive: true,
+        },
+      });
+
+      const created = await tx.restaurant.create({
+        data: {
+          ownerId: owner.id,
+          name,
+          type: input.type || "RESTAURANT",
+          email: input.email?.trim() || "",
+          phoneNumber: input.phoneNumber?.trim() || "",
+          city: input.city?.trim() || "",
+          isActive: true,
+        },
+      });
+
+      await tx.user.update({
+        where: { id: owner.id },
+        data: { restaurantId: created.id },
+      });
+
+      return created;
+    });
+
+    revalidatePath("/superadmin/restaurants");
+    return { data: { id: restaurant.id, name: restaurant.name } };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to create restaurant" };
+  }
+}
+
+
+// Open or close a restaurant. Closing it (isActive = false) is the platform
+// admin's kill switch: login() and the portal guards both refuse every
+// owner / receptionist / waiter tied to this restaurant while it's closed, so
+// the whole team is locked out until an admin reopens it. Platform admins have
+// no restaurant link of their own, so this never affects admin sign-in.
+export async function setRestaurantStatus(id: string, isActive: boolean) {
+  const session = await requireAdmin();
+  try {
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id },
+      select: { id: true, name: true, isActive: true },
+    });
+    if (!restaurant) return { error: "Restaurant not found" };
+
+    const updated = await prisma.restaurant.update({
+      where: { id },
+      data: { isActive },
+      select: { id: true, isActive: true },
+    });
+
+    await logActivity(session, {
+      restaurantId: id,
+      actionType: isActive ? "RESTAURANT_ACTIVATED" : "RESTAURANT_CLOSED",
+      entityType: "Restaurant",
+      entityId: id,
+      description: `Restaurant "${restaurant.name}" ${isActive ? "reopened" : "closed"} by platform admin`,
+      changesBefore: { isActive: restaurant.isActive },
+      changesAfter: { isActive },
+    });
+
+    revalidatePath("/superadmin/restaurants");
+    revalidatePath(`/superadmin/restaurants/${id}`);
+    return { data: updated };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to update restaurant status" };
+  }
+}
+
+// Edit a restaurant's core profile. Only the fields supplied are touched, so a
+// partial form (e.g. just the phone number) leaves everything else intact.
+export async function updateRestaurant(
+  id: string,
+  data: {
+    name?: string;
+    email?: string;
+    phoneNumber?: string;
+    street?: string;
+    city?: string;
+    state?: string;
+    type?: string;
+  }
+) {
+  const session = await requireAdmin();
+
+  if (data.name !== undefined && !data.name.trim()) {
+    return { error: "Name is required" };
+  }
+
+  try {
+    const existing = await prisma.restaurant.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) return { error: "Restaurant not found" };
+
+    const updated = await prisma.restaurant.update({
+      where: { id },
+      data: {
+        ...(data.name !== undefined ? { name: data.name.trim() } : {}),
+        ...(data.email !== undefined ? { email: data.email.trim() } : {}),
+        ...(data.phoneNumber !== undefined ? { phoneNumber: data.phoneNumber.trim() } : {}),
+        ...(data.street !== undefined ? { street: data.street.trim() } : {}),
+        ...(data.city !== undefined ? { city: data.city.trim() } : {}),
+        ...(data.state !== undefined ? { state: data.state.trim() } : {}),
+        ...(data.type !== undefined ? { type: data.type } : {}),
+      },
+      select: { id: true, name: true, email: true, phoneNumber: true, street: true, city: true, state: true, type: true, isActive: true },
+    });
+
+    await logActivity(session, {
+      restaurantId: id,
+      actionType: "RESTAURANT_UPDATED",
+      entityType: "Restaurant",
+      entityId: id,
+      description: `Restaurant "${updated.name}" profile updated by platform admin`,
+    });
+
+    revalidatePath("/superadmin/restaurants");
+    revalidatePath(`/superadmin/restaurants/${id}`);
+    return { data: updated };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to update restaurant" };
+  }
+}
+
+// Permanently delete a restaurant and everything that hangs off it. None of the
+// relations declare ON DELETE CASCADE, so every dependent row is removed in
+// foreign-key order inside a single transaction — the whole tenant is erased
+// atomically, or nothing is. This also deletes the owner / reception / waiter
+// user rows, since those accounts can't exist without their restaurant.
+export async function deleteRestaurant(id: string) {
+  await requireAdmin();
+  try {
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id },
+      select: { id: true, name: true },
+    });
+    if (!restaurant) return { error: "Restaurant not found" };
+
+    await prisma.$transaction([
+      // Leaf rows that reference other children (must go first).
+      prisma.payment.deleteMany({ where: { bill: { restaurantId: id } } }),
+      prisma.inventoryHistory.deleteMany({ where: { item: { restaurantId: id } } }),
+      prisma.orderItem.deleteMany({ where: { order: { restaurantId: id } } }),
+      prisma.addOn.deleteMany({ where: { menuItem: { restaurantId: id } } }),
+      // Rows that reference orders / tables / menu items.
+      prisma.bill.deleteMany({ where: { restaurantId: id } }),
+      prisma.barTab.deleteMany({ where: { restaurantId: id } }),
+      prisma.reservation.deleteMany({ where: { restaurantId: id } }),
+      prisma.order.deleteMany({ where: { restaurantId: id } }),
+      prisma.menuItem.deleteMany({ where: { restaurantId: id } }),
+      prisma.category.deleteMany({ where: { restaurantId: id } }),
+      prisma.inventoryItem.deleteMany({ where: { restaurantId: id } }),
+      prisma.shift.deleteMany({ where: { restaurantId: id } }),
+      prisma.restaurantTable.deleteMany({ where: { restaurantId: id } }),
+      prisma.staff.deleteMany({ where: { restaurantId: id } }),
+      prisma.notification.deleteMany({ where: { restaurantId: id } }),
+      prisma.activityLog.deleteMany({ where: { restaurantId: id } }),
+      prisma.kpiCard.deleteMany({ where: { restaurantId: id } }),
+      prisma.waitlistEntry.deleteMany({ where: { restaurantId: id } }),
+      prisma.customer.deleteMany({ where: { restaurantId: id } }),
+      prisma.coupon.deleteMany({ where: { restaurantId: id } }),
+      prisma.corporateAccount.deleteMany({ where: { restaurantId: id } }),
+      prisma.taxRate.deleteMany({ where: { restaurantId: id } }),
+      prisma.floor.deleteMany({ where: { restaurantId: id } }),
+      prisma.operatingHours.deleteMany({ where: { restaurantId: id } }),
+      prisma.subscription.deleteMany({ where: { restaurantId: id } }),
+      prisma.user.deleteMany({ where: { restaurantId: id } }),
+      prisma.restaurant.delete({ where: { id } }),
+    ]);
+
+    revalidatePath("/superadmin/restaurants");
+    return { success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to delete restaurant" };
+  }
+}
+
+// === Restaurant control: plan / features / owner account ===
+
+// Assign or switch a restaurant's subscription plan. Follows the same
+// find-or-update pattern as completeGoogleRegistration (lib/actions/auth.ts):
+// reuse the most recent subscription row if one exists, otherwise create it. The
+// superadmin can move any restaurant onto any plan in the catalog.
+export async function setRestaurantPlan(
+  restaurantId: string,
+  planId: string,
+  billingCycle: "MONTHLY" | "ANNUAL" = "MONTHLY"
+) {
+  const session = await requireAdmin();
+  try {
+    const [restaurant, plan] = await Promise.all([
+      prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { id: true, name: true } }),
+      prisma.plan.findUnique({ where: { id: planId }, select: { id: true, name: true } }),
+    ]);
+    if (!restaurant) return { error: "Restaurant not found" };
+    if (!plan) return { error: "Plan not found" };
+
+    const existing = await prisma.subscription.findFirst({
+      where: { restaurantId },
+      orderBy: { createdAt: "desc" },
+      include: { plan: { select: { name: true } } },
+    });
+
+    const now = new Date();
+    const endDate = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+    if (existing) {
+      await prisma.subscription.update({
+        where: { id: existing.id },
+        data: { planId, status: "ACTIVE", startDate: now, endDate, billingCycle },
+      });
+    } else {
+      await prisma.subscription.create({
+        data: { restaurantId, planId, status: "ACTIVE", startDate: now, endDate, billingCycle },
+      });
+    }
+
+    await logActivity(session, {
+      restaurantId,
+      actionType: "RESTAURANT_PLAN_CHANGED",
+      entityType: "Subscription",
+      entityId: existing?.id || restaurantId,
+      description: `Plan for "${restaurant.name}" set to ${plan.name} by platform admin`,
+      changesBefore: { plan: existing?.plan?.name || null },
+      changesAfter: { plan: plan.name, billingCycle },
+    });
+
+    revalidatePath("/superadmin/restaurants");
+    revalidatePath(`/superadmin/restaurants/${restaurantId}`);
+    return { data: { planId, planName: plan.name } };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to set plan" };
+  }
+}
+
+// Toggle a restaurant's feature flags. Only the flags that actually exist on the
+// Restaurant model are exposed (enableQRMenu, enableGST); anything not supplied
+// is left untouched.
+export async function updateRestaurantFeatures(
+  id: string,
+  features: { enableQRMenu?: boolean; enableGST?: boolean }
+) {
+  const session = await requireAdmin();
+  try {
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id },
+      select: { id: true, name: true, enableQRMenu: true, enableGST: true },
+    });
+    if (!restaurant) return { error: "Restaurant not found" };
+
+    const updated = await prisma.restaurant.update({
+      where: { id },
+      data: {
+        ...(features.enableQRMenu !== undefined ? { enableQRMenu: features.enableQRMenu } : {}),
+        ...(features.enableGST !== undefined ? { enableGST: features.enableGST } : {}),
+      },
+      select: { id: true, enableQRMenu: true, enableGST: true },
+    });
+
+    await logActivity(session, {
+      restaurantId: id,
+      actionType: "RESTAURANT_FEATURES_UPDATED",
+      entityType: "Restaurant",
+      entityId: id,
+      description: `Feature flags for "${restaurant.name}" updated by platform admin`,
+      changesBefore: { enableQRMenu: restaurant.enableQRMenu, enableGST: restaurant.enableGST },
+      changesAfter: { enableQRMenu: updated.enableQRMenu, enableGST: updated.enableGST },
+    });
+
+    revalidatePath(`/superadmin/restaurants/${id}`);
+    return { data: updated };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to update features" };
+  }
+}
+
+// The restaurant's owner account (RESTAURANT_OWNER). Shared by the two
+// owner-management actions below.
+async function findRestaurantOwner(restaurantId: string) {
+  return prisma.user.findFirst({
+    where: { restaurantId, role: "RESTAURANT_OWNER" },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, firstName: true, lastName: true, isActive: true },
+  });
+}
+
+// Reset a restaurant owner's login password. Mirrors the hashing used everywhere
+// else (bcrypt cost 12) and the 6-char minimum from auth.ts's resetPassword.
+export async function resetRestaurantOwnerPassword(restaurantId: string, newPassword: string) {
+  const session = await requireAdmin();
+  if (!newPassword || newPassword.length < 6) {
+    return { error: "New password must be at least 6 characters" };
+  }
+  try {
+    const owner = await findRestaurantOwner(restaurantId);
+    if (!owner) return { error: "This restaurant has no owner account" };
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({ where: { id: owner.id }, data: { passwordHash } });
+
+    await logActivity(session, {
+      restaurantId,
+      actionType: "OWNER_PASSWORD_RESET",
+      entityType: "User",
+      entityId: owner.id,
+      description: `Owner login password reset by platform admin`,
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to reset password" };
+  }
+}
+
+// Activate or deactivate a restaurant owner's login. A deactivated owner
+// (isActive = false) is refused by login() independently of the restaurant kill
+// switch, so this locks out just the owner while receptionists / waiters keep
+// working.
+export async function setRestaurantOwnerActive(restaurantId: string, isActive: boolean) {
+  const session = await requireAdmin();
+  try {
+    const owner = await findRestaurantOwner(restaurantId);
+    if (!owner) return { error: "This restaurant has no owner account" };
+
+    await prisma.user.update({ where: { id: owner.id }, data: { isActive } });
+
+    await logActivity(session, {
+      restaurantId,
+      actionType: isActive ? "OWNER_ACTIVATED" : "OWNER_DEACTIVATED",
+      entityType: "User",
+      entityId: owner.id,
+      description: `Owner login ${isActive ? "reactivated" : "deactivated"} by platform admin`,
+    });
+
+    revalidatePath(`/superadmin/restaurants/${restaurantId}`);
+    return { data: { id: owner.id, isActive } };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to update owner status" };
+  }
 }

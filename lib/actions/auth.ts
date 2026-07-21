@@ -42,8 +42,14 @@ export async function createSessionFromSupabaseLogin(userId: string, email: stri
     // Find restaurant by ownerId (may have been inserted via Supabase already)
     let restaurant = await prisma.restaurant.findFirst({
       where: { ownerId: userId },
-      select: { id: true },
+      select: { id: true, isActive: true },
     });
+
+    // Same kill switch as the password path: an owner whose restaurant the
+    // superadmin has closed cannot get a session, even via Google sign-in.
+    if (restaurant && !restaurant.isActive) {
+      return { error: "This restaurant has been closed by the administrator. Please contact support." };
+    }
 
     // Link Prisma user to restaurant if not already linked
     if (restaurant && !prismaUser.restaurantId) {
@@ -82,6 +88,7 @@ export async function login(
     // Allow login by email, phone number, OR username
     const user = await prisma.user.findFirst({
       where: { OR: [{ username }, { email: username }, { phoneNumber: username }], isActive: true },
+      include: { restaurant: { select: { isActive: true } } },
     });
 
     if (!user || !user.passwordHash) {
@@ -91,6 +98,17 @@ export async function login(
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       return { error: "Invalid username or password" };
+    }
+
+    // Platform kill switch: a restaurant the superadmin has closed locks out
+    // its entire team — owner, receptionist and waiter alike. Checked only
+    // after the password is verified so it can't be used to probe accounts.
+    // Admins carry no restaurant link, so `user.restaurant` is null for them
+    // and this branch never fires.
+    if (user.restaurant && !user.restaurant.isActive) {
+      return {
+        error: "This restaurant has been closed by the administrator. Please contact support.",
+      };
     }
 
     // Admin console gate: only SUPER_ADMIN / ADMIN may sign in here. Reject
