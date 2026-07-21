@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/format';
 import { getRestaurantFullDetail } from '@/lib/actions/admin';
-import { ComingSoon } from '@/components/superadmin/coming-soon';
+import { RestaurantControls } from './restaurant-controls';
 import { ADMIN_TONE_CLASSES } from '@/lib/constants';
 import { AdminPageSkeleton } from '@/components/superadmin/skeletons';
 
@@ -62,7 +62,7 @@ export default function RestaurantDetail() {
     );
   }
 
-  const { restaurant, orders, bills, staff, tables, notifications, activityLogs } = data;
+  const { restaurant, orders, bills, staff, tables, owner, activityLogs } = data;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -135,7 +135,7 @@ export default function RestaurantDetail() {
 
       <Tabs defaultValue="orders" className="w-full">
         <TabsList className="bg-muted border border-border w-full justify-start overflow-auto flex-nowrap h-auto p-1 gap-0">
-          {['orders', 'payments', 'staff', 'tables', 'subscription', 'tickets', 'documents', 'audit'].map((tab) => (
+          {['orders', 'payments', 'staff', 'tables', 'subscription', 'controls', 'audit'].map((tab) => (
             <TabsTrigger key={tab} value={tab}
               className="text-xs px-4 py-2 text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md capitalize whitespace-nowrap"
             >
@@ -284,35 +284,15 @@ export default function RestaurantDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="tickets" className="mt-4">
-          <Card className="bg-card border-border shadow-sm">
-            <CardContent className="p-6">
-              {notifications.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground text-sm">No support tickets available</div>
-              ) : (
-                <div className="space-y-3">
-                  {notifications.map((n: any) => (
-                    <div key={n.id} className="flex items-start justify-between p-3 rounded-lg bg-muted/50 border border-border">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{n.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
-                        <p className="text-[10px] text-muted-foreground mt-1">{formatRelativeTime(n.createdAt)}</p>
-                      </div>
-                      <StatusBadge status={n.isRead ? "true" : "false"} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="documents" className="mt-4">
-          <Card className="bg-card border-border shadow-sm">
-            <CardContent className="p-6">
-              <ComingSoon message="Document upload, PAN/VAT certificates, licences, and compliance paperwork for this restaurant." />
-            </CardContent>
-          </Card>
+        <TabsContent value="controls" className="mt-4">
+          <RestaurantControls
+            restaurantId={restaurant.id}
+            restaurantName={restaurant.name}
+            currentPlanId={restaurant.subscriptions[0]?.planId ?? null}
+            currentPlanName={restaurant.subscriptions[0]?.plan?.name ?? null}
+            initialFeatures={{ enableQRMenu: restaurant.enableQRMenu, enableGST: restaurant.enableGST }}
+            owner={owner}
+          />
         </TabsContent>
 
         <TabsContent value="audit" className="mt-4">

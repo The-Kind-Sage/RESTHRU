@@ -18,7 +18,7 @@ import {
 import { cn } from '@/lib/utils';
 import { logout, getCurrentUser } from '@/lib/actions/auth';
 import { unregisterServiceWorker } from '@/lib/service-worker';
-import { getUnreadNotificationCount } from '@/lib/actions/admin';
+import { getAdminAttentionCount } from '@/lib/actions/admin';
 import { AdminBreadcrumbs } from '@/components/superadmin/breadcrumbs';
 
 // ── Lazy-load the command palette — it's heavy (all 12 nav icon refs +
@@ -80,13 +80,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [commandOpen, setCommandOpen]   = useState(false);
   const [adminUser, setAdminUser] = useState<{ firstName: string; lastName: string; email: string } | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
+  // Platform "attention" count: active restaurants missing contact details.
+  // (Replaces a platform-wide unread count of restaurant-staff operational
+  // notifications, which was meaningless for a platform admin.)
+  const [attentionCount, setAttentionCount] = useState(0);
 
   useEffect(() => {
     getCurrentUser().then((user) => {
       if (user) setAdminUser(user);
     });
-    getUnreadNotificationCount().then(setUnreadCount).catch(() => {});
+    getAdminAttentionCount().then(setAttentionCount).catch(() => {});
   }, []);
 
   const initials    = 'SA';
@@ -238,18 +241,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           <div className="flex items-center gap-3">
-            <Link href="/superadmin/support" className="relative">
+            <Link href="/superadmin/compliance" className="relative">
               <Button
                 variant="ghost"
                 size="icon"
                 className="text-muted-foreground hover:text-foreground hover:bg-muted h-9 w-9"
-                title={unreadCount > 0 ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}` : 'No unread notifications'}
+                title={attentionCount > 0 ? `${attentionCount} restaurant${attentionCount === 1 ? '' : 's'} need attention (missing contact details)` : 'All restaurants have complete details'}
               >
                 <Bell className="h-4 w-4" />
               </Button>
-              {unreadCount > 0 && (
+              {attentionCount > 0 && (
                 <span className="absolute top-1 right-1 min-w-[16px] h-[16px] px-0.5 rounded-full bg-destructive text-destructive-foreground text-[9px] font-semibold flex items-center justify-center pointer-events-none">
-                  {unreadCount > 9 ? '9+' : unreadCount}
+                  {attentionCount > 9 ? '9+' : attentionCount}
                 </span>
               )}
             </Link>

@@ -8,6 +8,7 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Building2, Users, UtensilsCrossed, Table2, ShoppingCart } from "lucide-react";
+import { RestaurantActions, AddRestaurantButton } from "./restaurant-actions";
 
 // Which plan (pack) each restaurant is on. Restaurants without an active
 // subscription are on the Free pack — resolved here so they still show up.
@@ -52,6 +53,7 @@ export default async function AdminRestaurants() {
               <span className="text-xs text-muted-foreground">{count}</span>
             </div>
           ))}
+        <AddRestaurantButton />
       </PageHeader>
 
       {restaurants.length === 0 ? (
@@ -74,6 +76,7 @@ export default async function AdminRestaurants() {
                   <TableHead className="text-center"><Table2 className="inline h-3.5 w-3.5" /></TableHead>
                   <TableHead className="text-center"><ShoppingCart className="inline h-3.5 w-3.5" /></TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -96,9 +99,24 @@ export default async function AdminRestaurants() {
                     <TableCell className="text-center text-xs text-muted-foreground">{r._count.tables}</TableCell>
                     <TableCell className="text-center text-xs text-muted-foreground">{r._count.orders}</TableCell>
                     <TableCell>
-                      <Badge variant={r.isActive ? "default" : "secondary"}>
-                        {r.isActive ? "Active" : "Inactive"}
+                      <Badge variant={r.isActive ? "default" : "destructive"}>
+                        {r.isActive ? "Active" : "Closed"}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <RestaurantActions
+                        restaurant={{
+                          id: r.id,
+                          name: r.name,
+                          email: r.email,
+                          phoneNumber: r.phoneNumber,
+                          street: r.street,
+                          city: r.city,
+                          state: r.state,
+                          type: r.type,
+                          isActive: r.isActive,
+                        }}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

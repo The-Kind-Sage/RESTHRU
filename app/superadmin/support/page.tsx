@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/shared/page-header';
 
 import React, { useEffect, useState, useTransition } from 'react';
 import {
-  Search, Send, ChevronDown, Megaphone, BookOpen, Building2, ShoppingCart, Bell,
+  Search, Send, Megaphone, Building2, ShoppingCart, Users,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,25 +13,32 @@ import { Input } from '@/components/ui/input';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { formatNumber, formatRelativeTime, formatDate } from '@/lib/format';
-import { getSupportQuickStats, getRecentNotifications, sendMassCommunication } from '@/lib/actions/admin';
-import { ComingSoon } from '@/components/superadmin/coming-soon';
+import { formatNumber, formatRelativeTime } from '@/lib/format';
+import { getSupportQuickStats, getSentAnnouncements, sendMassCommunication } from '@/lib/actions/admin';
 import { toast } from 'sonner';
+
+type Announcement = {
+  subject: string;
+  message: string;
+  sentAt: string | Date;
+  recipientCount: number;
+  restaurantCount: number;
+};
 
 export default function SupportCenter() {
   const [search, setSearch] = useState('');
   const [stats, setStats] = useState<any>(null);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [audience, setAudience] = useState('all');
   const [audienceValue, setAudienceValue] = useState('');
-  const [channel, setChannel] = useState('email');
+  const [channel, setChannel] = useState('inapp');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [sending, startSend] = useTransition();
 
   useEffect(() => {
     getSupportQuickStats().then(setStats);
-    getRecentNotifications().then(setNotifications);
+    getSentAnnouncements().then(setAnnouncements);
   }, []);
 
   const handleSend = () => {
@@ -49,20 +56,24 @@ export default function SupportCenter() {
       if (res.error) {
         toast.error(res.error);
       } else {
-        toast.success(`Message sent to ${res.data?.restaurantCount || 0} restaurant(s) (${res.data?.recipientCount || 0} recipients)`);
+        toast.success(`Sent to ${res.data?.restaurantCount || 0} restaurant(s) — ${res.data?.recipientCount || 0} recipient(s)`);
         setSubject('');
         setMessage('');
+        // Refresh the broadcast history so the one we just sent shows up.
+        getSentAnnouncements().then(setAnnouncements);
       }
     });
   };
 
-  const filteredTickets = notifications.filter((n) =>
-    !search || n.title.toLowerCase().includes(search.toLowerCase()) || n.message.toLowerCase().includes(search.toLowerCase())
+  const filtered = announcements.filter((a) =>
+    !search ||
+    a.subject.toLowerCase().includes(search.toLowerCase()) ||
+    a.message.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title="Support Center" description="Manage tickets, knowledge base, and communications">
+      <PageHeader title="Support Center" description="Broadcast announcements to restaurants and review what you've sent">
         <Badge className="border-primary/30 text-primary bg-primary/5">
           <span className="h-1.5 w-1.5 rounded-full bg-primary mr-1.5 animate-pulse" />
           Live
@@ -77,7 +88,7 @@ export default function SupportCenter() {
                 <div className="relative flex-1 min-w-[200px] max-w-sm">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search notifications by title, message..."
+                    placeholder="Search broadcasts by subject or message..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-9 bg-muted border-border text-foreground placeholder:text-muted-foreground text-sm h-9"
@@ -87,38 +98,49 @@ export default function SupportCenter() {
             </CardContent>
           </Card>
 
-          <div className="space-y-3">
-            {filteredTickets.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground text-sm">No tickets found matching your filters</div>
-            ) : (
-              filteredTickets.map((n) => (
-                <Card key={n.id} className="bg-card border-border shadow-sm hover:border-primary/30 transition-colors">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
+          <Card className="bg-card border-border shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-sm font-medium text-foreground">Sent Announcements</CardTitle>
+              <Megaphone className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {filtered.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground text-sm">
+                    {announcements.length === 0
+                      ? 'No announcements sent yet. Use Mass Communication to broadcast to your restaurants.'
+                      : 'No broadcasts match your search.'}
+                  </div>
+                ) : (
+                  filtered.map((a, i) => (
+                    <div
+                      key={`${a.subject}-${i}`}
+                      className="p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors"
+                    >
                       <div className="flex items-start gap-3">
-                        <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                          n.type === "ALERT" ? "bg-destructive/10" : n.type === "INFO" ? "bg-info/10" : "bg-accent/10"
-                        }`}>
-                          <Bell className={`h-4 w-4 ${
-                            n.type === "ALERT" ? "text-destructive" : n.type === "INFO" ? "text-info" : "text-accent"
-                          }`} />
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <Megaphone className="h-4 w-4 text-primary" />
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{n.title}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
-                          <div className="flex items-center gap-2 mt-1.5">
-                            <Badge className="border text-[10px] bg-muted text-muted-foreground border-border">{n.type}</Badge>
-                            <span className="text-[10px] text-muted-foreground">{n.restaurant?.name}</span>
-                            <span className="text-[10px] text-muted-foreground">{formatRelativeTime(n.createdAt)}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-foreground">{a.subject}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{a.message}</p>
+                          <div className="flex flex-wrap items-center gap-2 mt-2">
+                            <Badge className="border text-[10px] bg-muted text-muted-foreground border-border">
+                              <Building2 className="h-3 w-3 mr-1" />{formatNumber(a.restaurantCount)} restaurant{a.restaurantCount === 1 ? '' : 's'}
+                            </Badge>
+                            <Badge className="border text-[10px] bg-muted text-muted-foreground border-border">
+                              <Users className="h-3 w-3 mr-1" />{formatNumber(a.recipientCount)} recipient{a.recipientCount === 1 ? '' : 's'}
+                            </Badge>
+                            <span className="text-[10px] text-muted-foreground">{formatRelativeTime(a.sentAt)}</span>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="space-y-6">
@@ -161,23 +183,13 @@ export default function SupportCenter() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Bell className="h-4 w-4 text-info" />
-                      <span className="text-sm text-foreground">Recent Notifications</span>
+                      <Megaphone className="h-4 w-4 text-info" />
+                      <span className="text-sm text-foreground">Broadcasts Sent</span>
                     </div>
-                    <span className="text-sm font-medium text-foreground">{formatNumber(stats.totalNotifications)}</span>
+                    <span className="text-sm font-medium text-foreground">{formatNumber(announcements.length)}</span>
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium text-foreground">Knowledge Base</CardTitle>
-              <BookOpen className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <ComingSoon message="Help articles, FAQs, and onboarding guides for restaurant owners and their staff." />
             </CardContent>
           </Card>
 
@@ -215,12 +227,12 @@ export default function SupportCenter() {
                     <SelectValue placeholder="Select channel" />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
-                    <SelectItem value="email" className="text-foreground">Email</SelectItem>
-                    <SelectItem value="sms" className="text-foreground">SMS</SelectItem>
                     <SelectItem value="inapp" className="text-foreground">In-app</SelectItem>
-                    <SelectItem value="push" className="text-foreground">Push</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-[10px] text-muted-foreground">
+                  Delivered as an in-app notification to every user of the targeted restaurants.
+                </p>
               </div>
               <div className="space-y-2">
                 <label className="text-xs text-muted-foreground">Subject</label>

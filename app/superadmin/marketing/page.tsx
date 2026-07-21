@@ -4,16 +4,14 @@ import { PageHeader } from '@/components/shared/page-header';
 
 import React, { useEffect, useState } from 'react';
 import {
-  FileText, Image, BarChart3,
-  Search, Activity, RefreshCw, Building2, Globe, MapPin, UtensilsCrossed,
+  FileText, Image,
+  Search, Building2, Globe, MapPin, UtensilsCrossed,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatNumber } from '@/lib/format';
 import { getPlatformStats, getAllRestaurants } from '@/lib/actions/admin';
-import { ComingSoon } from '@/components/superadmin/coming-soon';
 
 const statusColor = (status: string) => {
   const colors: Record<string, string> = {
@@ -148,33 +146,24 @@ export default function AdminMarketing() {
       </Card>
 
       <Card className="bg-card border-border shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-info" />
-              <CardTitle className="text-sm font-medium text-foreground">SEO Tools</CardTitle>
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">Meta tags and search optimization for public pages</p>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Search className="h-4 w-4 text-info" />
+            <CardTitle className="text-sm font-medium text-foreground">Public Presence</CardTitle>
           </div>
-          <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground">
-            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Reindex
-          </Button>
+          <p className="text-xs text-muted-foreground mt-0.5">Public-facing profiles and menus across the platform</p>
         </CardHeader>
         <CardContent>
           {!stats ? (
-            <div className="text-center py-12 text-muted-foreground text-sm">No SEO data available</div>
+            <div className="text-center py-12 text-muted-foreground text-sm">No data available</div>
           ) : (
             <div className="space-y-3">
-              <div className="flex justify-between p-3 rounded-lg bg-muted/50 border border-border">
-                <span className="text-sm text-foreground">Total Pages Indexed</span>
-                <span className="text-sm font-medium text-foreground">{formatNumber(restaurants.length * 5)}</span>
-              </div>
               <div className="flex justify-between p-3 rounded-lg bg-muted/50 border border-border">
                 <span className="text-sm text-foreground">Active Restaurants with Profiles</span>
                 <span className="text-sm font-medium text-foreground">{formatNumber(stats.totalRestaurants)}</span>
               </div>
               <div className="flex justify-between p-3 rounded-lg bg-muted/50 border border-border">
-                <span className="text-sm text-foreground">Menu Items Indexed</span>
+                <span className="text-sm text-foreground">Menu Items on Public Menus</span>
                 <span className="text-sm font-medium text-foreground">{formatNumber(stats.totalMenuItems)}</span>
               </div>
             </div>
