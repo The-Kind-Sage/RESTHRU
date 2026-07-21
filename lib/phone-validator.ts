@@ -36,4 +36,4 @@ export function phonePlaceholder(): string {
 export const phoneSchema = z.string().refine((val) => {
   const result = validatePhone(val);
   return result.valid;
-}, 'Only Nepal mobile numbers are allowed (10 digits, starts with 984,985,986,974,975,980,981,982,970,971)');
+}, 'Only Nepal mobile numbers are allowed');
