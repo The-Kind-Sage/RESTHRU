@@ -7,6 +7,7 @@ import { ChevronRight, Home } from 'lucide-react';
 const LABELS: Record<string, string> = {
   '/superadmin': 'Dashboard',
   '/superadmin/restaurants': 'Restaurants',
+  '/superadmin/owners': 'Owner Management',
   '/superadmin/menu': 'Menu Management',
   '/superadmin/subscriptions': 'Subscriptions',
   '/superadmin/analytics': 'Analytics',

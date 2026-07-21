@@ -24,6 +24,20 @@ model User {
   updatedAt     DateTime @updatedAt @map("updated_at")
   lastLoginAt   DateTime? @map("last_login_at")
 
+  // Owner profile + KYC / identity verification. Primarily managed by platform
+  // admins from the Owner Management console; all nullable/defaulted so they
+  // apply harmlessly to every User role.
+  dateOfBirth          DateTime? @map("date_of_birth")
+  address              String?
+  identityDocType      String    @default("") @map("identity_doc_type")
+  identityDocNumber    String?   @map("identity_doc_number")
+  identityDocImage     String?   @map("identity_doc_image")
+  identityDocBackImage String?   @map("identity_doc_back_image")
+  isVerified           Boolean   @default(false) @map("is_verified")
+  verifiedAt           DateTime? @map("verified_at")
+  verifiedBy           String?   @map("verified_by")
+  adminNotes           String?   @map("admin_notes")
+
   restaurant    Restaurant?     @relation(fields: [restaurantId], references: [id])
   notifications Notification[]
   supportTickets SupportTicket[]
