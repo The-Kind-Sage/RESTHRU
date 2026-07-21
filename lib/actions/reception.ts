@@ -180,6 +180,17 @@ export async function updateReservation(reservationId: string, data: {
       data: updateData,
       include: { table: { select: { tableNumber: true, name: true } } },
     });
+
+    const changedFields = Object.keys(updateData);
+    await logActivity(session, {
+      actionType: "RESERVATION_UPDATE",
+      entityType: "Reservation",
+      entityId: reservationId,
+      description: `Reservation for ${updated.customerName} updated${
+        changedFields.length ? ` (${changedFields.join(", ")})` : ""
+      }`,
+    });
+
     return { data: updated };
   } catch (err: any) {
     return { error: err?.message || "Failed to update reservation" };
@@ -386,7 +397,7 @@ export async function splitOrderItems(orderId: string, itemIds: string[], target
 
     const splitSubtotal = itemsToSplit.reduce((s, i) => s + i.pricePerUnit * i.quantity, 0);
 
-    return await prisma.$transaction(async (tx) => {
+    const splitResult = await prisma.$transaction(async (tx) => {
       const newOrder = await tx.order.create({
         data: {
           restaurantId: session.restaurantId as string,
@@ -446,6 +457,15 @@ export async function splitOrderItems(orderId: string, itemIds: string[], target
 
       return { data: { newOrderId: newOrder.id, sourceOrderId: orderId } };
     });
+
+    await logActivity(session, {
+      actionType: "ORDER_SPLIT",
+      entityType: "Order",
+      entityId: orderId,
+      description: `${itemsToSplit.length} item(s) split from order ${sourceOrder.orderId} to table ${targetTable.tableNumber}`,
+    });
+
+    return splitResult;
   } catch (err: any) {
     return { error: err?.message || "Failed to split order" };
   }

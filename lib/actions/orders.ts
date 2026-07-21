@@ -491,6 +491,15 @@ export async function settleOrder(data: {
       description: `Order ${order.orderId} settled`,
     });
 
+    // Mirror the checkout flow: a settled order produces a fully-paid bill, so
+    // record a "completed" entry the owner can scan in the activity log.
+    await logActivity(session, {
+      actionType: "BILL_COMPLETED",
+      entityType: "Bill",
+      entityId: bill.id,
+      description: `Bill ${bill.billNumber} completed — total ${totalAmount} paid in full via ${data.paymentMethod}`,
+    });
+
     return { data: bill };
   } catch (err: any) {
     console.error("Failed to settle order:", err);

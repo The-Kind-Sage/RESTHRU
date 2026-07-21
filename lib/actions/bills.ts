@@ -149,7 +149,8 @@ export async function recordPayment(data: {
         include: { payments: true, order: { include: { items: true } } },
       });
 
-      if (totalPayments >= bill.totalAmount) {
+      const fullyPaid = totalPayments >= bill.totalAmount;
+      if (fullyPaid) {
         await tx.order.update({
           where: { id: bill.orderId },
           data: {
@@ -165,6 +166,17 @@ export async function recordPayment(data: {
         entityId: data.billId,
         description: `Payment of ${data.amount} recorded via ${data.method}`,
       });
+
+      // A distinct "completed" entry lands in the owner's logs the moment a bill
+      // is settled in full, alongside the per-payment records.
+      if (fullyPaid) {
+        await logActivity(session, {
+          actionType: "BILL_COMPLETED",
+          entityType: "Bill",
+          entityId: bill.id,
+          description: `Bill ${bill.billNumber} completed — total ${bill.totalAmount} paid in full via ${paymentMethod}`,
+        });
+      }
 
       return { data: updated };
     });
@@ -497,27 +509,54 @@ export async function applyCorporateAccountToBill(billId: string, accountId: str
   }
 }
 
-/** Voids a settled bill. Requires a manager/owner/admin to authorize with their own credentials. */
+/** Roles allowed to void a bill on their own authority, without a separate
+ *  manager/owner signing off. Reception is included so a receptionist can void
+ *  directly — every void is still written to the activity log for the owner. */
+const SELF_VOID_ROLES = ["RECEPTIONIST", "MANAGER", "RESTAURANT_OWNER", "ADMIN", "SUPER_ADMIN"];
+
+/**
+ * Voids a bill and records it to the activity log so the owner can always see
+ * who voided what and why.
+ *
+ * Reception (and managers/owners) may void directly — no separate approval is
+ * required. Callers that still want a supervisor to sign off can pass
+ * `approverUsername`/`approverPassword`; when supplied those credentials are
+ * verified and the approver is recorded as the authorizer. Either way a
+ * `BILL_VOID` entry is logged against the acting user.
+ */
 export async function voidBill(data: {
   billId: string;
   reason: string;
-  approverUsername: string;
-  approverPassword: string;
+  approverUsername?: string;
+  approverPassword?: string;
 }) {
   const session = await getSession();
   if (!session?.restaurantId || !session?.id) return { error: "Not authenticated" };
   if (!data.reason?.trim()) return { error: "A void reason is required" };
 
+  const wantsApproval = !!(data.approverUsername?.trim() && data.approverPassword);
+
   try {
-    // bcrypt verification is the slow part — overlap it with the bill fetch.
-    // Approval errors keep precedence so failed logins read the same as before.
-    const [approval, bill] = await Promise.all([
-      verifyManagerApproval(session.restaurantId, data.approverUsername, data.approverPassword),
-      prisma.bill.findFirst({
-        where: { id: data.billId, restaurantId: session.restaurantId },
-      }),
-    ]);
-    if (!approval.ok) return { error: approval.error };
+    // Decide who is authorizing this void before touching the bill.
+    let voidedById = session.id;
+    let approvalNote = "self-authorized";
+
+    if (wantsApproval) {
+      const approval = await verifyManagerApproval(
+        session.restaurantId,
+        data.approverUsername!.trim(),
+        data.approverPassword!
+      );
+      if (!approval.ok) return { error: approval.error };
+      voidedById = approval.approverId;
+      approvalNote = `approved by ${approval.approverName}`;
+    } else if (!SELF_VOID_ROLES.includes(session.role)) {
+      return { error: "You are not allowed to void a bill. Ask a manager or owner to approve." };
+    }
+
+    const bill = await prisma.bill.findFirst({
+      where: { id: data.billId, restaurantId: session.restaurantId },
+    });
     if (!bill) return { error: "Bill not found" };
     if (bill.voidedAt) return { error: "Bill is already voided" };
 
@@ -525,7 +564,7 @@ export async function voidBill(data: {
       where: { id: bill.id },
       data: {
         status: "VOID",
-        voidedBy: approval.approverId,
+        voidedBy: voidedById,
         voidReason: data.reason.trim(),
         voidedAt: new Date(),
       },
@@ -538,7 +577,7 @@ export async function voidBill(data: {
         actionType: "BILL_VOID",
         entityType: "Bill",
         entityId: bill.id,
-        description: `Bill ${bill.billNumber} voided by ${session.username} (approved by ${approval.approverName}): ${data.reason.trim()}`,
+        description: `Bill ${bill.billNumber} (total ${bill.totalAmount}) voided by ${session.username} (${approvalNote}): ${data.reason.trim()}`,
       },
     });
 
