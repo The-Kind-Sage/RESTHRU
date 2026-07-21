@@ -35,7 +35,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { toast } from 'sonner';
 import { searchBills, voidBill } from '@/lib/actions/bills';
 import { BILL_STATUS_COLORS } from '@/lib/constants';
-import ManagerApprovalDialog from '@/components/dashboard/manager-approval-dialog';
+import { Textarea } from '@/components/ui/textarea';
 
 const STATUS_OPTIONS = ['ALL', 'PENDING', 'HELD', 'PAID', 'VOID'];
 const PAGE_SIZE = 15;
@@ -101,6 +101,8 @@ export default function InvoicesPage() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<any>(null);
   const [voidOpen, setVoidOpen] = useState(false);
+  const [voidReason, setVoidReason] = useState('');
+  const [voiding, setVoiding] = useState(false);
   const [page, setPage] = useState(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -145,10 +147,23 @@ export default function InvoicesPage() {
   const paginatedBills = bills.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const totalPages = Math.max(1, Math.ceil(bills.length / PAGE_SIZE));
 
-  const handleVoid = async (data: { reason: string; approverUsername: string; approverPassword: string }) => {
-    const result = await voidBill({ billId: selected.id, ...data });
-    if (result.error) return { error: result.error };
+  const closeVoid = () => {
+    setVoidOpen(false);
+    setVoidReason('');
+  };
+
+  const handleVoid = async () => {
+    if (!selected || !voidReason.trim() || voiding) return;
+    setVoiding(true);
+    const result = await voidBill({ billId: selected.id, reason: voidReason.trim() });
+    setVoiding(false);
+    if (result?.error) {
+      toast.error(result.error);
+      return;
+    }
     toast.success(`Bill ${selected.billNumber} voided`);
+    setVoidReason('');
+    setVoidOpen(false);
     setSelected(null);
     search();
   };
@@ -310,13 +325,39 @@ export default function InvoicesPage() {
         </DialogContent>
       </Dialog>
 
-      <ManagerApprovalDialog
-        open={voidOpen}
-        onOpenChange={setVoidOpen}
-        title={`Void ${selected?.billNumber ?? 'bill'}`}
-        description="Voiding a bill requires a manager, owner, or admin to authorize with their own login."
-        onConfirm={handleVoid}
-      />
+      <Dialog open={voidOpen} onOpenChange={(o) => { if (!o) closeVoid(); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Void {selected?.billNumber ?? 'bill'}</DialogTitle>
+            <DialogDescription>
+              This marks the bill as void and is recorded in the owner&apos;s activity log against your account. A reason is required.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Textarea
+              autoFocus
+              placeholder="Reason for voiding (e.g. wrong order, duplicate bill, customer walkout)"
+              value={voidReason}
+              onChange={(e) => setVoidReason(e.target.value)}
+              rows={3}
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={closeVoid} disabled={voiding}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                className="gap-1"
+                disabled={!voidReason.trim() || voiding}
+                onClick={handleVoid}
+              >
+                {voiding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+                Void bill
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

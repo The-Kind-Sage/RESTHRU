@@ -52,8 +52,18 @@ const actionTypeColors: Record<string, string> = {
   SHIFT_CLOSE: 'bg-muted-foreground/10 text-muted-foreground',
   ORDER_VOID: 'bg-destructive/10 text-destructive',
   ORDER_ITEM_VOID: 'bg-destructive/10 text-destructive',
+  BILL_VOID: 'bg-destructive/10 text-destructive',
   CASH_DRAWER_POP: 'bg-warning/10 text-warning',
   PAYMENT: 'bg-success/10 text-success',
+  PAYMENT_RECORD: 'bg-success/10 text-success',
+  PAYMENT_VERIFIED: 'bg-success/10 text-success',
+  BILL_COMPLETED: 'bg-success/10 text-success',
+  ORDER_SETTLE: 'bg-success/10 text-success',
+  DISCOUNT_APPLY: 'bg-warning/10 text-warning',
+  COUPON_APPLY: 'bg-warning/10 text-warning',
+  BILL_HOLD: 'bg-warning/10 text-warning',
+  ORDER_SPLIT: 'bg-info/10 text-info',
+  BILL_SPLIT: 'bg-info/10 text-info',
 };
 
 function formatActionType(action: string): string {

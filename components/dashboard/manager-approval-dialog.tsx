@@ -66,7 +66,7 @@ export default function ManagerApprovalDialog({
       return;
     }
     if (!username.trim() || !password) {
-      setError('Manager username and password are required');
+      setError('Manager or owner username and password are required');
       return;
     }
     setLoading(true);
@@ -108,7 +108,7 @@ export default function ManagerApprovalDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="approver-username">Manager username</Label>
+              <Label htmlFor="approver-username">Manager / owner username</Label>
               <Input
                 id="approver-username"
                 value={username}
@@ -118,7 +118,7 @@ export default function ManagerApprovalDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="approver-password">Manager password</Label>
+              <Label htmlFor="approver-password">Manager / owner password</Label>
               <Input
                 id="approver-password"
                 type="password"
