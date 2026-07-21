@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useWaiterOrderStore } from '@/store/waiter-order-store';
 import { useOrderSync } from '@/hooks/useOrderSync';
-import { useReadyNotifications } from '@/hooks/useReadyNotifications';
+import { NotificationSound } from '@/components/shared/notification-sound';
 import { logout } from '@/lib/actions/auth';
 import type { PosView } from './OrderPageClient';
 
@@ -28,8 +28,6 @@ export default function OrderHeader({
 }) {
   // Initialize sync and offline listeners
   useOrderSync();
-  // Poll for ORDER_READY notifications from the kitchen
-  useReadyNotifications();
 
   const {
     searchQuery, setSearchQuery,
@@ -57,6 +55,8 @@ export default function OrderHeader({
 
   return (
     <header className="sticky top-0 z-20 bg-card border-b border-border shadow-sm pt-safe-top">
+      {/* Rings on kitchen ORDER_READY (and any other) notifications */}
+      <NotificationSound />
       {/* Offline Banner */}
       {isOffline && (
         <div className="bg-destructive text-destructive-foreground text-xs font-semibold px-4 py-1.5 flex items-center justify-center gap-2">

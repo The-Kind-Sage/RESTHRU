@@ -25,6 +25,7 @@ import { unregisterServiceWorker } from '@/lib/service-worker';
 import { getAdminAttentionCount, getSuperadminNotifications } from '@/lib/actions/admin';
 import { AdminBreadcrumbs } from '@/components/superadmin/breadcrumbs';
 import { formatRelativeTime } from '@/lib/format';
+import { NotificationSound } from '@/components/shared/notification-sound';
 
 // ── Lazy-load the command palette — it's heavy (all 12 nav icon refs +
 //    keyboard handler + overlay) and only needed when Cmd+K is pressed.
@@ -147,6 +148,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      <NotificationSound />
       {/* Mobile drawer backdrop */}
       {mobileNavOpen && (
         <div
@@ -278,7 +280,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <p className="text-sm font-semibold text-foreground">Notifications</p>
                 </div>
                 <ScrollArea className="max-h-80">
-                  {notifications.openTickets.length === 0 && notifications.recentAnnouncements.length === 0 ? (
+                  {notifications.openTickets.length === 0 && notifications.recentAnnouncements.length === 0 && attentionCount === 0 ? (
                     <div className="py-8 text-center text-sm text-muted-foreground">All caught up</div>
                   ) : (
                     <div className="py-1">
@@ -316,7 +318,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   )}
                 </ScrollArea>
                 <Link
-                  href="/superadmin/support"
+                  href="/superadmin/support?tab=notifications"
                   onClick={() => setNotifOpen(false)}
                   className="block border-t border-border p-2.5 text-center text-xs font-medium text-primary hover:bg-muted/50 transition-colors rounded-b-lg"
                 >

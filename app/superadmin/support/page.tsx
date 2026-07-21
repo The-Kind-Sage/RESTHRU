@@ -3,9 +3,10 @@
 import { PageHeader } from '@/components/shared/page-header';
 
 import React, { useEffect, useState, useTransition } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Search, Send, Megaphone, Building2, ShoppingCart, Users, MessageSquare,
-  LifeBuoy, Image as ImageIcon, CheckCircle2, Clock, AlertCircle,
+  LifeBuoy, Image as ImageIcon, CheckCircle2, Clock, AlertCircle, Bell,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatNumber, formatRelativeTime } from '@/lib/format';
 import { getSupportQuickStats, getSentAnnouncements, sendMassCommunication } from '@/lib/actions/admin';
 import { getSupportTickets, updateTicketStatus } from '@/lib/actions/support';
@@ -29,6 +31,8 @@ type Announcement = {
 };
 
 export default function SupportCenter() {
+  const searchParams = useSearchParams();
+  const defaultTab = searchParams.get('tab') === 'notifications' ? 'notifications' : 'support';
   const [search, setSearch] = useState('');
   const [stats, setStats] = useState<any>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -69,7 +73,8 @@ export default function SupportCenter() {
   };
 
   const [tickets, setTickets] = useState<any[]>([]);
-  const [activeTicketTab, setActiveTicketTab] = useState('support');
+  const [activeTicketTab, setActiveTicketTab] = useState(defaultTab);
+  const [notifSearch, setNotifSearch] = useState('');
 
   useEffect(() => {
     getSupportTickets().then((res) => {
@@ -121,6 +126,12 @@ export default function SupportCenter() {
             <LifeBuoy className="h-4 w-4" /> Support Tickets
             {openTickets.length > 0 && (
               <Badge className="bg-amber-500 text-white text-[10px] px-1.5 py-0">{openTickets.length}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-2">
+            <Bell className="h-4 w-4" /> Notifications
+            {tickets.length > 0 && (
+              <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0">{tickets.length}</Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="broadcast" className="gap-2">
@@ -216,6 +227,78 @@ export default function SupportCenter() {
               </Card>
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-6 mt-6">
+          <div className="relative max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search notifications..."
+              value={notifSearch}
+              onChange={(e) => setNotifSearch(e.target.value)}
+              className="pl-9 bg-muted border-border text-foreground placeholder:text-muted-foreground text-sm h-9"
+            />
+          </div>
+
+          {tickets.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground text-sm">
+                No notifications yet.
+              </CardContent>
+            </Card>
+          ) : (
+            <ScrollArea className="h-[600px]">
+              <div className="space-y-2">
+                {tickets
+                  .filter((t) =>
+                    !notifSearch ||
+                    t.subject?.toLowerCase().includes(notifSearch.toLowerCase()) ||
+                    t.message?.toLowerCase().includes(notifSearch.toLowerCase()) ||
+                    t.restaurant?.name?.toLowerCase().includes(notifSearch.toLowerCase())
+                  )
+                  .map((ticket) => (
+                    <Card key={ticket.id} className="bg-card border-border shadow-sm">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            <MessageSquare className="h-4 w-4 text-primary" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-medium text-foreground">{ticket.subject}</p>
+                              <Badge className={`text-[10px] ${
+                                ticket.status === 'OPEN' ? 'bg-amber-500/10 text-amber-600 border-amber-200' :
+                                ticket.status === 'IN_PROGRESS' ? 'bg-blue-500/10 text-blue-600 border-blue-200' :
+                                'bg-green-500/10 text-green-600 border-green-200'
+                              }`}>
+                                {statusIcon(ticket.status)}
+                                <span className="ml-1">{ticket.status.replace('_', ' ')}</span>
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {ticket.restaurant?.name} &middot; {ticket.user?.firstName} {ticket.user?.lastName} &middot; {formatRelativeTime(ticket.createdAt)}
+                            </p>
+                            <p className="text-sm mt-2 text-foreground/80">{ticket.message}</p>
+                            {ticket.imageUrl && (
+                              <a href={ticket.imageUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:underline">
+                                <ImageIcon className="h-3 w-3" /> View Attachment
+                              </a>
+                            )}
+                            {ticket.status === 'OPEN' && (
+                              <div className="flex gap-2 mt-3">
+                                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleResolve(ticket.id)}>
+                                  <CheckCircle2 className="h-3 w-3 mr-1" /> Mark Resolved
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            </ScrollArea>
+          )}
         </TabsContent>
 
         <TabsContent value="broadcast" className="space-y-6 mt-6">

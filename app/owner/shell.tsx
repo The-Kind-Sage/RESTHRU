@@ -7,6 +7,7 @@ import TopHeader from '@/components/dashboard/top-header';
 import IdleTimeoutGuard from '@/components/dashboard/idle-timeout-guard';
 import OfflineBanner from '@/components/dashboard/offline-banner';
 import { UpgradePlanModal } from '@/components/shared/upgrade-plan-modal';
+import { NotificationSound } from '@/components/shared/notification-sound';
 import { useUIStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
 import { startSync, stopSync } from '@/lib/sync';
@@ -52,6 +53,7 @@ export default function DashboardShell({
       <IdleTimeoutGuard />
       <OfflineBanner />
       <UpgradePlanModal />
+      <NotificationSound />
       <Sidebar />
       {/* Content: no left margin on mobile (sidebar is an overlay drawer);
           on md+ it clears the inline sidebar's collapsed/expanded width. */}
