@@ -271,6 +271,9 @@ export default function SettingsPage() {
         websiteUrl: restaurant.website,
         currency: restaurant.currency,
         timezone: restaurant.timezone,
+        panNumber: restaurant.pan_number,
+        vatNumber: restaurant.vat_number,
+        vatRegistered: restaurant.vat_registered,
       }),
       saveOperatingHours(restaurantId, hoursPayload),
     ]);

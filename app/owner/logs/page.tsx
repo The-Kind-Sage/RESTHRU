@@ -17,7 +17,7 @@ import {
   AlertCircle, CheckCircle2, Clock, XCircle, ShoppingCart, Users,
   Building2, MessageSquare, CreditCard, UtensilsCrossed, Layers,
   DoorOpen, FileText, Package, Table as TableIcon, UserPlus, UserMinus,
-  Settings, ArrowLeftRight, Tag, RotateCw,
+  Settings, ArrowLeftRight, Tag, RotateCw, FileMinus,
 } from 'lucide-react';
 import { getLogs, LogEntry } from '@/lib/actions/logs';
 import { downloadCsv } from '@/lib/superadmin-export';
@@ -56,6 +56,7 @@ const actionTypeConfig: Record<string, { label: string; color: string; icon: Rea
   BILL_DRAFT:            { label: 'Bill Drafted',   color: 'bg-sky-500/10 text-sky-600 border-sky-200',                 icon: <FileText className="h-3 w-3" /> },
   BILL_COMPLETED:        { label: 'Bill Completed', color: 'bg-emerald-500/10 text-emerald-600 border-emerald-200',     icon: <CheckCircle2 className="h-3 w-3" /> },
   BILL_VOID:             { label: 'Bill Voided',    color: 'bg-red-500/10 text-red-600 border-red-200',                 icon: <XCircle className="h-3 w-3" /> },
+  CREDIT_NOTE_ISSUE:     { label: 'Credit Note',    color: 'bg-orange-500/10 text-orange-600 border-orange-200',        icon: <FileMinus className="h-3 w-3" /> },
   BILL_HOLD:             { label: 'Bill On Hold',   color: 'bg-amber-500/10 text-amber-600 border-amber-200',           icon: <Clock className="h-3 w-3" /> },
   BILL_RESUME:           { label: 'Bill Resumed',   color: 'bg-emerald-500/10 text-emerald-600 border-emerald-200',     icon: <RotateCw className="h-3 w-3" /> },
   BILL_SPLIT:            { label: 'Bill Split',     color: 'bg-purple-500/10 text-purple-600 border-purple-200',        icon: <ArrowLeftRight className="h-3 w-3" /> },
