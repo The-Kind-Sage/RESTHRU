@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { logActivity } from "./logs";
 import { verifyManagerApproval } from "@/lib/manager-approval";
+import { splitVatInclusive, NEPAL_VAT_RATE } from "@/lib/vat";
+import { fiscalYearBs } from "@/lib/nepali-date";
 
 export async function getPendingBills() {
   const session = await getSession();
@@ -51,8 +53,8 @@ export async function createBillDraft(orderId: string) {
   if (!session?.restaurantId) return { error: "Not authenticated" };
 
   try {
-    // All three lookups are independent — one round-trip instead of three.
-    const [order, existing, lastBill] = await Promise.all([
+    // All four lookups are independent — one round-trip instead of four.
+    const [order, existing, lastBill, restaurant] = await Promise.all([
       prisma.order.findFirst({
         where: { id: orderId, restaurantId: session.restaurantId },
       }),
@@ -64,11 +66,23 @@ export async function createBillDraft(orderId: string) {
         orderBy: { createdAt: "desc" },
         select: { billNumber: true },
       }),
+      prisma.restaurant.findUnique({
+        where: { id: session.restaurantId },
+        select: { vatRegistered: true, taxPercentage: true },
+      }),
     ]);
     if (!order) return { error: "Order not found" };
     if (existing) return { data: existing };
     const lastNum = parseInt(lastBill?.billNumber?.replace(/\D/g, "") ?? "", 10);
     const nextNum = isNaN(lastNum) ? 1 : lastNum + 1;
+
+    // Menu-inclusive total (courts bar adding VAT on top). For a VAT-registered
+    // restaurant the 13% VAT component is back-calculated from this gross for the
+    // tax invoice; otherwise the whole amount is the taxable base (VAT = 0).
+    const total = order.subtotal + order.serviceCharge - order.discountAmount;
+    const { taxable, vat } = restaurant?.vatRegistered
+      ? splitVatInclusive(total, restaurant.taxPercentage || NEPAL_VAT_RATE)
+      : { taxable: total, vat: 0 };
 
     const bill = await prisma.bill.create({
       data: {
@@ -76,14 +90,14 @@ export async function createBillDraft(orderId: string) {
         orderId: order.id,
         billNumber: `B-${nextNum.toString().padStart(5, "0")}`,
         subtotal: order.subtotal,
-        // No VAT — recompute the total from menu prices instead of copying the
-        // order's stored total, so even older orders with tax baked in bill clean.
-        taxAmount: 0,
+        taxableAmount: taxable,
+        taxAmount: vat,
         serviceCharge: order.serviceCharge,
-        totalAmount: order.subtotal + order.serviceCharge - order.discountAmount,
+        totalAmount: total,
         amountPaid: 0,
         change: 0,
         status: "PENDING",
+        fiscalYear: fiscalYearBs(new Date()),
         createdBy: session.id,
       },
       include: {
@@ -121,6 +135,11 @@ export async function recordPayment(data: {
         include: { payments: true },
       });
       if (!bill) return { error: "Bill not found" };
+      // An issued (fully-paid) invoice is hard-locked — no further payments; a
+      // reversal must go through a credit note.
+      if (bill.status === "PAID" || bill.isLocked) {
+        return { error: "This invoice is already settled and locked. Issue a credit note to reverse it." };
+      }
 
       await tx.payment.create({
         data: {
@@ -136,6 +155,7 @@ export async function recordPayment(data: {
       const distinctMethods = Array.from(new Set(allMethods));
       const paymentMethod = distinctMethods.length > 1 ? "SPLIT" : distinctMethods[0];
       const change = Math.max(0, totalPayments - bill.totalAmount);
+      const fullyPaid = totalPayments >= bill.totalAmount;
 
       const updated = await tx.bill.update({
         where: { id: bill.id },
@@ -143,13 +163,14 @@ export async function recordPayment(data: {
           amountPaid: totalPayments,
           paymentMethod: paymentMethod === "SPLIT" ? "SPLIT" : paymentMethod,
           change,
-          status: totalPayments >= bill.totalAmount ? "PAID" : "PENDING",
-          settledAt: totalPayments >= bill.totalAmount ? new Date() : undefined,
+          status: fullyPaid ? "PAID" : "PENDING",
+          settledAt: fullyPaid ? new Date() : undefined,
+          // Lock the invoice the moment it is fully settled / issued.
+          isLocked: fullyPaid ? true : undefined,
+          fiscalYear: fullyPaid && !bill.fiscalYear ? fiscalYearBs(new Date()) : undefined,
         },
         include: { payments: true, order: { include: { items: true } } },
       });
-
-      const fullyPaid = totalPayments >= bill.totalAmount;
       if (fullyPaid) {
         await tx.order.update({
           where: { id: bill.orderId },
@@ -380,14 +401,21 @@ export async function applyDiscountToBill(billId: string, discountAmount: number
     if (bill.status !== "PENDING") return { error: "Can only discount a pending bill" };
 
     const clamped = Math.min(Math.max(discountAmount, 0), bill.subtotal);
-    // No VAT — totals are plain menu prices (+ service charge) minus discount.
+    // Menu-inclusive total minus discount; re-derive the VAT split from the new
+    // gross for VAT bills (a non-zero taxAmount marks the bill as VAT-registered).
     const newTotal = bill.subtotal + bill.serviceCharge - clamped;
+    const isVat = bill.taxAmount > 0;
+    const { taxable, vat } = isVat
+      ? splitVatInclusive(newTotal, NEPAL_VAT_RATE)
+      : { taxable: newTotal, vat: 0 };
 
     const updated = await prisma.bill.update({
       where: { id: billId },
       data: {
         discountAmount: clamped,
         totalAmount: newTotal,
+        taxableAmount: taxable,
+        taxAmount: vat,
         status: newTotal <= 0 ? "PAID" : "PENDING",
         ...(discountReason ? { notes: discountReason } : {}),
       },
@@ -435,8 +463,12 @@ export async function applyCouponToBill(billId: string, couponCode: string) {
       : coupon.discountValue;
 
     const clampedDiscount = Math.min(discountValue, bill.subtotal);
-    // No VAT — totals are plain menu prices (+ service charge) minus discount.
+    // Menu-inclusive total minus coupon; re-derive the VAT split for VAT bills.
     const newTotal = bill.subtotal + bill.serviceCharge - clampedDiscount;
+    const isVat = bill.taxAmount > 0;
+    const { taxable, vat } = isVat
+      ? splitVatInclusive(newTotal, NEPAL_VAT_RATE)
+      : { taxable: newTotal, vat: 0 };
 
     return await prisma.$transaction(async (tx) => {
       await tx.coupon.update({
@@ -449,6 +481,8 @@ export async function applyCouponToBill(billId: string, couponCode: string) {
         data: {
           discountAmount: clampedDiscount,
           totalAmount: newTotal,
+          taxableAmount: taxable,
+          taxAmount: vat,
           notes: `Coupon: ${coupon.code} (${clampedDiscount})`,
         },
       });
@@ -559,6 +593,12 @@ export async function voidBill(data: {
     });
     if (!bill) return { error: "Bill not found" };
     if (bill.voidedAt) return { error: "Bill is already voided" };
+    // An issued (fully-paid) invoice is hard-locked and cannot be voided — Nepal
+    // VAT rules require reversing it with a credit note instead (gov.md §6).
+    // Only un-issued drafts (PENDING/HELD) can still be voided/cancelled.
+    if (bill.status === "PAID" || bill.isLocked) {
+      return { error: "This invoice is issued and locked. Reverse it by issuing a credit note instead of voiding." };
+    }
 
     const updated = await prisma.bill.update({
       where: { id: bill.id },

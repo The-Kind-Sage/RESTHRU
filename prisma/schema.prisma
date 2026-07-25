@@ -71,6 +71,12 @@ model Restaurant {
   serviceCharge   Float    @default(10) @map("service_charge")
   enableGST       Boolean  @default(false) @map("enable_gst")
   gstNumber       String?  @map("gst_number")
+  // Nepal IRD compliance — income-tax PAN, VAT registration number, and whether
+  // the restaurant is VAT-registered (drives whether bills are issued as full
+  // Tax Invoices with a 13% VAT breakdown vs. plain PAN bills). See gov.md.
+  panNumber       String?  @map("pan_number")
+  vatNumber       String?  @map("vat_number")
+  vatRegistered   Boolean  @default(false) @map("vat_registered")
   enableQRMenu    Boolean  @default(true) @map("enable_qr_menu")
   totalTables     Int      @default(0) @map("num_tables")
   totalStaff      Int      @default(0) @map("total_staff")
@@ -86,6 +92,7 @@ model Restaurant {
   orders           Order[]
   inventory        InventoryItem[]
   bills            Bill[]
+  creditNotes      CreditNote[]
   notifications    Notification[]
   activityLogs     ActivityLog[]
   subscriptions    Subscription[]
@@ -425,6 +432,7 @@ model Bill {
   orderId         String   @map("order_id")
   billNumber      String   @map("bill_number")
   subtotal        Float    @default(0)
+  taxableAmount   Float    @default(0) @map("taxable_amount")
   taxAmount       Float    @default(0) @map("tax_amount")
   serviceCharge   Float    @default(0) @map("service_charge")
   discountAmount  Float    @default(0) @map("discount_amount")
@@ -437,7 +445,18 @@ model Bill {
   billDate        DateTime @default(now()) @map("bill_date")
   settledAt       DateTime? @map("settled_at")
   createdBy       String   @map("created_by")
+  // IRD compliance (gov.md §5-§6): once an invoice is issued (fully paid) it is
+  // hard-locked — its figures can't be edited and it can't be voided; a reversal
+  // is done with a credit note. fiscalYear is the Nepali BS FY (e.g. "2082/83");
+  // creditNoteTotal accumulates the amount credited back against this invoice.
+  isLocked        Boolean  @default(false) @map("is_locked")
+  fiscalYear      String   @default("") @map("fiscal_year")
+  creditNoteTotal Float    @default(0) @map("credit_note_total")
   notes           String?
+  // Buyer details captured for a compliant Tax Invoice (Rule 17): a customer PAN
+  // is required for B2B sales or transactions >= NPR 10,000.
+  customerName    String?  @map("customer_name")
+  customerPan     String?  @map("customer_pan")
   voidedBy        String?  @map("voided_by")
   voidReason      String?  @map("void_reason")
   voidedAt        DateTime? @map("voided_at")
@@ -447,6 +466,7 @@ model Bill {
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   order      Order      @relation(fields: [orderId], references: [id])
   payments   Payment[]
+  creditNotes CreditNote[]
 
   @@unique([restaurantId, billNumber])
   @@index([restaurantId, status])
@@ -454,6 +474,30 @@ model Bill {
   @@index([restaurantId, createdAt])
   @@index([orderId])
   @@map("bills")
+}
+
+// Credit note — the compliant way to reverse/adjust an already-issued (locked)
+// invoice. Numbered gap-free per Nepali fiscal year (CN-YYYYYY-00001).
+model CreditNote {
+  id               String   @id @default(cuid())
+  restaurantId     String   @map("restaurant_id")
+  billId           String   @map("bill_id")
+  creditNoteNumber String   @map("credit_note_number")
+  fiscalYear       String   @map("fiscal_year")
+  reason           String
+  amount           Float    @default(0)
+  taxableAmount    Float    @default(0) @map("taxable_amount")
+  vatAmount        Float    @default(0) @map("vat_amount")
+  createdBy        String   @map("created_by")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  bill       Bill       @relation(fields: [billId], references: [id])
+
+  @@unique([restaurantId, creditNoteNumber])
+  @@index([restaurantId, createdAt])
+  @@index([billId])
+  @@map("credit_notes")
 }
 
 model BarTab {

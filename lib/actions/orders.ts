@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { logActivity } from "./logs";
 import { verifyManagerApproval } from "@/lib/manager-approval";
 import { splitVatInclusive, NEPAL_VAT_RATE } from "@/lib/vat";
+import { fiscalYearBs } from "@/lib/nepali-date";
 
 const SELF_VOID_ROLES = ["RECEPTIONIST", "MANAGER", "RESTAURANT_OWNER", "ADMIN", "SUPER_ADMIN"];
 
@@ -460,6 +461,9 @@ export async function settleOrder(data: {
               paymentRef: data.paymentRef || null,
               status: "PAID",
               settledAt: new Date(),
+              // Issued in full immediately, so lock it and stamp the BS fiscal year.
+              isLocked: true,
+              fiscalYear: fiscalYearBs(new Date()),
               createdBy: session.id,
             },
           });
