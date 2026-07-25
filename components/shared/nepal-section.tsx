@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Wallet, FileCheck, Calendar, Wifi, Languages, ArrowRight } from 'lucide-react';
+import { Wallet, FileCheck, Calendar, Wifi, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 const features = [
@@ -30,7 +30,7 @@ export function NepalSection() {
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} viewport={{ once: true }}>
             <p className="mb-2 text-xs sm:text-xs font-semibold uppercase tracking-[0.3em] text-primary">Made for Nepal</p>
             <h2 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-[2.5rem] font-bold tracking-tight text-foreground leading-tight">
-              Built for Nepal. <span className="text-primary">By Nepal.</span>
+              Built for Nepal. <span className="text-primary">By Drill Thru.</span>
             </h2>
             <p className="mb-5 sm:mb-8 max-w-md text-sm sm:text-base text-muted-foreground">The details foreign POS systems never bother to get right.</p>
 
@@ -55,10 +55,6 @@ export function NepalSection() {
               <Link href="/register" className="group inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-hover">
                 Start Free Trial <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
-              <div className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-primary/15 bg-primary/5 px-3.5 py-2">
-                <Languages className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">Nepali & English</span>
-              </div>
             </div>
           </motion.div>
 
