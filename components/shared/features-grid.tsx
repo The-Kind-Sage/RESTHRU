@@ -3,11 +3,11 @@
 import { motion } from 'framer-motion';
 import {
   QrCode,
-  WifiOff,
   ChefHat,
   Receipt,
   Package,
   BarChart3,
+  Wallet,
 } from 'lucide-react';
 
 interface Feature {
@@ -20,7 +20,7 @@ interface Feature {
 
 const features: Feature[] = [
   { id: '1', icon: QrCode, title: 'Smart QR Ordering', description: 'Customers scan, browse, and order from their own phone. Nothing to download.', stat: 'No app needed' },
-  { id: '2', icon: WifiOff, title: 'Works Offline', description: 'Load-shedding or dead wifi? It keeps taking orders and syncs the moment you are back online.', stat: 'Survives load-shedding' },
+  { id: '2', icon: Wallet, title: 'Multi-Payment Support', description: 'eSewa, Khalti, Fonepay, cash, or card — let customers pay how they want. All settlements in one place.', stat: '5 payment methods' },
   { id: '3', icon: ChefHat, title: 'Live Kitchen Display', description: 'Orders go straight from the table to the kitchen screen. No more shouting tickets across the room.', stat: 'No more shouting' },
   { id: '4', icon: Receipt, title: 'One-tap Billing', description: 'IRD-compliant bills, split payments, and printed receipts in seconds.', stat: 'IRD-ready' },
   { id: '5', icon: Package, title: 'Inventory Alerts', description: 'Know you are low on paneer before the dinner rush, not in the middle of it.', stat: 'Before you run out' },
