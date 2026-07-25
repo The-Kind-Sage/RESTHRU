@@ -76,7 +76,8 @@ import {
   verifyPayment,
   getPendingWalletPayments,
 } from "@/lib/actions/payments";
-import { formatReceiptHTML, printReceipt } from "@/lib/printing";
+import { formatTaxInvoiceHTML, printReceipt } from "@/lib/printing";
+import { getInvoicePrintData } from "@/lib/actions/invoice";
 import ScannerInput from "@/components/dashboard/scanner-input";
 
 const PAYMENT_METHODS = [
@@ -334,31 +335,16 @@ export default function CheckoutPage() {
     toast.success(`Found: ${result.data.name} (${result.data.loyaltyPoints} pts)`);
   };
 
-  const handlePrintReceipt = () => {
+  const handlePrintReceipt = async () => {
     if (!activeBill) return;
-    const items = (activeBill.order?.items || []).map((i: any) => ({
-      name: i.menuItemName,
-      qty: i.quantity,
-      price: i.pricePerUnit,
-      total: i.pricePerUnit * i.quantity,
-    }));
-    const html = formatReceiptHTML({
-      restaurantName: restaurant?.name || "Restaurant",
-      address: "",
-      phone: "",
-      billNumber: activeBill.billNumber,
-      items,
-      subtotal: activeBill.subtotal,
-      taxAmount: activeBill.taxAmount,
-      serviceCharge: activeBill.serviceCharge,
-      discountAmount: activeBill.discountAmount,
-      totalAmount: activeBill.totalAmount,
-      amountPaid: activeBill.amountPaid,
-      change: activeBill.change,
-      paymentMethod: activeBill.paymentMethod,
-      date: new Date().toLocaleString(),
-    });
-    printReceipt(html);
+    // Print the IRD-format invoice (Tax Invoice for VAT-registered restaurants,
+    // else a PAN bill). Seller PAN/VAT + VAT breakdown are resolved server-side.
+    const res = await getInvoicePrintData(activeBill.id);
+    if ("error" in res || !res.data) {
+      toast.error(("error" in res && res.error) || "Could not build invoice");
+      return;
+    }
+    printReceipt(formatTaxInvoiceHTML(res.data));
   };
 
   const handleScannerBarcode = (barcode: string) => {
