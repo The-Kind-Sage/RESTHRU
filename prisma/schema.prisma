@@ -69,6 +69,9 @@ model Restaurant {
   language        String   @default("en")
   taxPercentage   Float    @default(13) @map("tax_percentage")
   serviceCharge   Float    @default(10) @map("service_charge")
+  vatRegistered   Boolean  @default(false) @map("vat_registered")
+  panNumber       String?  @map("pan_number")
+  vatNumber       String?  @map("vat_number")
   enableGST       Boolean  @default(false) @map("enable_gst")
   gstNumber       String?  @map("gst_number")
   // Nepal IRD compliance — income-tax PAN, VAT registration number, and whether
@@ -89,6 +92,7 @@ model Restaurant {
   tables           RestaurantTable[]
   categories       Category[]
   menuItems        MenuItem[]
+  combos           Combo[]
   orders           Order[]
   inventory        InventoryItem[]
   bills            Bill[]
@@ -264,9 +268,35 @@ model Category {
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   menuItems MenuItem[]
+  combos    Combo[]
 
   @@index([restaurantId])
   @@map("categories")
+}
+
+model Combo {
+  id            String   @id @default(cuid())
+  restaurantId  String   @map("restaurant_id")
+  name          String
+  menuSection   String?  @map("menu_section")
+  categoryId    String?  @map("category_id")
+  price         Float    @default(0)
+  offerPrice    Float    @default(0) @map("offer_price")
+  comboType     String?  @map("combo_type")
+  hsCode        String?  @map("hs_code")
+  prepTime      Int      @default(0) @map("prep_time")
+  imageUrl      String?  @map("image_url")
+  description   String?
+  items         Json     @default("[]")
+  isAvailable   Boolean  @default(true) @map("is_available")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  category   Category?  @relation(fields: [categoryId], references: [id])
+
+  @@index([restaurantId])
+  @@map("combos")
 }
 
 model MenuItem {
@@ -290,6 +320,8 @@ model MenuItem {
   temperature   String?  @default("COLD")
   volume        Int?
   sizeOptions   Json?    @map("size_options")
+  kotType       String?  @map("kot_type")
+  hsCode        String?  @map("hs_code")
   isAvailable   Boolean  @default(true) @map("is_available")
   displayOrder  Int      @default(0) @map("display_order")
   createdAt     DateTime @default(now()) @map("created_at")

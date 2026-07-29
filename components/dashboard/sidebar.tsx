@@ -1,13 +1,16 @@
 'use client';
 
-import React, { useMemo, memo, useCallback, useEffect } from 'react';
+import React, { useMemo, memo, useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   UtensilsCrossed,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   LayoutDashboard,
   ClipboardList,
+  BookOpen,
   Users,
   Package,
   BarChart3,
@@ -15,6 +18,7 @@ import {
   LogOut,
   ScrollText,
   ShoppingCart,
+  PlusCircle,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -32,16 +36,146 @@ import { useUIStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
 
-const NAV_ITEMS: NavItem[] = [
+// A nav entry is either a plain link or a collapsible group with children.
+type OwnerNavEntry = NavItem & { children?: { label: string; href: string }[] };
+
+const NAV_ITEMS: OwnerNavEntry[] = [
   { label: 'Dashboard',          href: '/owner',                Icon: LayoutDashboard },
+  { label: 'New Order',          href: '/owner/order',          Icon: PlusCircle      },
   { label: 'Orders',             href: '/owner/orders',         Icon: ShoppingCart    },
-  { label: 'Menu Management',    href: '/owner/menu',           Icon: ClipboardList   },
+  {
+    label: 'Menu',
+    href: '/owner/menu',
+    Icon: BookOpen,
+    children: [
+      { label: 'Dishes',      href: '/owner/menu' },
+      { label: 'Category',    href: '/owner/menu/category' },
+      { label: 'Combo Offer', href: '/owner/menu/combo' },
+    ],
+  },
   { label: 'Staff Management',   href: '/owner/staff',          Icon: Users           },
   { label: 'Inventory',          href: '/owner/inventory',      Icon: Package         },
   { label: 'Reports & Analytics',href: '/owner/reports',        Icon: BarChart3       },
   { label: 'Logs',               href: '/owner/logs',           Icon: ScrollText      },
   { label: 'Settings',           href: '/owner/settings',       Icon: Settings        },
 ];
+
+// ── Collapsible nav group (e.g. "Menu" → Dishes / Category / Combo Offer) ──
+const NavGroup = memo(function NavGroup({
+  item,
+  collapsed,
+  pathname,
+}: {
+  item: OwnerNavEntry;
+  collapsed: boolean;
+  pathname: string;
+}) {
+  const { Icon } = item;
+  const children = item.children ?? [];
+  // A child is active on an exact match, or on any of its own sub-routes. The
+  // parent "Dishes" href (/owner/menu) matches exactly so it doesn't light up
+  // while on /owner/menu/category or /owner/menu/combo.
+  const childActive = useCallback(
+    (href: string) =>
+      href === '/owner/menu'
+        ? pathname === '/owner/menu'
+        : pathname === href || pathname.startsWith(href + '/'),
+    [pathname]
+  );
+  const groupActive = pathname === item.href || pathname.startsWith(item.href + '/');
+  const [open, setOpen] = useState(groupActive);
+
+  // Keep the group open whenever one of its routes is active.
+  useEffect(() => {
+    if (groupActive) setOpen(true);
+  }, [groupActive]);
+
+  // Collapsed (icons-only) rail: the group icon just links to the first child.
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link href={children[0]?.href ?? item.href} prefetch={true}>
+            <div
+              className={cn(
+                'group flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all duration-150 cursor-pointer',
+                groupActive
+                  ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                  : 'text-white/50 hover:text-white hover:bg-white/[0.08]'
+              )}
+            >
+              <Icon className="flex-shrink-0 h-[18px] w-[18px]" />
+            </div>
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="font-medium">
+          {item.label}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={cn(
+          'w-full group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-150',
+          groupActive
+            ? 'text-white'
+            : 'text-white/50 hover:text-white hover:bg-white/[0.08]'
+        )}
+      >
+        <Icon
+          className={cn(
+            'flex-shrink-0 h-[18px] w-[18px]',
+            groupActive ? 'text-white' : 'text-white/50 group-hover:text-white'
+          )}
+        />
+        <span className="flex-1 text-left text-[13px] font-medium whitespace-nowrap leading-none">
+          {item.label}
+        </span>
+        <ChevronDown
+          className={cn(
+            'h-4 w-4 flex-shrink-0 transition-transform duration-200',
+            open ? 'rotate-180' : 'rotate-0'
+          )}
+        />
+      </button>
+
+      {open && (
+        <div className="mt-0.5 space-y-0.5 pl-3">
+          {children.map((child) => {
+            const active = childActive(child.href);
+            return (
+              <Link key={child.href} href={child.href} prefetch={true}>
+                <div
+                  className={cn(
+                    'flex items-center gap-2.5 rounded-lg pl-4 pr-3 py-2 transition-all duration-150 cursor-pointer',
+                    active
+                      ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                      : 'text-white/70 hover:text-white hover:bg-white/[0.08]'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'h-1.5 w-1.5 rounded-full flex-shrink-0',
+                      active ? 'bg-white' : 'bg-white/50'
+                    )}
+                  />
+                  <span className="text-[13px] font-medium whitespace-nowrap leading-none">
+                    {child.label}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+});
 
 // ── Main sidebar — memo prevents re-render when parent re-renders
 //    for reasons unrelated to sidebar state.
@@ -127,14 +261,23 @@ const Sidebar = memo(function Sidebar() {
           className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5"
           onClick={() => setMobileMenuOpen(false)}
         >
-          {NAV_ITEMS.map((item) => (
-            <SharedNavLink
-              key={item.href}
-              item={item}
-              active={isActive(item.href)}
-              collapsed={collapsed}
-            />
-          ))}
+          {NAV_ITEMS.map((item) =>
+            item.children ? (
+              <NavGroup
+                key={item.label}
+                item={item}
+                collapsed={collapsed}
+                pathname={pathname}
+              />
+            ) : (
+              <SharedNavLink
+                key={item.href}
+                item={item}
+                active={isActive(item.href)}
+                collapsed={collapsed}
+              />
+            )
+          )}
         </nav>
 
         {/* ── Bottom: user + collapse ── */}

@@ -6,6 +6,7 @@ import {
   getTopSellingItems,
   getRecentActivity,
   getTableOverview,
+  getRecentTransactions,
 } from '@/lib/actions/dashboard';
 import DashboardClient from './client';
 import {
@@ -30,7 +31,7 @@ async function DashboardData() {
 
   // All five queries fire in parallel; individual failures are isolated.
   const errors: string[] = [];
-  const [stats, orders, chartData, topItems, activities, tables] = await Promise.all([
+  const [stats, orders, chartData, topItems, activities, tables, transactions] = await Promise.all([
     restaurantId
       ? getDashboardStats(restaurantId).catch((e) => { errors.push(`Stats: ${e?.message || e}`); return null; })
       : Promise.resolve(null),
@@ -49,6 +50,9 @@ async function DashboardData() {
     restaurantId
       ? getTableOverview(restaurantId).catch((e) => { errors.push(`Tables: ${e?.message || e}`); return []; })
       : Promise.resolve([]),
+    restaurantId
+      ? getRecentTransactions(restaurantId).catch((e) => { errors.push(`Transactions: ${e?.message || e}`); return []; })
+      : Promise.resolve([]),
   ]);
 
   return (
@@ -59,6 +63,7 @@ async function DashboardData() {
       topItems={topItems}
       activities={activities}
       tables={tables}
+      transactions={transactions}
       errors={errors}
     />
   );

@@ -287,12 +287,21 @@ export default function SettingsPage() {
   const saveBilling = async () => {
     if (!restaurantId) return;
     setIsSaving(true);
-    const result = await upsertSettings(restaurantId, {
-      vat_rate: settings.vat_rate,
-      bill_footer_message: settings.bill_footer_message,
-      vat_on_receipt: settings.vat_on_receipt,
-    });
+    const [result, restResult] = await Promise.all([
+      upsertSettings(restaurantId, {
+        vat_rate: settings.vat_rate,
+        bill_footer_message: settings.bill_footer_message,
+        vat_on_receipt: settings.vat_on_receipt,
+      }),
+      updateRestaurant(restaurantId, {
+        panNumber: restaurant.pan_number,
+        vatRegistered: restaurant.vat_registered,
+        vatNumber: restaurant.vat_number,
+        taxPercentage: settings.vat_rate,
+      }),
+    ]);
     if (result.error) { toast.error(result.error); setIsSaving(false); return; }
+    if (restResult.error) { toast.error(restResult.error); setIsSaving(false); return; }
     setIsDirty(false);
     toast.success('Billing settings saved');
     setIsSaving(false);

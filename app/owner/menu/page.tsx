@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Search, LayoutGrid, List, Eye, Edit2, Trash2,
@@ -37,7 +38,7 @@ import { uploadImage } from '@/lib/upload';
 import { useAuthStore } from '@/store/auth-store';
 import { useUpgradeStore } from '@/store/upgrade-store';
 import {
-  addCategory, updateCategory, deleteCategory as deleteCategoryAction,
+  updateCategory, deleteCategory as deleteCategoryAction,
   toggleCategoryActive as toggleCategoryActiveAction,
   getMenuItems, addMenuItem, updateMenuItem,
   deleteMenuItem as deleteMenuItemAction,
@@ -150,6 +151,7 @@ export default function MenuPage() {
   const restaurantId = restaurant?.id;
   const showUpgrade = useUpgradeStore((s) => s.show);
   const qrRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [categories, setCategories] = useState<Category[]>([]);
@@ -366,48 +368,25 @@ export default function MenuPage() {
   };
 
   // ── Category handlers ──────────────────────────────────────────────────────
-  const handleAddCategory = () => {
-    setEditingCategory(null);
-    setCategoryFormData({ name: '', nameNp: '', emoji: '📂', sortOrder: categories.length, active: true });
-    setIsAddCategoryOpen(true);
-  };
-
+  // Category editing only — new categories are created on the dedicated
+  // Menu → Category page, so there is no add path here anymore.
   const handleSaveCategory = async () => {
+    if (!editingCategory) return;
     if (!categoryFormData.name) { toast.error('Category name is required'); return; }
     if (!restaurantId) { toast.error('Restaurant not loaded — try refreshing'); return; }
     setIsSavingCategory(true);
     try {
-      if (editingCategory) {
-        const result = await updateCategory(editingCategory.id, {
-          name: categoryFormData.name,
-          nameNp: categoryFormData.nameNp,
-          emoji: categoryFormData.emoji,
-          sortOrder: categoryFormData.sortOrder,
-          active: categoryFormData.active,
-        });
-        if (result.error) { toast.error(result.error); return; }
-        setCategories(categories.map(c => c.id === editingCategory.id
-          ? { ...editingCategory, ...categoryFormData } as Category : c));
-        toast.success('Category updated');
-      } else {
-        const result = await addCategory({
-          name: categoryFormData.name,
-          nameNp: categoryFormData.nameNp,
-          emoji: categoryFormData.emoji,
-          sortOrder: categoryFormData.sortOrder,
-          active: categoryFormData.active,
-          restaurantId,
-        });
-        if (result.error) { toast.error(result.error); return; }
-        if (result.data) {
-          setCategories([...categories, {
-            id: result.data.id, name: categoryFormData.name!, nameNp: categoryFormData.nameNp,
-            emoji: categoryFormData.emoji || '📂', itemCount: 0,
-            active: categoryFormData.active ?? true, sortOrder: categoryFormData.sortOrder || 0,
-          }]);
-          toast.success('Category added');
-        }
-      }
+      const result = await updateCategory(editingCategory.id, {
+        name: categoryFormData.name,
+        nameNp: categoryFormData.nameNp,
+        emoji: categoryFormData.emoji,
+        sortOrder: categoryFormData.sortOrder,
+        active: categoryFormData.active,
+      });
+      if (result.error) { toast.error(result.error); return; }
+      setCategories(categories.map(c => c.id === editingCategory.id
+        ? { ...editingCategory, ...categoryFormData } as Category : c));
+      toast.success('Category updated');
       setIsAddCategoryOpen(false);
     } catch (err: any) {
       toast.error(err.message || 'Failed to save category');
@@ -534,7 +513,7 @@ export default function MenuPage() {
       <div className="w-[280px] border-r bg-card flex flex-col flex-shrink-0">
         <div className="p-5 border-b flex items-center justify-between">
           <h2 className="text-lg font-bold">Categories</h2>
-          <Button size="sm" onClick={handleAddCategory}><Plus className="w-4 h-4 mr-1" />Add</Button>
+          {/* Category creation now lives on the dedicated Menu → Category page. */}
         </div>
         <ScrollArea className="flex-1">
           <div className="p-3 space-y-1">
@@ -572,7 +551,7 @@ export default function MenuPage() {
               ))}
             </AnimatePresence>
             {categories.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">No categories yet.<br/>Click Add to create one.</p>
+              <p className="text-sm text-muted-foreground text-center py-8">No categories yet.<br/>Add them from Menu → Category.</p>
             )}
           </div>
         </ScrollArea>
@@ -588,8 +567,8 @@ export default function MenuPage() {
               <p className="text-sm text-muted-foreground">{categories.find(c => c.id === selectedCategory)?.name || 'Select a category'}</p>
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleAddItem} disabled={!selectedCategory}>
-                <Plus className="w-4 h-4 mr-2" />Add Item
+              <Button onClick={() => router.push('/owner/menu/dishes/create')}>
+                <Plus className="w-4 h-4 mr-2" />Add Dishes
               </Button>
               <Button
                 variant={bulkMode ? 'secondary' : 'outline'}
@@ -662,7 +641,7 @@ export default function MenuPage() {
             ) : filteredItems.length === 0 ? (
               <div className="text-center py-20 text-muted-foreground">
                 <p className="font-medium mb-1">No items yet</p>
-                <p className="text-sm">Click "Add Item" to add your first menu item.</p>
+                <p className="text-sm">Click "Add Dishes" to add your first menu item.</p>
               </div>
             ) : viewMode === 'grid' ? (
               <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">

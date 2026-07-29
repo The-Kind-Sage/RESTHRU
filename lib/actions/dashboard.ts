@@ -34,6 +34,17 @@ export type ChartPoint = { date: string; revenue: number };
 export type TopItem    = { name: string; orders: number; revenue: number; percentage: number; isVeg: boolean };
 export type Activity   = { id: string; type: "order" | "payment" | "cancelled"; title: string; time: Date };
 export type TableOverviewItem = { id: string; tableNumber: number; status: string };
+export type Transaction = {
+  id: string;
+  billNumber: string;
+  orderId: string | null;
+  tableNumber: number | null;
+  totalAmount: number;
+  taxAmount: number;
+  paymentMethod: string;
+  status: string;
+  date: Date;
+};
 
 // ─── 1. Dashboard Stats ────────────────────────────────────────────────────
 // Cached for 60 s — avoids recalculating aggregate counts on every navigation.
@@ -265,5 +276,39 @@ export const getRecentActivity = cache(
     return activities
       .sort((a, b) => b.time.getTime() - a.time.getTime())
       .slice(0, limit);
+  }
+);
+
+// ─── 6. Transaction History — recent bills with amount, VAT, method, status ─
+export const getRecentTransactions = cache(
+  async (restaurantId: string, limit = 10): Promise<Transaction[]> => {
+    const bills = await prisma.bill.findMany({
+      where: { restaurantId },
+      orderBy: { billDate: "desc" },
+      take: limit,
+      select: {
+        id: true,
+        billNumber: true,
+        totalAmount: true,
+        taxAmount: true,
+        paymentMethod: true,
+        status: true,
+        billDate: true,
+        settledAt: true,
+        order: { select: { orderId: true, table: { select: { tableNumber: true } } } },
+      },
+    });
+
+    return bills.map((b) => ({
+      id: b.id,
+      billNumber: b.billNumber,
+      orderId: b.order?.orderId ?? null,
+      tableNumber: b.order?.table?.tableNumber ?? null,
+      totalAmount: b.totalAmount,
+      taxAmount: b.taxAmount,
+      paymentMethod: b.paymentMethod,
+      status: b.status,
+      date: b.settledAt ?? b.billDate,
+    }));
   }
 );

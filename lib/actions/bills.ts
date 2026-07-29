@@ -7,6 +7,15 @@ import { verifyManagerApproval } from "@/lib/manager-approval";
 import { splitVatInclusive, NEPAL_VAT_RATE } from "@/lib/vat";
 import { fiscalYearBs } from "@/lib/nepali-date";
 
+function splitBillVat(
+  totalAmount: number,
+  restaurant: { vatRegistered: boolean; taxPercentage: number } | null,
+) {
+  return restaurant?.vatRegistered
+    ? splitVatInclusive(totalAmount, restaurant.taxPercentage || NEPAL_VAT_RATE)
+    : { taxable: totalAmount, vat: 0 };
+}
+
 export async function getPendingBills() {
   const session = await getSession();
   if (!session?.restaurantId) return { error: "Not authenticated" };
@@ -76,13 +85,8 @@ export async function createBillDraft(orderId: string) {
     const lastNum = parseInt(lastBill?.billNumber?.replace(/\D/g, "") ?? "", 10);
     const nextNum = isNaN(lastNum) ? 1 : lastNum + 1;
 
-    // Menu-inclusive total (courts bar adding VAT on top). For a VAT-registered
-    // restaurant the 13% VAT component is back-calculated from this gross for the
-    // tax invoice; otherwise the whole amount is the taxable base (VAT = 0).
-    const total = order.subtotal + order.serviceCharge - order.discountAmount;
-    const { taxable, vat } = restaurant?.vatRegistered
-      ? splitVatInclusive(total, restaurant.taxPercentage || NEPAL_VAT_RATE)
-      : { taxable: total, vat: 0 };
+    const totalAmount = order.subtotal + order.serviceCharge - order.discountAmount;
+    const { taxable, vat } = splitBillVat(totalAmount, restaurant);
 
     const bill = await prisma.bill.create({
       data: {
@@ -93,7 +97,7 @@ export async function createBillDraft(orderId: string) {
         taxableAmount: taxable,
         taxAmount: vat,
         serviceCharge: order.serviceCharge,
-        totalAmount: total,
+        totalAmount,
         amountPaid: 0,
         change: 0,
         status: "PENDING",
@@ -394,20 +398,21 @@ export async function applyDiscountToBill(billId: string, discountAmount: number
   if (!session?.restaurantId) return { error: "Not authenticated" };
 
   try {
-    const bill = await prisma.bill.findFirst({
-      where: { id: billId, restaurantId: session.restaurantId },
-    });
+    const [bill, restaurant] = await Promise.all([
+      prisma.bill.findFirst({
+        where: { id: billId, restaurantId: session.restaurantId },
+      }),
+      prisma.restaurant.findUnique({
+        where: { id: session.restaurantId },
+        select: { vatRegistered: true, taxPercentage: true },
+      }),
+    ]);
     if (!bill) return { error: "Bill not found" };
     if (bill.status !== "PENDING") return { error: "Can only discount a pending bill" };
 
     const clamped = Math.min(Math.max(discountAmount, 0), bill.subtotal);
-    // Menu-inclusive total minus discount; re-derive the VAT split from the new
-    // gross for VAT bills (a non-zero taxAmount marks the bill as VAT-registered).
     const newTotal = bill.subtotal + bill.serviceCharge - clamped;
-    const isVat = bill.taxAmount > 0;
-    const { taxable, vat } = isVat
-      ? splitVatInclusive(newTotal, NEPAL_VAT_RATE)
-      : { taxable: newTotal, vat: 0 };
+    const { taxable, vat } = splitBillVat(newTotal, restaurant);
 
     const updated = await prisma.bill.update({
       where: { id: billId },
@@ -452,9 +457,15 @@ export async function applyCouponToBill(billId: string, couponCode: string) {
       return { error: "Coupon usage limit reached" };
     }
 
-    const bill = await prisma.bill.findFirst({
-      where: { id: billId, restaurantId: session.restaurantId },
-    });
+    const [bill, restaurant] = await Promise.all([
+      prisma.bill.findFirst({
+        where: { id: billId, restaurantId: session.restaurantId },
+      }),
+      prisma.restaurant.findUnique({
+        where: { id: session.restaurantId },
+        select: { vatRegistered: true, taxPercentage: true },
+      }),
+    ]);
     if (!bill) return { error: "Bill not found" };
     if (bill.status !== "PENDING") return { error: "Can only apply coupon to a pending bill" };
 
@@ -463,12 +474,8 @@ export async function applyCouponToBill(billId: string, couponCode: string) {
       : coupon.discountValue;
 
     const clampedDiscount = Math.min(discountValue, bill.subtotal);
-    // Menu-inclusive total minus coupon; re-derive the VAT split for VAT bills.
     const newTotal = bill.subtotal + bill.serviceCharge - clampedDiscount;
-    const isVat = bill.taxAmount > 0;
-    const { taxable, vat } = isVat
-      ? splitVatInclusive(newTotal, NEPAL_VAT_RATE)
-      : { taxable: newTotal, vat: 0 };
+    const { taxable, vat } = splitBillVat(newTotal, restaurant);
 
     return await prisma.$transaction(async (tx) => {
       await tx.coupon.update({
