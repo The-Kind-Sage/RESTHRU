@@ -37,7 +37,7 @@ import {
 import { addMenuItem, getCategories, getMenuItems } from "@/lib/actions/menu";
 import { getLibrary, type LibraryEntry } from "@/lib/actions/image-library";
 import { FOOD_TYPES } from "@/lib/constants";
-import SelectImageModal, { type LibraryImage } from "@/components/menu/SelectImageModal";
+import SelectImageModal, { type LibraryImage } from "@/components/shared/select-image-modal";
 import { cn } from "@/lib/utils";
 
 const SUB_MENUS = ["Appetizers", "Main Courses", "Desserts", "Beverages", "Extra"];
