@@ -68,6 +68,7 @@ export async function updateRestaurant(restaurantId: string, data: Record<string
     const allowedFields = [
       "name", "email", "street", "phoneNumber", "websiteUrl", "city", "timezone",
       "currency", "language", "taxPercentage", "bannerImageUrl",
+      "vatRegistered", "panNumber", "vatNumber",
     ];
     const updateData: Record<string, any> = {};
     for (const key of allowedFields) {

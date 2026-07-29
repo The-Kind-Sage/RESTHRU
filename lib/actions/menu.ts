@@ -9,6 +9,7 @@ export async function addCategory(data: {
   name: string;
   nameNp?: string;
   emoji?: string;
+  imageUrl?: string;
   sortOrder?: number;
   active?: boolean;
   restaurantId: string;
@@ -18,8 +19,8 @@ export async function addCategory(data: {
 
   try {
     const result: { id: string }[] = await prisma.$queryRaw`
-      INSERT INTO categories (id, restaurant_id, name, display_order, is_active, created_at, updated_at)
-      VALUES (gen_random_uuid()::text, ${data.restaurantId}, ${data.name}, ${data.sortOrder || 0}, ${data.active ?? true}, now(), now())
+      INSERT INTO categories (id, restaurant_id, name, image_url, display_order, is_active, created_at, updated_at)
+      VALUES (gen_random_uuid()::text, ${data.restaurantId}, ${data.name}, ${data.imageUrl ?? null}, ${data.sortOrder || 0}, ${data.active ?? true}, now(), now())
       RETURNING id
     `;
     await logActivity(session, {
@@ -40,6 +41,7 @@ export async function updateCategory(
     name: string;
     nameNp?: string;
     emoji?: string;
+    imageUrl?: string;
     sortOrder?: number;
     active?: boolean;
   }
@@ -48,9 +50,11 @@ export async function updateCategory(
   if (!session) return { error: "Not authenticated" };
 
   try {
+    // COALESCE keeps the existing image when the caller doesn't supply a new one.
     await prisma.$executeRaw`
       UPDATE categories
-      SET name = ${data.name}, display_order = ${data.sortOrder || 0}, is_active = ${data.active ?? true}
+      SET name = ${data.name}, display_order = ${data.sortOrder || 0}, is_active = ${data.active ?? true},
+          image_url = COALESCE(${data.imageUrl ?? null}, image_url)
       WHERE id = ${id}
     `;
     await logActivity(session, {
@@ -157,6 +161,9 @@ export async function addMenuItem(data: {
   temperature?: string | null;
   volume?: number | null;
   sizeOptions?: any;
+  kotType?: string | null;
+  hsCode?: string | null;
+  addOns?: { name: string; price: number }[];
 }) {
   const session = await getSession();
   if (!session) return { error: "Not authenticated" };
@@ -167,6 +174,7 @@ export async function addMenuItem(data: {
   if (limitReached) return { error: limitMessage(limitReached), limitReached };
 
   try {
+    const extras = (data.addOns || []).filter((a) => a.name?.trim());
     const item = await prisma.menuItem.create({
       data: {
         restaurantId: data.restaurantId,
@@ -187,6 +195,13 @@ export async function addMenuItem(data: {
         temperature: data.temperature ? data.temperature.toUpperCase() : null,
         volume: data.volume || null,
         sizeOptions: data.sizeOptions || null,
+        kotType: data.kotType?.trim() || null,
+        hsCode: data.hsCode?.trim() || null,
+        ...(extras.length > 0 && {
+          addOns: {
+            create: extras.map((a) => ({ name: a.name.trim(), price: a.price || 0 })),
+          },
+        }),
       },
     });
     await logActivity(session, {
@@ -360,6 +375,82 @@ export async function getCategories(restaurantId: string) {
     return { data: cats };
   } catch (err: any) {
     return { error: err?.message || "Failed to load categories" };
+  }
+}
+
+/**
+ * Category overview for the Menu → Category page: every category with its dish
+ * count and total order count (how many times its dishes have been ordered),
+ * plus the aggregate stats shown in the header cards.
+ */
+export async function getCategoryOverview(restaurantId: string) {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated" };
+
+  try {
+    const [cats, dishGroups, orderRows] = await Promise.all([
+      prisma.category.findMany({
+        where: { restaurantId },
+        orderBy: { displayOrder: "asc" },
+        select: { id: true, name: true, imageUrl: true, isActive: true },
+      }),
+      prisma.menuItem.groupBy({
+        by: ["categoryId"],
+        where: { restaurantId },
+        _count: { _all: true },
+      }),
+      // Order counts per category — join order_items → menu_items back to category.
+      prisma.$queryRaw<{ category_id: string; order_count: number }[]>`
+        SELECT mi."category_id" AS category_id, COUNT(oi."id")::int AS order_count
+        FROM "menu_items" mi
+        JOIN "order_items" oi ON oi."menu_item_id" = mi."id"
+        WHERE mi."restaurant_id" = ${restaurantId}
+        GROUP BY mi."category_id"
+      `,
+    ]);
+
+    const dishCountBy = new Map(dishGroups.map((g) => [g.categoryId, g._count._all]));
+    const orderCountBy = new Map(orderRows.map((r) => [r.category_id, Number(r.order_count)]));
+
+    const categories = cats.map((c) => ({
+      id: c.id,
+      name: c.name,
+      imageUrl: c.imageUrl,
+      isActive: c.isActive,
+      dishCount: dishCountBy.get(c.id) ?? 0,
+      orderCount: orderCountBy.get(c.id) ?? 0,
+    }));
+
+    const totalDishes = categories.reduce((s, c) => s + c.dishCount, 0);
+    const topSold = categories.reduce<(typeof categories)[number] | null>(
+      (best, c) => (best === null || c.orderCount > best.orderCount ? c : best),
+      null
+    );
+    const mostDishes = categories.reduce<(typeof categories)[number] | null>(
+      (best, c) => (best === null || c.dishCount > best.dishCount ? c : best),
+      null
+    );
+
+    return {
+      data: {
+        categories,
+        stats: {
+          total: categories.length,
+          totalDishes,
+          topSold: topSold && topSold.orderCount > 0
+            ? { name: topSold.name, orders: topSold.orderCount }
+            : null,
+          mostDishes: mostDishes && mostDishes.dishCount > 0
+            ? { name: mostDishes.name, dishes: mostDishes.dishCount }
+            : null,
+          avgDishesPerCategory: categories.length > 0
+            ? Math.round((totalDishes / categories.length) * 10) / 10
+            : 0,
+        },
+      },
+    };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to load category overview" };
   }
 }
 

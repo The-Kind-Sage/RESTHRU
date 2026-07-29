@@ -48,10 +48,15 @@ import { formatDistanceToNow } from 'date-fns';
 
 const PAGE_TITLES: Record<string, string> = {
   '/owner': 'Dashboard',
-  '/owner/menu': 'Menu Management',
+  '/owner/menu': 'Dishes',
+  '/owner/menu/dishes/create': 'Create Dish',
+  '/owner/menu/category': 'Category',
+  '/owner/menu/combo': 'Combo Offer',
+  '/owner/menu/combo/create': 'Create Combo Offer',
   '/owner/staff': 'Staff Management',
   '/owner/inventory': 'Inventory',
   '/owner/reports': 'Reports & Analytics',
+  '/owner/order': 'New Order',
   '/owner/orders': 'Orders',
   '/owner/logs': 'Activity Logs',
   '/owner/settings': 'Settings',

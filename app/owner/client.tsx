@@ -8,7 +8,7 @@ import { getGreeting } from "@/lib/helpers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp, ShoppingBag, LayoutGrid, Clock, ArrowRight, AlertTriangle } from "lucide-react";
+import { TrendingUp, ShoppingBag, LayoutGrid, Clock, ArrowRight, AlertTriangle, Receipt } from "lucide-react";
 import Link from "next/link";
 import type {
   DashboardStats,
@@ -17,8 +17,9 @@ import type {
   TopItem,
   Activity,
   TableOverviewItem,
+  Transaction,
 } from "@/lib/actions/dashboard";
-import { getRevenueChartData, getDashboardStats, getRecentOrders, getRecentActivity, getTableOverview } from "@/lib/actions/dashboard";
+import { getRevenueChartData, getDashboardStats, getRecentOrders, getRecentActivity, getTableOverview, getRecentTransactions } from "@/lib/actions/dashboard";
 import { ChartSkeleton } from "@/components/dashboard/skeletons";
 
 // ── Lazy-load heavy libraries ─────────────────────────────────────────────
@@ -46,6 +47,7 @@ type DashboardData = {
   topItems: TopItem[];
   activities: Activity[];
   tables: TableOverviewItem[];
+  transactions: Transaction[];
   errors?: string[];
 };
 
@@ -66,6 +68,7 @@ export default function DashboardClient({
   topItems,
   activities,
   tables,
+  transactions,
   errors: serverErrors,
 }: DashboardData) {
   const { user, restaurant } = useAuthStore();
@@ -77,6 +80,7 @@ export default function DashboardClient({
   const [liveOrders, setLiveOrders] = useState(orders);
   const [liveActivities, setLiveActivities] = useState(activities);
   const [liveTables, setLiveTables] = useState(tables);
+  const [liveTransactions, setLiveTransactions] = useState(transactions);
   const [pollError, setPollError] = useState<string | null>(null);
 
   // Period toggle now re-fetches chart data from the server action.
@@ -98,16 +102,18 @@ export default function DashboardClient({
     if (!restaurantId) return;
     const poll = async () => {
       const failures: string[] = [];
-      const [freshStats, freshOrders, freshActivities, freshTables] = await Promise.all([
+      const [freshStats, freshOrders, freshActivities, freshTables, freshTransactions] = await Promise.all([
         getDashboardStats(restaurantId).catch(() => { failures.push("stats"); return null; }),
         getRecentOrders(restaurantId, 10).catch(() => { failures.push("orders"); return null; }),
         getRecentActivity(restaurantId).catch(() => { failures.push("activity"); return null; }),
         getTableOverview(restaurantId).catch(() => { failures.push("tables"); return null; }),
+        getRecentTransactions(restaurantId).catch(() => { failures.push("transactions"); return null; }),
       ]);
       if (freshStats) setLiveStats(freshStats);
       if (freshOrders) setLiveOrders(freshOrders);
       if (freshActivities) setLiveActivities(freshActivities);
       if (freshTables) setLiveTables(freshTables);
+      if (freshTransactions) setLiveTransactions(freshTransactions);
       // Surface a persistent live-update failure rather than silently leaving
       // the owner looking at stale data with no indication anything is wrong.
       setPollError(
@@ -127,6 +133,19 @@ export default function DashboardClient({
     READY: "bg-success",
     SERVED: "bg-muted",
     CANCELLED: "bg-destructive",
+  };
+
+  // Bill/transaction statuses use their own palette (distinct from order statuses).
+  const billStatusColors: Record<string, string> = {
+    PAID: "bg-success text-white",
+    PENDING: "bg-warning text-white",
+    HELD: "bg-muted text-muted-foreground",
+    VOID: "bg-destructive text-white",
+  };
+
+  const formatTxnDate = (d: Date | string) => {
+    const date = new Date(d);
+    return `${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })} · ${date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
   };
 
   return (
@@ -464,6 +483,80 @@ export default function DashboardClient({
           </CardContent>
         </Card>
       </div>
+
+      {/* ── Transaction History ── */}
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-primary" />
+              Transaction History
+            </CardTitle>
+            <Link
+              href="/owner/reports"
+              className="text-sm text-primary hover:underline flex items-center gap-1"
+            >
+              View All <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {liveTransactions.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b">
+                    <th className="text-left font-medium py-2 pr-4">Bill</th>
+                    <th className="text-left font-medium py-2 pr-4 hidden sm:table-cell">Order</th>
+                    <th className="text-left font-medium py-2 pr-4 hidden md:table-cell">Method</th>
+                    <th className="text-left font-medium py-2 pr-4 hidden sm:table-cell">Date</th>
+                    <th className="text-right font-medium py-2 pr-4">VAT</th>
+                    <th className="text-right font-medium py-2 pr-4">Amount</th>
+                    <th className="text-right font-medium py-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {liveTransactions.map((txn) => (
+                    <tr key={txn.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
+                      <td className="py-3 pr-4 font-semibold whitespace-nowrap">{txn.billNumber}</td>
+                      <td className="py-3 pr-4 text-muted-foreground whitespace-nowrap hidden sm:table-cell">
+                        {txn.orderId ?? "—"}
+                        {txn.tableNumber != null && (
+                          <span className="text-xs"> · T{txn.tableNumber}</span>
+                        )}
+                      </td>
+                      <td className="py-3 pr-4 text-muted-foreground whitespace-nowrap hidden md:table-cell">
+                        {txn.paymentMethod}
+                      </td>
+                      <td className="py-3 pr-4 text-muted-foreground whitespace-nowrap hidden sm:table-cell">
+                        {formatTxnDate(txn.date)}
+                      </td>
+                      <td className="py-3 pr-4 text-right text-muted-foreground whitespace-nowrap">
+                        {txn.taxAmount > 0 ? formatCurrency(txn.taxAmount) : "—"}
+                      </td>
+                      <td className="py-3 pr-4 text-right font-semibold whitespace-nowrap">
+                        {formatCurrency(txn.totalAmount)}
+                      </td>
+                      <td className="py-3 text-right">
+                        <Badge
+                          variant="outline"
+                          className={billStatusColors[txn.status] ?? "bg-muted text-muted-foreground"}
+                        >
+                          {txn.status.charAt(0) + txn.status.slice(1).toLowerCase()}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-sm py-8 text-center">
+              No transactions yet
+            </p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
