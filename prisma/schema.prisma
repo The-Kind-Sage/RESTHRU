@@ -74,12 +74,6 @@ model Restaurant {
   vatNumber       String?  @map("vat_number")
   enableGST       Boolean  @default(false) @map("enable_gst")
   gstNumber       String?  @map("gst_number")
-  // Nepal IRD compliance — income-tax PAN, VAT registration number, and whether
-  // the restaurant is VAT-registered (drives whether bills are issued as full
-  // Tax Invoices with a 13% VAT breakdown vs. plain PAN bills). See gov.md.
-  panNumber       String?  @map("pan_number")
-  vatNumber       String?  @map("vat_number")
-  vatRegistered   Boolean  @default(false) @map("vat_registered")
   enableQRMenu    Boolean  @default(true) @map("enable_qr_menu")
   totalTables     Int      @default(0) @map("num_tables")
   totalStaff      Int      @default(0) @map("total_staff")
