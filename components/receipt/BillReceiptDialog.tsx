@@ -7,10 +7,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Printer, Loader2 } from "lucide-react";
+import { Printer, Loader2, Download } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import { useAuthStore } from "@/store/auth-store";
-import { formatReceiptHTML, printReceipt } from "@/lib/printing";
+import { formatReceiptHTML, printReceipt, downloadReceipt } from "@/lib/printing";
+import { toast } from "sonner";
 
 interface ReceiptItem {
   name: string;
@@ -41,6 +42,8 @@ interface Props {
   bill?: BillData;
   orderId?: string;
   tableName?: string;
+  /** Raw order type (DINE_IN / DELIVERY / …); rendered human-readable. */
+  orderType?: string;
 }
 
 export default function BillReceiptDialog({
@@ -50,7 +53,17 @@ export default function BillReceiptDialog({
   bill,
   orderId,
   tableName,
+  orderType,
 }: Props) {
+  const ORDER_TYPE_LABELS: Record<string, string> = {
+    DINE_IN: "Dine In",
+    TAKEAWAY: "Take away",
+    DELIVERY: "Delivery",
+    PICKUP: "Pick up",
+  };
+  const orderTypeLabel = orderType
+    ? ORDER_TYPE_LABELS[orderType.toUpperCase()] ?? orderType
+    : "";
   const { restaurant } = useAuthStore();
   const receiptRef = useRef<HTMLDivElement>(null);
   const [printLoading, setPrintLoading] = useState(false);
@@ -86,9 +99,9 @@ export default function BillReceiptDialog({
         minute: "2-digit",
       });
 
-  const handlePrint = () => {
-    setPrintLoading(true);
-    const html = formatReceiptHTML({
+  // Single source of truth so the saved copy matches the printed one exactly.
+  const buildReceiptHtml = () =>
+    formatReceiptHTML({
       restaurantName: restaurant?.name || "Restaurant",
       address: addrStr,
       phone: phoneStr,
@@ -104,8 +117,22 @@ export default function BillReceiptDialog({
       paymentMethod: bill?.paymentMethod || "N/A",
       date: `${dateStr} ${timeStr}`,
     });
-    printReceipt(html);
+
+  const handlePrint = () => {
+    setPrintLoading(true);
+    if (!printReceipt(buildReceiptHtml())) {
+      toast.error("Couldn't open the printer — check your browser's print settings.");
+    }
     setTimeout(() => setPrintLoading(false), 1000);
+  };
+
+  const handleDownload = () => {
+    const name = `bill-${bill?.billNumber || orderId || "receipt"}`;
+    if (downloadReceipt(buildReceiptHtml(), name)) {
+      toast.success("Bill downloaded");
+    } else {
+      toast.error("Couldn't download the bill.");
+    }
   };
 
   return (
@@ -138,7 +165,10 @@ export default function BillReceiptDialog({
                 <p className="font-semibold text-gray-800">
                   Bill: {bill?.billNumber || orderId || "N/A"}
                 </p>
-                {tableName && <p>Table: {tableName}</p>}
+                {/* Only dine-in has a table; other types name themselves so the
+                    receipt still says how the order was placed. */}
+                {tableName ? <p>Table: {tableName}</p> : null}
+                {orderTypeLabel && <p>Type: {orderTypeLabel}</p>}
               </div>
               <div className="text-right">
                 <p>{dateStr}</p>
@@ -229,6 +259,14 @@ export default function BillReceiptDialog({
               onClick={() => onOpenChange(false)}
             >
               Close
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 gap-2"
+              onClick={handleDownload}
+            >
+              <Download className="w-4 h-4" />
+              Download
             </Button>
             <Button
               className="flex-1 gap-2"

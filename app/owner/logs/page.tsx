@@ -77,15 +77,15 @@ const actionTypeConfig: Record<string, { label: string; color: string; icon: Rea
   WAITLIST_NOTIFY:       { label: 'Notified',       color: 'bg-blue-500/10 text-blue-600 border-blue-200',              icon: <MessageSquare className="h-3 w-3" /> },
   WAITLIST_SEAT:         { label: 'Waitlist Seated', color: 'bg-emerald-500/10 text-emerald-600 border-emerald-200',    icon: <UserPlus className="h-3 w-3" /> },
   WAITLIST_REMOVE:       { label: 'Waitlist Removed', color: 'bg-red-500/10 text-red-600 border-red-200',               icon: <UserMinus className="h-3 w-3" /> },
-  // Tables / Floor
+  // Tables / Space
   TABLE_MERGE:           { label: 'Tables Merged',  color: 'bg-purple-500/10 text-purple-600 border-purple-200',        icon: <Layers className="h-3 w-3" /> },
   TABLE_ADD:             { label: 'Table Added',    color: 'bg-emerald-500/10 text-emerald-600 border-emerald-200',     icon: <TableIcon className="h-3 w-3" /> },
   TABLE_STATUS_UPDATE:   { label: 'Table Updated',  color: 'bg-indigo-500/10 text-indigo-600 border-indigo-200',        icon: <TableIcon className="h-3 w-3" /> },
   TABLE_POSITION_UPDATE: { label: 'Table Moved',    color: 'bg-indigo-500/10 text-indigo-600 border-indigo-200',        icon: <TableIcon className="h-3 w-3" /> },
   TABLE_DELETE:          { label: 'Table Deleted',  color: 'bg-red-500/10 text-red-600 border-red-200',                 icon: <TableIcon className="h-3 w-3" /> },
-  FLOOR_ADD:             { label: 'Floor Added',    color: 'bg-emerald-500/10 text-emerald-600 border-emerald-200',     icon: <Layers className="h-3 w-3" /> },
-  FLOOR_RENAME:          { label: 'Floor Renamed',  color: 'bg-indigo-500/10 text-indigo-600 border-indigo-200',        icon: <Layers className="h-3 w-3" /> },
-  FLOOR_DELETE:          { label: 'Floor Deleted',  color: 'bg-red-500/10 text-red-600 border-red-200',                 icon: <Layers className="h-3 w-3" /> },
+  SPACE_ADD:             { label: 'Space Added',    color: 'bg-emerald-500/10 text-emerald-600 border-emerald-200',     icon: <Layers className="h-3 w-3" /> },
+  SPACE_RENAME:          { label: 'Space Renamed',  color: 'bg-indigo-500/10 text-indigo-600 border-indigo-200',        icon: <Layers className="h-3 w-3" /> },
+  SPACE_DELETE:          { label: 'Space Deleted',  color: 'bg-red-500/10 text-red-600 border-red-200',                 icon: <Layers className="h-3 w-3" /> },
   // Menu
   MENU_ITEM_CREATED:     { label: 'Menu Item Added', color: 'bg-emerald-500/10 text-emerald-600 border-emerald-200',    icon: <UtensilsCrossed className="h-3 w-3" /> },
   MENU_ITEM_UPDATED:     { label: 'Menu Item Updated', color: 'bg-indigo-500/10 text-indigo-600 border-indigo-200',     icon: <UtensilsCrossed className="h-3 w-3" /> },

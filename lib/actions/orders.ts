@@ -6,6 +6,7 @@ import { logActivity } from "./logs";
 import { verifyManagerApproval } from "@/lib/manager-approval";
 import { splitVatInclusive, NEPAL_VAT_RATE } from "@/lib/vat";
 import { fiscalYearBs } from "@/lib/nepali-date";
+import { newTableToken } from "@/lib/table-token";
 
 const SELF_VOID_ROLES = ["RECEPTIONIST", "MANAGER", "RESTAURANT_OWNER", "ADMIN", "SUPER_ADMIN"];
 
@@ -55,7 +56,15 @@ async function releaseTableForOrder(tx: any, order: { id: string; tableId: strin
       where: { id: order.tableId },
       data: otherOpen
         ? { currentOrderId: otherOpen.id }
-        : { status: "AVAILABLE", currentOrderId: null, occupiedSince: null, assignedWaiterId: null },
+        : {
+            status: "AVAILABLE",
+            currentOrderId: null,
+            occupiedSince: null,
+            assignedWaiterId: null,
+            // The party has paid and left: rotate the QR token so the link they
+            // scanned can't be used to order again once they're gone.
+            qrCode: newTableToken(),
+          },
     });
   }
 }
@@ -66,10 +75,18 @@ export async function notifyServers(
   order: { id: string; orderId: string; assignedWaiterId: string | null },
   title: string,
   message: string,
-  type: string
+  type: string,
+  opts?: {
+    /** Where the notification's "View" button should take the recipient. */
+    actionUrl?: string;
+    /** Never notify this user — used so the person who just acted isn't pinged. */
+    excludeUserId?: string;
+    /** Alert the whole front of house even when the order has an assigned waiter. */
+    notifyAll?: boolean;
+  }
 ) {
   let recipientIds: string[];
-  if (order.assignedWaiterId) {
+  if (order.assignedWaiterId && !opts?.notifyAll) {
     recipientIds = [order.assignedWaiterId];
   } else {
     // Don't notify owners about ORDER_READY — they don't need to hear every
@@ -83,6 +100,9 @@ export async function notifyServers(
     });
     recipientIds = servers.map((s) => s.id);
   }
+  if (opts?.excludeUserId) {
+    recipientIds = recipientIds.filter((id) => id !== opts.excludeUserId);
+  }
   if (recipientIds.length === 0) return;
 
   await prisma.notification.createMany({
@@ -94,14 +114,19 @@ export async function notifyServers(
       message,
       relatedEntityId: order.id,
       relatedEntityType: "Order",
+      actionUrl: opts?.actionUrl ?? null,
     })),
   });
 }
+
+const TABLE_ORDER_TYPES = ["DINE_IN"];
 
 export async function createOrder(data: {
   draftItems: Array<{ menuItem: { id: string, name: string, price: number }, quantity: number, notes?: string }>;
   tableNumber: string | null;
   guestCount: number;
+  /** DINE_IN | TAKEAWAY | DELIVERY | PICKUP. Defaults by table presence. */
+  orderType?: string;
 }) {
   const session = await getSession();
   if (!session || !session.restaurantId) {
@@ -157,9 +182,15 @@ export async function createOrder(data: {
       };
     }
 
-    // Resolve the table — required for dine-in so the kitchen knows where food goes
+    // Honour the caller's order type; fall back to the old table-presence rule
+    // for callers that don't send one.
+    const orderType = (data.orderType || (data.tableNumber ? "DINE_IN" : "TAKEAWAY")).toUpperCase();
+    const takesTable = TABLE_ORDER_TYPES.includes(orderType);
+
+    // Resolve the table — only dine-in sits at one. Ignoring it otherwise stops
+    // a delivery/takeaway order inheriting a stale table and occupying it.
     let table: Awaited<ReturnType<typeof prisma.restaurantTable.findUnique>> = null;
-    if (data.tableNumber) {
+    if (takesTable && data.tableNumber) {
       const tableNum = parseInt(data.tableNumber, 10);
       if (!isNaN(tableNum)) {
         table = await prisma.restaurantTable.findUnique({
@@ -196,7 +227,7 @@ export async function createOrder(data: {
               restaurantId,
               tableId: table?.id ?? null,
               orderId: nextNumber.toString(),
-              orderType: table ? "DINE_IN" : "TAKEAWAY",
+              orderType,
               status: "PENDING",
               subtotal,
               taxAmount,
@@ -237,6 +268,25 @@ export async function createOrder(data: {
       entityId: order.id,
       description: `Order ${order.orderId} created for table ${data.tableNumber} (${data.draftItems.length} items)`,
     });
+
+    // Ring the front of house (owner/reception/other waiters) for the new order.
+    // `notifyAll` overrides the assigned-waiter shortcut — the creator assigns
+    // themselves, so without it nobody but them would ever hear about it — and
+    // `excludeUserId` keeps the person who just tapped "send" from self-pinging.
+    // Best-effort: the order is already committed, so a failure here isn't fatal.
+    try {
+      const whereLabel = data.tableNumber ? `Table ${data.tableNumber}` : "Takeaway";
+      await notifyServers(
+        restaurantId,
+        order,
+        "New Order Request",
+        `Order #${order.orderId} added from ${whereLabel} — ${itemsToCreate.length} item${itemsToCreate.length !== 1 ? "s" : ""}, Rs ${totalAmount}`,
+        "NEW_ORDER",
+        { notifyAll: true, excludeUserId: session.id }
+      );
+    } catch (notifyErr) {
+      console.error("Failed to notify staff of new order:", notifyErr);
+    }
 
     if (unavailable.length > 0) {
       return { data: order, warning: `Skipped unavailable items: ${unavailable.join(", ")}` };
@@ -394,6 +444,11 @@ export async function settleOrder(data: {
   discountAmount?: number;
   discountReason?: string;
   paymentRef?: string;
+  /**
+   * Counter sale: the guest pays up front, so the order is billed the moment
+   * it's raised instead of after it has been cooked and served.
+   */
+  quickBill?: boolean;
 }) {
   const session = await getSession();
   if (!session || !session.restaurantId) {
@@ -421,7 +476,7 @@ export async function settleOrder(data: {
     ]);
     if (!order) return { error: "Order not found" };
     if (order.status === "CANCELLED") return { error: "Cannot bill a cancelled order" };
-    if (order.status === "PENDING" || order.status === "PREPARING") {
+    if (!data.quickBill && (order.status === "PENDING" || order.status === "PREPARING")) {
       return { error: "Order is still in the kitchen. Serve it before billing." };
     }
     if (order.bills.length > 0) return { error: "This order has already been billed" };

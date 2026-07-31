@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Download, Printer, Info, X, UtensilsCrossed, Loader2, ArrowUpRight } from 'lucide-react';
+import { Download, Printer, Info, X, UtensilsCrossed, Loader2, ArrowUpRight, Link as LinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,8 +27,10 @@ const QR_CODE_COLORS = [
 interface TableQRData {
   id: string;
   tableNumber: number;
-  floor: string;
+  space: string;
   name: string | null;
+  /** Rotating QR token — changes when the table is released after payment. */
+  qrCode: string;
 }
 
 export default function QRCodeCenterPage() {
@@ -36,13 +38,19 @@ export default function QRCodeCenterPage() {
   const restaurantId = restaurant?.id;
   const restaurantName = restaurant?.name || 'Restaurant';
 
+  // Read the origin only after mount. Reading window during render makes the
+  // server emit an empty origin while the client emits the real one, so the QR
+  // encodes different data in each pass and React reports a hydration mismatch.
+  const [origin, setOrigin] = useState('');
+  useEffect(() => setOrigin(window.location.origin), []);
+
   const [selectedQRPreview, setSelectedQRPreview] = useState<TableQRData | null>(null);
   const [bgColor, setBgColor] = useState(QR_CODE_COLORS[0]);
   const [customMessage, setCustomMessage] = useState('Scan to Order');
   const [dismissBanner, setDismissBanner] = useState(false);
   const [tables, setTables] = useState<TableQRData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedFloor, setSelectedFloor] = useState<string>('all');
+  const [selectedSpace, setSelectedSpace] = useState<string>('all');
   const [isApplying, setIsApplying] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
 
@@ -55,8 +63,9 @@ export default function QRCodeCenterPage() {
         result.data.map((t: any) => ({
           id: t.id,
           tableNumber: t.tableNumber,
-          floor: t.floor || 'Floor 1',
+          space: t.space || 'Space 1',
           name: t.name,
+          qrCode: t.qrCode || '',
         }))
       );
     } else if (result.error) {
@@ -69,13 +78,13 @@ export default function QRCodeCenterPage() {
     loadTables();
   }, [loadTables]);
 
-  // Derived from the tables actually loaded, so renamed/added/deleted floors
+  // Derived from the tables actually loaded, so renamed/added/deleted spaces
   // (managed on the Table Map page) are reflected here with no extra fetch.
-  const floors = Array.from(new Set(tables.map((t) => t.floor))).sort();
+  const spaces = Array.from(new Set(tables.map((t) => t.space))).sort();
 
-  const filteredTables = selectedFloor === 'all'
+  const filteredTables = selectedSpace === 'all'
     ? tables
-    : tables.filter((t) => t.floor === selectedFloor);
+    : tables.filter((t) => t.space === selectedSpace);
 
   const handleDownloadQR = (tableNumber: number) => {
     const svg = qrRef.current?.querySelector('svg');
@@ -127,7 +136,7 @@ export default function QRCodeCenterPage() {
   };
 
   const qrValue = selectedQRPreview && typeof window !== 'undefined'
-    ? `${window.location.origin}/r/${restaurantId}?table=${selectedQRPreview.tableNumber}`
+    ? `${origin}/r/${restaurantId}?table=${selectedQRPreview.tableNumber}`
     : '';
 
   return (
@@ -176,19 +185,19 @@ export default function QRCodeCenterPage() {
         </Card>
       )}
 
-      {/* QR Code Grid */}
+      {/* QR Code Grid — grouped by space */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Table QR Codes</h2>
-          <div className="flex gap-2">
-            {['all', ...floors].map((floor) => (
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <h2 className="text-lg font-semibold">QR Codes</h2>
+          <div className="flex gap-2 flex-wrap">
+            {['all', ...spaces].map((space) => (
               <Button
-                key={floor}
-                variant={selectedFloor === floor ? 'default' : 'outline'}
+                key={space}
+                variant={selectedSpace === space ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setSelectedFloor(floor)}
+                onClick={() => setSelectedSpace(space)}
               >
-                {floor === 'all' ? 'All Floors' : floor}
+                {space === 'all' ? 'All Spaces' : space}
               </Button>
             ))}
           </div>
@@ -204,63 +213,102 @@ export default function QRCodeCenterPage() {
             <p className="text-sm mt-1">Add tables in the Table Management section first.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredTables.map((table) => (
-              <Card
-                key={table.id}
-                className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => {
-                  setSelectedQRPreview(table);
-                  setTimeout(() => {
-                    const el = document.getElementById('qr-preview-content');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  }, 100);
-                }}
-              >
-                <CardContent className="p-4">
-                  <div className="flex justify-center mb-3">
-                    <div className="p-2 bg-white rounded-lg border">
-                      <QRCode
-                        value={`${typeof window !== 'undefined' ? window.location.origin : ''}/r/${restaurantId}?table=${table.tableNumber}`}
-                        size={100}
-                        bgColor="#ffffff"
-                        fgColor="#0f172a"
-                        level="H"
-                      />
+          Object.entries(
+            // Group the visible tables under their space heading.
+            filteredTables.reduce((acc: Record<string, TableQRData[]>, t) => {
+              const key = t.space || 'Unassigned Space';
+              (acc[key] ||= []).push(t);
+              return acc;
+            }, {})
+          ).map(([spaceName, spaceTables]) => (
+            <div key={spaceName} className="space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="h-5 w-1 rounded-full bg-primary" />
+                <h3 className="font-semibold text-primary">{spaceName}</h3>
+                <Badge variant="outline" className="text-[11px]">
+                  {spaceTables.length} {spaceTables.length === 1 ? 'Table' : 'Tables'}
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {spaceTables.map((table) => {
+                  // Points at the table's ordering route, not the menu book.
+                  //   • the table is addressed by its cuid, so it can't be swapped
+                  //     for a neighbour's by editing "table=1" to "table=2";
+                  //   • `k` is the rotating token, checked against THAT table, so a
+                  //     link kept from a previous sitting stops working once paid.
+                  const menuUrl = `${origin}/r/${restaurantId}/t/${table.id}${table.qrCode ? `?k=${table.qrCode}` : ''}`;
+                  return (
+                    <div key={table.id} className="rounded-xl border overflow-hidden bg-card">
+                      <div className="bg-muted/40 px-5 pt-6 pb-5 text-center">
+                        <p className="text-sm font-medium text-muted-foreground">Welcome To</p>
+                        <h4 className="text-xl font-bold mt-0.5 break-words">{restaurantName}</h4>
+
+                        {/* QR with the table label riding on its top border */}
+                        <div className="relative inline-block mt-6">
+                          <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 rounded-md bg-primary px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-primary-foreground whitespace-nowrap">
+                            {table.name || `Table ${table.tableNumber}`}
+                          </span>
+                          <div className="rounded-xl border-2 border-primary p-3 bg-white">
+                            <div className="bg-white p-2 rounded-lg">
+                              <QRCode
+                                value={menuUrl}
+                                size={120}
+                                bgColor="#ffffff"
+                                fgColor="#0f172a"
+                                level="H"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className="text-sm text-muted-foreground mt-5">Scan To Explore Our Menu</p>
+
+                        <div className="mt-6">
+                          <p className="text-[10px] text-muted-foreground">Powered By</p>
+                          <p className="text-sm font-extrabold tracking-tight">Resthru</p>
+                        </div>
+                      </div>
+
+                      {/* Footer: link + actions */}
+                      <div className="flex items-center gap-2 border-t px-3 py-2.5">
+                        <a
+                          href={menuUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 min-w-0 flex-1 text-xs text-primary hover:underline"
+                          title={menuUrl}
+                        >
+                          <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-primary/10">
+                            <LinkIcon className="h-3 w-3" />
+                          </span>
+                          <span className="truncate">{menuUrl}</span>
+                        </a>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 flex-shrink-0"
+                          aria-label="Download QR"
+                          onClick={() => handleDownloadQR(table.tableNumber)}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 flex-shrink-0"
+                          aria-label="Print QR"
+                          onClick={() => handlePrintQR(table.tableNumber)}
+                        >
+                          <Printer className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-center mb-3">
-                    <p className="font-semibold text-sm">Table {table.tableNumber}</p>
-                    <p className="text-xs text-muted-foreground">{table.floor}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 h-8"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownloadQR(table.tableNumber);
-                      }}
-                    >
-                      <Download className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 h-8"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePrintQR(table.tableNumber);
-                      }}
-                    >
-                      <Printer className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))
         )}
       </div>
 
@@ -329,7 +377,7 @@ export default function QRCodeCenterPage() {
                 {/* QR Code */}
                 <div className="mb-4 p-2 bg-white rounded-lg">
                   <QRCode
-                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/r/${restaurantId}?table=${selectedQRPreview?.tableNumber || 1}`}
+                    value={`${origin}/r/${restaurantId}?table=${selectedQRPreview?.tableNumber || 1}`}
                     size={120}
                     bgColor="#ffffff"
                     fgColor="#0f172a"
@@ -375,7 +423,7 @@ export default function QRCodeCenterPage() {
               {/* QR Code */}
               <div className="p-3 bg-white rounded-xl shadow-sm border">
                 <QRCode
-                  value={`${typeof window !== 'undefined' ? window.location.origin : ''}/r/${restaurantId}?table=${selectedQRPreview.tableNumber}`}
+                  value={`${origin}/r/${restaurantId}?table=${selectedQRPreview.tableNumber}`}
                   size={160}
                   bgColor="#ffffff"
                   fgColor="#0f172a"

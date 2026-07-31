@@ -26,17 +26,21 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { createOrder } from '@/lib/actions/orders';
+import { createOrder, settleOrder } from '@/lib/actions/orders';
+import BillReceiptDialog from '@/components/receipt/BillReceiptDialog';
+import { showAlertToast } from '@/components/shared/alert-toast';
 import { formatCurrency } from '@/lib/format';
 
 export default function ActiveOrderSheet() {
   const { 
     draftItems, getTotalItems, getTotalPrice, 
-    removeItem, orderState, setOrderState, clearDraft, tableNumber, guestCount
+    removeItem, orderState, setOrderState, clearDraft, tableNumber, guestCount, orderType, quickBill
   } = useWaiterOrderStore();
   
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [payMethod, setPayMethod] = useState<'CASH' | 'ESEWA' | 'KHALTI' | 'FONEPAY'>('CASH');
+  const [billReceipt, setBillReceipt] = useState<{ open: boolean; items: any[]; bill: any; orderId?: string } | null>(null);
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
 
@@ -53,7 +57,8 @@ export default function ActiveOrderSheet() {
         notes: item.notes
       })),
       tableNumber,
-      guestCount
+      guestCount,
+      orderType
     };
 
     const result = await createOrder(payload);
@@ -68,10 +73,66 @@ export default function ActiveOrderSheet() {
       toast.warning(result.warning);
     }
 
+    const order = (result as any).data;
+
+    // Quick billing is a counter sale: the guest pays as they order, so bill it
+    // straight away and show the receipt instead of routing it to the kitchen.
+    if (quickBill && order?.id) {
+      // Snapshot the lines before clearDraft() wipes them for the receipt.
+      const receiptItems = draftItems.map((item) => {
+        const unit = item.menuItem.discountPrice ?? item.menuItem.price;
+        return {
+          name: item.menuItem.name,
+          qty: item.quantity,
+          price: unit,
+          total: unit * item.quantity,
+        };
+      });
+
+      const settled = await settleOrder({
+        orderId: order.id,
+        paymentMethod: payMethod,
+        quickBill: true,
+      });
+
+      if ('error' in settled && settled.error) {
+        // The order exists but isn't billed — say so rather than implying it's paid.
+        toast.error(`Order ${order.orderId} created, but billing failed: ${settled.error}`);
+        setOrderState('CONFIRMED');
+        setIsOpen(false);
+        clearDraft();
+        return;
+      }
+
+      setOrderState('CONFIRMED');
+      setIsOpen(false);
+      clearDraft();
+      setBillReceipt({
+        open: true,
+        items: receiptItems,
+        bill: (settled as any).data,
+        orderId: order.orderId,
+      });
+      toast.success('Bill generated', {
+        icon: <CheckCircle2 className="text-green-500" />
+      });
+      return;
+    }
+
     setOrderState('CONFIRMED');
     setIsOpen(false);
-    toast.success('Order Sent to Kitchen', {
-      icon: <CheckCircle2 className="text-green-500" />
+    // Same alert card the live notifications use, so every "something happened"
+    // popup in the app looks and behaves the same.
+    showAlertToast({
+      title: 'Order Sent to Kitchen',
+      message: `Order #${order?.orderId ?? ''}${tableNumber ? ` (Table ${tableNumber})` : ''} - ${totalItems} item${totalItems !== 1 ? 's' : ''}`,
+      actionUrl: window.location.pathname.startsWith('/reception')
+        ? '/reception/orders'
+        : window.location.pathname.startsWith('/owner')
+        ? '/owner/orders'
+        : '/order',
+      actionLabel: 'View Order',
+      icon: <CheckCircle2 className="h-5 w-5" />,
     });
     clearDraft(); // clear after confirmed
   };
@@ -85,7 +146,10 @@ export default function ActiveOrderSheet() {
     toast('Order Cancelled');
   };
 
-  if (totalItems === 0 && orderState === 'DRAFT') {
+  // Stay mounted while a quick-bill receipt is on screen: clearDraft() empties
+  // the cart and resets orderState, which would otherwise unmount this
+  // component and take the receipt with it before it could be read or printed.
+  if (totalItems === 0 && orderState === 'DRAFT' && !billReceipt?.open) {
     return null;
   }
 
@@ -177,13 +241,38 @@ export default function ActiveOrderSheet() {
           
           {orderState === 'DRAFT' ? (
             <>
+              {/* A quick bill is recorded as paid on the spot, so the method has
+                  to be chosen deliberately rather than assumed. */}
+              {quickBill && (
+                <div className="px-2">
+                  <p className="text-xs font-medium text-muted-foreground mb-1.5">Payment method</p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {(['CASH', 'ESEWA', 'KHALTI', 'FONEPAY'] as const).map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => setPayMethod(m)}
+                        className={
+                          'rounded-lg border py-2 text-xs font-semibold transition-colors ' +
+                          (payMethod === m
+                            ? 'border-primary bg-primary text-white'
+                            : 'border-border text-muted-foreground hover:bg-muted')
+                        }
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <Button 
                 onClick={handleConfirmOrder} 
                 disabled={isSubmitting || draftItems.length === 0}
                 className="w-full h-14 text-lg font-bold rounded-xl bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
               >
                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
-                {isSubmitting ? 'Sending...' : 'Confirm'}
+                {isSubmitting
+                  ? (quickBill ? 'Billing...' : 'Sending...')
+                  : (quickBill ? 'Generate Bill' : 'Confirm')}
               </Button>
               <AlertDialog open={showCancelAlert} onOpenChange={setShowCancelAlert}>
                 <AlertDialogTrigger asChild>
@@ -226,6 +315,20 @@ export default function ActiveOrderSheet() {
           )}
         </DrawerFooter>
       </DrawerContent>
+
+      {/* Receipt for a quick bill, shown as soon as the sale is recorded */}
+      {billReceipt && (
+        <BillReceiptDialog
+          open={billReceipt.open}
+          onOpenChange={(o) =>
+            setBillReceipt((prev) => (prev ? { ...prev, open: o } : prev))
+          }
+          items={billReceipt.items}
+          bill={billReceipt.bill}
+          orderId={billReceipt.orderId}
+          orderType={orderType}
+        />
+      )}
     </Drawer>
   );
 }

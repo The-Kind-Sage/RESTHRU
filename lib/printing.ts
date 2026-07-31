@@ -180,13 +180,186 @@ export function formatCreditNoteHTML(d: CreditNotePrintData) {
 </body></html>`;
 }
 
-export function printReceipt(html: string) {
-  const w = window.open("", "", "width=300,height=600");
-  if (!w) return;
-  w.document.write(html);
-  w.document.close();
-  w.focus();
-  setTimeout(() => { w.print(); }, 500);
+/**
+ * Kitchen Order Ticket (KOT) — the docket the kitchen cooks from.
+ *
+ * Deliberately price-free and set in much larger type than the customer
+ * receipt: it is read at a glance across a hot, busy pass, so quantity and
+ * item name dominate and special instructions are called out rather than
+ * tucked away.
+ */
+export function formatKOTHTML(data: {
+  kotNumber: number | string;
+  /** Omitted from the docket when the order has no table (delivery/takeaway). */
+  tableLabel?: string | null;
+  orderTypeLabel: string;
+  waiterName: string;
+  /** Pre-formatted, e.g. "29 Jul 2026 10:22 PM". */
+  orderedAt: string;
+  items: Array<{ name: string; qty: number; notes?: string | null }>;
+  reprint?: boolean;
+}) {
+  const totalDishes = data.items.length;
+  const totalQty = data.items.reduce((s, i) => s + i.qty, 0);
+
+  return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>KOT ${escapeHtml(String(data.kotNumber))}</title>
+<style>
+  @page { margin: 0; size: 80mm auto; }
+  body { font-family: 'Courier New', monospace; font-size: 13px; width: 72mm; margin: 0 auto; padding: 4mm 0; color: #000; }
+  .center { text-align: center; }
+  .bold { font-weight: bold; }
+  .kot-title { font-size: 21px; font-weight: bold; }
+  .table-label { font-size: 16px; font-weight: bold; margin-top: 3px; }
+  .meta { margin-top: 2px; }
+  .divider { border-top: 1px dashed #000; margin: 6px 0; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-weight: bold; padding-bottom: 2px; }
+  td { padding: 3px 0; vertical-align: top; }
+  .qty-col { text-align: right; white-space: nowrap; }
+  .sn-col { width: 26px; }
+  .notes { font-size: 11px; font-style: italic; padding-left: 26px; }
+  .reprint { border: 2px solid #000; padding: 2px; font-weight: bold; margin-bottom: 5px; }
+  .thanks { margin-top: 10px; }
+</style></head><body>
+  ${data.reprint ? `<div class="center reprint">*** REPRINT ***</div>` : ""}
+  <div class="center kot-title">KOT ${escapeHtml(String(data.kotNumber))}</div>
+  ${
+    data.tableLabel
+      ? `<div class="center table-label">Table: ${escapeHtml(data.tableLabel)}</div>`
+      : `<div class="center table-label">${escapeHtml(data.orderTypeLabel)}</div>`
+  }
+
+  <div class="meta">Type: ${escapeHtml(data.orderTypeLabel)}</div>
+  <div class="meta">Order By: ${escapeHtml(data.waiterName)}</div>
+  <div class="meta">Order At: ${escapeHtml(data.orderedAt)}</div>
+
+  <div class="divider"></div>
+  <table>
+    <tr><th class="sn-col">S.N</th><th>Dishes</th><th class="qty-col">QTY</th></tr>
+  </table>
+  <div class="divider"></div>
+  <table>
+    ${data.items
+      .map(
+        (i, idx) => `<tr>
+          <td class="sn-col">${idx + 1}.</td>
+          <td>${escapeHtml(i.name)}${
+            i.notes ? `<div class="notes">** ${escapeHtml(i.notes)}</div>` : ""
+          }</td>
+          <td class="qty-col">${i.qty}</td>
+        </tr>`
+      )
+      .join("")}
+    <tr class="bold">
+      <td colspan="2">Total (Dishes/QTY)</td>
+      <td class="qty-col">${totalDishes}/${totalQty}</td>
+    </tr>
+  </table>
+  <div class="divider"></div>
+
+  <div class="center thanks">Thank You!</div>
+</body></html>`;
+}
+
+/**
+ * Saves a receipt/docket to a file.
+ *
+ * Writes the same self-contained HTML that `printReceipt` sends to the printer,
+ * so the saved copy is byte-identical to the paper one — it opens in any
+ * browser and can be re-printed or saved as PDF from there. Kept dependency
+ * free on purpose: generating a true PDF client-side needs a library, which
+ * isn't worth pulling in just to archive a bill.
+ *
+ * Returns false if the browser blocks the download.
+ */
+export function downloadReceipt(html: string, filename: string): boolean {
+  if (typeof document === "undefined") return false;
+  try {
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename.toLowerCase().endsWith(".html") ? filename : `${filename}.html`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // Give the browser a moment to start the download before revoking.
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Sends a receipt/docket to the printer.
+ *
+ * Uses a hidden same-page iframe rather than `window.open`: a popup is blocked
+ * by default in most browsers unless the click is trusted all the way through,
+ * and a blocked popup fails *silently* — the cashier taps Print and nothing at
+ * all happens. An iframe is never popup-blocked.
+ *
+ * Returns false only when the document itself can't be created, so callers can
+ * surface a real error instead of leaving the user guessing.
+ */
+export function printReceipt(html: string): boolean {
+  if (typeof document === "undefined") return false;
+
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("aria-hidden", "true");
+  // Kept on-page but visually nowhere: `display:none` stops some browsers
+  // rendering the document at all, which prints a blank sheet.
+  iframe.style.cssText =
+    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow?.document;
+  if (!doc) {
+    iframe.remove();
+    return false;
+  }
+
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    iframe.remove();
+  };
+
+  // onload and the fallback timer can both fire; without this the user gets
+  // two print dialogs (and two dockets).
+  let started = false;
+  const run = () => {
+    if (started) return;
+    started = true;
+    const win = iframe.contentWindow;
+    if (!win) return cleanup();
+    // Tear down once the print dialog closes; the timeout is a backstop for
+    // browsers that never fire afterprint (and so would leak the iframe).
+    win.addEventListener?.("afterprint", cleanup);
+    setTimeout(cleanup, 60_000);
+    try {
+      win.focus();
+      win.print();
+    } catch {
+      cleanup();
+    }
+  };
+
+  // Wait for the written document to be laid out, or the sheet comes out blank.
+  if (doc.readyState === "complete") {
+    setTimeout(run, 50);
+  } else {
+    iframe.onload = run;
+    setTimeout(run, 500); // fallback if onload doesn't fire for a written doc
+  }
+
+  return true;
 }
 
 export function generateESCPOS(data: {

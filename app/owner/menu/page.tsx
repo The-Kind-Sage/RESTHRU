@@ -37,6 +37,7 @@ import { FOOD_TYPES, FOOD_SUB_TYPES, SPICE_LEVELS, ALLERGENS } from '@/lib/const
 import { uploadImage } from '@/lib/upload';
 import { useAuthStore } from '@/store/auth-store';
 import { useUpgradeStore } from '@/store/upgrade-store';
+import { portalBase } from '@/lib/portal';
 import {
   updateCategory, deleteCategory as deleteCategoryAction,
   toggleCategoryActive as toggleCategoryActiveAction,
@@ -567,7 +568,7 @@ export default function MenuPage() {
               <p className="text-sm text-muted-foreground">{categories.find(c => c.id === selectedCategory)?.name || 'Select a category'}</p>
             </div>
             <div className="flex gap-2">
-              <Button onClick={() => router.push('/owner/menu/dishes/create')}>
+              <Button onClick={() => router.push(`${portalBase()}/menu/dishes/create`)}>
                 <Plus className="w-4 h-4 mr-2" />Add Dishes
               </Button>
               <Button

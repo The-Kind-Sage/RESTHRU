@@ -26,7 +26,7 @@ export async function addTable(data: {
   name?: string;
   capacity: number;
   shape: string;
-  floor: string;
+  space: string;
   positionX: number;
   positionY: number;
 }) {
@@ -46,7 +46,7 @@ export async function addTable(data: {
         name: data.name || null,
         capacity: data.capacity,
         shape: data.shape,
-        floor: data.floor,
+        space: data.space,
         positionX: data.positionX,
         positionY: data.positionY,
       },

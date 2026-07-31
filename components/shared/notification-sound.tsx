@@ -3,6 +3,8 @@
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { getMyUnreadNotifications } from '@/lib/actions/notifications';
+import { resolveNotificationUrl } from '@/lib/notification-route';
+import { AlertToast, ALERT_DURATION_MS } from '@/components/shared/alert-toast';
 
 /**
  * System-wide notification sound.
@@ -71,24 +73,76 @@ function getAudioContext(): AudioContext | null {
   return audioCtx;
 }
 
+/** True when the browser's autoplay policy is still blocking the chime. */
+export function isAudioBlocked(): boolean {
+  const ctx = audioCtx;
+  return !ctx || ctx.state !== 'running';
+}
+
+/**
+ * Unlocks audio. Browsers only allow an AudioContext to start from inside a
+ * real user gesture, so this must be called from a click/keypress handler.
+ * Playing a zero-volume blip in the same tick is what actually flips Safari/iOS
+ * out of the suspended state.
+ */
+export function unlockAudio(): Promise<boolean> {
+  const ctx = getAudioContext();
+  if (!ctx) return Promise.resolve(false);
+  const kick = () => {
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.01);
+    } catch {
+      // ignore — the resume() below is what matters most
+    }
+  };
+  if (ctx.state === 'running') {
+    return Promise.resolve(true);
+  }
+  return ctx
+    .resume()
+    .then(() => {
+      kick();
+      return ctx.state === 'running';
+    })
+    .catch(() => false);
+}
+
 /** Resume/create the AudioContext on the user's first interaction. */
 function bindAudioUnlock() {
   if (audioUnlockBound || typeof window === 'undefined') return;
   audioUnlockBound = true;
   const unlock = () => {
-    const ctx = getAudioContext();
-    if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+    unlockAudio().then((ok) => {
+      // Keep listening until audio is genuinely running — the first gesture
+      // can land while the context is still initialising.
+      if (ok) {
+        window.removeEventListener('pointerdown', unlock);
+        window.removeEventListener('keydown', unlock);
+      }
+    });
   };
   window.addEventListener('pointerdown', unlock);
   window.addEventListener('keydown', unlock);
 }
 
-/** Plays a clear two-tone "ding-dong" ring. Silent if audio is unavailable. */
-function playRing() {
+/**
+ * Plays a clear two-tone "ding-dong" ring.
+ * Returns false when the browser's autoplay policy silently swallowed it, so
+ * the caller can offer the user a way to switch sound on.
+ */
+function playRing(): boolean {
   try {
     const ctx = getAudioContext();
-    if (!ctx) return;
+    if (!ctx) return false;
     if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    // A suspended context accepts the scheduling calls below but emits nothing.
+    if (ctx.state !== 'running') return false;
 
     const base = ctx.currentTime;
     const tone = (freq: number, offset: number, duration = 0.35) => {
@@ -106,8 +160,10 @@ function playRing() {
     };
     tone(880, 0);      // ding
     tone(1174.66, 0.18); // dong (a fourth up)
+    return true;
   } catch {
     // Ignore — never let a failed chime break the app.
+    return false;
   }
 }
 
@@ -157,16 +213,44 @@ async function poll() {
   saveWatermark(userId, watermark);
 
   // One ring for the whole batch, plus a toast per notification.
-  playRing();
+  const rang = playRing();
   if (typeof navigator !== 'undefined' && navigator.vibrate) {
     navigator.vibrate([150, 80, 150]);
   }
   fresh.forEach((n) => {
-    toast(n.title, {
-      description: n.message,
-      duration: 8000,
-      closeButton: true,
-    });
+    const actionUrl = resolveNotificationUrl(n);
+    // The very first alert in a tab often can't make a sound: browsers block
+    // audio until the user has interacted with the page. Rather than fail
+    // silently, offer to switch it on straight from the popup.
+    const needsSoundOptIn = !rang;
+
+    toast.custom(
+      (id) => (
+        <AlertToast
+          toastId={id}
+          title={n.title}
+          message={n.message}
+          actionUrl={actionUrl}
+          actionLabel={n.relatedEntityType === 'Order' ? 'View Order' : 'View'}
+          onEnableSound={
+            needsSoundOptIn
+              ? () => {
+                  unlockAudio().then((ok) => {
+                    toast.dismiss(id);
+                    if (ok) {
+                      playRing();
+                      toast.success('Notification sound enabled');
+                    } else {
+                      toast.error('Your browser blocked audio for this site');
+                    }
+                  });
+                }
+              : undefined
+          }
+        />
+      ),
+      { duration: ALERT_DURATION_MS }
+    );
   });
 }
 

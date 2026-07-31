@@ -2,7 +2,14 @@
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, BellOff, Loader2, ArrowRight, XCircle, Banknote, Ban, Receipt } from "lucide-react";
+import {
+  Loader2, ArrowRight, XCircle, Banknote, Ban, Receipt, Printer,
+  Search, Plus, ChevronDown, Utensils, Bike, CalendarCheck, ShoppingBag,
+  ShoppingCart, FileText,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +42,33 @@ import { Separator } from "@/components/ui/separator";
 import ManagerApprovalDialog from "@/components/dashboard/manager-approval-dialog";
 import BillReceiptDialog from "@/components/receipt/BillReceiptDialog";
 import { getBill } from "@/lib/actions/bills";
+import KotDialog from "@/components/kot/KotDialog";
+
+type AddOrderKey =
+  | "DINE_IN" | "DELIVERY" | "RESERVATION" | "TAKEAWAY" | "PICKUP" | "QUICK_BILL";
+
+const ADD_ORDER_OPTIONS: Array<{ key: AddOrderKey; label: string; Icon: React.ElementType }> = [
+  { key: "DINE_IN",    label: "Dine In order",  Icon: Utensils },
+  { key: "DELIVERY",   label: "Delivery order", Icon: Bike },
+  { key: "RESERVATION",label: "Reservation",    Icon: CalendarCheck },
+  { key: "TAKEAWAY",   label: "Take away",      Icon: ShoppingBag },
+  { key: "PICKUP",     label: "Pick up",        Icon: ShoppingCart },
+  { key: "QUICK_BILL", label: "Quick billing",  Icon: FileText },
+];
+
+const ORDER_TYPE_LABELS: Record<string, string> = {
+  DINE_IN: "Dine In",
+  TAKEAWAY: "Takeaway",
+  DELIVERY: "Delivery",
+  PICKUP: "Pick up",
+};
+
+/** Dine-in orders are identified by their table; the rest by their type. */
+function orderPlaceLabel(order: any): string {
+  if (order?.table?.tableNumber) return `Table ${order.table.tableNumber}`;
+  const t = String(order?.orderType ?? "").toUpperCase();
+  return ORDER_TYPE_LABELS[t] ?? "Takeaway";
+}
 
 type OrderStatus = "PENDING" | "PREPARING" | "READY" | "SERVED" | "CANCELLED";
 
@@ -56,7 +90,9 @@ export default function LiveOrdersPage() {
   const canSelfVoid = user?.role && SELF_VOID_ROLES.includes(user.role);
   const [orders, setOrders] = useState<any[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<OrderStatus | "all">("all");
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [addOrderOpen, setAddOrderOpen] = useState(false);
+  const router = useRouter();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [busyOrderId, setBusyOrderId] = useState<string | null>(null);
@@ -68,25 +104,12 @@ export default function LiveOrdersPage() {
   const [selfVoidTarget, setSelfVoidTarget] = useState<any>(null); // 'item' | 'order'
   const [cancelTarget, setCancelTarget] = useState<any>(null);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [billReceipt, setBillReceipt] = useState<{ open: boolean; items: any[]; bill: any; orderId?: string; tableName?: string }>({ open: false, items: [], bill: null });
-  const audioCtxRef = useRef<AudioContext | null>(null);
-
-  const playSound = useCallback(() => {
-    try {
-      if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
-      const ctx = audioCtxRef.current;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.15);
-    } catch { /* audio not available */ }
-  }, []);
-
+  const [billReceipt, setBillReceipt] = useState<{ open: boolean; items: any[]; bill: any; orderId?: string; tableName?: string; orderType?: string }>({ open: false, items: [], bill: null });
+  // Kitchen docket preview — opened after Start Cooking, or for a reprint.
+  const [kotState, setKotState] = useState<{ orderId: string | null; reprint: boolean }>({
+    orderId: null,
+    reprint: false,
+  });
   const refresh = useCallback(() => {
     if (!restaurantId) return;
     getOrdersWithItems(restaurantId, 50).then(setOrders).catch(() => {});
@@ -106,9 +129,50 @@ export default function LiveOrdersPage() {
   );
 
   const filteredOrders = useMemo(() => {
-    if (selectedFilter === "all") return orders;
-    return orders.filter((o: any) => o.status === selectedFilter);
-  }, [orders, selectedFilter]);
+    const byStatus =
+      selectedFilter === "all"
+        ? orders
+        : orders.filter((o: any) => o.status === selectedFilter);
+
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return byStatus;
+    // Match on order number, table, customer, or any dish on the ticket.
+    return byStatus.filter((o: any) =>
+      String(o.orderId).toLowerCase().includes(q) ||
+      String(o.table?.tableNumber ?? "").toLowerCase().includes(q) ||
+      String(o.customerName ?? "").toLowerCase().includes(q) ||
+      (o.items || []).some((i: any) => String(i.menuItemName ?? "").toLowerCase().includes(q))
+    );
+  }, [orders, selectedFilter, searchQuery]);
+
+  /**
+   * Routes the "Add New Order" shortcuts. This screen is shared by the owner
+   * and reception portals, so the destination is resolved from the current
+   * portal rather than hard-coded.
+   */
+  const handleAddOrder = (key: AddOrderKey) => {
+    setAddOrderOpen(false);
+    const portal = window.location.pathname.startsWith("/owner") ? "/owner" : "/reception";
+
+    switch (key) {
+      case "DINE_IN":
+      case "TAKEAWAY":
+      case "DELIVERY":
+      case "PICKUP":
+        // Order entry reads ?type= and records it on the order, so a delivery
+        // ticket says Delivery and carries no table.
+        router.push(`${portal}/order?type=${key}`);
+        break;
+      case "QUICK_BILL":
+        // Counter sale: same order-entry screen, but the cart bills it on the
+        // spot (quick=1) rather than sending it to the kitchen.
+        router.push(`${portal}/order?type=TAKEAWAY&quick=1`);
+        break;
+      case "RESERVATION":
+        toast.info("Reservations aren't built yet.");
+        break;
+    }
+  };
 
   const ordersByStatus = useMemo(() => ({
     PENDING: filteredOrders.filter((o: any) => o.status === "PENDING"),
@@ -138,6 +202,9 @@ export default function LiveOrdersPage() {
     toast.success(`Order ${order.orderId} → ${statusConfig[status].label}`);
     // Update the dialog copy too if it's open on this order
     setSelectedOrder((prev: any) => (prev?.id === order.id ? { ...prev, status } : prev));
+    // Starting the cook is the moment the kitchen needs its docket, so offer to
+    // print it rather than forcing a separate trip through the order dialog.
+    if (status === "PREPARING") setKotState({ orderId: order.id, reprint: false });
     refresh();
   };
 
@@ -186,6 +253,7 @@ export default function LiveOrdersPage() {
       bill: billData,
       orderId: order.orderId,
       tableName: order.table ? `T${order.table.tableNumber}` : undefined,
+      orderType: order.orderType,
     });
   };
 
@@ -220,16 +288,41 @@ export default function LiveOrdersPage() {
                 </Badge>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-3 py-1 bg-success/10 border border-success/20 rounded-full">
-                  <div className="relative w-2 h-2">
-                    <div className="absolute inset-0 bg-success rounded-full animate-pulse" />
-                    <div className="absolute inset-0 bg-success rounded-full" />
-                  </div>
-                  <span className="text-xs font-semibold text-primary">Live</span>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search"
+                    className="pl-9 w-full sm:w-56"
+                  />
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => { setSoundEnabled(!soundEnabled); if (soundEnabled) playSound(); }}>
-                  {soundEnabled ? <Bell className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
-                </Button>
+
+                <Popover open={addOrderOpen} onOpenChange={setAddOrderOpen}>
+                  <PopoverTrigger asChild>
+                    <Button className="gap-2">
+                      <Plus className="w-4 h-4" /> Add New Order
+                      <ChevronDown className="w-4 h-4 opacity-80" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-[420px] max-w-[92vw] p-5">
+                    <h3 className="text-lg font-bold mb-4">Add New Order</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {ADD_ORDER_OPTIONS.map(({ key, label, Icon }) => (
+                        <button
+                          key={key}
+                          onClick={() => handleAddOrder(key)}
+                          className="flex items-center gap-3 rounded-lg bg-muted/50 hover:bg-muted px-3 py-4 text-left transition-colors"
+                        >
+                          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md bg-background border">
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <span className="text-sm font-medium">{label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
             <div className="flex gap-2 overflow-x-auto pb-2">
@@ -288,7 +381,7 @@ export default function LiveOrdersPage() {
                                 <div>
                                   <h3 className="font-semibold text-sm">{order.orderId}</h3>
                                   <p className="text-xs text-muted-foreground">
-                                    {order.table ? `Table ${order.table.tableNumber}` : "Takeaway"}
+                                    {orderPlaceLabel(order)}
                                   </p>
                                 </div>
                                 <Badge variant={order.status === "PENDING" ? "default" : "outline"}>
@@ -379,7 +472,7 @@ export default function LiveOrdersPage() {
           <DialogHeader>
             <DialogTitle>{selectedOrder?.orderId || "Order Details"}</DialogTitle>
             <DialogDescription>
-              {selectedOrder?.table ? `Table ${selectedOrder.table.tableNumber}` : "Takeaway"} - {statusConfig[selectedOrder?.status as OrderStatus]?.label || "Unknown"}
+              {orderPlaceLabel(selectedOrder)} - {statusConfig[selectedOrder?.status as OrderStatus]?.label || "Unknown"}
             </DialogDescription>
           </DialogHeader>
           {selectedOrder && (
@@ -471,6 +564,16 @@ export default function LiveOrdersPage() {
             </div>
           )}
           <DialogFooter className="gap-2">
+            {/* Reprint — printers jam and kitchens mislay dockets. */}
+            {selectedOrder && !["CANCELLED"].includes(selectedOrder.status) && (
+              <Button
+                variant="outline"
+                className="gap-1"
+                onClick={() => setKotState({ orderId: selectedOrder.id, reprint: true })}
+              >
+                <Printer className="w-4 h-4" /> Print KOT
+              </Button>
+            )}
             {selectedOrder && statusConfig[selectedOrder.status as OrderStatus]?.nextStatus && (
               <Button
                 disabled={busyOrderId === selectedOrder.id}
@@ -511,6 +614,15 @@ export default function LiveOrdersPage() {
         bill={billReceipt.bill}
         orderId={billReceipt.orderId}
         tableName={billReceipt.tableName}
+        orderType={billReceipt.orderType}
+      />
+
+      {/* Kitchen docket — shown after Start Cooking and for reprints */}
+      <KotDialog
+        open={!!kotState.orderId}
+        onOpenChange={(o) => !o && setKotState({ orderId: null, reprint: false })}
+        orderId={kotState.orderId}
+        reprint={kotState.reprint}
       />
 
       {canSelfVoid ? (

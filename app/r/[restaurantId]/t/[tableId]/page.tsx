@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -65,6 +65,10 @@ export default function CustomerMenuPage() {
   const params = useParams();
   const restaurantId = params.restaurantId as string;
   const tableId = params.tableId as string;
+  // Rotating QR token from the scanned link (?k=…), proving this is the
+  // current sitting at the table rather than a link kept from a past visit.
+  const searchParams = useSearchParams();
+  const qrToken = searchParams.get('k') ?? undefined;
 
   const [restaurant, setRestaurant] = useState<{ name: string; tagline?: string } | null>(null);
   const [categories, setCategories] = useState<CategoryTab[]>([]);
@@ -186,6 +190,9 @@ export default function CustomerMenuPage() {
           quantity: i.quantity,
           notes: i.specialInstructions,
         })),
+        // Forwarded from the scanned QR link; the server rejects a token from a
+        // previous sitting so an old link can't order after the bill is paid.
+        token: qrToken,
       });
 
       if (result.error || !result.data) {

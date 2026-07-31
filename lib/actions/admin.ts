@@ -1035,7 +1035,7 @@ export async function deleteRestaurant(id: string) {
       prisma.coupon.deleteMany({ where: { restaurantId: id } }),
       prisma.corporateAccount.deleteMany({ where: { restaurantId: id } }),
       prisma.taxRate.deleteMany({ where: { restaurantId: id } }),
-      prisma.floor.deleteMany({ where: { restaurantId: id } }),
+      prisma.space.deleteMany({ where: { restaurantId: id } }),
       prisma.operatingHours.deleteMany({ where: { restaurantId: id } }),
       prisma.subscription.deleteMany({ where: { restaurantId: id } }),
       prisma.user.deleteMany({ where: { restaurantId: id } }),

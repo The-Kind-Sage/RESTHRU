@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useEffect, useCallback } from 'react';
+import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import {
@@ -44,6 +44,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { useNotificationsStore, AppNotification } from '@/store/notifications-store';
 import { useWaiterOrderStore } from '@/store/waiter-order-store';
 import { cn } from '@/lib/utils';
+import { resolveNotificationUrl } from '@/lib/notification-route';
 import { formatDistanceToNow } from 'date-fns';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -82,18 +83,21 @@ function NotificationItem({
   notification,
   onRead,
   onDismiss,
+  onView,
 }: {
   notification: AppNotification;
   onRead: (id: string) => void;
   onDismiss: (id: string) => void;
+  onView: (n: AppNotification) => void;
 }) {
+  const viewUrl = resolveNotificationUrl(notification);
   return (
     <div
       className={cn(
         'group flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer',
         !notification.isRead && 'bg-primary/5'
       )}
-      onClick={() => !notification.isRead && onRead(notification.id)}
+      onClick={() => (viewUrl ? onView(notification) : !notification.isRead && onRead(notification.id))}
     >
       {/* Icon */}
       <div className="mt-0.5 flex-shrink-0 h-8 w-8 rounded-full bg-muted flex items-center justify-center">
@@ -110,9 +114,19 @@ function NotificationItem({
             {notification.message}
           </p>
         )}
-        <p className="text-[11px] text-muted-foreground/70 mt-1">
-          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-        </p>
+        <div className="flex items-center gap-2 mt-1">
+          <p className="text-[11px] text-muted-foreground/70">
+            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+          </p>
+          {viewUrl && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onView(notification); }}
+              className="text-[11px] font-semibold text-primary hover:underline"
+            >
+              {notification.relatedEntityType === 'Order' ? 'View Order' : 'View'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Unread dot + dismiss */}
@@ -162,6 +176,19 @@ export default function TopHeader() {
     if (restaurant?.id) markAllRead(restaurant.id);
   }, [restaurant?.id, markAllRead]);
 
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  /** Opening a notification marks it read, closes the panel and navigates. */
+  const handleView = useCallback(
+    (n: AppNotification) => {
+      const url = resolveNotificationUrl(n);
+      if (!n.isRead) markRead(n.id);
+      setNotifOpen(false);
+      if (url) router.push(url);
+    },
+    [markRead, router]
+  );
+
   return (
     <header
       className={cn(
@@ -203,7 +230,7 @@ export default function TopHeader() {
         {/* Sync status */}
         <SyncIndicator />
         {/* ── Notification Bell ── */}
-        <Popover>
+        <Popover open={notifOpen} onOpenChange={setNotifOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
@@ -267,6 +294,7 @@ export default function TopHeader() {
                       notification={n}
                       onRead={markRead}
                       onDismiss={dismiss}
+                      onView={handleView}
                     />
                   ))}
                 </div>

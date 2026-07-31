@@ -10,6 +10,23 @@ export interface AppNotification {
   message: string;
   isRead: boolean;
   createdAt: Date;
+  /** Explicit destination for the panel's "View" button, when one was stored. */
+  actionUrl?: string | null;
+  /** Used to route by entity when no explicit actionUrl exists (e.g. "Order"). */
+  relatedEntityType?: string | null;
+}
+
+/**
+ * The database stores raw event types (NEW_ORDER, ORDER_READY, BILL_REQUESTED…)
+ * while the UI groups them into four icon buckets. Without this mapping every
+ * lookup missed and notifications rendered with an empty icon circle.
+ */
+function toUiType(dbType: string): AppNotification['type'] {
+  const t = (dbType || '').toUpperCase();
+  if (t.includes('ORDER')) return 'order';
+  if (t.includes('BILL') || t.includes('PAYMENT')) return 'bill';
+  if (t.includes('STOCK') || t.includes('INVENTORY')) return 'stock';
+  return 'system';
 }
 
 interface NotificationsState {
@@ -30,7 +47,10 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   fetch: async (restaurantId: string) => {
     set({ isLoading: true });
     const data = await getNotifications(restaurantId);
-    const notifications = data as AppNotification[];
+    const notifications: AppNotification[] = (data ?? []).map((n: any) => ({
+      ...n,
+      type: toUiType(n.type),
+    }));
     set({
       notifications,
       unreadCount: notifications.filter((n) => !n.isRead).length,
