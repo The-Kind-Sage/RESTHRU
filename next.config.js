@@ -80,24 +80,6 @@ const nextConfig = {
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
         ],
       },
-      {
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value:
-              process.env.NODE_ENV === 'production'
-                ? 'public, max-age=31536000, immutable'
-                : 'no-cache, must-revalidate',
-          },
-        ],
-      },
-      {
-        source: '/fonts/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
     ];
   },
 };
