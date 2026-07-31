@@ -43,6 +43,8 @@ export async function getMyUnreadNotifications() {
         title: "New support ticket",
         message: t.restaurant?.name ? `${t.restaurant.name}: ${t.subject}` : t.subject,
         createdAt: t.createdAt,
+        actionUrl: "/superadmin/support" as string | null,
+        relatedEntityType: "SupportTicket" as string | null,
       })),
     };
   }
@@ -57,6 +59,10 @@ export async function getMyUnreadNotifications() {
       title: true,
       message: true,
       createdAt: true,
+      // Drive the alert popup's "View Order" button: an explicit actionUrl when
+      // one was set, otherwise the client routes by entity type per portal.
+      actionUrl: true,
+      relatedEntityType: true,
     },
   });
 
@@ -75,6 +81,9 @@ export async function getNotifications(restaurantId: string) {
       message: true,
       isRead: true,
       createdAt: true,
+      // Needed by the bell panel's "View" button to route to the right screen.
+      actionUrl: true,
+      relatedEntityType: true,
     },
   });
 }

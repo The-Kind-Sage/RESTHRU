@@ -358,7 +358,9 @@ export default function CheckoutPage() {
       paymentMethod: activeBill.paymentMethod,
       date: new Date().toLocaleString(),
     });
-    printReceipt(html);
+    if (!printReceipt(html)) {
+      toast.error("Couldn't open the printer — check your browser's print settings.");
+    }
   };
 
   const handleScannerBarcode = (barcode: string) => {

@@ -201,10 +201,10 @@ export const VAT_RATE = 13;
 export const CURRENCY = 'NPR';
 export const CURRENCY_SYMBOL = 'NPR';
 
-// Default floors seeded for a new restaurant. The Table Map page manages the
-// real, per-restaurant list via the Floor model (lib/actions/floors.ts) —
+// Default spaces seeded for a new restaurant. The Table Map page manages the
+// real, per-restaurant list via the Space model (lib/actions/spaces.ts) —
 // this constant is only a fallback while that list is still loading.
-export const FLOORS = ['Floor 1', 'Floor 2', 'Floor 3'];
+export const SPACES = ['Space 1', 'Space 2', 'Space 3'];
 
 // Table Shapes
 export const TABLE_SHAPES = [

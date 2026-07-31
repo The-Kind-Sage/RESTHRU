@@ -17,6 +17,7 @@ import {
   Package,
   Settings,
   LogOut,
+  BookOpen,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -29,17 +30,40 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { SharedNavLink } from '@/components/shared/nav-link';
+import { NavGroup, type NavGroupItem } from '@/components/shared/nav-group';
 import type { NavItem } from '@/components/shared/nav-link';
 import { useUIStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
 
-const NAV_ITEMS: NavItem[] = [
+// A nav entry is either a plain link or a collapsible group with children.
+type ReceptionNavEntry = NavItem & { children?: NavGroupItem['children'] };
+
+const NAV_ITEMS: ReceptionNavEntry[] = [
   { label: 'Live Orders',   href: '/reception/orders',    Icon: ShoppingBag     },
   { label: 'Invoices',      href: '/reception/invoices',  Icon: Receipt         },
-  { label: 'Table Map',     href: '/reception/tables',    Icon: LayoutGrid      },
+  {
+    label: 'Table & Space',
+    href: '/reception/tables',
+    Icon: LayoutGrid,
+    children: [
+      { label: 'Table',     href: '/reception/tables' },
+      { label: 'Space',     href: '/reception/tables/spaces' },
+      { label: 'QR Codes',  href: '/reception/tables/qr' },
+    ],
+  },
   { label: 'Checkout',      href: '/reception/checkout',  Icon: DollarSign      },
   { label: 'Order',         href: '/reception/order',     Icon: UtensilsCrossed },
+  {
+    label: 'Menu',
+    href: '/reception/menu',
+    Icon: BookOpen,
+    children: [
+      { label: 'Dishes',      href: '/reception/menu' },
+      { label: 'Category',    href: '/reception/menu/category' },
+      { label: 'Combo Offer', href: '/reception/menu/combo' },
+    ],
+  },
   { label: 'Reception',     href: '/reception',           Icon: ConciergeBell   },
   { label: 'Print Center',  href: '/reception/prints',    Icon: Printer         },
   { label: 'CRM',           href: '/reception/crm',       Icon: Star            },
@@ -123,14 +147,23 @@ const ReceptionSidebar = memo(function ReceptionSidebar() {
           className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5"
           onClick={() => setMobileMenuOpen(false)}
         >
-          {NAV_ITEMS.map((item) => (
-            <SharedNavLink
-              key={item.href}
-              item={item}
-              active={isActive(item.href)}
-              collapsed={collapsed}
-            />
-          ))}
+          {NAV_ITEMS.map((item) =>
+            item.children ? (
+              <NavGroup
+                key={item.label}
+                item={item}
+                collapsed={collapsed}
+                pathname={pathname}
+              />
+            ) : (
+              <SharedNavLink
+                key={item.href}
+                item={item}
+                active={isActive(item.href)}
+                collapsed={collapsed}
+              />
+            )
+          )}
         </nav>
 
         <div className="flex-shrink-0 border-t border-white/5 p-2 space-y-1">

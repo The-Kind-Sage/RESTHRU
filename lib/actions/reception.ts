@@ -735,7 +735,7 @@ export async function getAvailableTables() {
   try {
     const tables = await prisma.restaurantTable.findMany({
       where: { restaurantId: session.restaurantId },
-      orderBy: [{ floor: "asc" }, { tableNumber: "asc" }],
+      orderBy: [{ space: "asc" }, { tableNumber: "asc" }],
     });
     return { data: tables };
   } catch (err: any) {

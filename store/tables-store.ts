@@ -5,17 +5,17 @@ import { RestaurantTable, TableStatus } from '@/types';
 
 interface TablesStoreState {
   tables: RestaurantTable[];
-  selectedFloor: string | null;
+  selectedSpace: string | null;
   setTables: (tables: RestaurantTable[]) => void;
   updateTableStatus: (tableId: string, status: TableStatus) => void;
-  setSelectedFloor: (floor: string | null) => void;
-  getTablesByFloor: (floor: string) => RestaurantTable[];
+  setSelectedSpace: (space: string | null) => void;
+  getTablesBySpace: (space: string) => RestaurantTable[];
   getTablesByStatus: (status: TableStatus) => RestaurantTable[];
 }
 
 export const useTablesStore = create<TablesStoreState>((set, get) => ({
   tables: [],
-  selectedFloor: null,
+  selectedSpace: null,
 
   setTables: (tables) => {
     set({ tables });
@@ -36,12 +36,12 @@ export const useTablesStore = create<TablesStoreState>((set, get) => ({
     }));
   },
 
-  setSelectedFloor: (floor) => {
-    set({ selectedFloor: floor });
+  setSelectedSpace: (space) => {
+    set({ selectedSpace: space });
   },
 
-  getTablesByFloor: (floor) => {
-    return get().tables.filter((table) => table.location === floor);
+  getTablesBySpace: (space) => {
+    return get().tables.filter((table) => table.location === space);
   },
 
   getTablesByStatus: (status) => {

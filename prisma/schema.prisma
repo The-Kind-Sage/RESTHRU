@@ -103,13 +103,13 @@ model Restaurant {
   coupons          Coupon[]
   corporateAccounts CorporateAccount[]
   taxRates         TaxRate[]
-  floors           Floor[]
+  spaces           Space[]
   supportTickets   SupportTicket[]
 
   @@map("restaurants")
 }
 
-model Floor {
+model Space {
   id           String   @id @default(cuid())
   restaurantId String   @map("restaurant_id")
   name         String
@@ -119,11 +119,11 @@ model Floor {
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
 
-  // Tables reference a floor by name (RestaurantTable.floor is a free-text
-  // column, not a foreign key — renaming a floor bulk-updates every table's
-  // `floor` string in the same transaction instead of relying on a join).
+  // Tables reference a space by name (RestaurantTable.space is a free-text
+  // column, not a foreign key — renaming a space bulk-updates every table's
+  // `space` string in the same transaction instead of relying on a join).
   @@unique([restaurantId, name])
-  @@map("floors")
+  @@map("spaces")
 }
 
 model OperatingHours {
@@ -228,7 +228,7 @@ model RestaurantTable {
   capacity        Int      @default(4)
   shape           String   @default("SQUARE")
   location        String?
-  floor           String   @default("Floor 1")
+  space           String   @default("Space 1")
   status          String   @default("AVAILABLE")
   positionX       Float    @default(50) @map("position_x")
   positionY       Float    @default(50) @map("position_y")
@@ -358,6 +358,8 @@ model Order {
   discountReason  String?  @map("discount_reason")
   totalAmount     Float    @default(0) @map("total_amount")
   assignedWaiterId String? @map("assigned_waiter_id")
+  /// Sequential per-restaurant kitchen-docket number, assigned on first print.
+  kotNumber       Int?     @map("kot_number")
   customerName    String?  @map("customer_name")
   customerPhone   String?  @map("customer_phone")
   specialRequests String?  @map("special_requests")

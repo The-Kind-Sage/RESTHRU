@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useWaiterOrderStore } from '@/store/waiter-order-store';
 import OrderHeader, { PosCategory } from './OrderHeader';
 import MenuGrid from './MenuGrid';
 import ActiveOrderSheet from './ActiveOrderSheet';
@@ -23,6 +25,24 @@ export default function OrderPageClient({
   waiterName: string;
 }) {
   const [view, setView] = useState<PosView>('menu');
+  const searchParams = useSearchParams();
+  const setOrderType = useWaiterOrderStore((s) => s.setOrderType);
+  const setQuickBill = useWaiterOrderStore((s) => s.setQuickBill);
+
+  // The "Add New Order" shortcuts pass the kind of order as ?type=. Applying it
+  // here is what makes a delivery order actually record as DELIVERY instead of
+  // falling back to dine-in — and clears any table left over from a previous
+  // dine-in order, which would otherwise print on its docket and bill.
+  const typeParam = searchParams.get('type');
+  // ?quick=1 marks a counter sale: the cart bills the order straight away
+  // instead of sending it to the kitchen.
+  const quickParam = searchParams.get('quick') === '1';
+  useEffect(() => {
+    // Arriving without ?type= means a plain "New Order": start from dine-in
+    // rather than inheriting the persisted type of whatever was ordered last.
+    setOrderType(typeParam ? typeParam.toUpperCase() : 'DINE_IN');
+    setQuickBill(quickParam);
+  }, [typeParam, quickParam, setOrderType, setQuickBill]);
 
   return (
     <div className="flex flex-col h-[100dvh] w-full mx-auto bg-background overflow-hidden relative sm:border-x sm:border-border lg:max-w-3xl xl:max-w-5xl">

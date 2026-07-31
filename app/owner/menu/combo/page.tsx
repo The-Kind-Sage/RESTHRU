@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { getCombos, deleteCombo, toggleComboAvailable } from "@/lib/actions/combos";
+import { portalBase } from '@/lib/portal';
 
 type ComboRow = {
   id: string;
@@ -103,7 +104,7 @@ export default function ComboOfferPage() {
           <Button variant="outline" className="gap-1.5" disabled>
             <SlidersHorizontal className="h-4 w-4" /> Filter
           </Button>
-          <Button onClick={() => router.push("/owner/menu/combo/create")} className="gap-1.5">
+          <Button onClick={() => router.push(`${portalBase()}/menu/combo/create`)} className="gap-1.5">
             <Plus className="h-4 w-4" /> Add New
           </Button>
         </div>
@@ -144,7 +145,7 @@ export default function ComboOfferPage() {
                       </div>
                       <p className="text-lg font-bold">No Combo Offer found</p>
                       <p className="text-muted-foreground mt-1">Create a new Combo Offer.</p>
-                      <Button onClick={() => router.push("/owner/menu/combo/create")} className="mt-5 gap-1.5">
+                      <Button onClick={() => router.push(`${portalBase()}/menu/combo/create`)} className="mt-5 gap-1.5">
                         <Plus className="h-4 w-4" /> Add New
                       </Button>
                     </div>

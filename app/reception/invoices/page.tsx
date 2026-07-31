@@ -34,6 +34,7 @@ import { formatCurrency, formatDateTime } from '@/lib/format';
 import { useAuthStore } from '@/store/auth-store';
 import { toast } from 'sonner';
 import { searchBills, voidBill } from '@/lib/actions/bills';
+import { printReceipt as printViaIframe } from '@/lib/printing';
 import { BILL_STATUS_COLORS } from '@/lib/constants';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -41,8 +42,6 @@ const STATUS_OPTIONS = ['ALL', 'PENDING', 'HELD', 'PAID', 'VOID'];
 const PAGE_SIZE = 15;
 
 function printReceipt(bill: any) {
-  const win = window.open('', '_blank', 'width=380,height=600');
-  if (!win) { toast.error('Pop-up blocked. Please allow pop-ups for this site.'); return; }
   const itemsHtml = (bill.order?.items || [])
     .filter((i: any) => i.status !== 'CANCELLED')
     .map(
@@ -53,7 +52,9 @@ function printReceipt(bill: any) {
   const paymentsHtml = (bill.payments || [])
     .map((p: any) => `<tr><td>${p.method}</td><td style="text-align:right">${formatCurrency(p.amount)}</td></tr>`)
     .join('');
-  win.document.write(`
+  // Routed through the shared helper: it prints via a hidden iframe, so it
+  // isn't silently killed by the browser's pop-up blocker.
+  const ok = printViaIframe(`
     <html>
       <head>
         <title>Bill ${bill.billNumber}</title>
@@ -86,9 +87,9 @@ function printReceipt(bill: any) {
       </body>
     </html>
   `);
-  win.document.close();
-  win.focus();
-  win.print();
+  if (!ok) {
+    toast.error("Couldn't open the printer — check your browser's print settings.");
+  }
 }
 
 export default function InvoicesPage() {

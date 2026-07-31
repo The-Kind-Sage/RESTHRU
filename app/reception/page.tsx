@@ -78,7 +78,7 @@ import {
   splitOrderItems,
 } from "@/lib/actions/reception";
 
-const FLOOR_BG: Record<string, string> = {
+const SPACE_BG: Record<string, string> = {
   AVAILABLE: "bg-success/20",
   OCCUPIED: "bg-warning/20",
   RESERVED: "bg-primary/20",
@@ -352,16 +352,16 @@ export default function ReceptionPage() {
     [tables]
   );
 
-  const floors = useMemo(() => {
-    const f = new Set(tables.map((t: any) => t.floor));
+  const spaces = useMemo(() => {
+    const f = new Set(tables.map((t: any) => t.space));
     return Array.from(f) as string[];
   }, [tables]);
 
-  const tablesByFloor = useMemo(() => {
+  const tablesBySpace = useMemo(() => {
     const map: Record<string, any[]> = {};
     for (const t of tables) {
-      if (!map[t.floor]) map[t.floor] = [];
-      map[t.floor].push(t);
+      if (!map[t.space]) map[t.space] = [];
+      map[t.space].push(t);
     }
     return map;
   }, [tables]);
@@ -398,8 +398,8 @@ export default function ReceptionPage() {
             <TabsTrigger value="reservations" className="gap-1">
               <Calendar className="w-4 h-4" /> Reservations
             </TabsTrigger>
-            <TabsTrigger value="floor" className="gap-1">
-              <Table2 className="w-4 h-4" /> Floor & Walk-in
+            <TabsTrigger value="space" className="gap-1">
+              <Table2 className="w-4 h-4" /> Space & Walk-in
             </TabsTrigger>
             <TabsTrigger value="waitlist" className="gap-1">
               <Users className="w-4 h-4" /> Waitlist ({waitlist.length})
@@ -553,8 +553,8 @@ export default function ReceptionPage() {
             </Card>
           </TabsContent>
 
-          {/* ── Tab 2: Floor & Walk-in ── */}
-          <TabsContent value="floor" className="space-y-4">
+          {/* ── Tab 2: Space & Walk-in ── */}
+          <TabsContent value="space" className="space-y-4">
             <div className="flex items-center gap-2">
               <Button onClick={() => setShowWalkIn(true)}>
                 <UserPlus className="w-4 h-4 mr-1" /> Walk-in Assignment
@@ -620,22 +620,22 @@ export default function ReceptionPage() {
               </Card>
             )}
 
-            {/* Floor plan */}
+            {/* Space plan */}
             <div className="space-y-4">
-              {floors.map((floor) => (
-                <Card key={floor}>
+              {spaces.map((space) => (
+                <Card key={space}>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">{floor}</CardTitle>
+                    <CardTitle className="text-sm">{space}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-                      {(tablesByFloor[floor] || []).map((table: any) => (
+                      {(tablesBySpace[space] || []).map((table: any) => (
                         <div
                           key={table.id}
                           className={`p-2 rounded-lg border text-center ${
                             table.status === "AVAILABLE" ? "cursor-pointer hover:shadow-md" : ""
                           } transition-shadow ${
-                            FLOOR_BG[table.status] || "bg-muted/20"
+                            SPACE_BG[table.status] || "bg-muted/20"
                           }`}
                           onClick={() => {
                             if (table.status === "AVAILABLE") {

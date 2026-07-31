@@ -17,13 +17,19 @@ interface WaiterOrderStore {
   draftItems: DraftOrderItem[];
   tableNumber: string | null;
   guestCount: number;
+  /** DINE_IN | TAKEAWAY | DELIVERY | PICKUP — drives whether a table applies. */
+  orderType: string;
+  /** Counter sale: bill the order immediately instead of sending to kitchen. */
+  quickBill: boolean;
   searchQuery: string;
   selectedCategory: string | null;
   isOffline: boolean;
-  
+
   // Actions
   setOrderState: (state: WaiterOrderState) => void;
   setTableInfo: (tableNumber: string, guestCount: number) => void;
+  setOrderType: (orderType: string) => void;
+  setQuickBill: (quickBill: boolean) => void;
   setSearchQuery: (query: string) => void;
   setSelectedCategory: (categoryId: string | null) => void;
   setIsOffline: (status: boolean) => void;
@@ -47,13 +53,27 @@ export const useWaiterOrderStore = create<WaiterOrderStore>()(
       draftItems: [],
       tableNumber: null,
       guestCount: 1,
+      orderType: 'DINE_IN',
+      quickBill: false,
       searchQuery: '',
       selectedCategory: null,
       isOffline: false,
 
       setOrderState: (state) => set({ orderState: state }),
-      
-      setTableInfo: (tableNumber, guestCount) => set({ tableNumber, guestCount }),
+
+      // Choosing a table *is* the dine-in decision. Without this the type stays
+      // whatever the previous order used (it's persisted), so an order taken at
+      // Table 1 could still be recorded — and printed — as Take away.
+      setTableInfo: (tableNumber, guestCount) =>
+        set({ tableNumber, guestCount, orderType: 'DINE_IN' }),
+
+      // Switching away from dine-in drops any table already chosen — the
+      // number is persisted, so without this a delivery order would inherit
+      // the last table used and print "Table 1" on its docket.
+      setOrderType: (orderType) =>
+        set(orderType === 'DINE_IN' ? { orderType } : { orderType, tableNumber: null }),
+
+      setQuickBill: (quickBill) => set({ quickBill }),
       
       setSearchQuery: (query) => set({ searchQuery: query }),
       
@@ -132,11 +152,15 @@ export const useWaiterOrderStore = create<WaiterOrderStore>()(
     {
       name: 'waiter-order-storage', // name of the item in the storage (must be unique)
       storage: createJSONStorage(() => localStorage), // (optional) by default, 'localStorage' is used
-      partialize: (state) => ({ 
-        draftItems: state.draftItems, 
-        tableNumber: state.tableNumber, 
+      partialize: (state) => ({
+        draftItems: state.draftItems,
+        tableNumber: state.tableNumber,
         guestCount: state.guestCount,
-        orderState: state.orderState 
+        orderType: state.orderType,
+        // quickBill is deliberately NOT persisted: it's a per-visit mode set by
+        // ?quick=1. Remembering it would silently auto-bill the next ordinary
+        // order taken on this device.
+        orderState: state.orderState
       }), // only persist these fields
     }
   )

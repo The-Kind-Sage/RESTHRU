@@ -27,10 +27,10 @@ import {
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
 import { getTables, addTable, updateTableStatus, updateTablePosition, deleteTable } from '@/lib/actions/tables';
-import { getFloors, addFloor, renameFloor, deleteFloor } from '@/lib/actions/floors';
+import { getSpaces, addSpace, renameSpace, deleteSpace } from '@/lib/actions/spaces';
 import { useUpgradeStore } from '@/store/upgrade-store';
 
-interface FloorInfo {
+interface SpaceInfo {
   id: string;
   name: string;
   displayOrder: number;
@@ -43,7 +43,7 @@ interface Table {
   capacity: number;
   shape: 'square' | 'round' | 'large';
   status: 'available' | 'occupied' | 'bill_requested' | 'reserved';
-  floor: string;
+  space: string;
   position_x: number;
   position_y: number;
   qr_code_url?: string;
@@ -256,7 +256,7 @@ function TableDetailDialog({ table, restaurantId, isOpen, onClose, onStatusChang
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Table {table.number}{table.name ? ` — ${table.name}` : ''}</DialogTitle>
-          <DialogDescription>Capacity: {table.capacity} people · {table.floor}</DialogDescription>
+          <DialogDescription>Capacity: {table.capacity} people · {table.space}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -292,9 +292,9 @@ function TableDetailDialog({ table, restaurantId, isOpen, onClose, onStatusChang
   );
 }
 
-function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultFloor, floors, onAdded }: {
+function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultSpace, spaces, onAdded }: {
   isOpen: boolean; onClose: () => void;
-  restaurantId: string; existingCount: number; defaultFloor: string; floors: FloorInfo[];
+  restaurantId: string; existingCount: number; defaultSpace: string; spaces: SpaceInfo[];
   onAdded: (table: Table) => void;
 }) {
   const showUpgrade = useUpgradeStore((s) => s.show);
@@ -302,15 +302,15 @@ function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultF
   const [tableName, setTableName] = useState('');
   const [capacity, setCapacity] = useState('4');
   const [shape, setShape] = useState<'square' | 'round' | 'large'>('square');
-  const [floor, setFloor] = useState(defaultFloor);
+  const [space, setSpace] = useState(defaultSpace);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setTableNumber(String(existingCount + 1));
-      setFloor(defaultFloor);
+      setSpace(defaultSpace);
     }
-  }, [isOpen, existingCount, defaultFloor]);
+  }, [isOpen, existingCount, defaultSpace]);
 
   const handleAdd = async () => {
     if (!tableNumber) return;
@@ -329,7 +329,7 @@ function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultF
       name: tableName || undefined,
       capacity: parseInt(capacity),
       shape,
-      floor,
+      space,
       positionX: x,
       positionY: y,
     });
@@ -345,13 +345,13 @@ function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultF
       capacity: parseInt(capacity),
       shape,
       status: 'available',
-      floor,
+      space,
       position_x: x,
       position_y: y,
     });
     toast.success(`Table ${tableNumber} added`);
     onClose();
-    setTableNumber(''); setTableName(''); setCapacity('4'); setShape('square'); setFloor(defaultFloor);
+    setTableNumber(''); setTableName(''); setCapacity('4'); setShape('square'); setSpace(defaultSpace);
   };
 
   return (
@@ -388,11 +388,11 @@ function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultF
             </Select>
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Floor</label>
-            <Select value={floor} onValueChange={setFloor}>
+            <label className="text-sm font-medium mb-1.5 block">Space</label>
+            <Select value={space} onValueChange={setSpace}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {floors.map(f => (
+                {spaces.map(f => (
                   <SelectItem key={f.id} value={f.name}>{f.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -410,25 +410,25 @@ function AddTableDialog({ isOpen, onClose, restaurantId, existingCount, defaultF
   );
 }
 
-function ManageFloorsDialog({ isOpen, onClose, floors, tables, onAdd, onRename, onDelete }: {
+function ManageSpacesDialog({ isOpen, onClose, spaces, tables, onAdd, onRename, onDelete }: {
   isOpen: boolean; onClose: () => void;
-  floors: FloorInfo[]; tables: Table[];
+  spaces: SpaceInfo[]; tables: Table[];
   onAdd: (name: string) => Promise<boolean>;
-  onRename: (floorId: string, oldName: string, newName: string) => Promise<boolean>;
-  onDelete: (floorId: string, name: string) => Promise<boolean>;
+  onRename: (spaceId: string, oldName: string, newName: string) => Promise<boolean>;
+  onDelete: (spaceId: string, name: string) => Promise<boolean>;
 }) {
-  const [newFloorName, setNewFloorName] = useState('');
+  const [newSpaceName, setNewSpaceName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<FloorInfo | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SpaceInfo | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const startEdit = (f: FloorInfo) => { setEditingId(f.id); setEditValue(f.name); };
+  const startEdit = (f: SpaceInfo) => { setEditingId(f.id); setEditValue(f.name); };
   const cancelEdit = () => { setEditingId(null); setEditValue(''); };
 
-  const saveEdit = async (f: FloorInfo) => {
+  const saveEdit = async (f: SpaceInfo) => {
     const trimmed = editValue.trim();
     if (!trimmed || trimmed === f.name) { cancelEdit(); return; }
     setSavingId(f.id);
@@ -438,12 +438,12 @@ function ManageFloorsDialog({ isOpen, onClose, floors, tables, onAdd, onRename, 
   };
 
   const handleAdd = async () => {
-    const trimmed = newFloorName.trim();
+    const trimmed = newSpaceName.trim();
     if (!trimmed) return;
     setIsAdding(true);
     const ok = await onAdd(trimmed);
     setIsAdding(false);
-    if (ok) setNewFloorName('');
+    if (ok) setNewSpaceName('');
   };
 
   const handleConfirmDelete = async () => {
@@ -459,13 +459,13 @@ function ManageFloorsDialog({ isOpen, onClose, floors, tables, onAdd, onRename, 
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Manage Floors</DialogTitle>
-            <DialogDescription>Add, rename, or remove floors in your restaurant layout.</DialogDescription>
+            <DialogTitle>Manage Spaces</DialogTitle>
+            <DialogDescription>Add, rename, or remove spaces in your restaurant layout.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-            {floors.map((f) => {
-              const count = tables.filter(t => t.floor === f.name).length;
+            {spaces.map((f) => {
+              const count = tables.filter(t => t.space === f.name).length;
               const isEditing = editingId === f.id;
               return (
                 <div key={f.id} className="flex items-center gap-2 rounded-lg border p-2.5">
@@ -508,13 +508,13 @@ function ManageFloorsDialog({ isOpen, onClose, floors, tables, onAdd, onRename, 
 
           <div className="flex items-center gap-2 pt-2 border-t">
             <Input
-              placeholder="e.g., Floor 4, Rooftop"
-              value={newFloorName}
-              onChange={e => setNewFloorName(e.target.value)}
+              placeholder="e.g., Space 4, Rooftop"
+              value={newSpaceName}
+              onChange={e => setNewSpaceName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }}
               disabled={isAdding}
             />
-            <Button onClick={handleAdd} disabled={isAdding || !newFloorName.trim()} className="gap-1.5 flex-shrink-0">
+            <Button onClick={handleAdd} disabled={isAdding || !newSpaceName.trim()} className="gap-1.5 flex-shrink-0">
               {isAdding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               Add
             </Button>
@@ -531,7 +531,7 @@ function ManageFloorsDialog({ isOpen, onClose, floors, tables, onAdd, onRename, 
           <AlertDialogHeader>
             <AlertDialogTitle>Delete &quot;{deleteTarget?.name}&quot;?</AlertDialogTitle>
             <AlertDialogDescription>
-              This cannot be undone. Floors with tables on them can&apos;t be deleted — move or delete those tables first.
+              This cannot be undone. Spaces with tables on them can&apos;t be deleted — move or delete those tables first.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -541,7 +541,7 @@ function ManageFloorsDialog({ isOpen, onClose, floors, tables, onAdd, onRename, 
               disabled={isDeleting}
               className="bg-destructive hover:bg-destructive/90 text-white"
             >
-              {isDeleting ? 'Deleting...' : 'Delete Floor'}
+              {isDeleting ? 'Deleting...' : 'Delete Space'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -554,13 +554,13 @@ export default function TableMapPage() {
   const { restaurant } = useAuthStore();
   const restaurantId = restaurant?.id || '';
   const [tables, setTables] = useState<Table[]>([]);
-  const [floors, setFloors] = useState<FloorInfo[]>([]);
+  const [spaces, setSpaces] = useState<SpaceInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedFloor, setSelectedFloor] = useState('');
+  const [selectedSpace, setSelectedSpace] = useState('');
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [tableDetailOpen, setTableDetailOpen] = useState(false);
   const [addTableOpen, setAddTableOpen] = useState(false);
-  const [manageFloorsOpen, setManageFloorsOpen] = useState(false);
+  const [manageSpacesOpen, setManageSpacesOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Table | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -601,62 +601,62 @@ export default function TableMapPage() {
   useEffect(() => {
     if (!restaurantId) return;
     setIsLoading(true);
-    Promise.all([getTables(restaurantId), getFloors(restaurantId)]).then(([tablesResult, floorsResult]) => {
+    Promise.all([getTables(restaurantId), getSpaces(restaurantId)]).then(([tablesResult, spacesResult]) => {
       setIsLoading(false);
       if (tablesResult.error) toast.error(tablesResult.error);
       if (tablesResult.data) setTables(tablesResult.data.map((t: any) => ({
         id: t.id, number: t.tableNumber, name: t.name,
         capacity: t.capacity, shape: (t.shape || 'SQUARE').toLowerCase(),
-        status: (t.status || 'AVAILABLE').toLowerCase(), floor: t.floor || 'Floor 1',
+        status: (t.status || 'AVAILABLE').toLowerCase(), space: t.space || 'Space 1',
         position_x: t.positionX || 50, position_y: t.positionY || 50,
         qr_code_url: t.qrCodeUrl,
       })));
-      if (floorsResult.error) { toast.error(floorsResult.error); return; }
-      if (floorsResult.data) {
-        setFloors(floorsResult.data);
-        setSelectedFloor(prev => (prev && floorsResult.data!.some(f => f.name === prev)) ? prev : (floorsResult.data![0]?.name ?? ''));
+      if (spacesResult.error) { toast.error(spacesResult.error); return; }
+      if (spacesResult.data) {
+        setSpaces(spacesResult.data);
+        setSelectedSpace(prev => (prev && spacesResult.data!.some(f => f.name === prev)) ? prev : (spacesResult.data![0]?.name ?? ''));
       }
     });
   }, [restaurantId]);
 
-  const handleAddFloor = async (name: string) => {
-    const result = await addFloor(restaurantId, name);
+  const handleAddSpace = async (name: string) => {
+    const result = await addSpace(restaurantId, name);
     if (result.error) { toast.error(result.error); return false; }
-    const newFloor = result.data!;
-    setFloors(prev => [...prev, newFloor]);
-    setSelectedFloor(newFloor.name);
-    toast.success(`Floor "${newFloor.name}" added`);
+    const newSpace = result.data!;
+    setSpaces(prev => [...prev, newSpace]);
+    setSelectedSpace(newSpace.name);
+    toast.success(`Space "${newSpace.name}" added`);
     return true;
   };
 
-  const handleRenameFloor = async (floorId: string, oldName: string, newName: string) => {
-    const result = await renameFloor(floorId, restaurantId, newName);
+  const handleRenameSpace = async (spaceId: string, oldName: string, newName: string) => {
+    const result = await renameSpace(spaceId, restaurantId, newName);
     if (result.error) { toast.error(result.error); return false; }
     const renamedTo = result.data!.name;
-    setFloors(prev => prev.map(f => f.id === floorId ? { ...f, name: renamedTo } : f));
-    setTables(prev => prev.map(t => t.floor === oldName ? { ...t, floor: renamedTo } : t));
-    setSelectedFloor(prev => prev === oldName ? renamedTo : prev);
-    toast.success(`Floor renamed to "${renamedTo}"`);
+    setSpaces(prev => prev.map(f => f.id === spaceId ? { ...f, name: renamedTo } : f));
+    setTables(prev => prev.map(t => t.space === oldName ? { ...t, space: renamedTo } : t));
+    setSelectedSpace(prev => prev === oldName ? renamedTo : prev);
+    toast.success(`Space renamed to "${renamedTo}"`);
     return true;
   };
 
-  const handleDeleteFloor = async (floorId: string, name: string) => {
-    const result = await deleteFloor(floorId, restaurantId);
+  const handleDeleteSpace = async (spaceId: string, name: string) => {
+    const result = await deleteSpace(spaceId, restaurantId);
     if (result.error) { toast.error(result.error); return false; }
-    const nextFloors = floors.filter(f => f.id !== floorId);
-    setFloors(nextFloors);
-    if (selectedFloor === name) setSelectedFloor(nextFloors[0]?.name ?? '');
-    toast.success(`Floor "${name}" deleted`);
+    const nextSpaces = spaces.filter(f => f.id !== spaceId);
+    setSpaces(nextSpaces);
+    if (selectedSpace === name) setSelectedSpace(nextSpaces[0]?.name ?? '');
+    toast.success(`Space "${name}" deleted`);
     return true;
   };
 
-  const floorTables = tables.filter(t => t.floor === selectedFloor);
+  const spaceTables = tables.filter(t => t.space === selectedSpace);
 
   const counts = {
-    available: floorTables.filter(t => t.status === 'available').length,
-    occupied: floorTables.filter(t => t.status === 'occupied').length,
-    billRequested: floorTables.filter(t => t.status === 'bill_requested').length,
-    reserved: floorTables.filter(t => t.status === 'reserved').length,
+    available: spaceTables.filter(t => t.status === 'available').length,
+    occupied: spaceTables.filter(t => t.status === 'occupied').length,
+    billRequested: spaceTables.filter(t => t.status === 'bill_requested').length,
+    reserved: spaceTables.filter(t => t.status === 'reserved').length,
   };
 
   return (
@@ -664,16 +664,16 @@ export default function TableMapPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Table Map</h1>
-          <p className="text-muted-foreground mt-1">Manage your restaurant floor layout and table status</p>
+          <p className="text-muted-foreground mt-1">Manage your restaurant space layout and table status</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={() => setManageFloorsOpen(true)} className="gap-2">
-            <Building2 className="w-4 h-4" /> Manage Floors
+          <Button variant="outline" onClick={() => setManageSpacesOpen(true)} className="gap-2">
+            <Building2 className="w-4 h-4" /> Manage Spaces
           </Button>
           <Button variant={isEditMode ? 'default' : 'outline'} onClick={() => setIsEditMode(!isEditMode)} className="gap-2">
             {isEditMode ? <><Lock className="w-4 h-4" />Done Editing</> : <><Unlock className="w-4 h-4" />Edit Layout</>}
           </Button>
-          <Button onClick={() => setAddTableOpen(true)} disabled={floors.length === 0} className="gap-2 bg-primary hover:bg-primary-hover">
+          <Button onClick={() => setAddTableOpen(true)} disabled={spaces.length === 0} className="gap-2 bg-primary hover:bg-primary-hover">
             <Plus className="w-4 h-4" /> Add Table
           </Button>
         </div>
@@ -682,9 +682,9 @@ export default function TableMapPage() {
       <Card>
         <CardHeader className="pb-3">
           <div className="space-y-4">
-            <Tabs value={selectedFloor} onValueChange={setSelectedFloor} className="w-fit">
+            <Tabs value={selectedSpace} onValueChange={setSelectedSpace} className="w-fit">
               <TabsList>
-                {floors.map(f => <TabsTrigger key={f.id} value={f.name}>{f.name}</TabsTrigger>)}
+                {spaces.map(f => <TabsTrigger key={f.id} value={f.name}>{f.name}</TabsTrigger>)}
               </TabsList>
             </Tabs>
             <div className="flex items-center gap-6 flex-wrap text-sm">
@@ -707,13 +707,13 @@ export default function TableMapPage() {
             <div className="h-[500px] flex items-center justify-center text-muted-foreground">Loading tables...</div>
           ) : (
             <div className="relative w-full min-h-[500px] bg-muted/20 rounded-xl border-2 border-dashed overflow-auto">
-              {floorTables.length === 0 ? (
+              {spaceTables.length === 0 ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                  <p className="font-medium">No tables on this floor</p>
+                  <p className="font-medium">No tables on this space</p>
                   <p className="text-sm">Click "Add Table" to place your first table.</p>
                 </div>
               ) : (
-                floorTables.map(table => (
+                spaceTables.map(table => (
                   <TableGridItem
                     key={table.id}
                     table={table}
@@ -729,9 +729,9 @@ export default function TableMapPage() {
           )}
 
           {/* Mobile list view */}
-          {floorTables.length > 0 && (
+          {spaceTables.length > 0 && (
             <div className="md:hidden space-y-2 mt-4">
-              {floorTables.map(table => {
+              {spaceTables.map(table => {
                 const colors = getStatusColors(table.status);
                 const label = table.status.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
                 return (
@@ -767,19 +767,19 @@ export default function TableMapPage() {
         onClose={() => setAddTableOpen(false)}
         restaurantId={restaurantId}
         existingCount={tables.length}
-        defaultFloor={selectedFloor}
-        floors={floors}
+        defaultSpace={selectedSpace}
+        spaces={spaces}
         onAdded={t => setTables(prev => [...prev, t])}
       />
 
-      <ManageFloorsDialog
-        isOpen={manageFloorsOpen}
-        onClose={() => setManageFloorsOpen(false)}
-        floors={floors}
+      <ManageSpacesDialog
+        isOpen={manageSpacesOpen}
+        onClose={() => setManageSpacesOpen(false)}
+        spaces={spaces}
         tables={tables}
-        onAdd={handleAddFloor}
-        onRename={handleRenameFloor}
-        onDelete={handleDeleteFloor}
+        onAdd={handleAddSpace}
+        onRename={handleRenameSpace}
+        onDelete={handleDeleteSpace}
       />
 
       {/* Delete confirmation */}
@@ -789,7 +789,7 @@ export default function TableMapPage() {
             <AlertDialogTitle>Delete Table {deleteTarget?.number}?</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget?.name ? `"${deleteTarget.name}" — ` : ''}
-              Capacity {deleteTarget?.capacity} · {deleteTarget?.floor}.
+              Capacity {deleteTarget?.capacity} · {deleteTarget?.space}.
               This will permanently remove the table and cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

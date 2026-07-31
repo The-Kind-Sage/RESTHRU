@@ -7,6 +7,7 @@
 // trust anything the client sends beyond identifiers to look up.
 
 import prisma from "@/lib/prisma";
+import { newTableToken } from "@/lib/table-token";
 import { notifyServers } from "@/lib/actions/orders";
 
 const MAX_QUANTITY_PER_ITEM = 20;
@@ -29,6 +30,8 @@ export async function createPublicOrder(data: {
   tableId: string;
   items: Array<{ menuItemId: string; quantity: number; notes?: string }>;
   guestCount?: number;
+  /** Rotating per-table QR token (the `k` query param on the scanned link). */
+  token?: string;
 }) {
   try {
     if (!data.restaurantId || !data.tableId) {
@@ -61,6 +64,16 @@ export async function createPublicOrder(data: {
       where: { id: data.tableId, restaurantId: data.restaurantId },
     });
     if (!table) return { error: "Table not found for this restaurant" };
+
+    // The QR link carries a token that is rotated when the table is released
+    // after payment, so a link from a previous sitting can't place new orders.
+    // Tables with no token yet (pre-existing rows) stay open so upgrading the
+    // app doesn't break every printed QR overnight.
+    if (table.qrCode && data.token !== table.qrCode) {
+      return {
+        error: "This QR link has expired. Please rescan the QR code on your table.",
+      };
+    }
 
     // Verify menu items against the menu and recompute prices server-side
     const menuItemIds = data.items.map((i) => i.menuItemId);
@@ -137,13 +150,19 @@ export async function createPublicOrder(data: {
             include: { items: true },
           });
 
-          // Occupy the table while it has an open order — same as the staff-side flow
+          // Occupy the table while it has an open order — same as the staff-side flow.
+          // The QR token is also rotated on every order: the link the guest just
+          // used dies immediately, so placing another order means physically
+          // rescanning the code at the table. That's what stops someone who
+          // saved (or was forwarded) the link from ordering remotely while the
+          // party is still seated — rotating only at payment left that window open.
           await tx.restaurantTable.update({
             where: { id: table.id },
             data: {
               status: "OCCUPIED",
               currentOrderId: created.id,
               occupiedSince: table.status === "OCCUPIED" ? table.occupiedSince : new Date(),
+              qrCode: newTableToken(),
             },
           });
 

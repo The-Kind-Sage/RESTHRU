@@ -49,6 +49,7 @@ import { createCombo } from "@/lib/actions/combos";
 import { getLibrary } from "@/lib/actions/image-library";
 import SelectImageModal, { type LibraryImage } from "@/components/menu/SelectImageModal";
 import { cn } from "@/lib/utils";
+import { portalBase } from '@/lib/portal';
 
 const SUB_MENUS = ["Appetizers", "Main Courses", "Desserts", "Beverages", "Extra"];
 const COMBO_TYPES = ["Veg", "Non-Veg", "Mixed"];
@@ -217,14 +218,14 @@ export default function ComboOfferPage() {
       return;
     }
     toast.success("Combo offer created");
-    router.push("/owner/menu/combo");
+    router.push(`${portalBase()}/menu/combo`);
   };
 
   return (
     <div className="pb-28">
       {/* ── Header ── */}
       <div className="flex items-center gap-3 mb-6">
-        <Button variant="outline" size="icon" onClick={() => router.push("/owner/menu/combo")}>
+        <Button variant="outline" size="icon" onClick={() => router.push(`${portalBase()}/menu/combo`)}>
           <ChevronLeft className="h-4 w-4 text-primary" />
         </Button>
         <h1 className="text-2xl font-bold">Create Combo Offer</h1>

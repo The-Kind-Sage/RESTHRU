@@ -39,6 +39,7 @@ import { getLibrary, type LibraryEntry } from "@/lib/actions/image-library";
 import { FOOD_TYPES } from "@/lib/constants";
 import SelectImageModal, { type LibraryImage } from "@/components/menu/SelectImageModal";
 import { cn } from "@/lib/utils";
+import { portalBase } from '@/lib/portal';
 
 const SUB_MENUS = ["Appetizers", "Main Courses", "Desserts", "Beverages", "Extra"];
 const KOT_TYPES = ["Kitchen", "Bar", "Bakery", "Grill", "Cold Station"];
@@ -173,7 +174,7 @@ export default function CreateDishPage() {
     if (thenNew) {
       resetForm();
     } else {
-      router.push("/owner/menu");
+      router.push(`${portalBase()}/menu`);
     }
   };
 
@@ -181,7 +182,7 @@ export default function CreateDishPage() {
     <div className="pb-28">
       {/* ── Header ── */}
       <div className="flex items-center gap-3 mb-6">
-        <Button variant="outline" size="icon" onClick={() => router.push("/owner/menu")}>
+        <Button variant="outline" size="icon" onClick={() => router.push(`${portalBase()}/menu`)}>
           <ChevronLeft className="h-4 w-4 text-primary" />
         </Button>
         <h1 className="text-2xl font-bold">Create Dish</h1>

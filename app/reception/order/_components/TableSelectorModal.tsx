@@ -41,8 +41,11 @@ export default function TableSelectorModal({ tables }: { tables: PosTable[] }) {
     // Automatically open if no table is set when the app starts.
     // Read the store at timeout time — the persisted value only arrives
     // after rehydration, which happens later than first render.
+    // Only dine-in sits at a table; prompting for one on a delivery/takeaway
+    // order is how a stale table ended up printed on those dockets.
     const timer = setTimeout(() => {
-      if (!useWaiterOrderStore.getState().tableNumber) setIsOpen(true);
+      const state = useWaiterOrderStore.getState();
+      if (state.orderType === 'DINE_IN' && !state.tableNumber) setIsOpen(true);
     }, 500);
 
     return () => {
