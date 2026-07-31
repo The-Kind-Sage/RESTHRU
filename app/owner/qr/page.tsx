@@ -38,11 +38,21 @@ export default function QRCodeCenterPage() {
   const restaurantId = restaurant?.id;
   const restaurantName = restaurant?.name || 'Restaurant';
 
-  // Read the origin only after mount. Reading window during render makes the
-  // server emit an empty origin while the client emits the real one, so the QR
-  // encodes different data in each pass and React reports a hydration mismatch.
+  // Base URL the QR codes point at.
+  //
+  // NEXT_PUBLIC_APP_URL wins so a QR printed from a laptop still encodes the
+  // public domain — otherwise it captures whatever the admin happens to be
+  // browsing (e.g. http://localhost:3000), which is unreachable from a guest's
+  // phone. Falls back to the current origin when the env var isn't set.
+  //
+  // Read after mount: touching `window` during render makes the server emit one
+  // origin and the client another, so the QR encodes different data in each pass
+  // and React reports a hydration mismatch.
   const [origin, setOrigin] = useState('');
-  useEffect(() => setOrigin(window.location.origin), []);
+  useEffect(
+    () => setOrigin(process.env.NEXT_PUBLIC_APP_URL || window.location.origin),
+    []
+  );
 
   const [selectedQRPreview, setSelectedQRPreview] = useState<TableQRData | null>(null);
   const [bgColor, setBgColor] = useState(QR_CODE_COLORS[0]);
