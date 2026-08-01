@@ -80,18 +80,10 @@ const nextConfig = {
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
         ],
       },
-      {
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value:
-              process.env.NODE_ENV === 'production'
-                ? 'public, max-age=31536000, immutable'
-                : 'no-cache, must-revalidate',
-          },
-        ],
-      },
+      // NOTE: no rule for /_next/static/* on purpose. Next.js content-hashes
+      // those filenames and already serves them `public, max-age=31536000,
+      // immutable`, so a custom header only duplicates that in production — and
+      // the dev variant ('no-cache') is what Next warns can break dev behaviour.
       {
         source: '/fonts/:path*',
         headers: [
