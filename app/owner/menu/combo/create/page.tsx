@@ -47,7 +47,7 @@ import {
 import { getCategories, getMenuItems } from "@/lib/actions/menu";
 import { createCombo } from "@/lib/actions/combos";
 import { getLibrary } from "@/lib/actions/image-library";
-import SelectImageModal, { type LibraryImage } from "@/components/menu/SelectImageModal";
+import SelectImageModal, { type LibraryImage } from "@/components/menu-admin/SelectImageModal";
 import { cn } from "@/lib/utils";
 import { portalBase } from '@/lib/portal';
 

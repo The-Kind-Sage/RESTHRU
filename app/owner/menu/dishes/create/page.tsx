@@ -37,7 +37,7 @@ import {
 import { addMenuItem, getCategories, getMenuItems } from "@/lib/actions/menu";
 import { getLibrary, type LibraryEntry } from "@/lib/actions/image-library";
 import { FOOD_TYPES } from "@/lib/constants";
-import SelectImageModal, { type LibraryImage } from "@/components/menu/SelectImageModal";
+import SelectImageModal, { type LibraryImage } from "@/components/menu-admin/SelectImageModal";
 import { cn } from "@/lib/utils";
 import { portalBase } from '@/lib/portal';
 
