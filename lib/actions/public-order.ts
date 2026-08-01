@@ -233,6 +233,88 @@ export async function getPublicOrderStatus(orderId: string, restaurantId: string
  * payment settlement still happens at `/reception/checkout` — this only records the
  * request so a real person acts on it.
  */
+/**
+ * Guest-initiated service call from the table QR page — water, or a waiter.
+ *
+ * Reuses notifyServers so these land in the same place as order and bill
+ * alerts: reception/waiter get the ring, the popup and the bell entry, with no
+ * separate channel to monitor. Deliberately writes no row of its own — a
+ * request is a transient nudge, not a record to reconcile.
+ */
+const SERVICE_REQUESTS: Record<string, { title: string; verb: string; type: string }> = {
+  WATER:  { title: "Water requested",  verb: "requested water",       type: "SERVICE_WATER" },
+  WAITER: { title: "Waiter called",    verb: "is calling a waiter",   type: "SERVICE_WAITER" },
+};
+
+/**
+ * Guest-facing table details for the QR ordering page.
+ *
+ * The route addresses the table by cuid (so a neighbouring table can't be
+ * reached by editing a digit), which means the page has no human-readable
+ * label to show until it asks for one — otherwise the header renders the raw id.
+ */
+export async function getPublicTableInfo(restaurantId: string, tableId: string) {
+  try {
+    const table = await prisma.restaurantTable.findFirst({
+      where: { id: tableId, restaurantId },
+      select: { tableNumber: true, name: true },
+    });
+    if (!table) return { error: "Table not found" };
+    return { data: { tableNumber: table.tableNumber, name: table.name } };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to load table" };
+  }
+}
+
+export async function requestTableService(data: {
+  restaurantId: string;
+  tableId: string;
+  kind: "WATER" | "WAITER";
+}) {
+  try {
+    if (!data.restaurantId || !data.tableId) {
+      return { error: "Missing restaurant or table" };
+    }
+    const spec = SERVICE_REQUESTS[data.kind];
+    if (!spec) return { error: "Unknown request" };
+
+    const restaurant = await prisma.restaurant.findFirst({
+      where: { id: data.restaurantId, isActive: true },
+      select: { id: true },
+    });
+    if (!restaurant) return { error: "Restaurant not found" };
+
+    // Never trust the client: the table must belong to this restaurant.
+    const table = await prisma.restaurantTable.findFirst({
+      where: { id: data.tableId, restaurantId: data.restaurantId },
+    });
+    if (!table) return { error: "Table not found for this restaurant" };
+
+    const order = table.currentOrderId
+      ? await prisma.order.findUnique({
+          where: { id: table.currentOrderId },
+          select: { id: true, orderId: true, assignedWaiterId: true },
+        })
+      : null;
+
+    await notifyServers(
+      data.restaurantId,
+      order ?? { id: table.id, orderId: table.tableNumber.toString(), assignedWaiterId: null },
+      spec.title,
+      `Table ${table.tableNumber} ${spec.verb}.`,
+      spec.type,
+      // Everyone front-of-house should see it, not just the assigned waiter —
+      // whoever is free should be able to pick it up.
+      { notifyAll: true }
+    );
+
+    return { data: true };
+  } catch (err: any) {
+    console.error("Failed to send table service request:", err);
+    return { error: err?.message || "Failed to send request" };
+  }
+}
+
 export async function requestPublicBill(data: {
   restaurantId: string;
   tableId: string;

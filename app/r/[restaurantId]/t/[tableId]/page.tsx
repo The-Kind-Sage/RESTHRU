@@ -38,8 +38,9 @@ import { useCartStore } from '@/store/cart-store';
 import { formatCurrency } from '@/lib/format';
 import { MenuItem, FoodType, SpiceLevel } from '@/types';
 import { getPublicMenuData } from '@/lib/actions/public-menu';
-import { createPublicOrder, getPublicOrderStatus, requestPublicBill } from '@/lib/actions/public-order';
+import { createPublicOrder, getPublicOrderStatus, requestPublicBill, getPublicTableInfo } from '@/lib/actions/public-order';
 import { generatePublicPaymentQR } from '@/lib/actions/payments';
+import GuestHelpPanel from './_components/GuestHelpPanel';
 
 interface CategoryTab {
   id: string;
@@ -76,6 +77,21 @@ export default function CustomerMenuPage() {
   const [loading, setLoading] = useState(true);
   const [menuError, setMenuError] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  // Guests can switch how dishes are laid out from the floating "View Style"
+  // action: a single-column list (default) or a two-up grid.
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  // Human-readable table label. The URL carries the cuid, so the number has to
+  // be looked up rather than parsed out of the path.
+  const [tableLabel, setTableLabel] = useState<string>('');
+
+  useEffect(() => {
+    if (!restaurantId || !tableId) return;
+    getPublicTableInfo(restaurantId, tableId).then((res) => {
+      if ('data' in res && res.data) {
+        setTableLabel(res.data.name || `Table ${res.data.tableNumber}`);
+      }
+    });
+  }, [restaurantId, tableId]);
   const [orderSheetOpen, setOrderSheetOpen] = useState(false);
   const [billDialogOpen, setBillDialogOpen] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -266,15 +282,17 @@ export default function CustomerMenuPage() {
   }
 
   return (
-    <div className="max-w-[430px] mx-auto min-h-screen bg-background overflow-x-hidden">
+    <div className="max-w-[430px] md:max-w-2xl lg:max-w-4xl mx-auto min-h-screen bg-background overflow-x-hidden">
       {/* HEADER BAR */}
       <header className="sticky top-0 z-40 bg-card border-b">
         <div className="p-4 flex items-center justify-between gap-2">
           <div className="flex-1 min-w-0">
             <h1 className="font-bold text-lg truncate">{restaurant?.name || 'Menu'}</h1>
-            <Badge variant="default" className="mt-1 bg-primary w-fit">
-              Table {tableId}
-            </Badge>
+            {tableLabel && (
+              <Badge variant="default" className="mt-1 bg-primary w-fit">
+                {tableLabel}
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Button
@@ -338,7 +356,13 @@ export default function CustomerMenuPage() {
       )}
 
       {/* MENU ITEMS LIST */}
-      <div className="pb-24 px-3 py-4 space-y-3">
+      <div
+        className={
+          viewMode === 'grid'
+            ? 'pb-24 px-3 py-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 items-stretch'
+            : 'pb-24 px-3 py-4 space-y-3'
+        }
+      >
         {loading ? (
           [1, 2, 3, 4].map((i) => (
             <Card key={i} className="overflow-hidden">
@@ -372,13 +396,15 @@ export default function CustomerMenuPage() {
                 exit={{ opacity: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card className={`overflow-hidden ${!item.isAvailable ? 'opacity-60' : ''}`}>
-                  <CardContent className="p-3">
-                    <div className="flex gap-3">
+                <Card className={`overflow-hidden h-full ${!item.isAvailable ? 'opacity-60' : ''}`}>
+                  <CardContent className="p-3 h-full">
+                    {/* Grid stacks image-over-text so two cards fit a phone;
+                        list keeps the wider text-beside-thumbnail layout. */}
+                    <div className={viewMode === 'grid' ? 'flex flex-col-reverse gap-2 h-full' : 'flex gap-3'}>
                       {/* LEFT SIDE */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-base">{item.name}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-2">
+                        <h3 className={viewMode === 'grid' ? 'font-bold text-sm line-clamp-1' : 'font-bold text-base'}>{item.name}</h3>
+                        <p className={viewMode === 'grid' ? 'hidden' : 'text-xs text-muted-foreground line-clamp-2'}>
                           {item.description}
                         </p>
                         <p className="font-bold text-primary mt-1 text-sm">
@@ -395,9 +421,26 @@ export default function CustomerMenuPage() {
                       </div>
 
                       {/* RIGHT SIDE */}
-                      <div className="flex-shrink-0">
-                        <div className="relative w-[100px] h-[100px] rounded-lg bg-gradient-to-br from-accent to-accent-light flex items-center justify-center text-3xl overflow-hidden">
-                          {getItemEmoji(item.id)}
+                      <div className={viewMode === 'grid' ? 'w-full' : 'flex-shrink-0'}>
+                        <div
+                          className={
+                            'relative rounded-lg bg-gradient-to-br from-accent to-accent-light flex items-center justify-center text-3xl overflow-hidden ' +
+                            (viewMode === 'grid' ? 'w-full aspect-square' : 'w-[100px] h-[100px]')
+                          }
+                        >
+                          {/* Show the dish photo when there is one; the emoji is
+                              only a fallback for items with no image. */}
+                          {item.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              loading="lazy"
+                              className="absolute inset-0 h-full w-full object-cover"
+                            />
+                          ) : (
+                            getItemEmoji(item.id)
+                          )}
 
                           {!item.isAvailable && (
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -453,7 +496,7 @@ export default function CustomerMenuPage() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto"
+            className="fixed bottom-0 left-0 right-0 max-w-[430px] md:max-w-2xl lg:max-w-4xl mx-auto"
           >
             <button
               onClick={() => setOrderSheetOpen(true)}
@@ -659,6 +702,21 @@ export default function CustomerMenuPage() {
           </AnimatePresence>
         </DrawerContent>
       </Drawer>
+
+      {/* Guest FAB + help sheet (water / waiter / bill) */}
+      <GuestHelpPanel
+        restaurantId={restaurantId}
+        tableId={tableId}
+        onRequestBill={() => setBillDialogOpen(true)}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        categories={categories}
+        subMenus={Array.from(
+          new Set(menuItems.map((i: any) => i.menuSection).filter(Boolean))
+        ) as string[]}
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+      />
 
       {/* BILL REQUEST DIALOG */}
       <Dialog open={billDialogOpen} onOpenChange={setBillDialogOpen}>
